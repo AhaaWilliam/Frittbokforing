@@ -134,11 +134,11 @@ export async function createProduct(
   data: ProductData,
 ): Promise<void> {
   await page.click('button:has-text("+ Ny artikel")')
-  await page.fill('#product-name', data.name)
+  await page.fill('#name', data.name)
   if (data.description) {
-    await page.fill('#product-description', data.description)
+    await page.fill('#description', data.description)
   }
-  await page.fill('#product-price', data.priceKr)
+  await page.fill('#_priceKr', data.priceKr)
   await page.click('button[type="submit"]:has-text("Spara")')
   // Wait for form to close
   await page.waitForSelector(`text=${data.name}`, { timeout: 10_000 })
