@@ -27,7 +27,8 @@
     "test:all": "vitest run && npx playwright test",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' 'tests/**/*.ts' --fix",
-    "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'"
+    "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
+    "dump:source": "node scripts/dump-source.mjs"
   },
   "keywords": [
     "bokföring",
