@@ -1,0 +1,90 @@
+import { useEffect } from 'react'
+import type { Company } from '../../shared/types'
+import { FiscalYearProvider } from '../contexts/FiscalYearContext'
+import { HashRouter, useRoute } from '../lib/router'
+import { routes } from '../lib/routes'
+import { Sidebar } from '../components/layout/Sidebar'
+import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
+import { PageOverview } from './PageOverview'
+import { PageIncome } from './PageIncome'
+import { PageExpenses } from './PageExpenses'
+import { PageVat } from './PageVat'
+import { PageTax } from './PageTax'
+import { PageExport } from './PageExport'
+import { PageSettings } from './PageSettings'
+import { PageCustomers } from './PageCustomers'
+import { PageProducts } from './PageProducts'
+import { PageManualEntries } from './PageManualEntries'
+import { PageReports } from './PageReports'
+import { PageAccounts } from './PageAccounts'
+import { PageSuppliers } from './PageSuppliers'
+
+interface AppShellProps {
+  company: Company
+}
+
+function PageContent({ page }: { page: string }) {
+  switch (page) {
+    case 'overview':
+      return <PageOverview />
+    case 'income':
+      return <PageIncome />
+    case 'expenses':
+      return <PageExpenses />
+    case 'vat':
+      return <PageVat />
+    case 'tax':
+      return <PageTax />
+    case 'reports':
+      return <PageReports />
+    case 'export':
+      return <PageExport />
+    case 'settings':
+      return <PageSettings />
+    case 'customers':
+      return <PageCustomers />
+    case 'products':
+      return <PageProducts />
+    case 'manual-entries':
+      return <PageManualEntries />
+    case 'accounts':
+      return <PageAccounts />
+    case 'suppliers':
+      return <PageSuppliers />
+    default:
+      return <PageOverview />
+  }
+}
+
+function AppShellInner({ company }: AppShellProps) {
+  const { page } = useRoute()
+
+  useEffect(() => {
+    document.title = `Fritt Bokföring — ${company.name}`
+  }, [company.name])
+
+  return (
+    <div className="flex h-screen" data-testid="app-ready">
+      <Sidebar company={company} />
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <ReadOnlyBanner />
+        <div
+          className="flex flex-1 flex-col overflow-hidden"
+          data-testid={`page-${page}`}
+        >
+          <PageContent page={page} />
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export function AppShell({ company }: AppShellProps) {
+  return (
+    <FiscalYearProvider>
+      <HashRouter routes={routes} fallback="/overview">
+        <AppShellInner company={company} />
+      </HashRouter>
+    </FiscalYearProvider>
+  )
+}

@@ -1,0 +1,324 @@
+import { useState, useRef } from 'react'
+import { Search, CheckCircle, CreditCard } from 'lucide-react'
+import { toast } from 'sonner'
+import type {
+  ExpenseListItem,
+  ExpenseStatusCounts,
+} from '../../../shared/types'
+import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useExpenses, useFinalizeExpense, usePayExpense, useDebouncedSearch } from '../../lib/hooks'
+import { formatKr } from '../../lib/format'
+import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
+import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
+import { PaymentDialog } from '../ui/PaymentDialog'
+
+interface ExpenseListProps {
+  onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
+}
+
+const STATUS_FILTERS: {
+  key: string | undefined
+  label: string
+  countKey: keyof ExpenseStatusCounts
+}[] = [
+  { key: undefined, label: 'Alla', countKey: 'total' },
+  { key: 'draft', label: 'Utkast', countKey: 'draft' },
+  { key: 'unpaid', label: 'Obetald', countKey: 'unpaid' },
+  { key: 'partial', label: 'Delbetald', countKey: 'partial' },
+  { key: 'paid', label: 'Betald', countKey: 'paid' },
+  { key: 'overdue', label: 'Förfallen', countKey: 'overdue' },
+]
+
+const STATUS_BADGE: Record<
+  string,
+  { bg: string; text: string; label: string }
+> = {
+  draft: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Utkast' },
+  unpaid: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Obetald' },
+  partial: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Delbetald' },
+  paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Betald' },
+  overdue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Förfallen' },
+}
+
+export function ExpenseList({ onNavigate }: ExpenseListProps) {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(
+    undefined,
+  )
+  const { search, debouncedSearch, setSearch } = useDebouncedSearch()
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  // Finalize dialog state
+  const [finalizeItem, setFinalizeItem] = useState<ExpenseListItem | null>(null)
+
+  // Payment dialog state
+  const [payItem, setPayItem] = useState<ExpenseListItem | null>(null)
+
+  const finalizeMutation = useFinalizeExpense()
+  const payMutation = usePayExpense()
+
+  useKeyboardShortcuts({
+    'mod+k': () => searchRef.current?.focus(),
+  })
+
+  const response = useExpenses(activeFiscalYear?.id, {
+    status: statusFilter,
+    search: debouncedSearch || undefined,
+  })
+
+  const isLoading = response.isLoading
+
+  let items: ExpenseListItem[] = []
+  let counts: ExpenseStatusCounts = {
+    total: 0,
+    draft: 0,
+    unpaid: 0,
+    partial: 0,
+    paid: 0,
+    overdue: 0,
+  }
+
+  if (response.data) {
+    items = response.data.expenses
+    counts = response.data.counts
+  }
+
+  async function handleFinalize() {
+    if (!finalizeItem) return
+    try {
+      await finalizeMutation.mutateAsync({ id: finalizeItem.id })
+      toast.success('Kostnad bokförd')
+      setFinalizeItem(null)
+    } catch (err) {
+      console.error('Finalize expense failed:', err)
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte bokföra kostnaden',
+      )
+    }
+  }
+
+  async function handlePayment(amount: number, date: string) {
+    if (!payItem) return
+    try {
+      await payMutation.mutateAsync({
+        expense_id: payItem.id,
+        amount,
+        payment_date: date,
+        payment_method: 'bankgiro',
+        account_number: '1930',
+      })
+      toast.success('Betalning registrerad')
+      setPayItem(null)
+    } catch (err) {
+      console.error('Pay expense failed:', err)
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte registrera betalning',
+      )
+    }
+  }
+
+  function handleRowClick(item: ExpenseListItem) {
+    if (item.status === 'draft') {
+      onNavigate({ edit: item.id })
+    } else {
+      onNavigate({ view: item.id })
+    }
+  }
+
+  function emptyMessage(): string {
+    if (debouncedSearch) return 'Inga kostnader matchar sökningen.'
+    if (statusFilter === 'draft') return 'Inga utkast-kostnader.'
+    if (statusFilter === 'unpaid') return 'Inga obetalda kostnader.'
+    if (statusFilter === 'partial') return 'Inga delbetalda kostnader.'
+    if (statusFilter === 'paid') return 'Inga betalda kostnader.'
+    if (statusFilter === 'overdue') return 'Inga förfallna kostnader.'
+    return 'Inga kostnader ännu. Klicka "+ Ny kostnad" för att registrera.'
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      {/* Filter pills */}
+      <div className="flex items-center gap-2 px-8 pt-4 pb-2">
+        {STATUS_FILTERS.map((f) => {
+          const isActive = statusFilter === f.key
+          return (
+            <button
+              key={f.label}
+              type="button"
+              onClick={() => setStatusFilter(f.key)}
+              className={
+                isActive
+                  ? 'rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'
+                  : 'rounded-full border border-input px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted'
+              }
+            >
+              {f.label}
+              {counts[f.countKey] > 0 && (
+                <span className="ml-1 opacity-70">({counts[f.countKey]})</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Search input */}
+      <div className="relative px-8 py-2">
+        <Search className="pointer-events-none absolute left-11 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          ref={searchRef}
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Sök leverantör, beskrivning eller fakturanr..."
+          className="w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : items.length === 0 ? (
+        !debouncedSearch && !statusFilter ? (
+          <EmptyState
+            icon={<ExpenseIllustration />}
+            title="Inga kostnader ännu"
+            description="Registrera din första kostnad för att komma igång."
+          />
+        ) : (
+          <div className="px-8 py-16 text-center text-sm text-muted-foreground">
+            {emptyMessage()}
+          </div>
+        )
+      ) : (
+        <div className="overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                <th className="px-8 py-3">Datum</th>
+                <th className="px-4 py-3">Leverantör</th>
+                <th className="px-4 py-3">Beskrivning</th>
+                <th className="px-4 py-3">Lev.fakturanr</th>
+                <th className="px-4 py-3 text-right">Totalt</th>
+                <th className="px-4 py-3 text-right">Betalt</th>
+                <th className="px-4 py-3 text-right">Kvarst.</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Förfaller</th>
+                <th className="px-4 py-3">Verif</th>
+                <th className="px-4 py-3">Åtgärder</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.draft
+                return (
+                  <tr
+                    key={item.id}
+                    onClick={() => handleRowClick(item)}
+                    className="cursor-pointer border-b transition-colors hover:bg-muted/50"
+                  >
+                    <td className="px-8 py-3">{item.expense_date}</td>
+                    <td className="px-4 py-3">{item.counterparty_name}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3">
+                      {item.description}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.supplier_invoice_number || '\u2014'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatKr(item.total_amount_ore)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {item.total_paid > 0 ? formatKr(item.total_paid) : ''}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {formatKr(item.remaining)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.bg} ${badge.text}`}
+                      >
+                        {badge.label}
+                      </span>
+                    </td>
+                    <td
+                      className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}
+                    >
+                      {item.due_date || '\u2014'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.verification_number
+                        ? `${item.verification_series ?? 'B'}${item.verification_number}`
+                        : '\u2014'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div
+                        className="flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.status === 'draft' && (
+                          <button
+                            type="button"
+                            onClick={() => setFinalizeItem(item)}
+                            title="Bokför"
+                            className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                            Bokför
+                          </button>
+                        )}
+                        {item.status !== 'draft' && item.status !== 'paid' && (
+                          <button
+                            type="button"
+                            onClick={() => setPayItem(item)}
+                            title="Registrera betalning"
+                            className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+                          >
+                            <CreditCard className="h-3 w-3" />
+                            Betala
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <ConfirmFinalizeDialog
+        open={!!finalizeItem}
+        onOpenChange={(open) => {
+          if (!open) setFinalizeItem(null)
+        }}
+        title="Bokför kostnad"
+        description={
+          finalizeItem
+            ? `Beskrivning: ${finalizeItem.description}\nLeverantör: ${finalizeItem.counterparty_name}\nBelopp: ${formatKr(finalizeItem.total_amount_ore)}`
+            : ''
+        }
+        onConfirm={handleFinalize}
+        isLoading={finalizeMutation.isPending}
+      />
+
+      {payItem && (
+        <PaymentDialog
+          open={!!payItem}
+          onOpenChange={(open) => {
+            if (!open) setPayItem(null)
+          }}
+          title="Registrera betalning"
+          totalAmount={payItem.total_amount_ore}
+          paidAmount={payItem.total_paid}
+          documentDate={payItem.expense_date}
+          fiscalYearEnd={activeFiscalYear?.end_date ?? '2099-12-31'}
+          onSubmit={handlePayment}
+          isLoading={payMutation.isPending}
+        />
+      )}
+    </div>
+  )
+}
