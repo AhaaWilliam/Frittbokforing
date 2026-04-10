@@ -4,7 +4,7 @@ import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
 import { registerIpcHandlers } from './ipc-handlers'
 import { getDb, closeDb } from './db'
-import fs from 'fs'
+import { createPreUpdateBackup } from './pre-update-backup'
 
 // --- Crash handler (main process) ---
 process.on('uncaughtException', (error) => {
@@ -42,22 +42,21 @@ function setupAutoUpdater(): void {
     // KRITISKT: Backup INNAN install — skyddar bokföringsdata
     // om den nya versionens migration misslyckas
     try {
-      const db = getDb()
-      const docsDir = path.join(
-        app.getPath('documents'),
-        'Fritt Bokföring',
-        'backups',
-      )
-      fs.mkdirSync(docsDir, { recursive: true })
-      const backupPath = path.join(
-        docsDir,
-        `pre-update-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.db`,
-      )
-      db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`)
-      log.info('Pre-update backup skapad:', backupPath)
+      createPreUpdateBackup()
     } catch (err) {
-      log.error('Kunde inte skapa pre-update backup:', err)
-      // Fortsätt ändå — bättre att uppdatera än att inte göra det
+      // Avbryt uppdateringen — datasäkerhet går före att få in ny version
+      const message =
+        err instanceof Error ? err.message : String(err)
+      log.error('Pre-update backup misslyckades, avbryter uppdatering:', err)
+      dialog.showErrorBox(
+        'Uppdateringen avbröts',
+        'Uppdateringen avbröts eftersom säkerhetskopieringen av databasen misslyckades. ' +
+          'Din nuvarande version fortsätter att fungera som vanligt.\n\n' +
+          'Kontrollera att du har ledigt diskutrymme i ~/Documents/Fritt Bokföring/backups/ ' +
+          'och att mappen är skrivbar, och försök sedan igen via Hjälp-menyn.\n\n' +
+          `Felmeddelande: ${message}`,
+      )
+      return
     }
 
     dialog
