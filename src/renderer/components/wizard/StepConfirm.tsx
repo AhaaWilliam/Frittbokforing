@@ -24,8 +24,10 @@ function formatKr(value: string): string {
   return num.toLocaleString('sv-SE') + ' kr'
 }
 
-function formatSwedishDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
+export function formatSwedishDate(iso: string): string {
+  const parts = iso.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, d] = parts
   const monthNames = [
     'januari',
     'februari',
@@ -40,7 +42,12 @@ function formatSwedishDate(iso: string): string {
     'november',
     'december',
   ]
-  return `${parseInt(d)} ${monthNames[parseInt(m) - 1]} ${y}`
+  const monthIndex = parseInt(m) - 1
+  const day = parseInt(d)
+  if (isNaN(day) || isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) {
+    return iso
+  }
+  return `${day} ${monthNames[monthIndex]} ${y}`
 }
 
 export function StepConfirm({

@@ -26,8 +26,8 @@ export function FiscalYearProvider({
       .then((id: unknown) => {
         if (typeof id === 'number') setRestoredId(id)
       })
-      .catch(() => {
-        // IPC-error — säkerställ att restoredIdLoaded ändå sätts
+      .catch((err: unknown) => {
+        console.warn('[FiscalYearContext] Kunde inte läsa last_fiscal_year_id:', err)
       })
       .finally(() => {
         setRestoredIdLoaded(true)

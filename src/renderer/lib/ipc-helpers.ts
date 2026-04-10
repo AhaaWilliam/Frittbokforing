@@ -1,4 +1,16 @@
-import type { IpcResult } from '../../shared/types'
+import type { IpcResult, ErrorCode } from '../../shared/types'
+
+export class IpcError extends Error {
+  code: ErrorCode
+  field?: string
+
+  constructor(message: string, code: ErrorCode, field?: string) {
+    super(message)
+    this.name = 'IpcError'
+    this.code = code
+    this.field = field
+  }
+}
 
 /**
  * Wraps an IPC call that returns IpcResult<T>.
@@ -10,10 +22,7 @@ export async function ipcCall<T>(
 ): Promise<T> {
   const result = await fn()
   if (!result.success) {
-    const error = new Error(result.error)
-    ;(error as unknown as Record<string, unknown>).code = result.code
-    ;(error as unknown as Record<string, unknown>).field = result.field
-    throw error
+    throw new IpcError(result.error, result.code, result.field)
   }
   return result.data
 }

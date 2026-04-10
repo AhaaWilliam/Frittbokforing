@@ -103,6 +103,16 @@ export function createProduct(
   }
 }
 
+const ALLOWED_PRODUCT_COLUMNS = new Set([
+  'name',
+  'description',
+  'unit',
+  'default_price',
+  'vat_code_id',
+  'account_id',
+  'article_type',
+])
+
 export function updateProduct(
   db: Database.Database,
   input: unknown,
@@ -133,7 +143,7 @@ export function updateProduct(
     const params: unknown[] = []
 
     for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
+      if (value !== undefined && ALLOWED_PRODUCT_COLUMNS.has(key)) {
         sets.push(`${key} = ?`)
         params.push(value ?? null)
       }

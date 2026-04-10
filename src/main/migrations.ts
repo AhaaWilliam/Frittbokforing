@@ -600,9 +600,14 @@ function getTableColumns(
   db: import('better-sqlite3').Database,
   table: string,
 ): Set<string> {
+  if (!VALID_SQL_IDENTIFIER.test(table)) {
+    throw new Error(`Invalid SQL identifier: table=${table}`)
+  }
   const columns = db.pragma('table_info(' + table + ')') as { name: string }[]
   return new Set(columns.map((c) => c.name))
 }
+
+const VALID_SQL_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]*$/
 
 function addColumnIfMissing(
   db: import('better-sqlite3').Database,
@@ -611,6 +616,9 @@ function addColumnIfMissing(
   definition: string,
   existingColumns: Set<string>,
 ): void {
+  if (!VALID_SQL_IDENTIFIER.test(table) || !VALID_SQL_IDENTIFIER.test(column)) {
+    throw new Error(`Invalid SQL identifier: table=${table}, column=${column}`)
+  }
   if (!existingColumns.has(column)) {
     db.exec('ALTER TABLE ' + table + ' ADD COLUMN ' + column + ' ' + definition)
   }
