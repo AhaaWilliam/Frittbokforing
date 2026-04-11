@@ -75,11 +75,11 @@ function seedBookedEntry(opts: {
   const jeId = Number(je.lastInsertRowid)
 
   db.prepare(
-    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 1, ?, ?, 0)`,
   ).run(jeId, opts.debitAccount, opts.amount)
   db.prepare(
-    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 2, ?, 0, ?)`,
   ).run(jeId, opts.creditAccount, opts.amount)
 

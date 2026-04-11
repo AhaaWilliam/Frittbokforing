@@ -438,7 +438,7 @@ export function finalizeExpense(
       const insertLine = db.prepare(
         `INSERT INTO journal_entry_lines (
           journal_entry_id, line_number, account_number,
-          debit_amount, credit_amount, description
+          debit_ore, credit_ore, description
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
 
@@ -707,7 +707,7 @@ export function payExpense(
       const insertLine = db.prepare(
         `INSERT INTO journal_entry_lines (
           journal_entry_id, line_number, account_number,
-          debit_amount, credit_amount, description
+          debit_ore, credit_ore, description
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
 
@@ -912,7 +912,7 @@ export function listExpenses(
     expense_date: 'e.expense_date',
     due_date: 'e.due_date',
     description: 'e.description',
-    total_amount_ore: 'e.total_amount_ore',
+    total_amount: 'e.total_amount_ore',
     counterparty_name: 'c.name',
     status: 'e.status',
     supplier_invoice_number: 'e.supplier_invoice_number',

@@ -128,26 +128,26 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     expect(jels.length).toBeGreaterThanOrEqual(3)
 
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_amount,
+      (sum: number, l: any) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_amount,
+      (sum: number, l: any) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit) // balans!
 
     // Check specific accounts
     const debit1510 = jels.find(
-      (l: any) => l.account_number === '1510' && l.debit_amount > 0,
+      (l: any) => l.account_number === '1510' && l.debit_ore > 0,
     )
     expect(debit1510).toBeDefined()
     const credit3002 = jels.find(
-      (l: any) => l.account_number === '3002' && l.credit_amount > 0,
+      (l: any) => l.account_number === '3002' && l.credit_ore > 0,
     )
     expect(credit3002).toBeDefined()
     const credit2610 = jels.find(
-      (l: any) => l.account_number === '2610' && l.credit_amount > 0,
+      (l: any) => l.account_number === '2610' && l.credit_ore > 0,
     )
     expect(credit2610).toBeDefined()
 
@@ -178,11 +178,11 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
       .all(payJe.id) as any[]
     const payDebit = payJels.reduce(
-      (sum: number, l: any) => sum + l.debit_amount,
+      (sum: number, l: any) => sum + l.debit_ore,
       0,
     )
     const payCredit = payJels.reduce(
-      (sum: number, l: any) => sum + l.credit_amount,
+      (sum: number, l: any) => sum + l.credit_ore,
       0,
     )
     expect(payDebit).toBe(payCredit)
@@ -190,12 +190,12 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // Debit 1930 (bank), Credit 1510 (kundfordran)
     expect(
       payJels.some(
-        (l: any) => l.account_number === '1930' && l.debit_amount > 0,
+        (l: any) => l.account_number === '1930' && l.debit_ore > 0,
       ),
     ).toBe(true)
     expect(
       payJels.some(
-        (l: any) => l.account_number === '1510' && l.credit_amount > 0,
+        (l: any) => l.account_number === '1510' && l.credit_ore > 0,
       ),
     ).toBe(true)
 
@@ -296,21 +296,21 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     // Should have separate credit entries for 2610 (25%) and 2620 (12%)
     const credit2610 = jels.find(
-      (l: any) => l.account_number === '2610' && l.credit_amount > 0,
+      (l: any) => l.account_number === '2610' && l.credit_ore > 0,
     )
     const credit2620 = jels.find(
-      (l: any) => l.account_number === '2620' && l.credit_amount > 0,
+      (l: any) => l.account_number === '2620' && l.credit_ore > 0,
     )
     expect(credit2610).toBeDefined()
     expect(credit2620).toBeDefined()
 
     // Balance check
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_amount,
+      (sum: number, l: any) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_amount,
+      (sum: number, l: any) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit)
@@ -600,7 +600,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     // Should use 3001 (custom) instead of default 3002
     const credit3001 = jels.find(
-      (l: any) => l.account_number === '3001' && l.credit_amount > 0,
+      (l: any) => l.account_number === '3001' && l.credit_ore > 0,
     )
     expect(credit3001).toBeDefined()
   })
@@ -653,11 +653,11 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     // Balance
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_amount,
+      (sum: number, l: any) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_amount,
+      (sum: number, l: any) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit)

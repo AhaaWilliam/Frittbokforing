@@ -92,9 +92,9 @@ describe('Räkenskapsårsövergång', () => {
     const ibLines = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
       .all(ibEntries[0].id) as any[]
-    const ibDebit = ibLines.reduce((s: number, l: any) => s + l.debit_amount, 0)
+    const ibDebit = ibLines.reduce((s: number, l: any) => s + l.debit_ore, 0)
     const ibCredit = ibLines.reduce(
-      (s: number, l: any) => s + l.credit_amount,
+      (s: number, l: any) => s + l.credit_ore,
       0,
     )
     expect(ibDebit).toBe(ibCredit)
@@ -157,10 +157,10 @@ describe('Räkenskapsårsövergång', () => {
 
     // Vinst: DEBET 8999, KREDIT 2099
     expect(
-      jels.some((l: any) => l.account_number === '8999' && l.debit_amount > 0),
+      jels.some((l: any) => l.account_number === '8999' && l.debit_ore > 0),
     ).toBe(true)
     expect(
-      jels.some((l: any) => l.account_number === '2099' && l.credit_amount > 0),
+      jels.some((l: any) => l.account_number === '2099' && l.credit_ore > 0),
     ).toBe(true)
   })
 

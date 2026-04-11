@@ -277,7 +277,7 @@ describe('finalizeExpense', () => {
       .get(saved.data.id) as { journal_entry_id: number }
     const balance = db
       .prepare(
-        'SELECT SUM(debit_amount) as d, SUM(credit_amount) as c FROM journal_entry_lines WHERE journal_entry_id = ?',
+        'SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines WHERE journal_entry_id = ?',
       )
       .get(expense.journal_entry_id) as { d: number; c: number }
     expect(balance.d).toBe(balance.c)
@@ -323,27 +323,27 @@ describe('finalizeExpense', () => {
       .get(result.data.id) as { journal_entry_id: number }
     const lines = db
       .prepare(
-        'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ?',
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
       )
       .all(exp.journal_entry_id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // DEBET 6110: 100000, DEBET 6071: 50000, DEBET 2640: 25000+6000=31000
     const d6110 = lines.find((l) => l.account_number === '6110')
-    expect(d6110?.debit_amount).toBe(100000)
+    expect(d6110?.debit_ore).toBe(100000)
     const d6071 = lines.find((l) => l.account_number === '6071')
-    expect(d6071?.debit_amount).toBe(50000)
+    expect(d6071?.debit_ore).toBe(50000)
     const d2640 = lines.find((l) => l.account_number === '2640')
-    expect(d2640?.debit_amount).toBe(31000)
+    expect(d2640?.debit_ore).toBe(31000)
     // KREDIT 2440: total
     const c2440 = lines.find((l) => l.account_number === '2440')
-    expect(c2440?.credit_amount).toBe(181000)
+    expect(c2440?.credit_ore).toBe(181000)
 
-    const totalD = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalC = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalD = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalC = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalD).toBe(totalC)
   })
 

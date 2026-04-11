@@ -115,20 +115,20 @@ describe('F27 regression: expense quantity * unit_price computation', () => {
 
     const expense = db.prepare('SELECT journal_entry_id FROM expenses WHERE id = ?').get(result.data.id) as { journal_entry_id: number }
     const lines = db.prepare(
-      'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ?'
-    ).all(expense.journal_entry_id) as { account_number: string; debit_amount: number; credit_amount: number }[]
+      'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?'
+    ).all(expense.journal_entry_id) as { account_number: string; debit_ore: number; credit_ore: number }[]
 
     const d6110 = lines.find(l => l.account_number === '6110')
-    expect(d6110?.debit_amount).toBe(100000)
+    expect(d6110?.debit_ore).toBe(100000)
 
     const d2640 = lines.find(l => l.account_number === '2640')
-    expect(d2640?.debit_amount).toBe(25000)
+    expect(d2640?.debit_ore).toBe(25000)
 
     const c2440 = lines.find(l => l.account_number === '2440')
-    expect(c2440?.credit_amount).toBe(125000)
+    expect(c2440?.credit_ore).toBe(125000)
 
-    const totalD = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalC = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalD = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalC = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalD).toBe(totalC)
     expect(totalD).toBe(125000)
   })

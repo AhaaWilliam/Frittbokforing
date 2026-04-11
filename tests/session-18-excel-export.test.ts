@@ -182,7 +182,7 @@ function createPreviousYear(testDb: Database.Database, companyId: number) {
     .run(companyId, prevFyId).lastInsertRowid as number
   testDb
     .prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 1, '1930', 5000000, 0), (?, 2, '2081', 0, 5000000)`,
     )
     .run(jeId, jeId)
@@ -587,7 +587,7 @@ describe('Excel Export', () => {
   // 27. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(18) // S24: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

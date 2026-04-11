@@ -129,7 +129,7 @@ describe('Betalning/kontering', () => {
     // Verify journal entry balance
     const lines = db
       .prepare(
-        'SELECT SUM(debit_amount) as d, SUM(credit_amount) as c FROM journal_entry_lines WHERE journal_entry_id = ?',
+        'SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines WHERE journal_entry_id = ?',
       )
       .get(result.data.payment.journal_entry_id) as { d: number; c: number }
     expect(lines.d).toBe(lines.c)
@@ -396,7 +396,7 @@ describe('Integration', () => {
 
   it('14. Migration 008 — payment_method + account_number columns', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(17) // S50: Uppdatera vid nya migrationer
+    expect(v).toBe(18) // S50: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_payments)') as { name: string }[]

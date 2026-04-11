@@ -16,13 +16,13 @@ export function getDashboardSummary(
       SELECT
         COALESCE(SUM(CASE
           WHEN jel.account_number IN ('2610', '2620', '2630')
-          THEN jel.credit_amount
+          THEN jel.credit_ore
           ELSE 0
         END), 0) AS vat_outgoing,
 
         COALESCE(SUM(CASE
           WHEN jel.account_number = '2640'
-          THEN jel.debit_amount
+          THEN jel.debit_ore
           ELSE 0
         END), 0) AS vat_incoming
 

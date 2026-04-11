@@ -405,7 +405,7 @@ export function exportSie5(
           .att('accountId', line.account_number)
           .att(
             'amount',
-            debitCreditToSie5Amount(line.debit_amount, line.credit_amount),
+            debitCreditToSie5Amount(line.debit_ore, line.credit_ore),
           )
       }
     }

@@ -127,7 +127,7 @@ describe('Session 11: Migration 010', () => {
 
   it('PRAGMA user_version = 10', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(18) // S24: Uppdatera vid nya migrationer
   })
 
   it('expense payments use auto_payment source_type in B-series', () => {
@@ -181,27 +181,27 @@ describe('Session 11: payExpense — kontering', () => {
       )
       .all(result.data.payment.journal_entry_id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // DEBET 2440
     const debit2440 = lines.find(
-      (l) => l.account_number === '2440' && l.debit_amount > 0,
+      (l) => l.account_number === '2440' && l.debit_ore > 0,
     )
     expect(debit2440).toBeDefined()
-    expect(debit2440!.debit_amount).toBe(expense.total_amount_ore)
+    expect(debit2440!.debit_ore).toBe(expense.total_amount_ore)
 
     // KREDIT 1930
     const credit1930 = lines.find(
-      (l) => l.account_number === '1930' && l.credit_amount > 0,
+      (l) => l.account_number === '1930' && l.credit_ore > 0,
     )
     expect(credit1930).toBeDefined()
-    expect(credit1930!.credit_amount).toBe(expense.total_amount_ore)
+    expect(credit1930!.credit_ore).toBe(expense.total_amount_ore)
 
     // Balance
-    const totalDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalDebit).toBe(totalCredit)
 
     // Expense status
@@ -341,31 +341,31 @@ describe('Session 11: payExpense — öresutjämning', () => {
       )
       .all(result.data.payment.journal_entry_id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // DEBET 2440: 100050 (entire debt)
     const debit2440 = lines.find(
-      (l) => l.account_number === '2440' && l.debit_amount > 0,
+      (l) => l.account_number === '2440' && l.debit_ore > 0,
     )
-    expect(debit2440!.debit_amount).toBe(100050)
+    expect(debit2440!.debit_ore).toBe(100050)
 
     // KREDIT 1930: 100000 (actual payment)
     const credit1930 = lines.find(
-      (l) => l.account_number === '1930' && l.credit_amount > 0,
+      (l) => l.account_number === '1930' && l.credit_ore > 0,
     )
-    expect(credit1930!.credit_amount).toBe(100000)
+    expect(credit1930!.credit_ore).toBe(100000)
 
     // KREDIT 3740: 50 (rounding)
     const credit3740 = lines.find(
-      (l) => l.account_number === '3740' && l.credit_amount > 0,
+      (l) => l.account_number === '3740' && l.credit_ore > 0,
     )
-    expect(credit3740!.credit_amount).toBe(50)
+    expect(credit3740!.credit_ore).toBe(50)
 
     // Balance
-    const totalDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalDebit).toBe(totalCredit)
   })
 
@@ -670,31 +670,31 @@ describe('Session 11: Integration', () => {
       )
       .all(result.data.payment.journal_entry_id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // DEBET 2440: 99950 (entire debt, not more)
     const debit2440 = lines.find(
-      (l) => l.account_number === '2440' && l.debit_amount > 0,
+      (l) => l.account_number === '2440' && l.debit_ore > 0,
     )
-    expect(debit2440!.debit_amount).toBe(99950)
+    expect(debit2440!.debit_ore).toBe(99950)
 
     // KREDIT 1930: 100000 (actual cash out)
     const credit1930 = lines.find(
-      (l) => l.account_number === '1930' && l.credit_amount > 0,
+      (l) => l.account_number === '1930' && l.credit_ore > 0,
     )
-    expect(credit1930!.credit_amount).toBe(100000)
+    expect(credit1930!.credit_ore).toBe(100000)
 
     // DEBET 3740: 50 (we paid more than debt)
     const debit3740 = lines.find(
-      (l) => l.account_number === '3740' && l.debit_amount > 0,
+      (l) => l.account_number === '3740' && l.debit_ore > 0,
     )
-    expect(debit3740!.debit_amount).toBe(50)
+    expect(debit3740!.debit_ore).toBe(50)
 
     // Balance: 99950 + 50 = 100000
-    const totalDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalDebit).toBe(100000)
     expect(totalCredit).toBe(100000)
   })

@@ -68,7 +68,7 @@ function createBookedEntry(
   for (let i = 0; i < lines.length; i++) {
     testDb
       .prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, ?, ?, ?, ?)`,
       )
       .run(jeId, i + 1, lines[i].account_number, lines[i].debit, lines[i].credit)
@@ -319,15 +319,15 @@ describe('GAP M10-3: Årstotal = summa kvartal', () => {
       )
       .run(companyId, fiscalYearId).lastInsertRowid as number
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 1, '2610', 0, 5000)`,
     ).run(jeId)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 2, '3002', 0, 20000)`,
     ).run(jeId)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 3, '1510', 25000, 0)`,
     ).run(jeId)
     db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(

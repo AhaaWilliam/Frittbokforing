@@ -337,8 +337,8 @@ export function nextInvoiceNumber(
 
 interface AggregatedJournalLine {
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description: string
 }
 
@@ -387,8 +387,8 @@ function buildJournalLines(
   // DEBET — Kundfordringar (1510)
   lines.push({
     account_number: '1510',
-    debit_amount: totalInclVat,
-    credit_amount: 0,
+    debit_ore: totalInclVat,
+    credit_ore: 0,
     description: desc,
   })
 
@@ -396,8 +396,8 @@ function buildJournalLines(
   for (const row of revenueRows) {
     lines.push({
       account_number: row.acct_number,
-      debit_amount: 0,
-      credit_amount: row.total_amount_ore,
+      debit_ore: 0,
+      credit_ore: row.total_amount_ore,
       description: desc,
     })
   }
@@ -407,15 +407,15 @@ function buildJournalLines(
     if (!row.vat_account_number || row.total_vat === 0) continue
     lines.push({
       account_number: row.vat_account_number,
-      debit_amount: 0,
-      credit_amount: row.total_vat,
+      debit_ore: 0,
+      credit_ore: row.total_vat,
       description: desc,
     })
   }
 
   // Öresutjämning (konto 3740)
-  const totalDebit = lines.reduce((sum, l) => sum + l.debit_amount, 0)
-  const totalCredit = lines.reduce((sum, l) => sum + l.credit_amount, 0)
+  const totalDebit = lines.reduce((sum, l) => sum + l.debit_ore, 0)
+  const totalCredit = lines.reduce((sum, l) => sum + l.credit_ore, 0)
   const diff = totalDebit - totalCredit
 
   if (diff !== 0) {
@@ -426,15 +426,15 @@ function buildJournalLines(
     }
     lines.push({
       account_number: '3740',
-      debit_amount: diff < 0 ? Math.abs(diff) : 0,
-      credit_amount: diff > 0 ? diff : 0,
+      debit_ore: diff < 0 ? Math.abs(diff) : 0,
+      credit_ore: diff > 0 ? diff : 0,
       description: desc,
     })
   }
 
   // Defense in depth: final balance check
-  const finalDebit = lines.reduce((sum, l) => sum + l.debit_amount, 0)
-  const finalCredit = lines.reduce((sum, l) => sum + l.credit_amount, 0)
+  const finalDebit = lines.reduce((sum, l) => sum + l.debit_ore, 0)
+  const finalCredit = lines.reduce((sum, l) => sum + l.credit_ore, 0)
   if (finalDebit !== finalCredit) {
     throw new Error(
       `CRITICAL: Balance still wrong after rounding. Debit ${finalDebit} !== Credit ${finalCredit}`,
@@ -569,7 +569,7 @@ export function finalizeDraft(
       const insertLine = db.prepare(
         `INSERT INTO journal_entry_lines (
           journal_entry_id, line_number, account_number,
-          debit_amount, credit_amount, description
+          debit_ore, credit_ore, description
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
       journalLines.forEach((jl, idx) => {
@@ -577,8 +577,8 @@ export function finalizeDraft(
           journalEntryId,
           idx + 1,
           jl.account_number,
-          jl.debit_amount,
-          jl.credit_amount,
+          jl.debit_ore,
+          jl.credit_ore,
           jl.description,
         )
       })
@@ -935,7 +935,7 @@ export function payInvoice(
       const insertLine = db.prepare(
         `INSERT INTO journal_entry_lines (
           journal_entry_id, line_number, account_number,
-          debit_amount, credit_amount, description
+          debit_ore, credit_ore, description
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
 

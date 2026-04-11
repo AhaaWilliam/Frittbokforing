@@ -74,7 +74,7 @@ function bookEntry(
   let lineNum = 1
   for (const l of lines) {
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, ?, ?, ?, ?, '')`,
     ).run(jeId, lineNum++, l.account, l.debit, l.credit)
   }

@@ -43,8 +43,8 @@ export interface JournalEntryInfo {
 
 export interface JournalLineInfo {
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description: string | null
 }
 
@@ -169,7 +169,7 @@ export function getOpeningBalancesFromPreviousYear(
     .prepare(
       `SELECT
       jel.account_number,
-      SUM(jel.debit_amount) - SUM(jel.credit_amount) as closing_balance_ore
+      SUM(jel.debit_ore) - SUM(jel.credit_ore) as closing_balance_ore
      FROM journal_entry_lines jel
      JOIN journal_entries je ON jel.journal_entry_id = je.id
      WHERE je.fiscal_year_id = ?
@@ -211,8 +211,8 @@ export function getMonthlyTotals(
       `SELECT
       jel.account_number,
       strftime('%Y-%m', je.journal_date) as month,
-      SUM(jel.debit_amount) as total_debit,
-      SUM(jel.credit_amount) as total_credit
+      SUM(jel.debit_ore) as total_debit,
+      SUM(jel.credit_ore) as total_credit
      FROM journal_entry_lines jel
      JOIN journal_entries je ON jel.journal_entry_id = je.id
      WHERE ${conditions.join(' AND ')}
@@ -264,7 +264,7 @@ export function getBalanceAtDate(
     .prepare(
       `SELECT
       jel.account_number,
-      SUM(jel.debit_amount) - SUM(jel.credit_amount) as balance_ore
+      SUM(jel.debit_ore) - SUM(jel.credit_ore) as balance_ore
      FROM journal_entry_lines jel
      JOIN journal_entries je ON jel.journal_entry_id = je.id
      WHERE je.fiscal_year_id = ?
@@ -290,7 +290,7 @@ export function getJournalEntryLines(
 ): JournalLineInfo[] {
   return db
     .prepare(
-      `SELECT account_number, debit_amount, credit_amount, description
+      `SELECT account_number, debit_ore, credit_ore, description
      FROM journal_entry_lines
      WHERE journal_entry_id = ?`,
     )
@@ -329,8 +329,8 @@ export function getAllJournalEntryLines(
       `SELECT
         jel.journal_entry_id,
         jel.account_number,
-        jel.debit_amount,
-        jel.credit_amount,
+        jel.debit_ore,
+        jel.credit_ore,
         jel.description
        FROM journal_entry_lines jel
        JOIN journal_entries je ON jel.journal_entry_id = je.id
@@ -340,8 +340,8 @@ export function getAllJournalEntryLines(
     .all(...params) as {
     journal_entry_id: number
     account_number: string
-    debit_amount: number
-    credit_amount: number
+    debit_ore: number
+    credit_ore: number
     description: string | null
   }[]
 
@@ -350,8 +350,8 @@ export function getAllJournalEntryLines(
     const existing = map.get(row.journal_entry_id)
     const line: JournalLineInfo = {
       account_number: row.account_number,
-      debit_amount: row.debit_amount,
-      credit_amount: row.credit_amount,
+      debit_ore: row.debit_ore,
+      credit_ore: row.credit_ore,
       description: row.description,
     }
     if (existing) {

@@ -579,7 +579,7 @@ export const ListExpensesSchema = z
         'expense_date',
         'due_date',
         'description',
-        'total_amount_ore',
+        'total_amount',
         'counterparty_name',
         'status',
         'supplier_invoice_number',

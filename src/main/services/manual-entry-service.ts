@@ -213,7 +213,7 @@ export function listManualEntries(
       me.description,
       je.verification_number,
       je.verification_series,
-      COALESCE((SELECT SUM(jel.debit_amount) FROM journal_entry_lines jel WHERE jel.journal_entry_id = je.id), 0) as total_amount
+      COALESCE((SELECT SUM(jel.debit_ore) FROM journal_entry_lines jel WHERE jel.journal_entry_id = je.id), 0) as total_amount
     FROM manual_entries me
     JOIN journal_entries je ON me.journal_entry_id = je.id
     WHERE me.fiscal_year_id = ? AND me.status = 'finalized'
@@ -336,7 +336,7 @@ export function finalizeManualEntry(
       const insertJel = db.prepare(
         `INSERT INTO journal_entry_lines (
           journal_entry_id, line_number, account_number,
-          debit_amount, credit_amount, description
+          debit_ore, credit_ore, description
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
       lines.forEach((line, idx) => {

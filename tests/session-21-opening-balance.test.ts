@@ -72,11 +72,11 @@ function seedBookedEntry(opts: {
   const jeId = Number(je.lastInsertRowid)
 
   db.prepare(
-    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 1, ?, ?, 0)`,
   ).run(jeId, opts.debitAccount, opts.amount)
   db.prepare(
-    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+    `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 2, ?, 0, ?)`,
   ).run(jeId, opts.creditAccount, opts.amount)
 
@@ -108,7 +108,7 @@ afterEach(() => {
 describe('Migration 012', () => {
   it('user_version = 14 efter migration', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
   })
 
   it('fiscal_years har is_closed-kolumn', () => {
@@ -207,13 +207,13 @@ describe('bookYearEndResult', () => {
       )
       .all(je!.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
     expect(lines[0].account_number).toBe('8999')
-    expect(lines[0].debit_amount).toBe(5_000_000)
+    expect(lines[0].debit_ore).toBe(5_000_000)
     expect(lines[1].account_number).toBe('2099')
-    expect(lines[1].credit_amount).toBe(5_000_000)
+    expect(lines[1].credit_ore).toBe(5_000_000)
   })
 
   it('skapar C-serie verifikation vid förlust (debet 2099, kredit 8999)', () => {
@@ -226,13 +226,13 @@ describe('bookYearEndResult', () => {
       )
       .all(je!.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
     expect(lines[0].account_number).toBe('2099')
-    expect(lines[0].debit_amount).toBe(3_000_000)
+    expect(lines[0].debit_ore).toBe(3_000_000)
     expect(lines[1].account_number).toBe('8999')
-    expect(lines[1].credit_amount).toBe(3_000_000)
+    expect(lines[1].credit_ore).toBe(3_000_000)
   })
 
   it('returnerar null om netResult = 0', () => {
@@ -288,14 +288,14 @@ describe('createOpeningBalance', () => {
       )
       .all(ib.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     const line1930 = lines.find((l) => l.account_number === '1930')
     const line2081 = lines.find((l) => l.account_number === '2081')
-    expect(line1930!.debit_amount).toBe(2_500_000) // Tillgång → debet
-    expect(line2081!.credit_amount).toBe(2_500_000) // EK → kredit
+    expect(line1930!.debit_ore).toBe(2_500_000) // Tillgång → debet
+    expect(line2081!.credit_ore).toBe(2_500_000) // EK → kredit
   })
 
   it('PL-konton (klass 3-8) exkluderas', () => {
@@ -359,7 +359,7 @@ describe('createOpeningBalance', () => {
 
     const sums = db
       .prepare(
-        `SELECT SUM(debit_amount) as d, SUM(credit_amount) as c
+        `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c
          FROM journal_entry_lines WHERE journal_entry_id = ?`,
       )
       .get(ib.id) as { d: number; c: number }
@@ -433,8 +433,8 @@ describe('createOpeningBalance', () => {
       )
       .all(ib.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // 2099 should NOT appear in IB
@@ -444,7 +444,7 @@ describe('createOpeningBalance', () => {
     // 2091 should appear instead
     const line2091 = lines.find((l) => l.account_number === '2091')
     expect(line2091).toBeDefined()
-    expect(line2091!.credit_amount).toBe(1_000_000)
+    expect(line2091!.credit_ore).toBe(1_000_000)
   })
 
   it('datum = nya FY:ts startdatum', () => {
@@ -523,12 +523,12 @@ describe('reTransfer', () => {
       )
       .all(newIb.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     const line1930 = lines.find((l) => l.account_number === '1930')
-    expect(line1930!.debit_amount).toBe(3_500_000) // 2.5M + 1M
+    expect(line1930!.debit_ore).toBe(3_500_000) // 2.5M + 1M
   })
 })
 

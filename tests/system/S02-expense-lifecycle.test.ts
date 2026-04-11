@@ -91,21 +91,21 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
       .all(je.id) as any[]
-    const totalDebit = jels.reduce((s: number, l: any) => s + l.debit_amount, 0)
+    const totalDebit = jels.reduce((s: number, l: any) => s + l.debit_ore, 0)
     const totalCredit = jels.reduce(
-      (s: number, l: any) => s + l.credit_amount,
+      (s: number, l: any) => s + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit)
 
     expect(
-      jels.some((l: any) => l.account_number === '6110' && l.debit_amount > 0),
+      jels.some((l: any) => l.account_number === '6110' && l.debit_ore > 0),
     ).toBe(true)
     expect(
-      jels.some((l: any) => l.account_number === '2640' && l.debit_amount > 0),
+      jels.some((l: any) => l.account_number === '2640' && l.debit_ore > 0),
     ).toBe(true)
     expect(
-      jels.some((l: any) => l.account_number === '2440' && l.credit_amount > 0),
+      jels.some((l: any) => l.account_number === '2440' && l.credit_ore > 0),
     ).toBe(true)
 
     // Betala

@@ -85,8 +85,8 @@ describe('Finansiella invarianter', () => {
         je.id,
         je.verification_series,
         je.verification_number,
-        COALESCE(SUM(jel.debit_amount), 0) as total_debit,
-        COALESCE(SUM(jel.credit_amount), 0) as total_credit
+        COALESCE(SUM(jel.debit_ore), 0) as total_debit,
+        COALESCE(SUM(jel.credit_ore), 0) as total_credit
       FROM journal_entries je
       JOIN journal_entry_lines jel ON jel.journal_entry_id = je.id
       WHERE je.status = 'booked'
@@ -171,11 +171,11 @@ describe('Finansiella invarianter', () => {
 
     // Check journal_entry_lines
     const lines = ctx.db
-      .prepare('SELECT debit_amount, credit_amount FROM journal_entry_lines')
+      .prepare('SELECT debit_ore, credit_ore FROM journal_entry_lines')
       .all() as any[]
     for (const line of lines) {
-      expect(Number.isInteger(line.debit_amount)).toBe(true)
-      expect(Number.isInteger(line.credit_amount)).toBe(true)
+      expect(Number.isInteger(line.debit_ore)).toBe(true)
+      expect(Number.isInteger(line.credit_ore)).toBe(true)
     }
 
     // Check invoices

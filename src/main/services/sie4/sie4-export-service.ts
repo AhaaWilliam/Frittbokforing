@@ -226,7 +226,7 @@ export function exportSie4(
 
       const entryLines = linesMap.get(entry.id) ?? []
       for (const line of entryLines) {
-        const amount = oreToSie4Amount(line.debit_amount - line.credit_amount)
+        const amount = oreToSie4Amount(line.debit_ore - line.credit_ore)
         const transDate = verDate
         const text = line.description
           ? quoteField(line.description)

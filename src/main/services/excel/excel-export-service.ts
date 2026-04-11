@@ -169,8 +169,8 @@ export async function exportExcel(
   for (const entry of entries) {
     const lines = linesMap.get(entry.id) ?? []
     for (const line of lines) {
-      const debet = oreToKr(line.debit_amount)
-      const kredit = oreToKr(line.credit_amount)
+      const debet = oreToKr(line.debit_ore)
+      const kredit = oreToKr(line.credit_ore)
       const row = sheetVer.addRow({
         serie: entry.verification_series,
         nr: entry.verification_number,
@@ -223,8 +223,8 @@ export async function exportExcel(
         series: entry.verification_series,
         verNum: entry.verification_number,
         text: line.description || entry.description,
-        debit: line.debit_amount,
-        credit: line.credit_amount,
+        debit: line.debit_ore,
+        credit: line.credit_ore,
       })
     }
   }

@@ -1113,4 +1113,51 @@ export const migrations: MigrationEntry[] = [
     ALTER TABLE invoices RENAME COLUMN total_amount TO total_amount_ore;
     ALTER TABLE invoices RENAME COLUMN vat_amount TO vat_amount_ore;
     ALTER TABLE invoices RENAME COLUMN net_amount TO net_amount_ore;` },
+  // Fas 7: Rename journal_entry_lines belopp-kolumner (M48).
+  // debit_amount → debit_ore, credit_amount → credit_ore, vat_amount → vat_ore.
+  // Trigger trg_check_balance_on_booking refererar dessa kolumner och måste återskapas.
+  { sql: `ALTER TABLE journal_entry_lines RENAME COLUMN debit_amount TO debit_ore;
+    ALTER TABLE journal_entry_lines RENAME COLUMN credit_amount TO credit_ore;
+    ALTER TABLE journal_entry_lines RENAME COLUMN vat_amount TO vat_ore;
+
+    DROP TRIGGER IF EXISTS trg_check_balance_on_booking;
+
+    CREATE TRIGGER trg_check_balance_on_booking
+    BEFORE UPDATE ON journal_entries
+    WHEN NEW.status = 'booked' AND OLD.status = 'draft'
+    BEGIN
+        SELECT CASE
+            WHEN (
+                COALESCE(
+                    (SELECT SUM(debit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                ) -
+                COALESCE(
+                    (SELECT SUM(credit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                )
+            ) != 0
+            THEN RAISE(ABORT, 'Verifikationen balanserar inte. Summa debet måste vara lika med summa kredit.')
+        END;
+        SELECT CASE
+            WHEN (
+                SELECT COUNT(*)
+                FROM journal_entry_lines
+                WHERE journal_entry_id = NEW.id
+            ) < 2
+            THEN RAISE(ABORT, 'Verifikation måste ha minst två rader.')
+        END;
+    END;`,
+    programmatic: migration018Verify },
 ]
+
+function migration018Verify(db: import('better-sqlite3').Database): void {
+  const cols = db.prepare('PRAGMA table_info(journal_entry_lines)').all() as { name: string }[]
+  const colNames = cols.map(c => c.name)
+  const expectedNew = ['debit_ore', 'credit_ore', 'vat_ore']
+  const forbiddenOld = ['debit_amount', 'credit_amount', 'vat_amount']
+  for (const name of expectedNew) {
+    if (!colNames.includes(name)) throw new Error(`Migration 018 failed: ${name} saknas`)
+  }
+  for (const name of forbiddenOld) {
+    if (colNames.includes(name)) throw new Error(`Migration 018 failed: ${name} finns kvar`)
+  }
+}

@@ -89,7 +89,7 @@ describe('Migration 013: system accounts', () => {
 
   it('PRAGMA user_version is 14', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(17)
+    expect(version).toBe(18)
   })
 })
 
@@ -280,11 +280,11 @@ describe('toggleAccountActive', () => {
       .run()
     const jeId = Number(jeResult.lastInsertRowid)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, 1, '1510', 10000, 0, 'Debet')`,
     ).run(jeId)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, 2, '1930', 0, 10000, 'Kredit')`,
     ).run(jeId)
     // Book it

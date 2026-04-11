@@ -111,7 +111,7 @@ describe('Database constraints — defense in depth', () => {
       ctx.db
         .prepare(
           `
-        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
         VALUES (?, 1, '6210', 50000, 0)
       `,
         )
@@ -119,7 +119,7 @@ describe('Database constraints — defense in depth', () => {
       ctx.db
         .prepare(
           `
-        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
         VALUES (?, 2, '1930', 0, 49000)
       `,
         )
@@ -157,7 +157,7 @@ describe('Database constraints — defense in depth', () => {
       ctx.db
         .prepare(
           `
-        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
         VALUES (?, 1, '6210', 10000, 0), (?, 2, '1930', 0, 10000)
       `,
         )
@@ -249,7 +249,7 @@ describe('Database constraints — defense in depth', () => {
       const err = expectSqlError(
         ctx,
         `
-        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
         VALUES (?, 1, '6210', 1000, 1000)
       `,
         [jeId],
@@ -311,7 +311,7 @@ describe('Database constraints — defense in depth', () => {
       const err = expectSqlError(
         ctx,
         `
-        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
         VALUES (99999, 1, '1930', 1000, 0)
       `,
       )

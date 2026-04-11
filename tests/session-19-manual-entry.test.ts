@@ -57,7 +57,7 @@ afterEach(() => {
 describe('Migration 011', () => {
   it('sätter user_version till 11', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
   })
 
   it('manual_entries-tabell skapas', () => {
@@ -341,16 +341,16 @@ describe('Finalize', () => {
       )
       .all(r.data.journalEntryId) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
       description: string
     }[]
     expect(jels.length).toBe(2)
     expect(jels[0].account_number).toBe('7010')
-    expect(jels[0].debit_amount).toBe(250_000)
+    expect(jels[0].debit_ore).toBe(250_000)
     expect(jels[0].description).toBe('Löner')
     expect(jels[1].account_number).toBe('1930')
-    expect(jels[1].credit_amount).toBe(250_000)
+    expect(jels[1].credit_ore).toBe(250_000)
   })
 
   it('kopierar description till journal_entry', () => {

@@ -183,7 +183,7 @@ describe('F3: invoice rounding with small remaining', () => {
 
     const lines = db
       .prepare(
-        `SELECT account_number, debit_amount, credit_amount
+        `SELECT account_number, debit_ore, credit_ore
          FROM journal_entry_lines jel
          JOIN journal_entries je ON jel.journal_entry_id = je.id
          WHERE je.fiscal_year_id = ? AND je.source_type = 'auto_payment'
@@ -191,24 +191,24 @@ describe('F3: invoice rounding with small remaining', () => {
       )
       .all(seed.fiscalYearId) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // Bank debit = 100, receivables credit = 99, rounding credit = 1
     const bankLine = lines.find(
-      (l) => l.account_number === '1930' && l.debit_amount > 0,
+      (l) => l.account_number === '1930' && l.debit_ore > 0,
     )
-    expect(bankLine?.debit_amount).toBe(100)
+    expect(bankLine?.debit_ore).toBe(100)
 
     const receivablesLine = lines.find(
-      (l) => l.account_number === '1510' && l.credit_amount > 0,
+      (l) => l.account_number === '1510' && l.credit_ore > 0,
     )
-    expect(receivablesLine?.credit_amount).toBe(99)
+    expect(receivablesLine?.credit_ore).toBe(99)
 
     const roundingLine = lines.find((l) => l.account_number === '3740')
     expect(roundingLine).toBeDefined()
-    expect(roundingLine!.credit_amount).toBe(1)
+    expect(roundingLine!.credit_ore).toBe(1)
 
     // Invariant: paid_amount === total_amount
     const updated = db
@@ -310,22 +310,22 @@ describe('F3: invoice rounding with small remaining', () => {
       const jeId = result.data.payment.journal_entry_id
       const lines = db
         .prepare(
-          'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ?',
+          'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
         .all(jeId) as {
         account_number: string
-        debit_amount: number
-        credit_amount: number
+        debit_ore: number
+        credit_ore: number
       }[]
-      expect(lines.find((l) => l.account_number === '1930')?.debit_amount).toBe(
+      expect(lines.find((l) => l.account_number === '1930')?.debit_ore).toBe(
         501,
       )
       expect(
-        lines.find((l) => l.account_number === '1510')?.credit_amount,
+        lines.find((l) => l.account_number === '1510')?.credit_ore,
       ).toBe(500)
       const rounding = lines.find((l) => l.account_number === '3740')
       expect(rounding).toBeDefined()
-      expect(rounding!.credit_amount).toBe(1)
+      expect(rounding!.credit_ore).toBe(1)
     }
   })
 })
@@ -354,27 +354,27 @@ describe('F3: expense rounding with small remaining', () => {
       const jeId = result.data.payment.journal_entry_id
       const lines = db
         .prepare(
-          'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ?',
+          'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
         .all(jeId) as {
         account_number: string
-        debit_amount: number
-        credit_amount: number
+        debit_ore: number
+        credit_ore: number
       }[]
       // Payables debit = 99, rounding debit = 1, bank credit = 100
-      expect(lines.find((l) => l.account_number === '2440')?.debit_amount).toBe(
+      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(
         99,
       )
-      expect(lines.find((l) => l.account_number === '3740')?.debit_amount).toBe(
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
         1,
       )
       expect(
-        lines.find((l) => l.account_number === '1930')?.credit_amount,
+        lines.find((l) => l.account_number === '1930')?.credit_ore,
       ).toBe(100)
 
       // Balance check
-      const totalDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-      const totalCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+      const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+      const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
       expect(totalDebit).toBe(totalCredit)
     }
 
@@ -414,13 +414,13 @@ describe('F3: expense rounding with small remaining', () => {
       const jeId = result.data.payment.journal_entry_id
       const lines = db
         .prepare(
-          'SELECT account_number, debit_amount FROM journal_entry_lines WHERE journal_entry_id = ?',
+          'SELECT account_number, debit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
-        .all(jeId) as { account_number: string; debit_amount: number }[]
-      expect(lines.find((l) => l.account_number === '2440')?.debit_amount).toBe(
+        .all(jeId) as { account_number: string; debit_ore: number }[]
+      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(
         50,
       )
-      expect(lines.find((l) => l.account_number === '3740')?.debit_amount).toBe(
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
         50,
       )
     }
@@ -480,10 +480,10 @@ describe('F3: expense rounding with small remaining', () => {
       const jeId = result.data.payment.journal_entry_id
       const lines = db
         .prepare(
-          'SELECT account_number, debit_amount FROM journal_entry_lines WHERE journal_entry_id = ?',
+          'SELECT account_number, debit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
-        .all(jeId) as { account_number: string; debit_amount: number }[]
-      expect(lines.find((l) => l.account_number === '3740')?.debit_amount).toBe(
+        .all(jeId) as { account_number: string; debit_ore: number }[]
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
         1,
       )
     }

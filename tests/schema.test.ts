@@ -61,13 +61,13 @@ function createDraftEntry(
   const entryId = Number(res.lastInsertRowid)
   testDb
     .prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 1, '1930', ?, 0)`,
     )
     .run(entryId, amount)
   testDb
     .prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
      VALUES (?, 2, '3001', 0, ?)`,
     )
     .run(entryId, opts.credit ?? amount)
@@ -144,7 +144,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {
@@ -164,7 +164,7 @@ describe('Struktur', () => {
 // CHECK CONSTRAINTS (6 tester)
 // ═══════════════════════════════════════════════════════════
 describe('CHECK constraints', () => {
-  it('7. Negativ debit_amount → error', () => {
+  it('7. Negativ debit_ore → error', () => {
     seedHelperData(db)
     const entryId = createDraftEntry(db, {
       companyId: 1,
@@ -173,13 +173,13 @@ describe('CHECK constraints', () => {
     })
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 3, '1910', -100, 0)`,
       ).run(entryId)
     }).toThrow()
   })
 
-  it('8. Negativ credit_amount → error', () => {
+  it('8. Negativ credit_ore → error', () => {
     seedHelperData(db)
     const entryId = createDraftEntry(db, {
       companyId: 1,
@@ -188,7 +188,7 @@ describe('CHECK constraints', () => {
     })
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 3, '1910', 0, -100)`,
       ).run(entryId)
     }).toThrow()
@@ -203,7 +203,7 @@ describe('CHECK constraints', () => {
     })
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 3, '1910', 100, 100)`,
       ).run(entryId)
     }).toThrow()
@@ -218,7 +218,7 @@ describe('CHECK constraints', () => {
     })
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 3, '1910', 0, 0)`,
       ).run(entryId)
     }).toThrow()
@@ -335,7 +335,7 @@ describe('Triggers — immutabilitet', () => {
     bookEntry(db, entryId)
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 3, '1910', 500, 0)`,
       ).run(entryId)
     }).toThrow(/Kan inte lägga till/)
@@ -397,7 +397,7 @@ describe('Triggers — balansvalidering', () => {
       .run()
     const entryId = Number(res.lastInsertRowid)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, 1, '1930', 100, 0)`,
     ).run(entryId)
     // Trigger 7 (balans) och trigger 7 (min 2 rader) båda blockerar.
@@ -459,7 +459,7 @@ describe('Foreign keys', () => {
   it('26. Ogiltigt journal_entry_id → error', () => {
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (99999, 1, '1930', 100, 0)`,
       ).run()
     }).toThrow()
@@ -476,7 +476,7 @@ describe('Foreign keys', () => {
     const entryId = Number(res.lastInsertRowid)
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
          VALUES (?, 1, '9999', 100, 0)`,
       ).run(entryId)
     }).toThrow()
@@ -527,11 +527,11 @@ describe('Integritet', () => {
         'SELECT * FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
       .all(entryId) as {
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
     expect(lines.length).toBe(2)
-    expect(lines[0].debit_amount).toBe(250000)
-    expect(lines[1].credit_amount).toBe(250000)
+    expect(lines[0].debit_ore).toBe(250000)
+    expect(lines[1].credit_ore).toBe(250000)
   })
 })

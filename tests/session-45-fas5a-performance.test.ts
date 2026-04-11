@@ -425,14 +425,14 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     // Verify 3740 journal line exists with credit 3 öre
     const roundingLine = db
       .prepare(
-        `SELECT jel.credit_amount FROM journal_entry_lines jel
+        `SELECT jel.credit_ore FROM journal_entry_lines jel
          JOIN journal_entries je ON jel.journal_entry_id = je.id
          WHERE je.source_type = 'auto_payment' AND jel.account_number = '3740'
          ORDER BY je.id DESC LIMIT 1`,
       )
-      .get() as { credit_amount: number } | undefined
+      .get() as { credit_ore: number } | undefined
     expect(roundingLine).toBeDefined()
-    expect(roundingLine!.credit_amount).toBe(3)
+    expect(roundingLine!.credit_ore).toBe(3)
   })
 
   it('8. listExpenses returns correct total_paid without subquery', () => {
@@ -788,7 +788,7 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 
     // All debit lines should come before the credit line (2440)
     const creditIdx = lines.findIndex(
-      (l) => l.account_number === '2440' && l.credit_amount > 0,
+      (l) => l.account_number === '2440' && l.credit_ore > 0,
     )
     expect(creditIdx).toBe(lines.length - 1) // 2440 is always last
   })
@@ -832,6 +832,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(17)
+    expect(row[0].user_version).toBe(18)
   })
 })

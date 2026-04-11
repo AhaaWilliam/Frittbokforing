@@ -66,7 +66,7 @@ function bookEntry(
   let lineNum = 1
   for (const l of lines) {
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, ?, ?, ?, ?, '')`,
     ).run(jeId, lineNum++, l.account, l.debit, l.credit)
   }
@@ -321,7 +321,7 @@ describe('invariant tests', () => {
     const fallbackRow = db
       .prepare(
         `SELECT
-          COALESCE(SUM(jel.credit_amount), 0) - COALESCE(SUM(jel.debit_amount), 0) AS net
+          COALESCE(SUM(jel.credit_ore), 0) - COALESCE(SUM(jel.debit_ore), 0) AS net
         FROM journal_entry_lines jel
         JOIN journal_entries je ON je.id = jel.journal_entry_id
         WHERE je.fiscal_year_id = ?
@@ -402,13 +402,13 @@ describe('bookYearEndResult with class 8', () => {
     // Verify the year-end entry uses the full net result (incl class 8)
     const lines = db
       .prepare(
-        'SELECT debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+        'SELECT debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
-      .all(je!.id) as { debit_amount: number; credit_amount: number }[]
+      .all(je!.id) as { debit_ore: number; credit_ore: number }[]
 
     // Profit: debit 8999, credit 2099
-    expect(lines[0].debit_amount).toBe(4_000_000) // includes class 8
-    expect(lines[1].credit_amount).toBe(4_000_000)
+    expect(lines[0].debit_ore).toBe(4_000_000) // includes class 8
+    expect(lines[1].credit_ore).toBe(4_000_000)
   })
 })
 

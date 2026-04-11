@@ -44,7 +44,7 @@ export function bookYearEndResult(
   const insertLine = db.prepare(
     `INSERT INTO journal_entry_lines (
       journal_entry_id, line_number, account_number,
-      debit_amount, credit_amount, description
+      debit_ore, credit_ore, description
     ) VALUES (?, ?, ?, ?, ?, 'Bokföring av årets resultat')`,
   )
 
@@ -107,7 +107,7 @@ export function createOpeningBalance(
     const insertLine = db.prepare(
       `INSERT INTO journal_entry_lines (
         journal_entry_id, line_number, account_number,
-        debit_amount, credit_amount, description
+        debit_ore, credit_ore, description
       ) VALUES (?, ?, ?, ?, ?, 'Ingående balans')`,
     )
 
@@ -132,7 +132,7 @@ export function createOpeningBalance(
     // Validera balans
     const check = db
       .prepare(
-        `SELECT SUM(debit_amount) as d, SUM(credit_amount) as c
+        `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c
          FROM journal_entry_lines WHERE journal_entry_id = ?`,
       )
       .get(journalEntryId) as { d: number; c: number }

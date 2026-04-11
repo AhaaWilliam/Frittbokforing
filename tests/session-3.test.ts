@@ -186,11 +186,11 @@ describe('Periodgenerering', () => {
 
     // Lägg till balanserade rader
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, 1, '1930', 10000, 0)`,
     ).run(entryId)
     db.prepare(
-      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, 2, '3001', 0, 10000)`,
     ).run(entryId)
 

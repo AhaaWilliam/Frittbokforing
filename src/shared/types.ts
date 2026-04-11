@@ -354,8 +354,8 @@ export interface JournalEntryLine {
   journal_entry_id: number
   line_number: number
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description: string | null
 }
 

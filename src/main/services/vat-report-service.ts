@@ -89,19 +89,19 @@ export function getVatReport(
         ((ap.period_number - 1) / 3) AS quarter_index,
         COALESCE(SUM(CASE
           WHEN jel.account_number = '${VAT_OUT_25_ACCOUNT}'
-          THEN jel.credit_amount - jel.debit_amount ELSE 0
+          THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_25,
         COALESCE(SUM(CASE
           WHEN jel.account_number = '${VAT_OUT_12_ACCOUNT}'
-          THEN jel.credit_amount - jel.debit_amount ELSE 0
+          THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_12,
         COALESCE(SUM(CASE
           WHEN jel.account_number = '${VAT_OUT_6_ACCOUNT}'
-          THEN jel.credit_amount - jel.debit_amount ELSE 0
+          THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_6,
         COALESCE(SUM(CASE
           WHEN jel.account_number = '${VAT_IN_ACCOUNT}'
-          THEN jel.debit_amount - jel.credit_amount ELSE 0
+          THEN jel.debit_ore - jel.credit_ore ELSE 0
         END), 0) AS vat_in
       FROM journal_entry_lines jel
       JOIN journal_entries je ON je.id = jel.journal_entry_id

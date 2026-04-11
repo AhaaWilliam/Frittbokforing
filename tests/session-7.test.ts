@@ -117,7 +117,7 @@ afterEach(() => {
 describe('Migration 007', () => {
   it('1. user_version = 14, invoice_lines.account_number exists', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_lines)') as { name: string }[]
@@ -166,7 +166,7 @@ describe('Finalize (bokför)', () => {
     // Journal entry lines balance
     const lines = db
       .prepare(
-        'SELECT SUM(debit_amount) as d, SUM(credit_amount) as c FROM journal_entry_lines WHERE journal_entry_id = (SELECT id FROM journal_entries LIMIT 1)',
+        'SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines WHERE journal_entry_id = (SELECT id FROM journal_entries LIMIT 1)',
       )
       .get() as { d: number; c: number }
     expect(lines.d).toBe(lines.c)
@@ -247,28 +247,28 @@ describe('Kontering', () => {
     }
     const lines = db
       .prepare(
-        'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
       .all(jeId.id) as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // Debet 1510: 40 * 95000 + 40 * 95000 * 0.25 = 3800000 + 950000 = 4750000
     const debet1510 = lines.find((l) => l.account_number === '1510')
     expect(debet1510).toBeDefined()
-    expect(debet1510!.debit_amount).toBe(4750000)
+    expect(debet1510!.debit_ore).toBe(4750000)
 
     // Kredit 3002: 3800000
     const kredit3002 = lines.find((l) => l.account_number === '3002')
     expect(kredit3002).toBeDefined()
-    expect(kredit3002!.credit_amount).toBe(3800000)
+    expect(kredit3002!.credit_ore).toBe(3800000)
 
     // Kredit 2610: 950000
     const kredit2610 = lines.find((l) => l.account_number === '2610')
     expect(kredit2610).toBeDefined()
-    expect(kredit2610!.credit_amount).toBe(950000)
+    expect(kredit2610!.credit_ore).toBe(950000)
   })
 
   it('9. Balanscheck: SUM(debit) = SUM(credit)', () => {
@@ -280,7 +280,7 @@ describe('Kontering', () => {
 
     const balance = db
       .prepare(
-        'SELECT SUM(debit_amount) as d, SUM(credit_amount) as c FROM journal_entry_lines',
+        'SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines',
       )
       .get() as { d: number; c: number }
     expect(balance.d).toBe(balance.c)
@@ -319,18 +319,18 @@ describe('Kontering', () => {
 
     const lines = db
       .prepare(
-        'SELECT account_number, debit_amount, credit_amount FROM journal_entry_lines WHERE journal_entry_id = (SELECT MAX(id) FROM journal_entries)',
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = (SELECT MAX(id) FROM journal_entries)',
       )
       .all() as {
       account_number: string
-      debit_amount: number
-      credit_amount: number
+      debit_ore: number
+      credit_ore: number
     }[]
 
     // Should have: 1510 (debet), 3002 (kredit), 3040 (kredit), 2610 (kredit 25%), 2620 (kredit 12%)
     expect(lines.length).toBeGreaterThanOrEqual(4)
-    const totalDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-    const totalCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+    const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+    const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
     expect(totalDebit).toBe(totalCredit)
   })
 
@@ -359,11 +359,11 @@ describe('Kontering', () => {
 
     const kredit3001 = db
       .prepare(
-        "SELECT credit_amount FROM journal_entry_lines WHERE journal_entry_id = (SELECT MAX(id) FROM journal_entries) AND account_number = '3001'",
+        "SELECT credit_ore FROM journal_entry_lines WHERE journal_entry_id = (SELECT MAX(id) FROM journal_entries) AND account_number = '3001'",
       )
-      .get() as { credit_amount: number } | undefined
+      .get() as { credit_ore: number } | undefined
     expect(kredit3001).toBeDefined()
-    expect(kredit3001!.credit_amount).toBe(50000)
+    expect(kredit3001!.credit_ore).toBe(50000)
   })
 })
 

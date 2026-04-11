@@ -189,7 +189,7 @@ function createManualBookedEntry(
   for (let i = 0; i < lines.length; i++) {
     testDb
       .prepare(
-        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_amount, credit_amount)
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, ?, ?, ?, ?)`,
       )
       .run(
@@ -372,7 +372,7 @@ describe('Session 13: getDashboardSummary', () => {
 
   it('regression: user_version=10 och 20 tabeller oförändrat', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(17) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(18) // S24: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

@@ -32,9 +32,9 @@ export function getAccountBalances(
       `SELECT
         jel.account_number,
         a.name AS account_name,
-        SUM(jel.debit_amount) AS total_debit,
-        SUM(jel.credit_amount) AS total_credit,
-        SUM(jel.credit_amount) - SUM(jel.debit_amount) AS net
+        SUM(jel.debit_ore) AS total_debit,
+        SUM(jel.credit_ore) AS total_credit,
+        SUM(jel.credit_ore) - SUM(jel.debit_ore) AS net
       FROM journal_entry_lines jel
       JOIN journal_entries je ON jel.journal_entry_id = je.id
       LEFT JOIN accounts a ON jel.account_number = a.account_number
