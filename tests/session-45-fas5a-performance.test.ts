@@ -122,7 +122,7 @@ function createUnpaidInvoice(
   if (!fResult.success) throw new Error('Finalize failed: ' + fResult.error)
   if (totalOverride !== undefined) {
     testDb
-      .prepare('UPDATE invoices SET total_amount = ? WHERE id = ?')
+      .prepare('UPDATE invoices SET total_amount_ore = ? WHERE id = ?')
       .run(totalOverride, fResult.data.id)
   }
   return fResult.data
@@ -475,9 +475,9 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
 
     const total = (
       db
-        .prepare('SELECT total_amount FROM invoices WHERE id = ?')
-        .get(inv1.id) as { total_amount: number }
-    ).total_amount
+        .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+        .get(inv1.id) as { total_amount_ore: number }
+    ).total_amount_ore
 
     // Pay inv1 fully
     payInvoice(db, {
@@ -832,6 +832,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(16)
+    expect(row[0].user_version).toBe(17)
   })
 })

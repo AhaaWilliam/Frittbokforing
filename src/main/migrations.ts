@@ -1106,4 +1106,11 @@ export const migrations: MigrationEntry[] = [
   { sql: migration014 },
   { sql: '-- Migration 015: expense paid_amount (se programmatic)', programmatic: migration015Programmatic },
   { sql: 'ALTER TABLE invoice_lines RENAME COLUMN unit_price TO unit_price_ore;' },
+  // Fas 6: Slutför öre-rename för invoice-domänen.
+  // Symmetri DB+TS med expense-domänen. Filformat behåller legacy-aliaser (M92).
+  { sql: `ALTER TABLE invoice_lines RENAME COLUMN line_total TO line_total_ore;
+    ALTER TABLE invoice_lines RENAME COLUMN vat_amount TO vat_amount_ore;
+    ALTER TABLE invoices RENAME COLUMN total_amount TO total_amount_ore;
+    ALTER TABLE invoices RENAME COLUMN vat_amount TO vat_amount_ore;
+    ALTER TABLE invoices RENAME COLUMN net_amount TO net_amount_ore;` },
 ]

@@ -294,7 +294,7 @@ describe('Session 13: getDashboardSummary', () => {
     const inv = createBookedInvoice(db, seed)
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: inv.total_amount,
+      amount: inv.total_amount_ore,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -372,7 +372,7 @@ describe('Session 13: getDashboardSummary', () => {
 
   it('regression: user_version=10 och 20 tabeller oförändrat', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(16) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(17) // S24: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

@@ -167,7 +167,7 @@ describe('F3: invoice rounding with small remaining', () => {
   it('fullbetalning av faktura med restbelopp = 99 öre bokförs korrekt', () => {
     const seed = seedInvoice(db)
     const invoice = createUnpaidInvoice(db, seed)
-    db.prepare('UPDATE invoices SET total_amount = ? WHERE id = ?').run(
+    db.prepare('UPDATE invoices SET total_amount_ore = ? WHERE id = ?').run(
       99,
       invoice.id,
     )
@@ -212,21 +212,21 @@ describe('F3: invoice rounding with small remaining', () => {
 
     // Invariant: paid_amount === total_amount
     const updated = db
-      .prepare('SELECT total_amount, status FROM invoices WHERE id = ?')
-      .get(invoice.id) as { total_amount: number; status: string }
+      .prepare('SELECT total_amount_ore, status FROM invoices WHERE id = ?')
+      .get(invoice.id) as { total_amount_ore: number; status: string }
     expect(updated.status).toBe('paid')
     const payments = db
       .prepare(
         'SELECT SUM(amount) as total FROM invoice_payments WHERE invoice_id = ?',
       )
       .get(invoice.id) as { total: number }
-    expect(payments.total).toBe(updated.total_amount)
+    expect(payments.total).toBe(updated.total_amount_ore)
   })
 
   it('fullbetalning av faktura med restbelopp = 50 öre (gränsfall)', () => {
     const seed = seedInvoice(db)
     const invoice = createUnpaidInvoice(db, seed)
-    db.prepare('UPDATE invoices SET total_amount = ? WHERE id = ?').run(
+    db.prepare('UPDATE invoices SET total_amount_ore = ? WHERE id = ?').run(
       50,
       invoice.id,
     )
@@ -258,7 +258,7 @@ describe('F3: invoice rounding with small remaining', () => {
   it('exakt betalning av faktura med restbelopp = 50 — ingen öresutjämning', () => {
     const seed = seedInvoice(db)
     const invoice = createUnpaidInvoice(db, seed)
-    db.prepare('UPDATE invoices SET total_amount = ? WHERE id = ?').run(
+    db.prepare('UPDATE invoices SET total_amount_ore = ? WHERE id = ?').run(
       50,
       invoice.id,
     )
@@ -292,7 +292,7 @@ describe('F3: invoice rounding with small remaining', () => {
   it('kontrollgrupp: restbelopp = 500 öre, amount = 501 (normal rounding)', () => {
     const seed = seedInvoice(db)
     const invoice = createUnpaidInvoice(db, seed)
-    db.prepare('UPDATE invoices SET total_amount = ? WHERE id = ?').run(
+    db.prepare('UPDATE invoices SET total_amount_ore = ? WHERE id = ?').run(
       500,
       invoice.id,
     )

@@ -141,13 +141,13 @@ describe('Edge cases och gränsfall', () => {
 
     ctx.invoiceService.finalizeDraft(ctx.db, draftResult.data.id)
     const inv = ctx.db
-      .prepare('SELECT total_amount FROM invoices WHERE id = ?')
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
       .get(draftResult.data.id) as any
 
     // Betala samma dag som fakturadatum
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
-      amount: inv.total_amount,
+      amount: inv.total_amount_ore,
       payment_date: '2026-03-15', // Samma dag!
       payment_method: 'bank',
       account_number: '1930',

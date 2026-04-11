@@ -293,7 +293,7 @@ export function exportSie5(
       const payments = invoicePaymentsMap.get(inv.id) ?? []
       const balTimeline = computeInvoiceBalances(
         inv.invoice_date,
-        inv.total_amount,
+        inv.total_amount_ore,
         payments,
         fy.end_date,
       )
@@ -307,7 +307,7 @@ export function exportSie5(
       invEl
         .ele(SIE5_NS, 'OriginalAmount')
         .att('date', inv.invoice_date)
-        .att('amount', oreToSie5Amount(inv.total_amount))
+        .att('amount', oreToSie5Amount(inv.total_amount_ore))
     }
   }
 

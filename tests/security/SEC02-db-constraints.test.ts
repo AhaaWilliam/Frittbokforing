@@ -225,7 +225,7 @@ describe('Database constraints — defense in depth', () => {
       const err = expectSqlError(
         ctx,
         `
-        INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, vat_amount, total_amount, status)
+        INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, vat_amount_ore, total_amount_ore, status)
         VALUES (1, 'customer_invoice', '999', '2026-01-01', '2026-02-01', 100, 25, 125, 'invalid_status')
       `,
       )
@@ -300,7 +300,7 @@ describe('Database constraints — defense in depth', () => {
       const err = expectSqlError(
         ctx,
         `
-        INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, vat_amount, total_amount, status)
+        INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, vat_amount_ore, total_amount_ore, status)
         VALUES (99999, 'customer_invoice', '999', '2026-01-01', '2026-02-01', 100, 25, 125, 'draft')
       `,
       )

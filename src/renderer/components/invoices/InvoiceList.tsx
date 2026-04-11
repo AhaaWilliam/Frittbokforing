@@ -248,13 +248,13 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                     <td className="px-4 py-3">{item.invoice_date}</td>
                     <td className="px-4 py-3">{item.counterparty_name}</td>
                     <td className="px-4 py-3 text-right">
-                      {formatKr(item.net_amount)}
+                      {formatKr(item.net_amount_ore)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {formatKr(item.vat_amount)}
+                      {formatKr(item.vat_amount_ore)}
                     </td>
                     <td className="px-4 py-3 text-right font-medium">
-                      {formatKr(item.total_amount)}
+                      {formatKr(item.total_amount_ore)}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -330,7 +330,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         title="Bokför faktura"
         description={
           finalizeItem
-            ? `Faktura ${finalizeItem.invoice_number || '(utkast)'}\nKund: ${finalizeItem.counterparty_name}\nBelopp: ${formatKr(finalizeItem.total_amount)}`
+            ? `Faktura ${finalizeItem.invoice_number || '(utkast)'}\nKund: ${finalizeItem.counterparty_name}\nBelopp: ${formatKr(finalizeItem.total_amount_ore)}`
             : ''
         }
         onConfirm={handleFinalize}
@@ -344,7 +344,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
             if (!open) setPayItem(null)
           }}
           title="Registrera betalning"
-          totalAmount={payItem.total_amount}
+          totalAmount={payItem.total_amount_ore}
           paidAmount={payItem.total_paid}
           documentDate={payItem.invoice_date}
           fiscalYearEnd={activeFiscalYear?.end_date ?? '2099-12-31'}

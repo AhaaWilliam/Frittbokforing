@@ -79,8 +79,8 @@ function calculateVatSummary(lines: FinalizedInvoiceLine[]): VatGroup[] {
       netAmount: 0,
       vatAmount: 0,
     }
-    existing.netAmount += line.line_total
-    existing.vatAmount += line.vat_amount
+    existing.netAmount += line.line_total_ore
+    existing.vatAmount += line.vat_amount_ore
     groups.set(rate, existing)
   }
   return Array.from(groups.values()).sort((a, b) => b.vatRate - a.vatRate)
@@ -286,7 +286,7 @@ function renderLineItems(
       width: COL.vatRate.width,
       align: 'center',
     })
-    doc.text(formatKronor(line.line_total), COL.amount.x, y, {
+    doc.text(formatKronor(line.line_total_ore), COL.amount.x, y, {
       width: COL.amount.width,
       align: 'right',
     })

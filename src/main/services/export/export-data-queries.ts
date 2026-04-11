@@ -62,7 +62,7 @@ export interface InvoiceInfo {
   due_date: string | null
   counterparty_id: number
   status: string
-  total_amount: number // öre
+  total_amount_ore: number
 }
 
 export interface ExpenseInfo {
@@ -388,7 +388,7 @@ export function getBookedInvoices(
   return db
     .prepare(
       `SELECT i.id, i.invoice_number, i.invoice_date, i.due_date,
-            i.counterparty_id, i.status, i.total_amount
+            i.counterparty_id, i.status, i.total_amount_ore
      FROM invoices i
      WHERE i.journal_entry_id IN (
        SELECT je.id FROM journal_entries je

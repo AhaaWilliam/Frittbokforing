@@ -2,7 +2,7 @@
  * Reusable E2E action helpers.
  * All functions take a Playwright Page and perform UI interactions.
  */
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 
 // ─── Wizard ──────────────────────────────────────────────────────────────────
 
@@ -210,23 +210,28 @@ export async function createDraftInvoice(
  * Clicks the "Bokför" button on the first matching row, confirms in dialog.
  */
 export async function finalizeInvoice(page: Page): Promise<void> {
-  // Click the "Bokför" action button inside the table (not the sidebar nav)
   const table = page.locator('table')
-  await table.locator('button:has-text("Bokför")').first().click()
+  const bokforButtons = table.locator('button:has-text("Bokför")')
 
-  // Wait for the confirm dialog (contains warning text)
+  // Pre-assertion: minst en knapp måste finnas (raden måste vara renderad).
+  await expect(bokforButtons.first()).toBeVisible({ timeout: 10_000 })
+  const countBefore = await bokforButtons.count()
+
+  await bokforButtons.first().click()
+
+  // Vänta på bekräftelsedialogen
   const warningText = page.locator('text=Denna åtgärd kan inte ångras')
   await warningText.waitFor({ state: 'visible', timeout: 10_000 })
 
-  // The dialog has exactly 2 buttons: "Avbryt" and "Bokför".
-  // Click the last button in the dialog (the confirm "Bokför" button).
+  // Klicka confirm-knappen (sista knappen i dialogen)
   const dialogBox = page.locator('.fixed.inset-0 .max-w-md')
-  const buttons = dialogBox.locator('button')
-  await buttons.last().click()
+  await dialogBox.locator('button').last().click()
 
-  // Wait for dialog to close and list to refresh
+  // Vänta in att dialogen försvinner ('hidden' täcker både display:none och detached)
   await warningText.waitFor({ state: 'hidden', timeout: 10_000 })
-  await page.waitForTimeout(500)
+
+  // POST-ASSERTION: antalet Bokför-knappar i tabellen ska ha minskat med exakt 1.
+  await expect(bokforButtons).toHaveCount(countBefore - 1, { timeout: 10_000 })
 }
 
 /**

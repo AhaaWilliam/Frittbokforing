@@ -154,7 +154,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // 6. Betala fullt
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: finalized.total_amount,
+      amount: finalized.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -345,7 +345,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
       .get(draftResult.data.id) as any
-    const totalAmount = inv.total_amount
+    const totalAmount = inv.total_amount_ore
 
     // Delbetala 60%
     const partAmount = Math.round(totalAmount * 0.6)
@@ -448,7 +448,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
       .get(draftResult.data.id) as any
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
-      amount: inv.total_amount,
+      amount: inv.total_amount_ore,
       payment_date: '2027-01-10',
       payment_method: 'bank',
       account_number: '1930',
@@ -636,7 +636,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
       .get(draftResult.data.id) as any
-    expect(inv.vat_amount).toBe(0)
+    expect(inv.vat_amount_ore).toBe(0)
 
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')

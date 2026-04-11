@@ -42,7 +42,7 @@ export function getDashboardSummary(
       .prepare(
         `
       SELECT COALESCE(
-        SUM(i.total_amount - i.paid_amount),
+        SUM(i.total_amount_ore - i.paid_amount),
         0
       ) AS unpaid_receivables
       FROM invoices i

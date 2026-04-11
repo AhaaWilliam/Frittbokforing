@@ -144,7 +144,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(16) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(17) // S24: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {
@@ -241,7 +241,7 @@ describe('CHECK constraints', () => {
     ).run()
     expect(() => {
       db.prepare(
-        `INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, total_amount)
+        `INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore)
          VALUES (1, 'customer_invoice', 'F001', '2025-01-01', '2025-01-31', -100, 100)`,
       ).run()
     }).toThrow()
@@ -349,7 +349,7 @@ describe('Triggers — fakturaskydd', () => {
       "INSERT INTO counterparties (id, type, name) VALUES (1, 'customer', 'Kund AB')",
     ).run()
     db.prepare(
-      `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, total_amount, status)
+      `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore, status)
        VALUES (1, 1, 'customer_invoice', 'F001', '2025-01-01', '2025-01-31', 10000, 12500, 'unpaid')`,
     ).run()
     expect(() => {
@@ -363,7 +363,7 @@ describe('Triggers — fakturaskydd', () => {
       "INSERT INTO counterparties (id, type, name) VALUES (1, 'customer', 'Kund AB')",
     ).run()
     db.prepare(
-      `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, total_amount, status)
+      `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore, status)
        VALUES (1, 1, 'customer_invoice', 'F001', '2025-01-01', '2025-01-31', 10000, 12500, 'draft')`,
     ).run()
     expect(() => {
@@ -485,7 +485,7 @@ describe('Foreign keys', () => {
   it('28. Ogiltigt counterparty_id → error', () => {
     expect(() => {
       db.prepare(
-        `INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, total_amount)
+        `INSERT INTO invoices (counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore)
          VALUES (99999, 'customer_invoice', 'F999', '2025-01-01', '2025-01-31', 100, 100)`,
       ).run()
     }).toThrow()

@@ -252,9 +252,9 @@ export interface Invoice {
   invoice_date: string
   due_date: string
   status: string
-  net_amount: number
-  vat_amount: number
-  total_amount: number
+  net_amount_ore: number
+  vat_amount_ore: number
+  total_amount_ore: number
   currency: string
   paid_amount: number
   journal_entry_id: number | null
@@ -274,8 +274,8 @@ export interface InvoiceLine {
   quantity: number
   unit_price_ore: number // ören
   vat_code_id: number
-  line_total: number // ören
-  vat_amount: number // ören
+  line_total_ore: number // ören
+  vat_amount_ore: number // ören
   sort_order: number
 }
 
@@ -365,9 +365,9 @@ export interface InvoiceListItem {
   invoice_number: string
   invoice_date: string
   due_date: string
-  net_amount: number
-  vat_amount: number
-  total_amount: number
+  net_amount_ore: number
+  vat_amount_ore: number
+  total_amount_ore: number
   status: string
   payment_terms: number
   counterparty_name: string
@@ -651,8 +651,8 @@ export interface FinalizedInvoiceLine {
   description: string
   quantity: number
   unit_price_ore: number // öre
-  line_total: number // öre
-  vat_amount: number // öre
+  line_total_ore: number // öre
+  vat_amount_ore: number // öre
   vat_code_id: number
   // JOINade fält:
   vat_rate: number // procent (25, 12, 6, 0)
@@ -668,9 +668,9 @@ export interface FinalizedInvoice {
   invoice_date: string
   due_date: string
   payment_terms: number
-  total_amount: number // öre
-  net_amount: number // öre
-  vat_amount: number // öre
+  total_amount_ore: number // öre
+  net_amount_ore: number // öre
+  vat_amount_ore: number // öre
   // JOINade fält:
   customer_name: string
   customer_org_number: string | null

@@ -721,12 +721,12 @@ export function seedAndPayInvoice(
 
   // Get total to pay
   const inv = ctx.db
-    .prepare('SELECT total_amount FROM invoices WHERE id = ?')
-    .get(invoiceId) as { total_amount: number }
+    .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+    .get(invoiceId) as { total_amount_ore: number }
 
   const payResult = payInvoice(ctx.db, {
     invoice_id: invoiceId,
-    amount: inv.total_amount,
+    amount: inv.total_amount_ore,
     payment_date: paymentDate,
     payment_method: 'bank',
     account_number: '1930',

@@ -24,8 +24,8 @@ describe('getFinalized', () => {
     expect(result.status).not.toBe('draft')
     expect(result.lines.length).toBeGreaterThan(0)
     expect(result.lines[0]).toHaveProperty('vat_rate')
-    expect(result.lines[0]).toHaveProperty('line_total')
-    expect(result.lines[0]).toHaveProperty('vat_amount')
+    expect(result.lines[0]).toHaveProperty('line_total_ore')
+    expect(result.lines[0]).toHaveProperty('vat_amount_ore')
   })
 
   it('includes customer data from JOIN', () => {

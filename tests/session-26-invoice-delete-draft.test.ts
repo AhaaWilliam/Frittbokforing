@@ -47,7 +47,7 @@ function seedDraftInvoice(): number {
     .prepare(
       `INSERT INTO invoices (
         counterparty_id, fiscal_year_id, invoice_type, invoice_number,
-        invoice_date, due_date, status, net_amount, vat_amount, total_amount,
+        invoice_date, due_date, status, net_amount_ore, vat_amount_ore, total_amount_ore,
         currency, payment_terms
       ) VALUES (?, ?, 'customer_invoice', '', '2025-06-01', '2025-07-01', 'draft', 100000, 25000, 125000, 'SEK', 30)`,
     )
@@ -57,13 +57,13 @@ function seedDraftInvoice(): number {
   db.prepare(
     `INSERT INTO invoice_lines (
       invoice_id, description, quantity, unit_price_ore, vat_code_id,
-      line_total, vat_amount, sort_order
+      line_total_ore, vat_amount_ore, sort_order
     ) VALUES (?, 'Produkt 1', 1, 50000, 1, 50000, 12500, 1)`,
   ).run(invoiceId)
   db.prepare(
     `INSERT INTO invoice_lines (
       invoice_id, description, quantity, unit_price_ore, vat_code_id,
-      line_total, vat_amount, sort_order
+      line_total_ore, vat_amount_ore, sort_order
     ) VALUES (?, 'Produkt 2', 1, 50000, 1, 50000, 12500, 2)`,
   ).run(invoiceId)
 

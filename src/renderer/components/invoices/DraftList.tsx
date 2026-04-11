@@ -48,7 +48,7 @@ export function DraftList({ onSelect }: DraftListProps) {
               <td className="px-8 py-3">{invoice.invoice_date}</td>
               <td className="px-4 py-3">{invoice.counterparty_name}</td>
               <td className="px-4 py-3 text-right">
-                {formatKr(invoice.total_amount)}
+                {formatKr(invoice.total_amount_ore)}
               </td>
               <td className="px-4 py-3">
                 <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">

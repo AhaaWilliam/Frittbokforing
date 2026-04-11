@@ -134,10 +134,10 @@ describe('Invoice draft CRUD', () => {
     expect(result.data.status).toBe('draft')
     expect(result.data.invoice_number).toBe('')
     // 40 * 95000 + 1 * 50000 = 3850000
-    expect(result.data.net_amount).toBe(3850000)
+    expect(result.data.net_amount_ore).toBe(3850000)
     // 3850000 * 0.25 = 962500
-    expect(result.data.vat_amount).toBe(962500)
-    expect(result.data.total_amount).toBe(4812500)
+    expect(result.data.vat_amount_ore).toBe(962500)
+    expect(result.data.total_amount_ore).toBe(4812500)
     expect(result.data.lines.length).toBe(2)
   })
 
@@ -217,8 +217,8 @@ describe('Invoice draft CRUD', () => {
 
     expect(updated.success).toBe(true)
     if (!updated.success) return
-    expect(updated.data.net_amount).toBe(100000) // 2 * 50000
-    expect(updated.data.vat_amount).toBe(25000) // 100000 * 0.25
+    expect(updated.data.net_amount_ore).toBe(100000) // 2 * 50000
+    expect(updated.data.vat_amount_ore).toBe(25000) // 100000 * 0.25
     expect(updated.data.lines[0].description).toBe('Uppdaterad')
   })
 
@@ -315,10 +315,10 @@ describe('Momsberäkning', () => {
     expect(result.success).toBe(true)
     if (!result.success) return
     // 40 * 95000 = 3800000 (38 000 kr)
-    expect(result.data.net_amount).toBe(3800000)
+    expect(result.data.net_amount_ore).toBe(3800000)
     // 3800000 * 0.25 = 950000 (9 500 kr)
-    expect(result.data.vat_amount).toBe(950000)
-    expect(result.data.total_amount).toBe(4750000)
+    expect(result.data.vat_amount_ore).toBe(950000)
+    expect(result.data.total_amount_ore).toBe(4750000)
   })
 
   it('7. Två rader med olika moms (25% + 12%) → korrekt summering', () => {
@@ -351,9 +351,9 @@ describe('Momsberäkning', () => {
     if (!result.success) return
     // Rad 1: 10 * 100000 = 1000000, moms 250000
     // Rad 2: 5 * 20000 = 100000, moms 12000
-    expect(result.data.net_amount).toBe(1100000)
-    expect(result.data.vat_amount).toBe(262000)
-    expect(result.data.total_amount).toBe(1362000)
+    expect(result.data.net_amount_ore).toBe(1100000)
+    expect(result.data.vat_amount_ore).toBe(262000)
+    expect(result.data.total_amount_ore).toBe(1362000)
   })
 
   it('8. Nollmoms → vat_amount = 0', () => {
@@ -376,8 +376,8 @@ describe('Momsberäkning', () => {
     })
     expect(result.success).toBe(true)
     if (!result.success) return
-    expect(result.data.vat_amount).toBe(0)
-    expect(result.data.total_amount).toBe(50000)
+    expect(result.data.vat_amount_ore).toBe(0)
+    expect(result.data.total_amount_ore).toBe(50000)
   })
 
   it('9. Avrundning: udda belopp', () => {
@@ -400,9 +400,9 @@ describe('Momsberäkning', () => {
     })
     expect(result.success).toBe(true)
     if (!result.success) return
-    expect(result.data.net_amount).toBe(33333)
+    expect(result.data.net_amount_ore).toBe(33333)
     // Math.round(33333 * 0.25) = Math.round(8333.25) = 8333
-    expect(result.data.vat_amount).toBe(8333)
+    expect(result.data.vat_amount_ore).toBe(8333)
   })
 })
 
@@ -504,7 +504,7 @@ describe('Preview + Integration', () => {
 
     // Manuellt insert med invoice_number=5
     db.prepare(
-      `INSERT INTO invoices (counterparty_id, fiscal_year_id, invoice_type, invoice_number, invoice_date, due_date, net_amount, total_amount, status)
+      `INSERT INTO invoices (counterparty_id, fiscal_year_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore, status)
        VALUES (?, ?, 'customer_invoice', '5', '2025-01-01', '2025-01-31', 10000, 12500, 'unpaid')`,
     ).run(seed.counterpartyId, seed.fiscalYearId)
 

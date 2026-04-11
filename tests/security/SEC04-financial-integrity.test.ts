@@ -181,13 +181,13 @@ describe('Finansiella invarianter', () => {
     // Check invoices
     const invoices = ctx.db
       .prepare(
-        'SELECT net_amount, vat_amount, total_amount, paid_amount FROM invoices',
+        'SELECT net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount FROM invoices',
       )
       .all() as any[]
     for (const inv of invoices) {
-      expect(Number.isInteger(inv.net_amount)).toBe(true)
-      expect(Number.isInteger(inv.vat_amount)).toBe(true)
-      expect(Number.isInteger(inv.total_amount)).toBe(true)
+      expect(Number.isInteger(inv.net_amount_ore)).toBe(true)
+      expect(Number.isInteger(inv.vat_amount_ore)).toBe(true)
+      expect(Number.isInteger(inv.total_amount_ore)).toBe(true)
       expect(Number.isInteger(inv.paid_amount)).toBe(true)
     }
   })
@@ -227,13 +227,13 @@ describe('Finansiella invarianter', () => {
     // After payment
     const inv = ctx.db
       .prepare(
-        "SELECT id, total_amount FROM invoices WHERE status = 'unpaid' LIMIT 1",
+        "SELECT id, total_amount_ore FROM invoices WHERE status = 'unpaid' LIMIT 1",
       )
       .get() as any
     if (inv) {
       ctx.invoiceService.payInvoice(ctx.db, {
         invoice_id: inv.id,
-        amount: inv.total_amount,
+        amount: inv.total_amount_ore,
         payment_date: '2026-04-15',
         payment_method: 'bank',
         account_number: '1930',

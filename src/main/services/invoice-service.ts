@@ -68,7 +68,7 @@ function processLines(
     const lineVat = Math.round(lineTotal * effectiveRate)
     totalAmount += lineTotal
     vatAmount += lineVat
-    return { ...line, line_total: lineTotal, vat_amount: lineVat }
+    return { ...line, line_total_ore: lineTotal, vat_amount_ore: lineVat }
   })
 
   return { processed, totalAmount, vatAmount }
@@ -97,7 +97,7 @@ export function saveDraft(
         .prepare(
           `INSERT INTO invoices (
           counterparty_id, fiscal_year_id, invoice_type, invoice_number,
-          invoice_date, due_date, status, net_amount, vat_amount, total_amount,
+          invoice_date, due_date, status, net_amount_ore, vat_amount_ore, total_amount_ore,
           currency, notes, payment_terms
         ) VALUES (?, ?, 'customer_invoice', '', ?, ?, 'draft', ?, ?, ?, ?, ?, ?)`,
         )
@@ -119,7 +119,7 @@ export function saveDraft(
       const insertLine = db.prepare(
         `INSERT INTO invoice_lines (
           invoice_id, product_id, description, quantity,
-          unit_price_ore, vat_code_id, line_total, vat_amount, sort_order, account_number
+          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore, sort_order, account_number
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       for (const line of processed) {
@@ -130,8 +130,8 @@ export function saveDraft(
           line.quantity,
           line.unit_price_ore,
           line.vat_code_id,
-          line.line_total,
-          line.vat_amount,
+          line.line_total_ore,
+          line.vat_amount_ore,
           line.sort_order,
           line.account_number ?? null,
         )
@@ -195,7 +195,7 @@ export function updateDraft(
       db.prepare(
         `UPDATE invoices SET
           counterparty_id = ?, invoice_date = ?, due_date = ?,
-          net_amount = ?, vat_amount = ?, total_amount = ?,
+          net_amount_ore = ?, vat_amount_ore = ?, total_amount_ore = ?,
           notes = ?, payment_terms = ?, updated_at = datetime('now','localtime')
         WHERE id = ? AND status = 'draft'`,
       ).run(
@@ -216,7 +216,7 @@ export function updateDraft(
       const insertLine = db.prepare(
         `INSERT INTO invoice_lines (
           invoice_id, product_id, description, quantity,
-          unit_price_ore, vat_code_id, line_total, vat_amount, sort_order, account_number
+          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore, sort_order, account_number
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       for (const line of processed) {
@@ -227,8 +227,8 @@ export function updateDraft(
           line.quantity,
           line.unit_price_ore,
           line.vat_code_id,
-          line.line_total,
-          line.vat_amount,
+          line.line_total_ore,
+          line.vat_amount_ore,
           line.sort_order,
           line.account_number ?? null,
         )
@@ -357,22 +357,22 @@ function buildJournalLines(
     .prepare(
       `SELECT
       COALESCE(a.account_number, il.account_number) as acct_number,
-      SUM(il.line_total) as total_amount
+      SUM(il.line_total_ore) as total_amount_ore
     FROM invoice_lines il
     LEFT JOIN products p ON il.product_id = p.id
     LEFT JOIN accounts a ON p.account_id = a.id
     WHERE il.invoice_id = ?
     GROUP BY COALESCE(a.account_number, il.account_number)`,
     )
-    .all(invoiceId) as { acct_number: string; total_amount: number }[]
+    .all(invoiceId) as { acct_number: string; total_amount_ore: number }[]
 
   // Aggregera moms per vat_code_id
   const vatRows = db
     .prepare(
-      `SELECT vc.vat_account as vat_account_number, SUM(il.vat_amount) as total_vat
+      `SELECT vc.vat_account as vat_account_number, SUM(il.vat_amount_ore) as total_vat
     FROM invoice_lines il
     JOIN vat_codes vc ON vc.id = il.vat_code_id
-    WHERE il.invoice_id = ? AND il.vat_amount > 0
+    WHERE il.invoice_id = ? AND il.vat_amount_ore > 0
     GROUP BY vc.vat_account`,
     )
     .all(invoiceId) as {
@@ -380,7 +380,7 @@ function buildJournalLines(
     total_vat: number
   }[]
 
-  const totalRevenue = revenueRows.reduce((sum, r) => sum + r.total_amount, 0)
+  const totalRevenue = revenueRows.reduce((sum, r) => sum + r.total_amount_ore, 0)
   const totalVat = vatRows.reduce((sum, r) => sum + r.total_vat, 0)
   const totalInclVat = totalRevenue + totalVat
 
@@ -397,7 +397,7 @@ function buildJournalLines(
     lines.push({
       account_number: row.acct_number,
       debit_amount: 0,
-      credit_amount: row.total_amount,
+      credit_amount: row.total_amount_ore,
       description: desc,
     })
   }
@@ -764,7 +764,7 @@ export function listInvoices(
     invoice_date: 'i.invoice_date',
     due_date: 'i.due_date',
     invoice_number: 'CAST(i.invoice_number AS INTEGER)',
-    total_amount: 'i.total_amount',
+    total_amount: 'i.total_amount_ore',
     counterparty_name: 'c.name',
   }
   const sortCol =
@@ -775,12 +775,12 @@ export function listInvoices(
     .prepare(
       `SELECT
       i.id, i.invoice_number, i.invoice_date, i.due_date,
-      i.net_amount, i.vat_amount, i.total_amount,
+      i.net_amount_ore, i.vat_amount_ore, i.total_amount_ore,
       i.status, i.payment_terms, i.journal_entry_id,
       c.name as counterparty_name,
       je.verification_number,
       i.paid_amount as total_paid,
-      (i.total_amount - i.paid_amount) as remaining
+      (i.total_amount_ore - i.paid_amount) as remaining
     FROM invoices i
     LEFT JOIN counterparties c ON i.counterparty_id = c.id
     LEFT JOIN journal_entries je ON i.journal_entry_id = je.id
@@ -840,7 +840,7 @@ export function payInvoice(
           'SELECT COALESCE(SUM(amount), 0) as total_paid FROM invoice_payments WHERE invoice_id = ?',
         )
         .get(input.invoice_id) as { total_paid: number }
-      const remaining = invoice.total_amount - paidResult.total_paid
+      const remaining = invoice.total_amount_ore - paidResult.total_paid
 
       // 4. Öresutjämning
       const ROUNDING_THRESHOLD = 50
@@ -1010,7 +1010,7 @@ export function payInvoice(
         `UPDATE invoices SET
           paid_amount = (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id),
           status = CASE
-            WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount THEN 'paid'
+            WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount_ore THEN 'paid'
             WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) > 0 THEN 'partial'
             ELSE status
           END,
