@@ -2,6 +2,7 @@ import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 
 interface FormSelectProps<TForm extends Record<string, unknown>> {
   form: UseEntityFormReturn<TForm>
+  formName: string
   name: keyof TForm & string
   label: string
   options: { value: string | number; label: string }[]
@@ -11,6 +12,7 @@ interface FormSelectProps<TForm extends Record<string, unknown>> {
 
 export function FormSelect<TForm extends Record<string, unknown>>({
   form,
+  formName,
   name,
   label,
   options,
@@ -19,6 +21,7 @@ export function FormSelect<TForm extends Record<string, unknown>>({
 }: FormSelectProps<TForm>) {
   const error = form.errors[name]
   const isNumeric = typeof options[0]?.value === 'number'
+  const testId = `${formName}-${name}`
   const selectClass = `block w-full rounded-md border ${error ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`
 
   return (
@@ -29,6 +32,7 @@ export function FormSelect<TForm extends Record<string, unknown>>({
       </label>
       <select
         id={name}
+        data-testid={testId}
         value={String(form.getField(name) ?? '')}
         onChange={(e) => {
           const val = isNumeric ? Number(e.target.value) : e.target.value

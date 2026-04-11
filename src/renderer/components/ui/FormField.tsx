@@ -2,6 +2,7 @@ import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 
 interface FormFieldProps<TForm extends Record<string, unknown>> {
   form: UseEntityFormReturn<TForm>
+  formName: string
   name: keyof TForm & string
   label: string
   required?: boolean
@@ -11,8 +12,14 @@ interface FormFieldProps<TForm extends Record<string, unknown>> {
   hint?: string
 }
 
+/** Strip leading underscore from internal state keys (e.g. _priceKr → priceKr) */
+function stripLeadingUnderscore(name: string): string {
+  return name.startsWith('_') ? name.slice(1) : name
+}
+
 export function FormField<TForm extends Record<string, unknown>>({
   form,
+  formName,
   name,
   label,
   required,
@@ -22,6 +29,7 @@ export function FormField<TForm extends Record<string, unknown>>({
   hint,
 }: FormFieldProps<TForm>) {
   const error = form.errors[name]
+  const testId = `${formName}-${stripLeadingUnderscore(name)}`
   const inputClass = `block w-full rounded-md border ${error ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`
 
   return (
@@ -32,6 +40,7 @@ export function FormField<TForm extends Record<string, unknown>>({
       </label>
       <input
         id={name}
+        data-testid={testId}
         type={type}
         value={String(form.getField(name) ?? '')}
         onChange={(e) => form.setField(name, e.target.value as TForm[typeof name])}

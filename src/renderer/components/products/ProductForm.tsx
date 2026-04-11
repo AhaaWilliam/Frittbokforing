@@ -125,9 +125,9 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         }}
         className="space-y-4"
       >
-        <FormField form={form} name="name" label="Namn" required />
+        <FormField form={form} formName="product" name="name" label="Namn" required />
 
-        <FormTextarea form={form} name="description" label="Beskrivning" />
+        <FormTextarea form={form} formName="product" name="description" label="Beskrivning" />
 
         {/* Article type radio buttons */}
         <div>
@@ -155,12 +155,13 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
           </div>
         </div>
 
-        <FormSelect form={form} name="unit" label="Enhet" options={UNIT_OPTIONS} />
+        <FormSelect form={form} formName="product" name="unit" label="Enhet" options={UNIT_OPTIONS} />
 
-        <FormField form={form} name="_priceKr" label="Standardpris (kr)" type="number" />
+        <FormField form={form} formName="product" name="_priceKr" label="Standardpris (kr)" type="number" />
 
         <FormSelect
           form={form}
+          formName="product"
           name="vat_code_id"
           label="Momskod"
           options={vatCodes?.map((vc) => ({ value: vc.id, label: vatLabel(vc.rate_percent) })) ?? []}
@@ -168,6 +169,7 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
 
         <FormSelect
           form={form}
+          formName="product"
           name="account_id"
           label="Konto"
           options={accounts?.map((a) => ({ value: a.id, label: a.name })) ?? []}

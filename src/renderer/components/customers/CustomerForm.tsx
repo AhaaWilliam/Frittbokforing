@@ -105,37 +105,39 @@ export function CustomerForm({
         }}
         className="space-y-4"
       >
-        <FormField form={form} name="name" label="Namn" required />
+        <FormField form={form} formName="customer" name="name" label="Namn" required />
 
-        <FormSelect form={form} name="type" label="Typ" options={TYPE_OPTIONS} />
+        <FormSelect form={form} formName="customer" name="type" label="Typ" options={TYPE_OPTIONS} />
 
-        <FormField form={form} name="org_number" label="Organisationsnummer" placeholder="NNNNNN-NNNN" />
+        <FormField form={form} formName="customer" name="org_number" label="Organisationsnummer" placeholder="NNNNNN-NNNN" />
 
         <FormField
           form={form}
+          formName="customer"
           name="vat_number"
           label="VAT-nummer"
           hint={vatSuggestion ? `Förslag: ${vatSuggestion}` : undefined}
         />
 
-        <FormField form={form} name="address_line1" label="Adress" />
+        <FormField form={form} formName="customer" name="address_line1" label="Adress" />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField form={form} name="postal_code" label="Postnummer" />
-          <FormField form={form} name="city" label="Stad" />
+          <FormField form={form} formName="customer" name="postal_code" label="Postnummer" />
+          <FormField form={form} formName="customer" name="city" label="Stad" />
         </div>
 
-        <FormField form={form} name="country" label="Land" />
+        <FormField form={form} formName="customer" name="country" label="Land" />
 
-        <FormField form={form} name="contact_person" label="Kontaktperson" />
+        <FormField form={form} formName="customer" name="contact_person" label="Kontaktperson" />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField form={form} name="email" label="E-post" type="email" />
-          <FormField form={form} name="phone" label="Telefon" type="tel" />
+          <FormField form={form} formName="customer" name="email" label="E-post" type="email" />
+          <FormField form={form} formName="customer" name="phone" label="Telefon" type="tel" />
         </div>
 
         <FormSelect
           form={form}
+          formName="customer"
           name="default_payment_terms"
           label="Betalningsvillkor"
           options={PAYMENT_TERMS_OPTIONS}

@@ -2,6 +2,7 @@ import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 
 interface FormTextareaProps<TForm extends Record<string, unknown>> {
   form: UseEntityFormReturn<TForm>
+  formName: string
   name: keyof TForm & string
   label: string
   required?: boolean
@@ -13,6 +14,7 @@ interface FormTextareaProps<TForm extends Record<string, unknown>> {
 
 export function FormTextarea<TForm extends Record<string, unknown>>({
   form,
+  formName,
   name,
   label,
   required,
@@ -22,6 +24,7 @@ export function FormTextarea<TForm extends Record<string, unknown>>({
   hint,
 }: FormTextareaProps<TForm>) {
   const error = form.errors[name]
+  const testId = `${formName}-${name}`
   const textareaClass = `block w-full rounded-md border ${error ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`
 
   return (
@@ -32,6 +35,7 @@ export function FormTextarea<TForm extends Record<string, unknown>>({
       </label>
       <textarea
         id={name}
+        data-testid={testId}
         value={String(form.getField(name) ?? '')}
         onChange={(e) => form.setField(name, e.target.value as TForm[typeof name])}
         placeholder={placeholder}
