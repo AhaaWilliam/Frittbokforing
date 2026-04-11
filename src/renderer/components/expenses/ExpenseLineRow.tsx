@@ -35,6 +35,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { description: e.target.value })
           }
+          data-testid={`expense-line-${index}-description`}
           className={inputClass}
         />
       </td>
@@ -44,6 +45,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { account_number: e.target.value })
           }
+          data-testid={`expense-line-${index}-account`}
           className={inputClass}
         >
           <option value="">V&auml;lj konto...</option>
@@ -63,6 +65,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { quantity: parseInt(e.target.value, 10) || 1 })
           }
+          data-testid={`expense-line-${index}-quantity`}
           className={inputClass}
         />
       </td>
@@ -75,12 +78,14 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
           }
+          data-testid={`expense-line-${index}-price`}
           className={inputClass}
         />
       </td>
       <td className="px-2 py-1">
         <select
           value={line.vat_code_id}
+          data-testid={`expense-line-${index}-vat`}
           onChange={(e) => {
             const vcId = parseInt(e.target.value, 10)
             const vc = vatCodes.find((v) => v.id === vcId)

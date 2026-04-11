@@ -69,6 +69,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           <ArticlePicker
             counterpartyId={counterpartyId}
             onSelect={handleArticleSelect}
+            testId={`invoice-line-${index}-article`}
           />
           {line.product_id === null && (
             <input
@@ -76,6 +77,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
               placeholder="Konto"
               value={line.account_number ?? ''}
               onChange={(e) => onUpdate(index, { account_number: e.target.value || null })}
+              data-testid={`invoice-line-${index}-account`}
               className="block w-20 rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           )}
@@ -86,6 +88,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           type="text"
           value={line.description}
           onChange={(e) => onUpdate(index, { description: e.target.value })}
+          data-testid={`invoice-line-${index}-description`}
           className="block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </td>
@@ -97,6 +100,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           onChange={(e) =>
             onUpdate(index, { quantity: parseFloat(e.target.value) || 0 })
           }
+          data-testid={`invoice-line-${index}-quantity`}
           className="block w-20 rounded-md border border-input bg-background px-2 py-1.5 text-right text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </td>
@@ -108,6 +112,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           onChange={(e) =>
             onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
           }
+          data-testid={`invoice-line-${index}-price`}
           className="block w-24 rounded-md border border-input bg-background px-2 py-1.5 text-right text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </td>
@@ -115,6 +120,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
         <select
           value={line.vat_rate}
           onChange={handleVatChange}
+          data-testid={`invoice-line-${index}-vat`}
           className="block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         >
           {VAT_OPTIONS.map((opt) => (
