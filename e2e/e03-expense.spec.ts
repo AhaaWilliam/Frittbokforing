@@ -17,7 +17,7 @@ test.describe('E03 — Expense Flow', () => {
     // 1. Create a supplier
     await navigateTo(window, 'suppliers')
     await window.click('button:has-text("+ Ny leverantör")')
-    await window.fill('#name', 'Leverantör AB')
+    await window.getByTestId('customer-name').fill('Leverantör AB')
     await window.click('button[type="submit"]:has-text("Spara")')
     await window.waitForSelector('text=Leverantör AB', { timeout: 10_000 })
     await takeScreenshot(window, 'e03-supplier-created')
@@ -48,13 +48,11 @@ test.describe('E03 — Expense Flow', () => {
     await window.click('button:has-text("Lägg till rad")')
 
     // Fill line description
-    const lineDesc = window.locator('tbody tr:last-child td:nth-child(1) input')
+    const lineDesc = window.getByTestId('expense-line-0-description')
     await lineDesc.fill('Papper och pennor')
 
     // Select an account (first expense account available)
-    const accountSelect = window.locator(
-      'tbody tr:last-child td:nth-child(2) select',
-    )
+    const accountSelect = window.getByTestId('expense-line-0-account')
     // Select the first non-empty option
     const options = await accountSelect.locator('option').all()
     for (const opt of options) {
@@ -66,18 +64,14 @@ test.describe('E03 — Expense Flow', () => {
     }
 
     // Fill quantity and price
-    const qtyInput = window.locator('tbody tr:last-child td:nth-child(3) input')
+    const qtyInput = window.getByTestId('expense-line-0-quantity')
     await qtyInput.fill('1')
 
-    const priceInput = window.locator(
-      'tbody tr:last-child td:nth-child(4) input',
-    )
+    const priceInput = window.getByTestId('expense-line-0-price')
     await priceInput.fill('500')
 
     // Select VAT code (first non-zero option)
-    const vatSelect = window.locator(
-      'tbody tr:last-child td:nth-child(5) select',
-    )
+    const vatSelect = window.getByTestId('expense-line-0-vat')
     const vatOptions = await vatSelect.locator('option').all()
     for (const opt of vatOptions) {
       const val = await opt.getAttribute('value')

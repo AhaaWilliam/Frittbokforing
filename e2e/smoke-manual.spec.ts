@@ -56,12 +56,12 @@ test.describe.serial('Smoke — Electron 41.1.0 migration', () => {
     await navigateTo(page, 'customers')
 
     await page.click('button:has-text("+ Ny kund")')
-    await page.fill('#name', 'Smoke Test AB')
-    await page.fill('#org_number', '551234-5678')
-    await page.fill('#address_line1', 'Storgatan 1')
-    await page.fill('#postal_code', '111 22')
-    await page.fill('#city', 'Stockholm')
-    await page.fill('#email', 'smoke@test.se')
+    await page.getByTestId('customer-name').fill('Smoke Test AB')
+    await page.getByTestId('customer-org_number').fill('551234-5678')
+    await page.getByTestId('customer-address_line1').fill('Storgatan 1')
+    await page.getByTestId('customer-postal_code').fill('111 22')
+    await page.getByTestId('customer-city').fill('Stockholm')
+    await page.getByTestId('customer-email').fill('smoke@test.se')
     await page.click('button[type="submit"]:has-text("Spara")')
 
     await page.waitForSelector('text=Smoke Test AB', { timeout: 10_000 })

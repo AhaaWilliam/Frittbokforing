@@ -106,12 +106,12 @@ export async function createCustomer(
   data: CustomerData,
 ): Promise<void> {
   await page.click('button:has-text("+ Ny kund")')
-  await page.fill('#name', data.name)
+  await page.getByTestId('customer-name').fill(data.name)
   if (data.orgNumber) {
-    await page.fill('#org_number', data.orgNumber)
+    await page.getByTestId('customer-org_number').fill(data.orgNumber)
   }
   if (data.email) {
-    await page.fill('#email', data.email)
+    await page.getByTestId('customer-email').fill(data.email)
   }
   await page.click('button[type="submit"]:has-text("Spara")')
   // Wait for form to close (customer detail shows)
@@ -134,11 +134,11 @@ export async function createProduct(
   data: ProductData,
 ): Promise<void> {
   await page.click('button:has-text("+ Ny artikel")')
-  await page.fill('#name', data.name)
+  await page.getByTestId('product-name').fill(data.name)
   if (data.description) {
-    await page.fill('#description', data.description)
+    await page.getByTestId('product-description').fill(data.description)
   }
-  await page.fill('#_priceKr', data.priceKr)
+  await page.getByTestId('product-priceKr').fill(data.priceKr)
   await page.click('button[type="submit"]:has-text("Spara")')
   // Wait for form to close
   await page.waitForSelector(`text=${data.name}`, { timeout: 10_000 })
@@ -180,22 +180,20 @@ export async function createDraftInvoice(
   await page.click('button:has-text("Lägg till rad")')
 
   // Select article via ArticlePicker (sets product_id, description, price, vat_code_id)
-  const articleInput = page.locator(
-    'tbody tr:last-child td:nth-child(1) input[placeholder*="artikel"]',
-  )
+  const articleInput = page.getByTestId('invoice-line-0-article')
   await articleInput.fill(opts.productName)
   await page.waitForTimeout(500) // debounce
-  const articleOption = page.locator('tbody tr:last-child td:nth-child(1) ul li button').first()
+  const articleOption = page.locator('[data-testid="invoice-line-0-article"] ~ ul li button').first()
   await articleOption.click({ timeout: 5_000 })
 
   // Override description, quantity, price if different from product defaults
-  const descInput = page.locator('tbody tr:last-child td:nth-child(2) input')
+  const descInput = page.getByTestId('invoice-line-0-description')
   await descInput.fill(opts.description)
 
-  const qtyInput = page.locator('tbody tr:last-child td:nth-child(3) input')
+  const qtyInput = page.getByTestId('invoice-line-0-quantity')
   await qtyInput.fill(String(opts.quantity))
 
-  const priceInput = page.locator('tbody tr:last-child td:nth-child(4) input')
+  const priceInput = page.getByTestId('invoice-line-0-price')
   await priceInput.fill(String(opts.unitPriceKr))
 
   // Save draft
