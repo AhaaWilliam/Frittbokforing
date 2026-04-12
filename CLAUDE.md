@@ -103,6 +103,14 @@ Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THR
 
 **M118.** `journal_entries` med `source_type='opening_balance'` är undantagna från immutability-triggers 1–5 (`trg_immutable_booked_entry_update/delete`, `trg_immutable_booked_line_update/delete/insert`). Detta möjliggör `reTransferOpeningBalance`-flödet som raderar och återskapar IB-verifikatet vid FY-byte. Balance-trigger 6 (`trg_check_balance_on_booking`) och period-trigger 7 (`trg_check_period_on_booking`) har INTE opening_balance-undantag — IB måste balansera och datumet måste ligga i öppet FY vid bokning. Om ett framtida IB-korrigeringsflöde behövs (t.ex. ändra IB efter att FY stängts) krävs undantag även i trigger 6/7.
 
+## 25. Ore-suffix obligatoriskt (M119)
+
+**M119.** Alla INTEGER-kolumner i SQLite som representerar pengar i ore ska ha `_ore`-suffix. Inga undantag. Galler retroaktivt (Sprint 15 F1 fixar 8 befintliga kolumner) och framat. Nya belopp-kolumner utan `_ore`-suffix ska inte accepteras i review.
+
+## 26. company_id-denormalisering ar intentionell (M120)
+
+**M120.** `journal_entries.company_id` och `accounting_periods.company_id` ar avsiktlig denormalisering for query-performance trots att `fiscal_year_id` ger company-scope via FK. `accounting_periods` anvander `company_id` i index `idx_ap_dates` och trigger `trg_check_period_on_booking`. Ta inte bort dessa kolumner.
+
 ## Projektstatus
 
-Se `STATUS.md` för aktuell sprint, test-count, kända fynd och infrastruktur-kontrakt.
+Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
