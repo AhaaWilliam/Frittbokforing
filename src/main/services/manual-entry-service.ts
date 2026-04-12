@@ -11,8 +11,8 @@ import log from 'electron-log'
 
 interface LineInput {
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description?: string
 }
 
@@ -20,8 +20,8 @@ function filterEmptyLines(lines: LineInput[]): LineInput[] {
   return lines.filter(
     (line) =>
       line.account_number.trim() !== '' ||
-      line.debit_amount > 0 ||
-      line.credit_amount > 0,
+      line.debit_ore > 0 ||
+      line.credit_ore > 0,
   )
 }
 
@@ -57,7 +57,7 @@ export function saveManualEntryDraft(
       const entryId = Number(result.lastInsertRowid)
 
       const insertLine = db.prepare(
-        `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+        `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, ?, ?, ?, ?, ?)`,
       )
       filtered.forEach((line, idx) => {
@@ -65,8 +65,8 @@ export function saveManualEntryDraft(
           entryId,
           idx + 1,
           line.account_number,
-          line.debit_amount,
-          line.credit_amount,
+          line.debit_ore,
+          line.credit_ore,
           line.description || null,
         )
       })
@@ -139,7 +139,7 @@ export function updateManualEntryDraft(
       ).run(input.id)
 
       const insertLine = db.prepare(
-        `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+        `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, ?, ?, ?, ?, ?)`,
       )
       filtered.forEach((line, idx) => {
@@ -147,8 +147,8 @@ export function updateManualEntryDraft(
           input.id,
           idx + 1,
           line.account_number,
-          line.debit_amount,
-          line.credit_amount,
+          line.debit_ore,
+          line.credit_ore,
           line.description || null,
         )
       })
@@ -247,14 +247,14 @@ export function finalizeManualEntry(
 
       // 3. Validate: at least 2 lines with amounts
       const linesWithAmount = lines.filter(
-        (l) => l.debit_amount > 0 || l.credit_amount > 0,
+        (l) => l.debit_ore > 0 || l.credit_ore > 0,
       )
       if (linesWithAmount.length < 2)
         throw new Error('Minst 2 rader med belopp krävs.')
 
       // 4. Validate balance
-      const sumDebit = lines.reduce((s, l) => s + l.debit_amount, 0)
-      const sumCredit = lines.reduce((s, l) => s + l.credit_amount, 0)
+      const sumDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+      const sumCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
       if (sumDebit !== sumCredit)
         throw new Error(
           `Obalanserad verifikation: debet ${sumDebit} ≠ kredit ${sumCredit}`,
@@ -344,8 +344,8 @@ export function finalizeManualEntry(
           journalEntryId,
           idx + 1,
           line.account_number,
-          line.debit_amount,
-          line.credit_amount,
+          line.debit_ore,
+          line.credit_ore,
           line.description || null,
         )
       })

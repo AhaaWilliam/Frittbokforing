@@ -567,8 +567,8 @@ export interface ManualEntryLine {
   manual_entry_id: number
   line_number: number
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description: string | null
 }
 
@@ -718,8 +718,8 @@ export interface UpdateExpenseDraftInput {
 // === Manual Entry Draft Input types (mirrors Zod schemas in ipc-schemas.ts) ===
 export interface ManualEntryLineInput {
   account_number: string
-  debit_amount: number
-  credit_amount: number
+  debit_ore: number
+  credit_ore: number
   description?: string
 }
 

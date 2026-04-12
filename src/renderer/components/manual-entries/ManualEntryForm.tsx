@@ -35,8 +35,8 @@ function buildManualInitialData(
         ? initialData.lines.map((l) => ({
             key: crypto.randomUUID(),
             accountNumber: String(l.account_number),
-            debitKr: l.debit_amount ? String(toKr(l.debit_amount)) : '',
-            creditKr: l.credit_amount ? String(toKr(l.credit_amount)) : '',
+            debitKr: l.debit_ore ? String(toKr(l.debit_ore)) : '',
+            creditKr: l.credit_ore ? String(toKr(l.credit_ore)) : '',
             description: l.description ?? '',
           }))
         : [makeEmptyManualLine(), makeEmptyManualLine(), makeEmptyManualLine()],

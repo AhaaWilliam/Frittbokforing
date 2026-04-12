@@ -357,7 +357,7 @@ describe('Export schemas', () => {
 describe('Manual Entry schemas', () => {
   const validManualEntry = {
     fiscal_year_id: 1,
-    lines: [{ account_number: '1930', debit_amount: 10000, credit_amount: 0 }],
+    lines: [{ account_number: '1930', debit_ore: 10000, credit_ore: 0 }],
   }
 
   it('SaveManualEntryDraftSchema accepts valid', () =>

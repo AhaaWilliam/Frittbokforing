@@ -89,7 +89,7 @@ describe('Migration 013: system accounts', () => {
 
   it('PRAGMA user_version is 14', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(18)
+    expect(version).toBe(19)
   })
 })
 
@@ -402,11 +402,11 @@ describe('finaliserings-guards', () => {
     const meId = Number(meResult.lastInsertRowid)
 
     db.prepare(
-      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, 1, '9030', 10000, 0, 'Debet')`,
     ).run(meId)
     db.prepare(
-      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount, description)
+      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore, description)
        VALUES (?, 2, '1930', 0, 10000, 'Kredit')`,
     ).run(meId)
 

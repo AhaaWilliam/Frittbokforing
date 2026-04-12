@@ -497,8 +497,8 @@ export const ExportSie4Schema = z
 const ManualEntryLineInputSchema = z
   .object({
     account_number: z.string().min(4),
-    debit_amount: z.number().int().min(0),
-    credit_amount: z.number().int().min(0),
+    debit_ore: z.number().int().min(0),
+    credit_ore: z.number().int().min(0),
     description: z.string().optional(),
   })
   .strict()

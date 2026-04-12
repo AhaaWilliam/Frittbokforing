@@ -57,7 +57,7 @@ afterEach(() => {
 describe('Migration 011', () => {
   it('sätter user_version till 11', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(19) // S24: Uppdatera vid nya migrationer
   })
 
   it('manual_entries-tabell skapas', () => {
@@ -79,8 +79,8 @@ describe('Migration 011', () => {
     expect(cols).toContain('manual_entry_id')
     expect(cols).toContain('line_number')
     expect(cols).toContain('account_number')
-    expect(cols).toContain('debit_amount')
-    expect(cols).toContain('credit_amount')
+    expect(cols).toContain('debit_ore')
+    expect(cols).toContain('credit_ore')
   })
 
   it('22 tabeller totalt', () => {
@@ -102,8 +102,8 @@ describe('Draft CRUD', () => {
       entry_date: '2025-03-15',
       description: 'Löner mars',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(r.success).toBe(true)
@@ -120,8 +120,8 @@ describe('Draft CRUD', () => {
     const r = saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(r.success).toBe(true)
@@ -139,9 +139,9 @@ describe('Draft CRUD', () => {
     const r = saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '', debit_amount: 0, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '', debit_ore: 0, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(r.success).toBe(true)
@@ -165,11 +165,11 @@ describe('Draft CRUD', () => {
       lines: [
         {
           account_number: '7010',
-          debit_amount: 100_000,
-          credit_amount: 0,
+          debit_ore: 100_000,
+          credit_ore: 0,
           description: 'Löner',
         },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(saved.success).toBe(true)
@@ -188,8 +188,8 @@ describe('Draft CRUD', () => {
     const saved = saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(saved.success).toBe(true)
@@ -200,8 +200,8 @@ describe('Draft CRUD', () => {
       entry_date: '2025-04-01',
       description: 'Uppdaterad',
       lines: [
-        { account_number: '5010', debit_amount: 200_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 200_000 },
+        { account_number: '5010', debit_ore: 200_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 200_000 },
       ],
     })
     expect(r.success).toBe(true)
@@ -211,7 +211,7 @@ describe('Draft CRUD', () => {
     if (!got.success) return
     expect(got.data.description).toBe('Uppdaterad')
     expect(got.data.lines[0].account_number).toBe('5010')
-    expect(got.data.lines[0].debit_amount).toBe(200_000)
+    expect(got.data.lines[0].debit_ore).toBe(200_000)
   })
 
   it('updateDraft kastar om finaliserad', () => {
@@ -219,8 +219,8 @@ describe('Draft CRUD', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(saved.success).toBe(true)
@@ -231,8 +231,8 @@ describe('Draft CRUD', () => {
     const r = updateManualEntryDraft(db, {
       id: saved.data.id,
       lines: [
-        { account_number: '5010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '5010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(r.success).toBe(false)
@@ -242,8 +242,8 @@ describe('Draft CRUD', () => {
     const saved = saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(saved.success).toBe(true)
@@ -267,8 +267,8 @@ describe('Draft CRUD', () => {
     saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     const drafts = listManualEntryDrafts(db, fyId)
@@ -284,8 +284,8 @@ describe('Finalize', () => {
       entry_date: '2025-03-15',
       description: 'Löner mars',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     expect(saved.success).toBe(true)
@@ -316,14 +316,14 @@ describe('Finalize', () => {
       lines: [
         {
           account_number: '7010',
-          debit_amount: 250_000,
-          credit_amount: 0,
+          debit_ore: 250_000,
+          credit_ore: 0,
           description: 'Löner',
         },
         {
           account_number: '1930',
-          debit_amount: 0,
-          credit_amount: 250_000,
+          debit_ore: 0,
+          credit_ore: 250_000,
           description: 'Bank',
         },
       ],
@@ -359,8 +359,8 @@ describe('Finalize', () => {
       entry_date: '2025-03-15',
       description: 'Löner mars 2025',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -379,8 +379,8 @@ describe('Finalize', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -401,8 +401,8 @@ describe('Finalize', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!s1.success) return
@@ -415,8 +415,8 @@ describe('Finalize', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-04-01',
       lines: [
-        { account_number: '5010', debit_amount: 50_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 50_000 },
+        { account_number: '5010', debit_ore: 50_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 50_000 },
       ],
     })
     if (!s2.success) return
@@ -437,8 +437,8 @@ describe('Finalize', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -452,9 +452,9 @@ describe('Finalize', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '', debit_amount: 0, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '', debit_ore: 0, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -469,8 +469,8 @@ describe('Validation', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 50_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 50_000 },
       ],
     })
     if (!saved.success) return
@@ -483,8 +483,8 @@ describe('Validation', () => {
     const saved = saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -498,8 +498,8 @@ describe('Validation', () => {
       fiscal_year_id: fyId,
       entry_date: '2024-12-31',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -518,8 +518,8 @@ describe('Validation', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-01-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -533,8 +533,8 @@ describe('Validation', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '9999', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '9999', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -548,8 +548,8 @@ describe('Validation', () => {
       fiscal_year_id: fyId,
       entry_date: '2025-03-15',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -567,8 +567,8 @@ describe('List finalized', () => {
       entry_date: '2025-03-15',
       description: 'Löner',
       lines: [
-        { account_number: '7010', debit_amount: 100_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100_000 },
+        { account_number: '7010', debit_ore: 100_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
     if (!saved.success) return
@@ -578,8 +578,8 @@ describe('List finalized', () => {
     saveManualEntryDraft(db, {
       fiscal_year_id: fyId,
       lines: [
-        { account_number: '7010', debit_amount: 50_000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 50_000 },
+        { account_number: '7010', debit_ore: 50_000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 50_000 },
       ],
     })
 

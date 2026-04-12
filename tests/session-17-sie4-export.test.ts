@@ -399,7 +399,7 @@ describe('SIE4 Export', () => {
   // 24. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(18) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(19) // S24: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

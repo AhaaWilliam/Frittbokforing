@@ -116,7 +116,7 @@ describe('SEC01: IPC Input-validering', () => {
         entry_date: '2026-03-15',
         description: 'Test',
         lines: [
-          { account_number: '1930', debit_amount: 10000, credit_amount: 0 },
+          { account_number: '1930', debit_ore: 10000, credit_ore: 0 },
         ],
         malicious: 'payload',
       })

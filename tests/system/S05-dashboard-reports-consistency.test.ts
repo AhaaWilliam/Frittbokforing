@@ -85,8 +85,8 @@ describe('Dashboard, Rapporter & Prognoser — konsistens', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 20000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 20000 },
+        { account_number: '6210', debit_ore: 20000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 20000 },
       ],
       { entryDate: '2026-03-15' },
     )
@@ -100,8 +100,8 @@ describe('Dashboard, Rapporter & Prognoser — konsistens', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 100000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100000 },
+        { account_number: '6210', debit_ore: 100000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100000 },
       ],
       { entryDate: '2026-02-15' },
     )

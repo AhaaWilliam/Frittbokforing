@@ -52,8 +52,8 @@ describe('Räkenskapsårsövergång', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 30000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 30000 },
+        { account_number: '6210', debit_ore: 30000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 30000 },
       ],
       { entryDate: '2026-03-20' },
     )

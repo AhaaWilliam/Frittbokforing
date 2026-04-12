@@ -1147,6 +1147,12 @@ export const migrations: MigrationEntry[] = [
         END;
     END;`,
     programmatic: migration018Verify },
+  // Fas 8: Rename manual_entry_lines belopp-kolumner (M48, final).
+  // debit_amount → debit_ore, credit_amount → credit_ore.
+  // Inga triggers att återskapa — tabellen har inga.
+  { sql: `ALTER TABLE manual_entry_lines RENAME COLUMN debit_amount TO debit_ore;
+    ALTER TABLE manual_entry_lines RENAME COLUMN credit_amount TO credit_ore;`,
+    programmatic: migration019Verify },
 ]
 
 function migration018Verify(db: import('better-sqlite3').Database): void {
@@ -1159,5 +1165,18 @@ function migration018Verify(db: import('better-sqlite3').Database): void {
   }
   for (const name of forbiddenOld) {
     if (colNames.includes(name)) throw new Error(`Migration 018 failed: ${name} finns kvar`)
+  }
+}
+
+function migration019Verify(db: import('better-sqlite3').Database): void {
+  const cols = db.prepare('PRAGMA table_info(manual_entry_lines)').all() as { name: string }[]
+  const colNames = cols.map(c => c.name)
+  const expectedNew = ['debit_ore', 'credit_ore']
+  const forbiddenOld = ['debit_amount', 'credit_amount']
+  for (const name of expectedNew) {
+    if (!colNames.includes(name)) throw new Error(`Migration 019 failed: ${name} saknas`)
+  }
+  for (const name of forbiddenOld) {
+    if (colNames.includes(name)) throw new Error(`Migration 019 failed: ${name} finns kvar`)
   }
 }

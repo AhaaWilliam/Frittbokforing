@@ -108,7 +108,7 @@ afterEach(() => {
 describe('Migration 012', () => {
   it('user_version = 14 efter migration', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(18) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(19) // S24: Uppdatera vid nya migrationer
   })
 
   it('fiscal_years har is_closed-kolumn', () => {
@@ -650,11 +650,11 @@ describe('is_closed enforcement', () => {
 
     // Add lines
     db.prepare(
-      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, 1, '1930', 100000, 0)`,
     ).run(me.id)
     db.prepare(
-      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_amount, credit_amount)
+      `INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, 2, '2081', 0, 100000)`,
     ).run(me.id)
 

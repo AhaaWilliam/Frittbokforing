@@ -837,8 +837,8 @@ export function seedManualEntry(
   ctx: SystemTestContext,
   lines: Array<{
     account_number: string
-    debit_amount: number
-    credit_amount: number
+    debit_ore: number
+    credit_ore: number
     description?: string
   }>,
   overrides?: Partial<{ entryDate: string; description: string }>,
@@ -854,8 +854,8 @@ export function seedManualEntry(
     lines: lines.map((l, i) => ({
       line_number: i + 1,
       account_number: l.account_number,
-      debit_amount: l.debit_amount,
-      credit_amount: l.credit_amount,
+      debit_ore: l.debit_ore,
+      credit_ore: l.credit_ore,
       description: l.description ?? '',
     })),
   })

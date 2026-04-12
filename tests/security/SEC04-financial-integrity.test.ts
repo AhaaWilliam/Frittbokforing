@@ -63,16 +63,16 @@ describe('Finansiella invarianter', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 50000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 50000 },
+        { account_number: '6210', debit_ore: 50000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 50000 },
       ],
       { entryDate: '2026-04-01' },
     )
     seedManualEntry(
       ctx,
       [
-        { account_number: '5010', debit_amount: 100000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 100000 },
+        { account_number: '5010', debit_ore: 100000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 100000 },
       ],
       { entryDate: '2026-05-01' },
     )
@@ -111,8 +111,8 @@ describe('Finansiella invarianter', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 10000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 10000 },
+        { account_number: '6210', debit_ore: 10000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 10000 },
       ],
       { entryDate: '2026-03-20' },
     )
@@ -217,8 +217,8 @@ describe('Finansiella invarianter', () => {
     seedManualEntry(
       ctx,
       [
-        { account_number: '6210', debit_amount: 30000, credit_amount: 0 },
-        { account_number: '1930', debit_amount: 0, credit_amount: 30000 },
+        { account_number: '6210', debit_ore: 30000, credit_ore: 0 },
+        { account_number: '1930', debit_ore: 0, credit_ore: 30000 },
       ],
       { entryDate: '2026-03-15' },
     )

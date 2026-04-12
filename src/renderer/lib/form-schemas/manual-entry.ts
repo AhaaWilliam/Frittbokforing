@@ -64,8 +64,8 @@ export function transformManualEntryForm(
       )
       .map(l => ({
         account_number: l.accountNumber,
-        debit_amount: parseSwedishAmount(l.debitKr),
-        credit_amount: parseSwedishAmount(l.creditKr),
+        debit_ore: parseSwedishAmount(l.debitKr),
+        credit_ore: parseSwedishAmount(l.creditKr),
         description: l.description || undefined,
       })),
   }

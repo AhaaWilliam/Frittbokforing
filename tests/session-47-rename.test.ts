@@ -30,7 +30,7 @@ afterEach(() => {
 describe('F23: invoice_lines.unit_price → unit_price_ore rename', () => {
   it('PRAGMA user_version === 16', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(18)
+    expect(v).toBe(19)
   })
 
   it('invoice_lines has unit_price_ore column (not unit_price)', () => {

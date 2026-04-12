@@ -618,8 +618,8 @@ describe('F9: finalize returns INACTIVE_ACCOUNT', () => {
       entry_date: '2025-03-15',
       description: 'Test',
       lines: [
-        { account_number: '1930', debit_amount: 10000, credit_amount: 0 },
-        { account_number: '5010', debit_amount: 0, credit_amount: 10000 },
+        { account_number: '1930', debit_ore: 10000, credit_ore: 0 },
+        { account_number: '5010', debit_ore: 0, credit_ore: 10000 },
       ],
     })
     expect(draftResult.success).toBe(true)
