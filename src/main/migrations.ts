@@ -1153,6 +1153,10 @@ export const migrations: MigrationEntry[] = [
   { sql: `ALTER TABLE manual_entry_lines RENAME COLUMN debit_amount TO debit_ore;
     ALTER TABLE manual_entry_lines RENAME COLUMN credit_amount TO credit_ore;`,
     programmatic: migration019Verify },
+  // Sprint 12: bank_fee_ore + bank_fee_account on both payment tables
+  { sql: '-- Migration 020: bank fee columns (se programmatic)', programmatic: migration020Programmatic },
+  // Sprint 13: payment_batches + auto_bank_fee source_type
+  { sql: '-- Migration 021: payment_batches + auto_bank_fee (se programmatic)', programmatic: migration021Programmatic },
 ]
 
 function migration018Verify(db: import('better-sqlite3').Database): void {
@@ -1179,4 +1183,298 @@ function migration019Verify(db: import('better-sqlite3').Database): void {
   for (const name of forbiddenOld) {
     if (colNames.includes(name)) throw new Error(`Migration 019 failed: ${name} finns kvar`)
   }
+}
+
+function migration020Programmatic(db: import('better-sqlite3').Database): void {
+  const ipCols = getTableColumns(db, 'invoice_payments')
+  addColumnIfMissing(db, 'invoice_payments', 'bank_fee_ore', 'INTEGER', ipCols)
+  addColumnIfMissing(db, 'invoice_payments', 'bank_fee_account', 'TEXT', ipCols)
+
+  const epCols = getTableColumns(db, 'expense_payments')
+  addColumnIfMissing(db, 'expense_payments', 'bank_fee_ore', 'INTEGER', epCols)
+  addColumnIfMissing(db, 'expense_payments', 'bank_fee_account', 'TEXT', epCols)
+}
+
+/**
+ * Migration 021: Sprint 13 — payment_batches + auto_bank_fee source_type
+ *
+ * 1. Rebuild journal_entries to add 'auto_bank_fee' to source_type CHECK.
+ * 2. Drop and recreate all 7 triggers (with opening_balance exception on 1–5,
+ *    debit_ore/credit_ore column names on balance trigger).
+ * 3. Recreate 4 indexes.
+ * 4. CREATE payment_batches table.
+ * 5. Add payment_batch_id FK to invoice_payments and expense_payments.
+ * 6. Partial indexes on payment_batch_id.
+ */
+function migration021Programmatic(db: import('better-sqlite3').Database): void {
+  // === Idempotency guard: check if auto_bank_fee is already in CHECK ===
+  const tableInfo = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .get() as { sql: string } | undefined
+  const needsRebuild = !tableInfo?.sql?.includes('auto_bank_fee')
+
+  if (needsRebuild) {
+    // 1. Rebuild journal_entries with extended CHECK
+    db.exec(`
+      CREATE TABLE journal_entries_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL REFERENCES companies(id),
+        fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+        verification_number INTEGER,
+        verification_series TEXT NOT NULL DEFAULT 'A',
+        journal_date TEXT NOT NULL,
+        registration_date TEXT NOT NULL DEFAULT (datetime('now')),
+        description TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        locked_at TEXT,
+        created_by INTEGER REFERENCES users(id),
+        source_type TEXT DEFAULT 'manual',
+        source_reference TEXT,
+        corrects_entry_id INTEGER REFERENCES journal_entries(id),
+        corrected_by_id INTEGER REFERENCES journal_entries(id),
+        version INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        CHECK (status IN ('draft', 'booked', 'corrected')),
+        CHECK (source_type IN ('manual', 'auto_invoice', 'auto_payment', 'auto_expense', 'auto_salary', 'auto_depreciation', 'auto_tax', 'import', 'opening_balance', 'auto_bank_fee')),
+        UNIQUE (verification_series, verification_number, fiscal_year_id)
+      );
+    `)
+
+    db.exec(`INSERT INTO journal_entries_new SELECT * FROM journal_entries;`)
+
+    // Drop all 7 triggers that reference journal_entries
+    db.exec(`DROP TRIGGER IF EXISTS trg_immutable_booked_entry_update;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_immutable_booked_entry_delete;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_immutable_booked_line_update;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_immutable_booked_line_delete;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_immutable_booked_line_insert;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_check_balance_on_booking;`)
+    db.exec(`DROP TRIGGER IF EXISTS trg_check_period_on_booking;`)
+
+    // Drop indexes
+    db.exec(`DROP INDEX IF EXISTS idx_je_date;`)
+    db.exec(`DROP INDEX IF EXISTS idx_je_fiscal_year;`)
+    db.exec(`DROP INDEX IF EXISTS idx_je_status;`)
+    db.exec(`DROP INDEX IF EXISTS idx_journal_entries_verify_series_unique;`)
+
+    db.exec(`DROP TABLE journal_entries;`)
+    db.exec(`ALTER TABLE journal_entries_new RENAME TO journal_entries;`)
+
+    // Recreate 4 indexes
+    db.exec(`CREATE INDEX idx_je_date ON journal_entries (journal_date);`)
+    db.exec(`CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);`)
+    db.exec(`CREATE INDEX idx_je_status ON journal_entries (status);`)
+    db.exec(`
+      CREATE UNIQUE INDEX idx_journal_entries_verify_series_unique
+      ON journal_entries(fiscal_year_id, verification_series, verification_number)
+      WHERE verification_number IS NOT NULL;
+    `)
+
+    // Recreate 7 triggers — opening_balance exception on immutability triggers 1–5,
+    // debit_ore/credit_ore on balance trigger (post-M18 column names)
+
+    // 1. UPDATE trigger — exception for opening_balance
+    db.exec(`
+      CREATE TRIGGER trg_immutable_booked_entry_update
+      BEFORE UPDATE ON journal_entries
+      WHEN OLD.status = 'booked' AND OLD.source_type != 'opening_balance'
+      BEGIN
+          SELECT CASE
+              WHEN NEW.status NOT IN ('booked', 'corrected')
+              THEN RAISE(ABORT, 'Bokförd verifikation kan bara markeras som rättad (corrected).')
+          END;
+          SELECT CASE
+              WHEN NEW.journal_date != OLD.journal_date
+                  OR NEW.description != OLD.description
+                  OR NEW.verification_number != OLD.verification_number
+                  OR NEW.verification_series != OLD.verification_series
+                  OR NEW.company_id != OLD.company_id
+                  OR NEW.fiscal_year_id != OLD.fiscal_year_id
+              THEN RAISE(ABORT, 'Bokförd verifikation kan inte ändras. Bara status och corrected_by_id får uppdateras.')
+          END;
+      END;
+    `)
+
+    // 2. DELETE trigger — exception for opening_balance
+    db.exec(`
+      CREATE TRIGGER trg_immutable_booked_entry_delete
+      BEFORE DELETE ON journal_entries
+      WHEN OLD.status = 'booked' AND OLD.source_type != 'opening_balance'
+      BEGIN
+          SELECT RAISE(ABORT, 'Bokförd verifikation kan inte raderas.');
+      END;
+    `)
+
+    // 3. Line UPDATE trigger — exception via subquery
+    db.exec(`
+      CREATE TRIGGER trg_immutable_booked_line_update
+      BEFORE UPDATE ON journal_entry_lines
+      WHEN (SELECT status FROM journal_entries WHERE id = OLD.journal_entry_id) = 'booked'
+        AND (SELECT source_type FROM journal_entries WHERE id = OLD.journal_entry_id) != 'opening_balance'
+      BEGIN
+          SELECT RAISE(ABORT, 'Rader på bokförd verifikation kan inte ändras.');
+      END;
+    `)
+
+    // 4. Line DELETE trigger — exception via subquery
+    db.exec(`
+      CREATE TRIGGER trg_immutable_booked_line_delete
+      BEFORE DELETE ON journal_entry_lines
+      WHEN (SELECT status FROM journal_entries WHERE id = OLD.journal_entry_id) = 'booked'
+        AND (SELECT source_type FROM journal_entries WHERE id = OLD.journal_entry_id) != 'opening_balance'
+      BEGIN
+          SELECT RAISE(ABORT, 'Rader på bokförd verifikation kan inte raderas.');
+      END;
+    `)
+
+    // 5. Line INSERT trigger — exception via subquery
+    db.exec(`
+      CREATE TRIGGER trg_immutable_booked_line_insert
+      BEFORE INSERT ON journal_entry_lines
+      WHEN (SELECT status FROM journal_entries WHERE id = NEW.journal_entry_id) = 'booked'
+        AND (SELECT source_type FROM journal_entries WHERE id = NEW.journal_entry_id) != 'opening_balance'
+      BEGIN
+          SELECT RAISE(ABORT, 'Kan inte lägga till rader på bokförd verifikation.');
+      END;
+    `)
+
+    // 6. Balance check trigger (debit_ore/credit_ore — post-M18)
+    db.exec(`
+      CREATE TRIGGER trg_check_balance_on_booking
+      BEFORE UPDATE ON journal_entries
+      WHEN NEW.status = 'booked' AND OLD.status = 'draft'
+      BEGIN
+          SELECT CASE
+              WHEN (
+                  COALESCE(
+                      (SELECT SUM(debit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                  ) -
+                  COALESCE(
+                      (SELECT SUM(credit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                  )
+              ) != 0
+              THEN RAISE(ABORT, 'Verifikationen balanserar inte. Summa debet måste vara lika med summa kredit.')
+          END;
+          SELECT CASE
+              WHEN (
+                  SELECT COUNT(*)
+                  FROM journal_entry_lines
+                  WHERE journal_entry_id = NEW.id
+              ) < 2
+              THEN RAISE(ABORT, 'Verifikation måste ha minst två rader.')
+          END;
+      END;
+    `)
+
+    // 7. Period check trigger
+    db.exec(`
+      CREATE TRIGGER trg_check_period_on_booking
+      BEFORE UPDATE ON journal_entries
+      WHEN NEW.status = 'booked' AND OLD.status = 'draft'
+      BEGIN
+          SELECT CASE
+              WHEN (SELECT is_closed FROM fiscal_years WHERE id = NEW.fiscal_year_id) = 1
+              THEN RAISE(ABORT, 'Kan inte bokföra i stängt räkenskapsår.')
+          END;
+          SELECT CASE
+              WHEN NOT EXISTS (
+                  SELECT 1 FROM fiscal_years
+                  WHERE id = NEW.fiscal_year_id
+                    AND NEW.journal_date BETWEEN start_date AND end_date
+              )
+              THEN RAISE(ABORT, 'Bokföringsdatum ligger utanför räkenskapsårets period.')
+          END;
+          SELECT CASE
+              WHEN EXISTS (
+                  SELECT 1 FROM accounting_periods
+                  WHERE fiscal_year_id = NEW.fiscal_year_id
+                    AND company_id = NEW.company_id
+                    AND NEW.journal_date BETWEEN start_date AND end_date
+                    AND is_closed = 1
+              )
+              THEN RAISE(ABORT, 'Kan inte bokföra i stängd period.')
+          END;
+      END;
+    `)
+  }
+
+  // === payment_batches table ===
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS payment_batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      batch_type TEXT NOT NULL CHECK (batch_type IN ('invoice', 'expense')),
+      payment_date TEXT NOT NULL,
+      account_number TEXT NOT NULL,
+      bank_fee_ore INTEGER NOT NULL DEFAULT 0,
+      bank_fee_journal_entry_id INTEGER REFERENCES journal_entries(id),
+      status TEXT NOT NULL DEFAULT 'completed' CHECK (status IN ('completed', 'partial', 'cancelled')),
+      user_note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pb_fiscal_year ON payment_batches(fiscal_year_id);`)
+
+  // === payment_batch_id on invoice_payments ===
+  const ipCols = getTableColumns(db, 'invoice_payments')
+  addColumnIfMissing(db, 'invoice_payments', 'payment_batch_id', 'INTEGER REFERENCES payment_batches(id)', ipCols)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`)
+
+  // === payment_batch_id on expense_payments ===
+  const epCols = getTableColumns(db, 'expense_payments')
+  addColumnIfMissing(db, 'expense_payments', 'payment_batch_id', 'INTEGER REFERENCES payment_batches(id)', epCols)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`)
+
+  // Verify
+  migration021Verify(db)
+}
+
+function migration021Verify(db: import('better-sqlite3').Database): void {
+  // 1. CHECK constraint includes auto_bank_fee
+  const tableInfo = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .get() as { sql: string }
+  if (!tableInfo.sql.includes('auto_bank_fee')) {
+    throw new Error('Migration 021 failed: auto_bank_fee not in journal_entries CHECK')
+  }
+
+  // 2. All 7 triggers exist
+  const triggers = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('journal_entries', 'journal_entry_lines')")
+    .all() as { name: string }[]
+  const triggerNames = new Set(triggers.map(t => t.name))
+  const expected = [
+    'trg_immutable_booked_entry_update',
+    'trg_immutable_booked_entry_delete',
+    'trg_immutable_booked_line_update',
+    'trg_immutable_booked_line_delete',
+    'trg_immutable_booked_line_insert',
+    'trg_check_balance_on_booking',
+    'trg_check_period_on_booking',
+  ]
+  for (const name of expected) {
+    if (!triggerNames.has(name)) {
+      throw new Error(`Migration 021 failed: trigger ${name} saknas`)
+    }
+  }
+
+  // 3. trg_immutable_booked_entry_update still has opening_balance exception
+  const updateTrigger = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='trigger' AND name='trg_immutable_booked_entry_update'")
+    .get() as { sql: string }
+  if (!updateTrigger.sql.includes('opening_balance')) {
+    throw new Error('Migration 021 failed: trg_immutable_booked_entry_update missing opening_balance exception')
+  }
+
+  // 4. payment_batches exists with correct CHECK
+  const pbInfo = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'")
+    .get() as { sql: string } | undefined
+  if (!pbInfo) throw new Error('Migration 021 failed: payment_batches table missing')
+
+  // 5. payment_batch_id column exists on both payment tables
+  const ipCols = getTableColumns(db, 'invoice_payments')
+  if (!ipCols.has('payment_batch_id')) throw new Error('Migration 021 failed: invoice_payments.payment_batch_id missing')
+  const epCols = getTableColumns(db, 'expense_payments')
+  if (!epCols.has('payment_batch_id')) throw new Error('Migration 021 failed: expense_payments.payment_batch_id missing')
 }

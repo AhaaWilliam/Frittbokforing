@@ -79,6 +79,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('expense:finalize', data),
   payExpense: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:pay', data),
+  payExpensesBulk: (data: Record<string, unknown>) =>
+    ipcRenderer.invoke('expense:payBulk', data),
   getExpensePayments: (data: { expense_id: number }) =>
     ipcRenderer.invoke('expense:payments', data),
   getExpense: (data: { id: number }) => ipcRenderer.invoke('expense:get', data),
@@ -118,6 +120,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('invoice:update-sent', data),
   payInvoice: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('invoice:pay', data),
+  payInvoicesBulk: (data: Record<string, unknown>) =>
+    ipcRenderer.invoke('invoice:payBulk', data),
   getPayments: (data: { invoice_id: number }) =>
     ipcRenderer.invoke('invoice:payments', data),
   saveDraft: (data: Record<string, unknown>) =>
@@ -193,3 +197,16 @@ contextBridge.exposeInMainWorld('api', {
   setSetting: (key: string, value: unknown) =>
     ipcRenderer.invoke('settings:set', key, value),
 })
+
+// Test-only API — separate from window.api, guarded by FRITT_TEST
+if (process.env.FRITT_TEST === '1') {
+  contextBridge.exposeInMainWorld('__testApi', {
+    getJournalEntries: (fyId?: number) => ipcRenderer.invoke('__test:getJournalEntries', fyId),
+    getInvoicePayments: (invoiceId?: number) => ipcRenderer.invoke('__test:getInvoicePayments', invoiceId),
+    getPaymentBatches: () => ipcRenderer.invoke('__test:getPaymentBatches'),
+    getInvoices: (fyId?: number) => ipcRenderer.invoke('__test:getInvoices', fyId),
+    getExpenses: (fyId?: number) => ipcRenderer.invoke('__test:getExpenses', fyId),
+    setInvoiceStatus: (invoiceId: number, status: string) => ipcRenderer.invoke('__test:setInvoiceStatus', invoiceId, status),
+    createFiscalYear: (opts: { companyId: number; startDate: string; endDate: string; yearLabel: string }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
+  })
+}

@@ -48,6 +48,7 @@ import {
   ensureInvoiceIndexes,
   refreshInvoiceStatuses,
   payInvoice,
+  payInvoicesBulk,
   getPayments,
 } from './services/invoice-service'
 import {
@@ -58,6 +59,7 @@ import {
   listExpenseDrafts,
   finalizeExpense,
   payExpense,
+  payExpensesBulk,
   getExpensePayments,
   getExpense,
   refreshExpenseStatuses,
@@ -143,6 +145,8 @@ import {
   NetResultInputSchema,
   GenerateInvoicePdfSchema,
   SaveInvoicePdfSchema,
+  PayInvoicesBulkPayloadSchema,
+  PayExpensesBulkPayloadSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse } from '../shared/types'
 import log from 'electron-log'
@@ -483,6 +487,17 @@ export function registerIpcHandlers(): void {
     return payExpense(db, parsed.data)
   })
 
+  ipcMain.handle('expense:payBulk', (_event, input: unknown) => {
+    const parsed = PayExpensesBulkPayloadSchema.safeParse(input)
+    if (!parsed.success)
+      return {
+        success: false,
+        error: parsed.error.issues.map((i) => i.message).join('; '),
+        code: 'VALIDATION_ERROR',
+      }
+    return payExpensesBulk(db, parsed.data)
+  })
+
   ipcMain.handle('expense:payments', (_event, input: unknown) => {
     const parsed = GetExpensePaymentsSchema.safeParse(input)
     if (!parsed.success)
@@ -666,6 +681,17 @@ export function registerIpcHandlers(): void {
         code: 'VALIDATION_ERROR',
       }
     return payInvoice(db, parsed.data)
+  })
+
+  ipcMain.handle('invoice:payBulk', (_event, input: unknown) => {
+    const parsed = PayInvoicesBulkPayloadSchema.safeParse(input)
+    if (!parsed.success)
+      return {
+        success: false,
+        error: parsed.error.issues.map((i) => i.message).join('; '),
+        code: 'VALIDATION_ERROR',
+      }
+    return payInvoicesBulk(db, parsed.data)
   })
 
   ipcMain.handle('invoice:payments', (_event, input: unknown) => {
@@ -1137,4 +1163,10 @@ export function registerIpcHandlers(): void {
     settings[key] = value
     saveSettings(settings)
   })
+
+  // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1
+  if (process.env.FRITT_TEST === '1') {
+    const { registerTestHandlers } = require('./ipc/test-handlers')
+    registerTestHandlers(db)
+  }
 }

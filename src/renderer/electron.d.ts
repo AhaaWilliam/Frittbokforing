@@ -141,6 +141,7 @@ interface ElectronAPI {
       payment: import('../shared/types').InvoicePayment
     }>
   >
+  payInvoicesBulk: (data: Record<string, unknown>) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
   getPayments: (data: {
     invoice_id: number
   }) => Promise<IpcResult<import('../shared/types').InvoicePayment[]>>
@@ -204,6 +205,7 @@ interface ElectronAPI {
       payment: import('../shared/types').ExpensePayment
     }>
   >
+  payExpensesBulk: (data: Record<string, unknown>) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
   getExpensePayments: (data: {
     expense_id: number
   }) => Promise<IpcResult<import('../shared/types').ExpensePayment[]>>

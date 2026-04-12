@@ -9,7 +9,7 @@ interface PaymentDialogProps {
   paidAmount: number
   documentDate: string
   fiscalYearEnd: string
-  onSubmit: (amount: number, date: string) => void
+  onSubmit: (amount: number, date: string, bankFeeOre?: number) => void
   isLoading: boolean
 }
 
@@ -31,12 +31,14 @@ export function PaymentDialog({
   const [paymentDate, setPaymentDate] = useState(
     new Date().toISOString().slice(0, 10),
   )
+  const [bankFeeStr, setBankFeeStr] = useState('')
   const [errors, setErrors] = useState<{ amount?: string; date?: string }>({})
 
   useEffect(() => {
     if (open) {
       setAmountStr((remaining / 100).toFixed(2))
       setPaymentDate(new Date().toISOString().slice(0, 10))
+      setBankFeeStr('')
       setErrors({})
     }
   }, [open, remaining])
@@ -68,7 +70,8 @@ export function PaymentDialog({
   function handleSubmit() {
     if (!validate()) return
     const amountOre = kronorToOre(amountStr)
-    onSubmit(amountOre, paymentDate)
+    const feeOre = bankFeeStr ? kronorToOre(bankFeeStr) : undefined
+    onSubmit(amountOre, paymentDate, feeOre || undefined)
   }
 
   return (
@@ -119,6 +122,21 @@ export function PaymentDialog({
             {errors.date && (
               <p className="mt-1 text-xs text-red-600">{errors.date}</p>
             )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Bankavgift (kr)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={bankFeeStr}
+              onChange={(e) => setBankFeeStr(e.target.value)}
+              placeholder="0.00"
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
           </div>
         </div>
 

@@ -57,7 +57,7 @@ afterEach(() => {
 describe('Migration 011', () => {
   it('sätter user_version till 11', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(19) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(21) // S24: Uppdatera vid nya migrationer
   })
 
   it('manual_entries-tabell skapas', () => {
@@ -91,7 +91,7 @@ describe('Migration 011', () => {
         )
         .get() as { c: number }
     ).c
-    expect(count).toBe(22)
+    expect(count).toBe(23)
   })
 })
 

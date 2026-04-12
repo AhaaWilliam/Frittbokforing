@@ -21,6 +21,7 @@ export function PayExpenseDialog({
   const [paymentDate, setPaymentDate] = useState(today)
   const [paymentMethod, setPaymentMethod] = useState<string>('bankgiro')
   const [accountNumber, setAccountNumber] = useState('1930')
+  const [bankFeeStr, setBankFeeStr] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const payMutation = usePayExpense()
@@ -30,12 +31,14 @@ export function PayExpenseDialog({
   const handleSubmit = async () => {
     setError(null)
     try {
+      const feeOre = bankFeeStr ? toOre(parseFloat(bankFeeStr)) : undefined
       await payMutation.mutateAsync({
         expense_id: expense.id,
         amount: toOre(parseFloat(amountKr)),
         payment_date: paymentDate,
         payment_method: paymentMethod,
         account_number: accountNumber,
+        ...(feeOre ? { bank_fee_ore: feeOre } : {}),
       })
       onSuccess?.()
       onClose()
@@ -129,6 +132,21 @@ export function PayExpenseDialog({
               <option value="kort">Kort</option>
               <option value="kontant">Kontant</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Bankavgift (kr)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={bankFeeStr}
+              onChange={(e) => setBankFeeStr(e.target.value)}
+              placeholder="0.00"
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
           </div>
         </div>
 

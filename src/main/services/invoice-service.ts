@@ -793,8 +793,264 @@ export function listInvoices(
 }
 
 // ═══════════════════════════════════════════════════════════
-// Pay Invoice — Session 9
+// Pay Invoice — Session 9 (refactored Sprint 13: _payInvoiceTx extraction)
 // ═══════════════════════════════════════════════════════════
+
+interface PayInvoiceTxResult {
+  invoice: Invoice
+  payment: InvoicePayment
+  journalEntryId: number
+}
+
+/**
+ * Internal transaction variant — does NOT open its own transaction.
+ * Throws structured { code, error, field? } on failure.
+ * Returns journalEntryId for bulk batch linking.
+ */
+function _payInvoiceTx(
+  db: Database.Database,
+  input: {
+    invoice_id: number
+    amount: number
+    payment_date: string
+    payment_method: string
+    account_number: string
+    bank_fee_ore?: number
+  },
+): PayInvoiceTxResult {
+  // 1. Hämta faktura
+  const invoice = db
+    .prepare('SELECT * FROM invoices WHERE id = ?')
+    .get(input.invoice_id) as Invoice | undefined
+  if (!invoice) throw { code: 'INVOICE_NOT_FOUND', error: 'Faktura saknas' }
+
+  // 2. Validera status
+  const payableStatuses = ['unpaid', 'overdue', 'partial']
+  if (!payableStatuses.includes(invoice.status)) {
+    throw {
+      code: 'VALIDATION_ERROR',
+      error: 'Kan inte registrera betalning på denna faktura.',
+    }
+  }
+
+  // 3. Beräkna remaining (total_amount already includes VAT in our schema)
+  const paidResult = db
+    .prepare(
+      'SELECT COALESCE(SUM(amount), 0) as total_paid FROM invoice_payments WHERE invoice_id = ?',
+    )
+    .get(input.invoice_id) as { total_paid: number }
+  const remaining = invoice.total_amount_ore - paidResult.total_paid
+
+  // 4. Öresutjämning
+  const ROUNDING_THRESHOLD = 50
+  const diff = input.amount - remaining
+
+  if (diff > ROUNDING_THRESHOLD) {
+    throw {
+      code: 'OVERPAYMENT',
+      error: `Beloppet överstiger kvarstående med mer än ${ROUNDING_THRESHOLD} öre.`,
+      field: 'amount',
+    }
+  }
+
+  const isAttemptedFullPayment =
+    Math.abs(diff) <= ROUNDING_THRESHOLD && remaining > 0
+  const needsRounding = isAttemptedFullPayment && diff !== 0
+  const roundingAmount = needsRounding ? diff : 0
+
+  const effectivePayment = input.amount
+  const actualReceivablesCredit = needsRounding ? remaining : input.amount
+
+  // 4b. Bankavgift
+  const bankFeeOre = input.bank_fee_ore ?? 0
+  const BANK_FEE_ACCOUNT = '6570'
+  if (bankFeeOre > 0) {
+    if (bankFeeOre >= effectivePayment) {
+      throw {
+        code: 'VALIDATION_ERROR',
+        error: 'Bankavgiften kan inte vara lika med eller överstiga betalningsbeloppet.',
+        field: 'bank_fee_ore',
+      }
+    }
+    validateAccountsActive(db, [BANK_FEE_ACCOUNT])
+  }
+
+  // 5. Find fiscal year for payment date
+  const paymentYear = db
+    .prepare(
+      'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
+    )
+    .get(input.payment_date, input.payment_date) as
+    | { id: number }
+    | undefined
+  if (!paymentYear) {
+    throw {
+      code: 'VALIDATION_ERROR',
+      error: 'Betalningsdatum faller inte i något räkenskapsår.',
+      field: 'payment_date',
+    }
+  }
+
+  // 6. Validate period open
+  const period = db
+    .prepare(
+      'SELECT is_closed FROM accounting_periods WHERE fiscal_year_id = ? AND ? BETWEEN start_date AND end_date',
+    )
+    .get(paymentYear.id, input.payment_date) as
+    | { is_closed: number }
+    | undefined
+  if (period && period.is_closed) {
+    throw {
+      code: 'YEAR_IS_CLOSED',
+      error: 'Perioden är stängd.',
+    }
+  }
+
+  // 7. Allokera verifikationsnummer
+  const nextVerResult = db
+    .prepare(
+      "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'A'",
+    )
+    .get(paymentYear.id) as { next_ver: number }
+
+  // 8. Kundnamn
+  const counterparty = db
+    .prepare('SELECT name FROM counterparties WHERE id = ?')
+    .get(invoice.counterparty_id) as { name: string }
+
+  const description = `Betalning faktura #${invoice.invoice_number} — ${counterparty.name}`
+
+  // 9. INSERT journal_entry (as draft, then book)
+  const entryResult = db
+    .prepare(
+      `INSERT INTO journal_entries (
+        company_id, fiscal_year_id, verification_number, verification_series,
+        journal_date, description, status, source_type
+      ) VALUES (
+        (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
+        ?, ?, 'draft', 'auto_payment'
+      )`,
+    )
+    .run(
+      paymentYear.id,
+      nextVerResult.next_ver,
+      input.payment_date,
+      description,
+    )
+  const journalEntryId = Number(entryResult.lastInsertRowid)
+
+  // 10. INSERT journal_entry_lines
+  let lineNum = 1
+  const insertLine = db.prepare(
+    `INSERT INTO journal_entry_lines (
+        journal_entry_id, line_number, account_number,
+        debit_ore, credit_ore, description
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+  )
+
+  // DEBET: Bankkonto (betalning minus bankavgift)
+  insertLine.run(
+    journalEntryId,
+    lineNum++,
+    input.account_number,
+    effectivePayment - bankFeeOre,
+    0,
+    description,
+  )
+
+  // DEBET: 6570 Bankkostnader (om avgift > 0)
+  if (bankFeeOre > 0) {
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      BANK_FEE_ACCOUNT,
+      bankFeeOre,
+      0,
+      description,
+    )
+  }
+
+  // DEBET: 3740 Öresutjämning (om kund betalade MINDRE)
+  if (roundingAmount < 0) {
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      '3740',
+      Math.abs(roundingAmount),
+      0,
+      description,
+    )
+  }
+
+  // KREDIT: 1510 Kundfordringar
+  insertLine.run(
+    journalEntryId,
+    lineNum++,
+    '1510',
+    0,
+    actualReceivablesCredit,
+    description,
+  )
+
+  // KREDIT: 3740 Öresutjämning (om kund betalade MER)
+  if (roundingAmount > 0) {
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      '3740',
+      0,
+      roundingAmount,
+      description,
+    )
+  }
+
+  // 11. Book journal entry (triggers validate balance)
+  db.prepare(
+    "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
+  ).run(journalEntryId)
+
+  // 12. INSERT invoice_payment (amount = actual receivables credit)
+  const paymentResult = db
+    .prepare(
+      `INSERT INTO invoice_payments (
+        invoice_id, journal_entry_id, payment_date, amount,
+        payment_method, account_number, bank_fee_ore, bank_fee_account
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      input.invoice_id,
+      journalEntryId,
+      input.payment_date,
+      actualReceivablesCredit,
+      input.payment_method,
+      input.account_number,
+      bankFeeOre > 0 ? bankFeeOre : null,
+      bankFeeOre > 0 ? BANK_FEE_ACCOUNT : null,
+    )
+
+  // 13. UPDATE invoice paid_amount + status atomically from payments
+  db.prepare(
+    `UPDATE invoices SET
+        paid_amount = (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id),
+        status = CASE
+          WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount_ore THEN 'paid'
+          WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) > 0 THEN 'partial'
+          ELSE status
+        END,
+        updated_at = datetime('now','localtime')
+      WHERE id = ?`,
+  ).run(input.invoice_id)
+
+  return {
+    invoice: db
+      .prepare('SELECT * FROM invoices WHERE id = ?')
+      .get(input.invoice_id) as Invoice,
+    payment: db
+      .prepare('SELECT * FROM invoice_payments WHERE id = ?')
+      .get(Number(paymentResult.lastInsertRowid)) as InvoicePayment,
+    journalEntryId,
+  }
+}
 
 export function payInvoice(
   db: Database.Database,
@@ -804,6 +1060,7 @@ export function payInvoice(
     payment_date: string
     payment_method: string
     account_number: string
+    bank_fee_ore?: number
   },
 ): IpcResult<{ invoice: Invoice; payment: InvoicePayment }> {
   // Pre-flight: block future dates
@@ -818,217 +1075,9 @@ export function payInvoice(
   }
 
   try {
-    const result = db.transaction(() => {
-      // 1. Hämta faktura
-      const invoice = db
-        .prepare('SELECT * FROM invoices WHERE id = ?')
-        .get(input.invoice_id) as Invoice | undefined
-      if (!invoice) throw { code: 'INVOICE_NOT_FOUND', error: 'Faktura saknas' }
-
-      // 2. Validera status
-      const payableStatuses = ['unpaid', 'overdue', 'partial']
-      if (!payableStatuses.includes(invoice.status)) {
-        throw {
-          code: 'VALIDATION_ERROR',
-          error: 'Kan inte registrera betalning på denna faktura.',
-        }
-      }
-
-      // 3. Beräkna remaining (total_amount already includes VAT in our schema)
-      const paidResult = db
-        .prepare(
-          'SELECT COALESCE(SUM(amount), 0) as total_paid FROM invoice_payments WHERE invoice_id = ?',
-        )
-        .get(input.invoice_id) as { total_paid: number }
-      const remaining = invoice.total_amount_ore - paidResult.total_paid
-
-      // 4. Öresutjämning
-      const ROUNDING_THRESHOLD = 50
-      const diff = input.amount - remaining
-
-      if (diff > ROUNDING_THRESHOLD) {
-        throw {
-          code: 'OVERPAYMENT',
-          error: `Beloppet överstiger kvarstående med mer än ${ROUNDING_THRESHOLD} öre.`,
-          field: 'amount',
-        }
-      }
-
-      // M99: Öresutjämning aktiveras när |diff| ≤ 50 öre och fakturan har kvarstående belopp.
-      // Tidigare fanns ett villkor `remaining > ROUNDING_THRESHOLD * 2` som blockerade
-      // fullbetalning av fakturor med restbelopp ≤ 100 öre och orsakade tyst datakorruption.
-      // Fixad i Sprint 11 Fas 4 (F3).
-      const isAttemptedFullPayment =
-        Math.abs(diff) <= ROUNDING_THRESHOLD && remaining > 0
-      const needsRounding = isAttemptedFullPayment && diff !== 0
-      const roundingAmount = needsRounding ? diff : 0
-
-      const effectivePayment = input.amount
-      const actualReceivablesCredit = needsRounding ? remaining : input.amount
-
-      // 5. Find fiscal year for payment date
-      const paymentYear = db
-        .prepare(
-          'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
-        )
-        .get(input.payment_date, input.payment_date) as
-        | { id: number }
-        | undefined
-      if (!paymentYear) {
-        throw {
-          code: 'VALIDATION_ERROR',
-          error: 'Betalningsdatum faller inte i något räkenskapsår.',
-          field: 'payment_date',
-        }
-      }
-
-      // 6. Validate period open
-      const period = db
-        .prepare(
-          'SELECT is_closed FROM accounting_periods WHERE fiscal_year_id = ? AND ? BETWEEN start_date AND end_date',
-        )
-        .get(paymentYear.id, input.payment_date) as
-        | { is_closed: number }
-        | undefined
-      if (period && period.is_closed) {
-        throw {
-          code: 'YEAR_IS_CLOSED',
-          error: 'Perioden är stängd.',
-        }
-      }
-
-      // 7. Allokera verifikationsnummer
-      const nextVerResult = db
-        .prepare(
-          "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'A'",
-        )
-        .get(paymentYear.id) as { next_ver: number }
-
-      // 8. Kundnamn
-      const counterparty = db
-        .prepare('SELECT name FROM counterparties WHERE id = ?')
-        .get(invoice.counterparty_id) as { name: string }
-
-      const description = `Betalning faktura #${invoice.invoice_number} — ${counterparty.name}`
-
-      // 9. INSERT journal_entry (as draft, then book)
-      const entryResult = db
-        .prepare(
-          `INSERT INTO journal_entries (
-          company_id, fiscal_year_id, verification_number, verification_series,
-          journal_date, description, status, source_type
-        ) VALUES (
-          (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
-          ?, ?, 'draft', 'auto_payment'
-        )`,
-        )
-        .run(
-          paymentYear.id,
-          nextVerResult.next_ver,
-          input.payment_date,
-          description,
-        )
-      const journalEntryId = Number(entryResult.lastInsertRowid)
-
-      // 10. INSERT journal_entry_lines
-      let lineNum = 1
-      const insertLine = db.prepare(
-        `INSERT INTO journal_entry_lines (
-          journal_entry_id, line_number, account_number,
-          debit_ore, credit_ore, description
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-      )
-
-      // DEBET: Bankkonto
-      insertLine.run(
-        journalEntryId,
-        lineNum++,
-        input.account_number,
-        effectivePayment,
-        0,
-        description,
-      )
-
-      // DEBET: 3740 Öresutjämning (om kund betalade MINDRE)
-      if (roundingAmount < 0) {
-        insertLine.run(
-          journalEntryId,
-          lineNum++,
-          '3740',
-          Math.abs(roundingAmount),
-          0,
-          description,
-        )
-      }
-
-      // KREDIT: 1510 Kundfordringar
-      insertLine.run(
-        journalEntryId,
-        lineNum++,
-        '1510',
-        0,
-        actualReceivablesCredit,
-        description,
-      )
-
-      // KREDIT: 3740 Öresutjämning (om kund betalade MER)
-      if (roundingAmount > 0) {
-        insertLine.run(
-          journalEntryId,
-          lineNum++,
-          '3740',
-          0,
-          roundingAmount,
-          description,
-        )
-      }
-
-      // 11. Book journal entry (triggers validate balance)
-      db.prepare(
-        "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
-      ).run(journalEntryId)
-
-      // 12. INSERT invoice_payment (amount = actual receivables credit)
-      const paymentResult = db
-        .prepare(
-          `INSERT INTO invoice_payments (
-          invoice_id, journal_entry_id, payment_date, amount,
-          payment_method, account_number
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          input.invoice_id,
-          journalEntryId,
-          input.payment_date,
-          actualReceivablesCredit,
-          input.payment_method,
-          input.account_number,
-        )
-
-      // 13. UPDATE invoice paid_amount + status atomically from payments
-      db.prepare(
-        `UPDATE invoices SET
-          paid_amount = (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id),
-          status = CASE
-            WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount_ore THEN 'paid'
-            WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) > 0 THEN 'partial'
-            ELSE status
-          END,
-          updated_at = datetime('now','localtime')
-        WHERE id = ?`,
-      ).run(input.invoice_id)
-
-      return {
-        invoice: db
-          .prepare('SELECT * FROM invoices WHERE id = ?')
-          .get(input.invoice_id) as Invoice,
-        payment: db
-          .prepare('SELECT * FROM invoice_payments WHERE id = ?')
-          .get(Number(paymentResult.lastInsertRowid)) as InvoicePayment,
-      }
-    })()
-
-    return { success: true, data: result }
+    const result = db.transaction(() => _payInvoiceTx(db, input))()
+    // Strip journalEntryId from public contract
+    return { success: true, data: { invoice: result.invoice, payment: result.payment } }
   } catch (err: unknown) {
     const e = err as {
       code?: string
@@ -1049,6 +1098,197 @@ export function payInvoice(
       error: 'Betalning misslyckades.',
       code: 'TRANSACTION_ERROR',
     }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Bulk Pay Invoices — Sprint 13 (M94/M95/M96)
+// ═══════════════════════════════════════════════════════════
+
+import type { BulkPaymentResult } from '../../shared/types'
+
+export interface BulkPayInvoicesInput {
+  payments: Array<{ invoice_id: number; amount_ore: number }>
+  payment_date: string
+  account_number: string
+  bank_fee_ore?: number
+  user_note?: string
+}
+
+export function payInvoicesBulk(
+  db: Database.Database,
+  input: BulkPayInvoicesInput,
+): IpcResult<BulkPaymentResult> {
+  // Pre-flight validations (outside transaction)
+  if (input.payments.length < 1) {
+    return { success: false, error: 'Minst en betalning krävs.', code: 'VALIDATION_ERROR' }
+  }
+
+  // Unique invoice_ids
+  const ids = input.payments.map(p => p.invoice_id)
+  if (new Set(ids).size !== ids.length) {
+    return { success: false, error: 'Dubbletter av faktura-id.', code: 'VALIDATION_ERROR' }
+  }
+
+  // Block future dates
+  const today = todayLocal()
+  if (input.payment_date > today) {
+    return { success: false, error: 'Betalningsdatum kan inte vara i framtiden.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+  }
+
+  // Find fiscal year for payment_date
+  const paymentYear = db
+    .prepare('SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?')
+    .get(input.payment_date, input.payment_date) as { id: number } | undefined
+  if (!paymentYear) {
+    return { success: false, error: 'Betalningsdatum faller inte i något räkenskapsår.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+  }
+
+  const bankFeeOre = input.bank_fee_ore ?? 0
+  if (bankFeeOre > 0) {
+    const totalPayments = input.payments.reduce((sum, p) => sum + p.amount_ore, 0)
+    if (bankFeeOre >= totalPayments) {
+      return { success: false, error: 'Bankavgiften kan inte vara lika med eller överstiga summan av alla betalningar.', code: 'VALIDATION_ERROR', field: 'bank_fee_ore' }
+    }
+  }
+
+  try {
+    const result = db.transaction(() => {
+      const succeeded: Array<{ id: number; payment_id: number; journal_entry_id: number }> = []
+      const failed: Array<{ id: number; error: string; code: string }> = []
+
+      // Per-payment savepoints
+      for (const p of input.payments) {
+        try {
+          db.transaction(() => {
+            const txResult = _payInvoiceTx(db, {
+              invoice_id: p.invoice_id,
+              amount: p.amount_ore,
+              payment_date: input.payment_date,
+              payment_method: 'bank',
+              account_number: input.account_number,
+              bank_fee_ore: 0, // Bank fee handled at batch level
+            })
+            succeeded.push({
+              id: p.invoice_id,
+              payment_id: txResult.payment.id,
+              journal_entry_id: txResult.journalEntryId,
+            })
+          })()
+        } catch (e: unknown) {
+          const err = e as { code?: string; error?: string }
+          failed.push({
+            id: p.invoice_id,
+            error: err.error ?? 'Okänt fel',
+            code: err.code ?? 'TRANSACTION_ERROR',
+          })
+        }
+      }
+
+      // If all failed → cancelled, no batch
+      if (succeeded.length === 0) {
+        return {
+          batch_id: null,
+          status: 'cancelled' as const,
+          succeeded,
+          failed,
+          bank_fee_journal_entry_id: null,
+        }
+      }
+
+      // Create batch
+      const batchStatus: 'completed' | 'partial' = failed.length === 0 ? 'completed' : 'partial'
+      const batchResult = db
+        .prepare(
+          `INSERT INTO payment_batches (
+            fiscal_year_id, batch_type, payment_date, account_number,
+            bank_fee_ore, bank_fee_journal_entry_id, status, user_note
+          ) VALUES (?, 'invoice', ?, ?, ?, NULL, ?, ?)`,
+        )
+        .run(
+          paymentYear.id,
+          input.payment_date,
+          input.account_number,
+          bankFeeOre,
+          batchStatus,
+          input.user_note ?? null,
+        )
+      const batchId = Number(batchResult.lastInsertRowid)
+
+      // Link payments to batch
+      const updateBatch = db.prepare(
+        'UPDATE invoice_payments SET payment_batch_id = ? WHERE id = ?',
+      )
+      for (const s of succeeded) {
+        updateBatch.run(batchId, s.payment_id)
+      }
+
+      // Bank fee journal entry (if > 0 and at least 1 succeeded)
+      let bankFeeJournalEntryId: number | null = null
+      if (bankFeeOre > 0) {
+        // Allocate A-series verification number
+        const nextVer = db
+          .prepare(
+            "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'A'",
+          )
+          .get(paymentYear.id) as { next_ver: number }
+
+        const description = `Bankavgift bulk-betalning ${input.payment_date}`
+
+        // INSERT as draft with source_type and source_reference already set
+        const entryResult = db
+          .prepare(
+            `INSERT INTO journal_entries (
+              company_id, fiscal_year_id, verification_number, verification_series,
+              journal_date, description, status, source_type, source_reference
+            ) VALUES (
+              (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
+              ?, ?, 'draft', 'auto_bank_fee', ?
+            )`,
+          )
+          .run(
+            paymentYear.id,
+            nextVer.next_ver,
+            input.payment_date,
+            description,
+            `batch:${batchId}`,
+          )
+        bankFeeJournalEntryId = Number(entryResult.lastInsertRowid)
+
+        // 2 journal lines: debet 6570, kredit bank account
+        const insertLine = db.prepare(
+          `INSERT INTO journal_entry_lines (
+            journal_entry_id, line_number, account_number,
+            debit_ore, credit_ore, description
+          ) VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        insertLine.run(bankFeeJournalEntryId, 1, '6570', bankFeeOre, 0, description)
+        insertLine.run(bankFeeJournalEntryId, 2, input.account_number, 0, bankFeeOre, description)
+
+        // Book (triggers validate balance)
+        db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(bankFeeJournalEntryId)
+
+        // Link bank fee to batch
+        db.prepare('UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?').run(bankFeeJournalEntryId, batchId)
+      }
+
+      return {
+        batch_id: batchId,
+        status: batchStatus,
+        succeeded,
+        failed,
+        bank_fee_journal_entry_id: bankFeeJournalEntryId,
+      }
+    })()
+
+    return { success: true, data: result }
+  } catch (err: unknown) {
+    const e = err as { code?: string; error?: string; field?: string }
+    if (e.code) {
+      return { success: false, error: e.error ?? 'Bulk-betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
+    }
+    log.error('[invoice-service] payInvoicesBulk failed:', err)
+    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'TRANSACTION_ERROR' }
   }
 }
 

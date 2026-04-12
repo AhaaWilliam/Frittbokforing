@@ -117,6 +117,7 @@ describe('Struktur', () => {
       'manual_entries',
       'manual_entry_lines',
       'opening_balances',
+      'payment_batches',
       'price_list_items',
       'price_lists',
       'products',
@@ -125,7 +126,7 @@ describe('Struktur', () => {
       'verification_sequences',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(22)
+    expect(tables.length).toBe(23)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -144,7 +145,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(19) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(21) // S24: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

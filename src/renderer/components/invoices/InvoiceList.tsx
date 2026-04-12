@@ -1,12 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Search, FileDown, CheckCircle, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
   InvoiceListItem,
   InvoiceStatusCounts,
+  BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useDebouncedSearch } from '../../lib/hooks'
+import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useBulkPayInvoices, useDebouncedSearch } from '../../lib/hooks'
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
@@ -14,6 +15,8 @@ import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { EmptyState, InvoiceIllustration } from '../ui/EmptyState'
 import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
 import { PaymentDialog } from '../ui/PaymentDialog'
+import { BulkPaymentDialog, type BulkPaymentRow } from '../ui/BulkPaymentDialog'
+import { BulkPaymentResultDialog } from '../ui/BulkPaymentResultDialog'
 
 interface InvoiceListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
@@ -55,8 +58,14 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   // Payment dialog state
   const [payItem, setPayItem] = useState<InvoiceListItem | null>(null)
 
+  // Multi-select state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [showBulkDialog, setShowBulkDialog] = useState(false)
+  const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
+
   const finalizeMutation = useFinalizeInvoice(activeFiscalYear?.id)
   const payMutation = usePayInvoice()
+  const bulkPayMutation = useBulkPayInvoices()
 
   // PDF hooks
   const generatePdfMutation = useIpcMutation(
@@ -104,7 +113,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }
 
-  async function handlePayment(amount: number, date: string) {
+  async function handlePayment(amount: number, date: string, bankFeeOre?: number) {
     if (!payItem) return
     try {
       await payMutation.mutateAsync({
@@ -113,6 +122,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         payment_date: date,
         payment_method: 'bankgiro',
         account_number: '1930',
+        ...(bankFeeOre ? { bank_fee_ore: bankFeeOre } : {}),
       })
       toast.success('Betalning registrerad')
       setPayItem(null)
@@ -121,6 +131,51 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       toast.error(
         err instanceof Error ? err.message : 'Kunde inte registrera betalning',
       )
+    }
+  }
+
+  const isSelectable = useCallback((item: InvoiceListItem) =>
+    ['unpaid', 'partial', 'overdue'].includes(item.status), [])
+
+  const selectableItems = items.filter(isSelectable)
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === selectableItems.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(selectableItems.map(i => i.id)))
+    }
+  }
+
+  async function handleBulkPay(payments: Array<{ id: number; amount_ore: number }>, date: string, accountNumber: string, bankFeeOre: number | undefined, userNote: string | undefined) {
+    try {
+      const result = await bulkPayMutation.mutateAsync({
+        payments: payments.map(p => ({ invoice_id: p.id, amount_ore: p.amount_ore })),
+        payment_date: date,
+        account_number: accountNumber,
+        bank_fee_ore: bankFeeOre,
+        user_note: userNote,
+      })
+      setShowBulkDialog(false)
+      setSelectedIds(new Set())
+      setBulkResult(result)
+      if (result.failed.length === 0) {
+        toast.success(`${result.succeeded.length} betalningar registrerade`)
+      } else {
+        toast.warning(`${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`)
+      }
+    } catch (err) {
+      console.error('Bulk pay failed:', err)
+      toast.error(err instanceof Error ? err.message : 'Bulk-betalning misslyckades')
     }
   }
 
@@ -201,6 +256,28 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
+          <span className="text-sm font-medium">{selectedIds.size} valda</span>
+          <button
+            type="button"
+            onClick={() => setShowBulkDialog(true)}
+            className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <CreditCard className="h-3 w-3" />
+            Bulk-betala
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Avmarkera alla
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       {isLoading ? (
         <LoadingSpinner />
@@ -221,7 +298,15 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-8 py-3">Nr</th>
+                <th className="px-3 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={selectableItems.length > 0 && selectedIds.size === selectableItems.length}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                </th>
+                <th className="px-4 py-3">Nr</th>
                 <th className="px-4 py-3">Datum</th>
                 <th className="px-4 py-3">Kund</th>
                 <th className="px-4 py-3 text-right">Netto</th>
@@ -242,7 +327,19 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                     onClick={() => handleRowClick(item)}
                     className="cursor-pointer border-b transition-colors hover:bg-muted/50"
                   >
-                    <td className="px-8 py-3">
+                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                      {isSelectable(item) ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       {item.invoice_number || '\u2014'}
                     </td>
                     <td className="px-4 py-3">{item.invoice_date}</td>
@@ -352,6 +449,28 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
           isLoading={payMutation.isPending}
         />
       )}
+
+      <BulkPaymentDialog
+        open={showBulkDialog}
+        onOpenChange={setShowBulkDialog}
+        title={`Bulk-betalning (${selectedIds.size} fakturor)`}
+        rows={items
+          .filter(i => selectedIds.has(i.id))
+          .map(i => ({
+            id: i.id,
+            label: i.invoice_number || `#${i.id}`,
+            counterparty: i.counterparty_name,
+            remaining: i.remaining,
+          }))}
+        onSubmit={handleBulkPay}
+        isLoading={bulkPayMutation.isPending}
+      />
+
+      <BulkPaymentResultDialog
+        open={!!bulkResult}
+        onOpenChange={() => setBulkResult(null)}
+        result={bulkResult}
+      />
     </div>
   )
 }

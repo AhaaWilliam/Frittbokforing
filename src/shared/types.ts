@@ -395,6 +395,8 @@ export interface InvoicePayment {
   payment_method: string | null
   account_number: string
   journal_entry_id: number
+  bank_fee_ore: number | null
+  bank_fee_account: string | null
   created_at: string
 }
 
@@ -443,6 +445,8 @@ export interface ExpensePayment {
   payment_method: string | null
   account_number: string
   journal_entry_id: number
+  bank_fee_ore: number | null
+  bank_fee_account: string | null
   created_at: string
 }
 
@@ -735,6 +739,34 @@ export interface UpdateManualEntryDraftInput {
   entry_date?: string
   description?: string
   lines: ManualEntryLineInput[]
+}
+
+// === Payment Batch ===
+export interface PaymentBatch {
+  id: number
+  fiscal_year_id: number
+  batch_type: 'invoice' | 'expense'
+  payment_date: string
+  account_number: string
+  bank_fee_ore: number
+  bank_fee_journal_entry_id: number | null
+  status: 'completed' | 'partial' | 'cancelled'
+  user_note: string | null
+  created_at: string
+}
+
+export interface BulkPaymentItem {
+  invoice_id?: number
+  expense_id?: number
+  amount_ore: number
+}
+
+export interface BulkPaymentResult {
+  batch_id: number | null
+  status: 'completed' | 'partial' | 'cancelled'
+  succeeded: Array<{ id: number; payment_id: number; journal_entry_id: number }>
+  failed: Array<{ id: number; error: string; code: string }>
+  bank_fee_journal_entry_id: number | null
 }
 
 export interface ExpenseDraftListItem {

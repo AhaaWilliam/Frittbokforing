@@ -348,6 +348,7 @@ export const PayInvoiceInputSchema = z
     payment_date: z.string().min(10).max(10),
     payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
     account_number: z.string().min(4).max(4),
+    bank_fee_ore: z.number().int().min(0).optional(),
   })
   .strict()
 
@@ -422,6 +423,7 @@ export const PayExpenseInputSchema = z
     payment_date: z.string().min(10).max(10),
     payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
     account_number: z.string().min(4).max(4),
+    bank_fee_ore: z.number().int().min(0).optional(),
   })
   .strict()
 
@@ -539,6 +541,61 @@ export const ManualEntryListSchema = z
     fiscal_year_id: z.number().int().positive(),
   })
   .strict()
+
+// === Bulk Payment ===
+export const PayInvoicesBulkPayloadSchema = z
+  .object({
+    payments: z
+      .array(
+        z.object({
+          invoice_id: z.number().int().positive(),
+          amount_ore: z.number().int().positive(),
+        }).strict(),
+      )
+      .min(1, 'Minst en betalning krävs'),
+    payment_date: z.string().min(10).max(10),
+    account_number: z.string().min(4).max(4),
+    bank_fee_ore: z.number().int().min(0).optional(),
+    user_note: z.string().max(500).optional(),
+  })
+  .strict()
+
+export const PayExpensesBulkPayloadSchema = z
+  .object({
+    payments: z
+      .array(
+        z.object({
+          expense_id: z.number().int().positive(),
+          amount_ore: z.number().int().positive(),
+        }).strict(),
+      )
+      .min(1, 'Minst en betalning krävs'),
+    payment_date: z.string().min(10).max(10),
+    account_number: z.string().min(4).max(4),
+    bank_fee_ore: z.number().int().min(0).optional(),
+    user_note: z.string().max(500).optional(),
+  })
+  .strict()
+
+export const BulkPaymentResultSchema = z.object({
+  batch_id: z.number().int().positive().nullable(),
+  status: z.enum(['completed', 'partial', 'cancelled']),
+  succeeded: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      payment_id: z.number().int().positive(),
+      journal_entry_id: z.number().int().positive(),
+    }),
+  ),
+  failed: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      error: z.string(),
+      code: z.string(),
+    }),
+  ),
+  bank_fee_journal_entry_id: z.number().int().positive().nullable(),
+})
 
 // === Reports ===
 export const ReportRequestSchema = z

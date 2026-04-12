@@ -127,7 +127,7 @@ describe('Session 11: Migration 010', () => {
 
   it('PRAGMA user_version = 10', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(19) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(21) // S24: Uppdatera vid nya migrationer
   })
 
   it('expense payments use auto_payment source_type in B-series', () => {

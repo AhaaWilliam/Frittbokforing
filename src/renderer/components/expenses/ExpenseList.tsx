@@ -1,18 +1,21 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Search, CheckCircle, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
   ExpenseListItem,
   ExpenseStatusCounts,
+  BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useExpenses, useFinalizeExpense, usePayExpense, useDebouncedSearch } from '../../lib/hooks'
+import { useExpenses, useFinalizeExpense, usePayExpense, useBulkPayExpenses, useDebouncedSearch } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
 import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
 import { PaymentDialog } from '../ui/PaymentDialog'
+import { BulkPaymentDialog, type BulkPaymentRow } from '../ui/BulkPaymentDialog'
+import { BulkPaymentResultDialog } from '../ui/BulkPaymentResultDialog'
 
 interface ExpenseListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
@@ -56,8 +59,13 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   // Payment dialog state
   const [payItem, setPayItem] = useState<ExpenseListItem | null>(null)
 
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [showBulkDialog, setShowBulkDialog] = useState(false)
+  const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
+
   const finalizeMutation = useFinalizeExpense()
   const payMutation = usePayExpense()
+  const bulkPayMutation = useBulkPayExpenses()
 
   useKeyboardShortcuts({
     'mod+k': () => searchRef.current?.focus(),
@@ -119,6 +127,51 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
     }
   }
 
+  const isSelectable = useCallback((item: ExpenseListItem) =>
+    ['unpaid', 'partial', 'overdue'].includes(item.status), [])
+
+  const selectableItems = items.filter(isSelectable)
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === selectableItems.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(selectableItems.map(i => i.id)))
+    }
+  }
+
+  async function handleBulkPay(payments: Array<{ id: number; amount_ore: number }>, date: string, accountNumber: string, bankFeeOre: number | undefined, userNote: string | undefined) {
+    try {
+      const result = await bulkPayMutation.mutateAsync({
+        payments: payments.map(p => ({ expense_id: p.id, amount_ore: p.amount_ore })),
+        payment_date: date,
+        account_number: accountNumber,
+        bank_fee_ore: bankFeeOre,
+        user_note: userNote,
+      })
+      setShowBulkDialog(false)
+      setSelectedIds(new Set())
+      setBulkResult(result)
+      if (result.failed.length === 0) {
+        toast.success(`${result.succeeded.length} betalningar registrerade`)
+      } else {
+        toast.warning(`${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`)
+      }
+    } catch (err) {
+      console.error('Bulk pay failed:', err)
+      toast.error(err instanceof Error ? err.message : 'Bulk-betalning misslyckades')
+    }
+  }
+
   function handleRowClick(item: ExpenseListItem) {
     if (item.status === 'draft') {
       onNavigate({ edit: item.id })
@@ -176,6 +229,28 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
+          <span className="text-sm font-medium">{selectedIds.size} valda</span>
+          <button
+            type="button"
+            onClick={() => setShowBulkDialog(true)}
+            className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <CreditCard className="h-3 w-3" />
+            Bulk-betala
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Avmarkera alla
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       {isLoading ? (
         <LoadingSpinner />
@@ -196,7 +271,15 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-8 py-3">Datum</th>
+                <th className="px-3 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={selectableItems.length > 0 && selectedIds.size === selectableItems.length}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                </th>
+                <th className="px-4 py-3">Datum</th>
                 <th className="px-4 py-3">Leverantör</th>
                 <th className="px-4 py-3">Beskrivning</th>
                 <th className="px-4 py-3">Lev.fakturanr</th>
@@ -218,7 +301,19 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                     onClick={() => handleRowClick(item)}
                     className="cursor-pointer border-b transition-colors hover:bg-muted/50"
                   >
-                    <td className="px-8 py-3">{item.expense_date}</td>
+                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                      {isSelectable(item) ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                    </td>
+                    <td className="px-4 py-3">{item.expense_date}</td>
                     <td className="px-4 py-3">{item.counterparty_name}</td>
                     <td className="max-w-[200px] truncate px-4 py-3">
                       {item.description}
@@ -319,6 +414,28 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
           isLoading={payMutation.isPending}
         />
       )}
+
+      <BulkPaymentDialog
+        open={showBulkDialog}
+        onOpenChange={setShowBulkDialog}
+        title={`Bulk-betalning (${selectedIds.size} kostnader)`}
+        rows={items
+          .filter(i => selectedIds.has(i.id))
+          .map(i => ({
+            id: i.id,
+            label: i.supplier_invoice_number || i.description,
+            counterparty: i.counterparty_name,
+            remaining: i.remaining,
+          }))}
+        onSubmit={handleBulkPay}
+        isLoading={bulkPayMutation.isPending}
+      />
+
+      <BulkPaymentResultDialog
+        open={!!bulkResult}
+        onOpenChange={() => setBulkResult(null)}
+        result={bulkResult}
+      />
     </div>
   )
 }

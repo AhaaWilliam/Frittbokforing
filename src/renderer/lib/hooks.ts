@@ -28,6 +28,8 @@ import type {
   UpdateExpenseDraftInput,
   SaveManualEntryDraftInput,
   UpdateManualEntryDraftInput,
+  BulkPaymentResult,
+  IpcResult,
 } from '../../shared/types'
 import { useIpcQuery, useDirectQuery } from './use-ipc-query'
 import { useIpcMutation } from './use-ipc-mutation'
@@ -393,6 +395,28 @@ export function usePayInvoice() {
   )
 }
 
+export function useBulkPayInvoices() {
+  return useIpcMutation<
+    {
+      payments: Array<{ invoice_id: number; amount_ore: number }>
+      payment_date: string
+      account_number: string
+      bank_fee_ore?: number
+      user_note?: string
+    },
+    BulkPaymentResult
+  >(
+    (input) => window.api.payInvoicesBulk(input) as Promise<IpcResult<BulkPaymentResult>>,
+    {
+      invalidate: [
+        queryKeys.allInvoices(),
+        queryKeys.anyInvoice(),
+        queryKeys.allPayments(),
+      ],
+    },
+  )
+}
+
 export function useInvoicePayments(invoiceId: number | undefined) {
   return useIpcQuery(
     queryKeys.invoicePayments(invoiceId!),
@@ -530,6 +554,29 @@ export function usePayExpense() {
       payment_method: string
       account_number: string
     }) => window.api.payExpense(input),
+    {
+      invalidate: [
+        queryKeys.allExpenseDrafts(),
+        queryKeys.allExpenses(),
+        queryKeys.anyExpense(),
+        queryKeys.allExpensePayments(),
+      ],
+    },
+  )
+}
+
+export function useBulkPayExpenses() {
+  return useIpcMutation<
+    {
+      payments: Array<{ expense_id: number; amount_ore: number }>
+      payment_date: string
+      account_number: string
+      bank_fee_ore?: number
+      user_note?: string
+    },
+    BulkPaymentResult
+  >(
+    (input) => window.api.payExpensesBulk(input) as Promise<IpcResult<BulkPaymentResult>>,
     {
       invalidate: [
         queryKeys.allExpenseDrafts(),
