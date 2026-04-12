@@ -16,3 +16,5 @@ test-results/
 e2e/test-results/
 e2e/playwright-report/
 fritt-bokforing-source-dump.txt
+notion-diffs/
+notion-snapshots/
