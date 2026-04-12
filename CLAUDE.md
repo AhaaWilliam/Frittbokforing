@@ -76,3 +76,33 @@ Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THR
 - **Rad-callbacks memoizeras med linesRef-mönstret.** `addLine`/`removeLine`/`updateLine` wrappas i `useCallback` och läser senaste lines via `linesRef.current`. Deps: `[form.setField]` (stabil referens). Pattern: `const linesRef = useRef(lines); linesRef.current = lines;`.
 - **Rad-komponenter wrappas i `React.memo`.** `InvoiceLineRow` och `ExpenseLineRow` (ny fil, extraherad från inline-rendering i ExpenseForm) är `memo`-wrappade. Shallow comparison av props skipprar re-render för orörda rader.
 - **FiscalYearContext auto-persist väntar på `restoredIdLoaded`.** `getSetting('last_fiscal_year_id')` måste ha resolverats (via `.finally()`) innan auto-persist-effekten tillåts skriva till settings. Förhindrar att temporär openYear-fallback overskriver användarens senaste FY-val.
+
+## 21. Bankavgifter vid betalning (M110–M111)
+
+**M110.** Bankavgifter lagras som `bank_fee_ore` + `bank_fee_account` på `invoice_payments` och `expense_payments`. En payment = en fakturaavstämning. Avgiften påverkar INTE `paid_amount` — den påverkar bara verifikatets bankrad. Kontot hårdkodas till '6570' server-side. Ingen moms på bankavgifter. NULL eller 0 → ingen extra verifikatrad.
+
+**M111.** Avgiften påverkar bankraden i verifikatet, inte fordran/skuldraden. Vid kundbetalning: D Bank (belopp − avgift), D 6570 (avgift), K 1510 (fullt belopp). Vid leverantörsbetalning: D 2440 (fullt belopp), D 6570 (avgift), K Bank (belopp + avgift). `invoices.paid_amount` och `expenses.paid_amount` speglar exakt summan av respektive `payments.amount` — avgifter räknas aldrig in.
+
+## 22. Bulk-betalningar (M112–M114)
+
+**M112.** Services exponerar både publik variant (returnerar `IpcResult`) och intern `_payInvoiceTx`/`_payExpenseTx`-variant (kastar strukturerade `{code, error, field?}`-fel, öppnar ingen egen transaktion). Bulk-wrappers (`payInvoicesBulk`, `payExpensesBulk`) komponerar över den interna varianten. Publika `payInvoice`/`payExpense` wrappar med `db.transaction(() => _payXTx(db, input))()` och strippar `journalEntryId` från returvärdet så det publika kontraktet är oförändrat.
+
+**M113.** Bulk-operationer använder yttre `db.transaction()` med nestade `db.transaction(single)()` som savepoints. Best-effort: per-rad-fel samlas i `failed[]`, batchen committar så länge `succeeded.length >= 1`. Om alla misslyckas returneras `status: 'cancelled'` utan batch-rad och utan bank-fee. `payment_batches`-tabellen skapas av migration 021 och har `batch_type IN ('invoice', 'expense')`, `status IN ('completed', 'partial', 'cancelled')`. `invoice_payments`/`expense_payments` har nullable `payment_batch_id` FK.
+
+**M114.** Batch-nivå-verifikat (bank-fee) använder samma serie (A för invoices, B för expenses) som underliggande payment-verifikat. Identifieras via `source_type='auto_bank_fee'` och `source_reference='batch:{batch_id}'` som sätts vid INSERT, aldrig via UPDATE (`trg_immutable_booked_entry_update` blockerar annars). `_payExpenseTx` accepterar `skipChronologyCheck: boolean` — publika `payExpense` anropar med `false`, bulk-wrapper validerar M6-kronologin en gång på batch-nivå och anropar med `true`.
+
+## 23. E2E-testinfrastruktur (M115–M117)
+
+**M115.** E2E-tester körs mot dev-byggd Electron-app via Playwright. Varje test-fil får egen temp-db via `FRITT_DB_PATH`-env (guardad till `NODE_ENV=test` eller `FRITT_TEST=1`). Data seedas via IPC-anrop från Playwright-sidan (`window.api.*` för produktion, `window.__testApi.*` för test-only) efter att appen startats — inte via direkt better-sqlite3 före start. Skäl: native module (better-sqlite3) kompileras för antingen Node.js (vitest) eller Electron (Playwright) — aldrig båda samtidigt. IPC-approach undviker ABI-konflikten helt.
+
+**M116.** E2E-tester täcker flöden som är orealistiska att testa i system-lagret (multi-step-UI, renderer↔main-IPC-kontrakt, full stack). System-lagret äger fortfarande affärslogik-testning. Ett E2E-test per kritiskt flöde, inte per edge-case. Redundansaudit i `tests/REDUNDANCY_AUDIT.md`.
+
+**M117.** `data-testid` tillåts på kritiska E2E-kontrakt: `wizard`, `app-ready`, `page-{name}`, bulk-dialog-actions, export-knappar. Fullständig whitelist i `tests/e2e/README.md`. Nya data-testid ska läggas till i whitelist vid införande.
+
+## 24. Opening balance-semantik (M118)
+
+**M118.** `journal_entries` med `source_type='opening_balance'` är undantagna från immutability-triggers 1–5 (`trg_immutable_booked_entry_update/delete`, `trg_immutable_booked_line_update/delete/insert`). Detta möjliggör `reTransferOpeningBalance`-flödet som raderar och återskapar IB-verifikatet vid FY-byte. Balance-trigger 6 (`trg_check_balance_on_booking`) och period-trigger 7 (`trg_check_period_on_booking`) har INTE opening_balance-undantag — IB måste balansera och datumet måste ligga i öppet FY vid bokning. Om ett framtida IB-korrigeringsflöde behövs (t.ex. ändra IB efter att FY stängts) krävs undantag även i trigger 6/7.
+
+## Projektstatus
+
+Se `STATUS.md` för aktuell sprint, test-count, kända fynd och infrastruktur-kontrakt.

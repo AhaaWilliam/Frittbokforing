@@ -4,10 +4,11 @@ import { app } from 'electron'
 import fs from 'fs'
 import { migrations } from './migrations'
 
-const DB_DIR = process.env.DB_PATH
-  ? path.dirname(process.env.DB_PATH)
-  : path.join(app.getPath('documents'), 'Fritt Bokföring')
-const DB_PATH = process.env.DB_PATH || path.join(DB_DIR, 'data.db')
+import { resolveDbPath } from './db-path'
+
+const defaultDbPath = path.join(app.getPath('documents'), 'Fritt Bokföring', 'data.db')
+const DB_PATH = resolveDbPath(process.env, defaultDbPath)
+const DB_DIR = path.dirname(DB_PATH)
 
 let db: Database.Database | null = null
 
