@@ -90,6 +90,18 @@ submit happy path, submit errors (IpcError m/u field, generic),
 isDirty + M102-subtlety, reset (full + partial),
 integration med FormField (2 sanity-tester)
 
+## Sprint 18 — S64d
+
+Komponent: FiscalYearContext (context + provider + useFiscalYearContext-hook)
+Test-fil: tests/renderer/contexts/FiscalYearContext.test.tsx
+M-principer täckta: M102 (restoredIdLoaded-gating mot race condition)
+Beteendecase: resolution-kedja (selectedYear → restoredId → first open → first),
+restoredIdLoaded-gating (4 timing-case inkl. explicit val under pending restore),
+setActiveFiscalYear-bieffekter (settings:set, stängd FY),
+isReadOnly-derivering (open/closed),
+edge cases (tom lista, ogiltigt restoredId),
+useFiscalYearContext utanför provider (throw)
+
 ## Exempelformat för PR-beskrivningar
 
 ```
