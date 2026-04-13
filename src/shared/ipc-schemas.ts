@@ -679,3 +679,111 @@ export const NetResultInputSchema = z
     fiscalYearId: z.number().int().positive(),
   })
   .strict()
+
+// ---------------------------------------------------------------------------
+// channelMap — explicit mapping of every IPC channel to its Zod input schema.
+// Used by mock-IPC (tests/setup/mock-ipc.ts) for input validation.
+//
+// Channels WITHOUT a Zod schema (no input or raw primitives) are excluded:
+//   'db:health-check', 'company:get', 'fiscal-year:list',
+//   'opening-balance:re-transfer', 'backup:create',
+//   'settings:get', 'settings:set'
+//
+// Schemas NOT in this map (not IPC channels — embedded/helper schemas):
+//   VatNumberSchema, InvoiceDraftLineSchema, BulkPaymentResultSchema
+// ---------------------------------------------------------------------------
+export const channelMap = {
+  // Company
+  'company:create': CreateCompanyInputSchema,
+  'company:update': UpdateCompanyInputSchema,
+
+  // Fiscal Years
+  'fiscal-year:create-new': FiscalYearCreateNewInputSchema,
+  'fiscal-year:switch': FiscalYearSwitchInputSchema,
+
+  // Fiscal Periods
+  'fiscal-period:list': FiscalPeriodListInputSchema,
+  'fiscal-period:close': PeriodActionInputSchema,
+  'fiscal-period:reopen': PeriodActionInputSchema,
+
+  // Opening Balance
+  'opening-balance:net-result': NetResultInputSchema,
+
+  // Counterparties
+  'counterparty:list': CounterpartyListInputSchema,
+  'counterparty:get': CounterpartyIdSchema,
+  'counterparty:create': CreateCounterpartyInputSchema,
+  'counterparty:update': UpdateCounterpartyInputSchema,
+  'counterparty:deactivate': CounterpartyIdSchema,
+
+  // Products
+  'product:list': ProductListInputSchema,
+  'product:get': ProductIdSchema,
+  'product:create': CreateProductInputSchema,
+  'product:update': UpdateProductInputSchema,
+  'product:deactivate': ProductIdSchema,
+  'product:set-customer-price': SetCustomerPriceInputSchema,
+  'product:remove-customer-price': RemoveCustomerPriceInputSchema,
+  'product:get-price-for-customer': GetPriceForCustomerInputSchema,
+
+  // VAT & Accounts
+  'vat-code:list': VatCodeListInputSchema,
+  'account:list': AccountListInputSchema,
+  'account:list-all': AccountListAllInputSchema,
+  'account:create': AccountCreateInputSchema,
+  'account:update': AccountUpdateInputSchema,
+  'account:toggle-active': AccountToggleActiveInputSchema,
+
+  // Invoices
+  'invoice:save-draft': SaveDraftInputSchema,
+  'invoice:get-draft': InvoiceIdSchema,
+  'invoice:update-draft': UpdateDraftInputSchema,
+  'invoice:delete-draft': InvoiceIdSchema,
+  'invoice:list-drafts': DraftListInputSchema,
+  'invoice:next-number': NextNumberInputSchema,
+  'invoice:list': InvoiceListInputSchema,
+  'invoice:finalize': FinalizeInvoiceInputSchema,
+  'invoice:update-sent': UpdateSentInvoiceInputSchema,
+  'invoice:pay': PayInvoiceInputSchema,
+  'invoice:payBulk': PayInvoicesBulkPayloadSchema,
+  'invoice:payments': GetPaymentsInputSchema,
+  'invoice:generate-pdf': GenerateInvoicePdfSchema,
+  'invoice:save-pdf': SaveInvoicePdfSchema,
+
+  // Expenses
+  'expense:save-draft': SaveExpenseDraftSchema,
+  'expense:get-draft': ExpenseIdSchema,
+  'expense:update-draft': UpdateExpenseDraftSchema,
+  'expense:delete-draft': ExpenseIdSchema,
+  'expense:list-drafts': ListExpenseDraftsSchema,
+  'expense:finalize': FinalizeExpenseSchema,
+  'expense:pay': PayExpenseInputSchema,
+  'expense:payBulk': PayExpensesBulkPayloadSchema,
+  'expense:payments': GetExpensePaymentsSchema,
+  'expense:get': GetExpenseSchema,
+  'expense:list': ListExpensesSchema,
+
+  // Manual Entries
+  'manual-entry:save-draft': SaveManualEntryDraftSchema,
+  'manual-entry:get': ManualEntryIdSchema,
+  'manual-entry:update-draft': UpdateManualEntryDraftSchema,
+  'manual-entry:delete-draft': ManualEntryIdSchema,
+  'manual-entry:list-drafts': ManualEntryListSchema,
+  'manual-entry:list': ManualEntryListSchema,
+  'manual-entry:finalize': ManualEntryFinalizeSchema,
+
+  // Dashboard & Reports
+  'dashboard:summary': DashboardSummaryInputSchema,
+  'vat:report': VatReportInputSchema,
+  'tax:forecast': TaxForecastInputSchema,
+  'report:income-statement': ReportRequestSchema,
+  'report:balance-sheet': ReportRequestSchema,
+
+  // Exports
+  'export:sie5': ExportSie5Schema,
+  'export:sie4': ExportSie4Schema,
+  'export:excel': ExportExcelSchema,
+  'export:write-file': ExportWriteFileRequestSchema,
+} as const satisfies Record<string, z.ZodType>
+
+export type ChannelName = keyof typeof channelMap
