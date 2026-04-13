@@ -178,7 +178,7 @@ describe('Periodgenerering', () => {
     // Skapa en draft-verifikation i period 1
     const entryResult = db
       .prepare(
-        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by)
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by_id)
        VALUES (?, ?, '2025-01-15', 'Test', 'draft', NULL)`,
       )
       .run(result.data.id, fy.id)

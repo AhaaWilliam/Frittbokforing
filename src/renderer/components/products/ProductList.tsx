@@ -76,7 +76,7 @@ export function ProductList({
                 {product.name}
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {formatKr(product.default_price)}/{unitLabel(product.unit)}
+                {formatKr(product.default_price_ore)}/{unitLabel(product.unit)}
               </div>
             </div>
             {typeBadge(product.article_type)}

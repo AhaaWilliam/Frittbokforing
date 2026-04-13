@@ -57,7 +57,7 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         description: product.description ?? '',
         article_type: product.article_type,
         unit: product.unit,
-        _priceKr: String(toKr(product.default_price)),
+        _priceKr: String(toKr(product.default_price_ore)),
         vat_code_id: product.vat_code_id,
         account_id: product.account_id,
       }

@@ -236,7 +236,7 @@ describe('GAP M04-1: Artikeltyp → standardkonto', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const result = createProduct(db, {
       name: 'Konsulttjänst',
-      default_price: 100_000,
+      default_price_ore: 100_000,
       vat_code_id: vatCodeId,
       account_id: accountId,
       article_type: 'service',
@@ -258,7 +258,7 @@ describe('GAP M04-1: Artikeltyp → standardkonto', () => {
 
     const result = createProduct(db, {
       name: 'Vara',
-      default_price: 50_000,
+      default_price_ore: 50_000,
       vat_code_id: vatCodeId,
       account_id: goodsAccount.id,
       article_type: 'goods',
@@ -272,7 +272,7 @@ describe('GAP M04-2: Momskod-koppling', () => {
     const { accountId } = getTestIds(db)
     const result = createProduct(db, {
       name: 'Felaktig',
-      default_price: 10_000,
+      default_price_ore: 10_000,
       vat_code_id: 99999, // Non-existent
       account_id: accountId,
     })

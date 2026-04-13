@@ -81,9 +81,9 @@ describe('Full-chain regression (migrations 1→24)', () => {
     const vatOut25 = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
     const vatIn25 = db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }
 
-    const prod1 = createProduct(db, { name: 'Konsulttjänst', default_price: 10000, vat_code_id: vatOut25.id, account_id: serviceAccount.id, article_type: 'service' })
+    const prod1 = createProduct(db, { name: 'Konsulttjänst', default_price_ore: 10000, vat_code_id: vatOut25.id, account_id: serviceAccount.id, article_type: 'service' })
     if (!prod1.success) throw new Error(prod1.error)
-    const prod2 = createProduct(db, { name: 'Skruvar', default_price: 5000, vat_code_id: vatOut25.id, account_id: goodsAccount.id, article_type: 'goods' })
+    const prod2 = createProduct(db, { name: 'Skruvar', default_price_ore: 5000, vat_code_id: vatOut25.id, account_id: goodsAccount.id, article_type: 'goods' })
     if (!prod2.success) throw new Error(prod2.error)
 
     // === Invoice 1: finalized + paid with bank fee (product-based line) ===

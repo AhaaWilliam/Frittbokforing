@@ -134,7 +134,7 @@ describe('SEC01: IPC Input-validering', () => {
     it('SEC01-A06: CreateProductInputSchema avvisar extra fält', () => {
       const result = CreateProductInputSchema.safeParse({
         name: 'Produkt',
-        default_price: 10000,
+        default_price_ore: 10000,
         vat_code_id: 1,
         account_id: 1,
         article_type: 'service',

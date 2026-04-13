@@ -221,7 +221,7 @@ export function useDeactivateProduct() {
 
 export function useSetCustomerPrice(productId: number | undefined) {
   return useIpcMutation<
-    { product_id: number; counterparty_id: number; price: number },
+    { product_id: number; counterparty_id: number; price_ore: number },
     CustomerPrice
   >(
     (data) => window.api.setCustomerPrice(data),

@@ -183,7 +183,7 @@ export interface Product {
   name: string
   description: string | null
   unit: 'timme' | 'styck' | 'dag' | 'månad' | 'km' | 'pauschal'
-  default_price: number // ören
+  default_price_ore: number
   vat_code_id: number
   account_id: number
   article_type: 'service' | 'goods' | 'expense'
@@ -195,11 +195,11 @@ export interface Product {
 export interface CustomerPrice {
   counterparty_id: number
   counterparty_name: string
-  price: number // ören
+  price_ore: number
 }
 
 export interface PriceResult {
-  price: number // ören
+  price_ore: number
   source: 'customer' | 'default'
 }
 
@@ -237,7 +237,7 @@ export interface CreateProductInput {
   name: string
   description?: string | null
   unit?: 'timme' | 'styck' | 'dag' | 'månad' | 'km' | 'pauschal'
-  default_price: number
+  default_price_ore: number
   vat_code_id: number
   account_id: number
   article_type?: 'service' | 'goods' | 'expense'
@@ -434,6 +434,7 @@ export interface ExpenseLine {
   vat_code_id: number
   line_total_ore: number
   vat_amount_ore: number
+  sort_order: number
 }
 
 export interface ExpenseWithLines extends Expense {

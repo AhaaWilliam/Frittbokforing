@@ -56,7 +56,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // 2. Skapa produkt
     const product = seedProduct(ctx, {
       name: 'Tjänst S01',
-      default_price: 100000,
+      default_price_ore: 100000,
     }) // 1000 kr
 
     // 3. Spara invoice draft med 2 rader

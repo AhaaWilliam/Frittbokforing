@@ -72,7 +72,7 @@ export function ProductDetail({ id, onEdit }: ProductDetailProps) {
 
       <div className="mb-4">
         <span className="text-2xl font-semibold">
-          {formatKr(data.default_price)}
+          {formatKr(data.default_price_ore)}
         </span>
         <span className="text-lg text-muted-foreground">
           /{unitLabel(data.unit)}

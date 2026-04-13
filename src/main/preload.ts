@@ -54,7 +54,7 @@ contextBridge.exposeInMainWorld('api', {
   setCustomerPrice: (data: {
     product_id: number
     counterparty_id: number
-    price: number
+    price_ore: number
   }) => ipcRenderer.invoke('product:set-customer-price', data),
   removeCustomerPrice: (data: {
     product_id: number

@@ -16,16 +16,18 @@ M119--M124 + M126 introducerade. PRAGMA user_version = 24, 22 tabeller.
 | S46 | M100-normalisering over services + dublettdetektion M124 | KLAR |
 | S47 | CLAUDE.md-sync + STATUS.md + M126 bank-fee-policy | KLAR |
 
-### Nasta: Sprint 16 (B-findings fran S41)
+### Sprint 16 (B-findings fran S41)
 | Session | Scope | Status |
 |---------|-------|--------|
-| S48 | F4/F6: Schema-namnkonvention | - |
-| S49 | F9: Timezone-fix + F10: expense_lines paritet | - |
-| S50 | Ovrigt fran S41-rapporten | - |
+| S48 | F4: ore-suffix products/price_list_items (M119) | KLAR |
+| S57 | F10: expense_lines paritet (M127) | KLAR |
+| S58 | F4: Schema-namnkonvention (created_by → created_by_id) | KLAR |
+| S59 | F9: Timezone-konsolidering | - |
+| S60 | F13: Handler error-patterns | - |
 
 ## Test-count
-- Vitest (system + unit): 1188 passed, 2 skipped (1190 totalt)
-- Testfiler: 92
+- Vitest (system + unit): 1196 passed, 2 skipped (1198 totalt)
+- Testfiler: 95
 - Playwright E2E: 10 (kors separat)
 - Korning: ~9s
 
@@ -37,6 +39,12 @@ M119--M124 + M126 introducerade. PRAGMA user_version = 24, 22 tabeller.
 - **Playwright workers: 1**: Electron singleton per test-fil.
 
 ## Kanda fynd vantande
+
+### Schema conventions -- medvetna avvikelser (klass B)
+- **accounts.k2_allowed** -- boolean utan `is_`-prefix. `is_k2_allowed` borderline, ej tydligt battre. 54 referenser over 8 filer.
+- **accounts.k3_only** -- boolean utan `is_`-prefix. `is_k3_only` borderline. Samma fotavtryck som k2_allowed.
+
+Dokumenterat i S58 (Sprint 16 F4). Konservativ default: ej andrade.
 
 ### Tech debt (by design, ej blockerande)
 1. **4 invariant-throws i validatePeriodInvariants** -- fangade av PERIOD_GENERATION_ERROR-wrapper, inte user-facing.

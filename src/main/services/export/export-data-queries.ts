@@ -38,7 +38,7 @@ export interface JournalEntryInfo {
   journal_date: string
   description: string
   created_at: string
-  created_by: number | null
+  created_by_id: number | null
 }
 
 export interface JournalLineInfo {
@@ -242,7 +242,7 @@ export function getBookedJournalEntries(
   return db
     .prepare(
       `SELECT id, verification_series, verification_number,
-            journal_date, description, created_at, created_by
+            journal_date, description, created_at, created_by_id
      FROM journal_entries
      WHERE ${conditions.join(' AND ')}
      ORDER BY verification_series, verification_number`,

@@ -68,7 +68,7 @@ function setupSeed(testDb: Database.Database): Seed {
     .get() as { id: number }
   const product = createProduct(testDb, {
     name: 'Konsult',
-    default_price: 100_000,
+    default_price_ore: 100_000,
     vat_code_id: vatCode25.id,
     account_id: account.id,
   })
@@ -384,7 +384,7 @@ describe('SIE4 Export', () => {
   // 24. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(24) // S43: Uppdatera vid nya migrationer
+    expect(version).toBe(27) // S48: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

@@ -28,6 +28,7 @@ function processExpenseLines(
     quantity: number
     unit_price_ore: number
     vat_code_id: number
+    sort_order?: number
   }[],
 ) {
   const allVatCodes = db
@@ -133,8 +134,8 @@ export function saveExpenseDraft(
       const insertLine = db.prepare(
         `INSERT INTO expense_lines (
           expense_id, description, account_number, quantity,
-          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore, sort_order, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       )
       for (const line of processed) {
         insertLine.run(
@@ -146,6 +147,7 @@ export function saveExpenseDraft(
           line.vat_code_id,
           line.line_total_ore,
           line.vat_amount_ore,
+          line.sort_order ?? 0,
         )
       }
 
@@ -183,7 +185,7 @@ export function getExpenseDraft(
   if (!expense) return { success: true, data: null }
 
   const lines = db
-    .prepare('SELECT * FROM expense_lines WHERE expense_id = ?')
+    .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
     .all(id) as ExpenseLine[]
 
   return { success: true, data: { ...expense, lines } }
@@ -248,8 +250,8 @@ export function updateExpenseDraft(
       const insertLine = db.prepare(
         `INSERT INTO expense_lines (
           expense_id, description, account_number, quantity,
-          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore, sort_order, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       )
       for (const line of processed) {
         insertLine.run(
@@ -261,6 +263,7 @@ export function updateExpenseDraft(
           line.vat_code_id,
           line.line_total_ore,
           line.vat_amount_ore,
+          line.sort_order ?? 0,
         )
       }
 
@@ -342,7 +345,7 @@ export function finalizeExpense(
 
       // 2. Lines
       const lines = db
-        .prepare('SELECT * FROM expense_lines WHERE expense_id = ?')
+        .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
         .all(id) as ExpenseLine[]
       if (lines.length === 0)
         throw { code: 'VALIDATION_ERROR', error: 'Kostnaden har inga rader' }
@@ -1191,7 +1194,7 @@ export function getExpense(
   if (!expense) return { success: true, data: null }
 
   const lines = db
-    .prepare('SELECT * FROM expense_lines WHERE expense_id = ?')
+    .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
     .all(id) as ExpenseLine[]
 
   return {

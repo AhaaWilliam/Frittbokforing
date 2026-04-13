@@ -78,7 +78,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
       name: 'Originalprodukt',
-      default_price: 100_00,
+      default_price_ore: 100_00,
       vat_code_id: vatCodeId,
       account_id: accountId,
       article_type: 'service',
@@ -89,19 +89,19 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
     const updated = updateProduct(db, {
       id: created.data.id,
       name: 'Uppdaterad produkt',
-      default_price: 200_00,
+      default_price_ore: 200_00,
     })
     expect(updated.success).toBe(true)
     if (!updated.success) throw new Error(updated.error)
     expect(updated.data.name).toBe('Uppdaterad produkt')
-    expect(updated.data.default_price).toBe(200_00)
+    expect(updated.data.default_price_ore).toBe(200_00)
   })
 
   it('icke-tillåtna fält ignoreras tyst av allowlist', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
       name: 'Skyddad produkt',
-      default_price: 100_00,
+      default_price_ore: 100_00,
       vat_code_id: vatCodeId,
       account_id: accountId,
       article_type: 'service',
@@ -123,7 +123,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
       name: 'Test',
-      default_price: 100_00,
+      default_price_ore: 100_00,
       vat_code_id: vatCodeId,
       account_id: accountId,
       article_type: 'service',
