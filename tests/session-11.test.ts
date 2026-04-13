@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import {
@@ -12,21 +12,6 @@ import {
 } from '../src/main/services/expense-service'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const m = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(m.sql)
-    if (m.programmatic) m.programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -127,7 +112,7 @@ describe('Session 11: Migration 010', () => {
 
   it('PRAGMA user_version = 10', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
+    expect(version).toBe(23) // S42: Uppdatera vid nya migrationer
   })
 
   it('expense payments use auto_payment source_type in B-series', () => {

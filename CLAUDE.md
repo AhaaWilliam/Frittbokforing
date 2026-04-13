@@ -117,6 +117,50 @@ Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THR
 
 Historik: S42 upptäckte att `trg_prevent_invoice_delete` tappades tyst vid invoices table-recreate. S41:s stoppvillkor ("inga triggers refererar de fem kolumnerna") fångade inte trigger-tillhörighet till tabellen.
 
+## 28. Table-recreate-mönstret för tabeller med inkommande FK (M122)
+
+**M122.** När en migration kräver `CREATE TABLE → DROP TABLE → RENAME` på en
+tabell som har **inkommande** FK-referenser från andra tabeller, ska följande
+mönster användas:
+
+1. `PRAGMA foreign_keys = OFF` körs **utanför** migrations-transaktionen
+   (better-sqlite3 tillåter inte PRAGMA foreign_keys-ändring inne i en
+   transaktion).
+2. Migrationen körs i transaktion: skapa ny tabell med `_new`-suffix, kopiera
+   data, droppa gamla tabellen, byt namn på den nya, återskapa alla index och
+   alla triggers (M121).
+3. `PRAGMA foreign_keys = ON` körs efter transaktionen.
+4. `PRAGMA foreign_key_check` körs direkt efter re-enable. Om resultatet inte
+   är tomt → kasta fel och rulla tillbaka migrationen externt (annars har
+   databasen FK-överträdelser och inga triggers fångar dem framåt).
+5. För varje table-recreate som följer detta mönster ska en
+   migrations-uppgraderings-smoke-test verifiera dataintegritet med konkreta
+   värden, inte bara att schemat ser rätt ut.
+
+Tabeller med inkommande FK i nuvarande schema (per S41-audit):
+- `companies` ← fiscal_years, accounting_periods, journal_entries
+- `fiscal_years` ← accounting_periods, verification_sequences, journal_entries,
+  invoices, expenses, manual_entries, opening_balances, payment_batches
+- `accounts(account_number)` ← journal_entry_lines, expense_lines,
+  invoice_payments, expense_payments
+- `counterparties` ← invoices, expenses, price_lists
+- `journal_entries` ← invoice_payments, expense_payments, manual_entries,
+  invoices, expenses, payment_batches (självreferens via corrects_entry_id /
+  corrected_by_id)
+- `invoices` ← invoice_payments, invoice_lines
+- `expenses` ← expense_lines, expense_payments
+- `manual_entries` ← manual_entry_lines
+- `vat_codes` ← products, invoice_lines, expense_lines
+- `products` ← invoice_lines, price_list_items
+- `payment_batches` ← invoice_payments, expense_payments
+
+Recreate på dessa kräver M122. Recreate på övriga (bladtabeller utan
+inkommande FK) kräver bara M121 (trigger-reattach).
+
+Exempel: migration 022 (Sprint 15 S42) införde mönstret för `invoices`,
+`invoice_payments`, `expense_payments`. Migration 023 (Sprint 15 S43)
+applicerar det på `payment_batches`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

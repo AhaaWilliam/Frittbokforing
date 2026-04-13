@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ExcelJS from 'exceljs'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
@@ -14,21 +14,6 @@ import { exportExcel } from '../src/main/services/excel/excel-export-service'
 import { getBalanceAtDate } from '../src/main/services/export/export-data-queries'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const m = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(m.sql)
-    if (m.programmatic) m.programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 const COMPANY = {
   name: 'Test AB',
@@ -587,7 +572,7 @@ describe('Excel Export', () => {
   // 27. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
+    expect(version).toBe(23) // S42: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

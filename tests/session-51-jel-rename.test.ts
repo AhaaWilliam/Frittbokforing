@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
@@ -23,20 +23,6 @@ import { exportSie5 } from '../src/main/services/sie5/sie5-export-service'
 import { exportExcel } from '../src/main/services/excel/excel-export-service'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(migrations[i].sql)
-    if (migrations[i].programmatic) migrations[i].programmatic!(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 function seedBase(testDb: Database.Database) {
   testDb.exec(`
@@ -61,7 +47,7 @@ afterEach(() => {
 describe('Migration 018 — journal_entry_lines rename', () => {
   it('user_version = 18 after all migrations', () => {
     const uv = db.prepare('PRAGMA user_version').get() as { user_version: number }
-    expect(uv.user_version).toBe(22)
+    expect(uv.user_version).toBe(23)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {

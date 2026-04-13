@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
@@ -22,21 +23,6 @@ import { getAllJournalEntryLines } from '../src/main/services/export/export-data
 import type { Expense } from '../src/shared/types'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const m = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(m.sql)
-    if (m.programmatic) m.programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -842,6 +828,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(22)
+    expect(row[0].user_version).toBe(23)
   })
 })

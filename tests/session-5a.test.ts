@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import {
   listCounterparties,
@@ -14,23 +15,6 @@ import {
 } from '../src/main/ipc-schemas'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const migration = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(migration.sql)
-    if (migration.programmatic) {
-      migration.programmatic(testDb)
-    }
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -56,7 +40,7 @@ afterEach(() => {
 describe('Migration 005', () => {
   it('1. user_version = 5, nya tabeller och kolumner', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(22) // S42: Uppdatera vid nya migrationer
+    expect(v).toBe(23) // S42: Uppdatera vid nya migrationer
 
     // Nya tabeller
     const tables = db

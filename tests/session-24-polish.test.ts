@@ -1,20 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(migrations[i].sql)
-    if (migrations[i].programmatic) migrations[i].programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
+import { createTestDb } from './helpers/create-test-db'
 
 // === 1. kronorToOre precision ===
 describe('kronorToOre', () => {
@@ -240,7 +226,7 @@ describe('Session 24 regression', () => {
   it('user_version = 14', () => {
     db = createTestDb()
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
+    expect(version).toBe(23) // S42: Uppdatera vid nya migrationer
   })
 
   it('22 tabeller', () => {

@@ -1159,6 +1159,8 @@ export const migrations: MigrationEntry[] = [
   { sql: '-- Migration 021: payment_batches + auto_bank_fee (se programmatic)', programmatic: migration021Programmatic },
   // Sprint 15 S42: öre-suffix på 5 belopp-kolumner (M119/F1)
   { sql: '-- Migration 022: öre-suffix rename (se programmatic)', programmatic: migration022Programmatic },
+  // Sprint 15 S43: FK på manual_entry_lines + payment_batches (F2, F6)
+  { sql: '-- Migration 023: FK account_number (se programmatic)', programmatic: migration023Programmatic },
 ]
 
 /**
@@ -1316,6 +1318,120 @@ function migration022Verify(db: import('better-sqlite3').Database): void {
     const cols = getTableColumns(db, table)
     if (!cols.has(expected)) throw new Error(`Migration 022 failed: ${table}.${expected} saknas`)
     if (cols.has(forbidden)) throw new Error(`Migration 022 failed: ${table}.${forbidden} finns kvar`)
+  }
+}
+
+/**
+ * Migration 023: Sprint 15 S43 — FK account_number på manual_entry_lines + payment_batches (F2, F6).
+ *
+ * Del A: manual_entry_lines.account_number → REFERENCES accounts(account_number)
+ *   Bladtabell (ingen inkommande FK) → M121-mönster, ingen trigger-reattach behövs.
+ *
+ * Del B: payment_batches.account_number → REFERENCES accounts(account_number)
+ *   Inkommande FK från invoice_payments + expense_payments → M122-mönster.
+ *   PRAGMA foreign_keys OFF/ON hanteras av db.ts (needsFkOff).
+ */
+function migration023Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: check if manual_entry_lines already has FK on account_number
+  const melSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'")
+    .get() as { sql: string } | undefined
+  if (melSchema && melSchema.sql.includes('REFERENCES accounts')) return
+
+  // === Del A: manual_entry_lines (M121) ===
+  // Verify no triggers attached before drop
+  const melTriggers = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='manual_entry_lines'")
+    .all() as { name: string }[]
+  if (melTriggers.length > 0) {
+    throw new Error(`Migration 023: unexpected triggers on manual_entry_lines: ${melTriggers.map(t => t.name).join(', ')}`)
+  }
+
+  db.exec(`
+    CREATE TABLE manual_entry_lines_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      manual_entry_id INTEGER NOT NULL REFERENCES manual_entries(id) ON DELETE CASCADE,
+      line_number INTEGER NOT NULL,
+      account_number TEXT NOT NULL REFERENCES accounts(account_number),
+      debit_ore INTEGER NOT NULL DEFAULT 0,
+      credit_ore INTEGER NOT NULL DEFAULT 0,
+      description TEXT,
+      UNIQUE(manual_entry_id, line_number)
+    );
+    INSERT INTO manual_entry_lines_new (id, manual_entry_id, line_number, account_number, debit_ore, credit_ore, description)
+    SELECT id, manual_entry_id, line_number, account_number, debit_ore, credit_ore, description
+    FROM manual_entry_lines;
+    DROP TABLE manual_entry_lines;
+    ALTER TABLE manual_entry_lines_new RENAME TO manual_entry_lines;
+  `)
+
+  // === Del B: payment_batches (M122) ===
+  // Verify no triggers attached before drop
+  const pbTriggers = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='payment_batches'")
+    .all() as { name: string }[]
+  if (pbTriggers.length > 0) {
+    throw new Error(`Migration 023: unexpected triggers on payment_batches: ${pbTriggers.map(t => t.name).join(', ')}`)
+  }
+
+  db.exec(`
+    CREATE TABLE payment_batches_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      batch_type TEXT NOT NULL CHECK (batch_type IN ('invoice', 'expense')),
+      payment_date TEXT NOT NULL,
+      account_number TEXT NOT NULL REFERENCES accounts(account_number),
+      bank_fee_ore INTEGER NOT NULL DEFAULT 0,
+      bank_fee_journal_entry_id INTEGER REFERENCES journal_entries(id),
+      status TEXT NOT NULL DEFAULT 'completed' CHECK (status IN ('completed', 'partial', 'cancelled')),
+      user_note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO payment_batches_new (id, fiscal_year_id, batch_type, payment_date, account_number,
+      bank_fee_ore, bank_fee_journal_entry_id, status, user_note, created_at)
+    SELECT id, fiscal_year_id, batch_type, payment_date, account_number,
+      bank_fee_ore, bank_fee_journal_entry_id, status, user_note, created_at
+    FROM payment_batches;
+    DROP TABLE payment_batches;
+    ALTER TABLE payment_batches_new RENAME TO payment_batches;
+  `)
+
+  // Recreate index (M121)
+  db.exec(`CREATE INDEX idx_pb_fiscal_year ON payment_batches(fiscal_year_id);`)
+
+  // Verify
+  migration023Verify(db)
+}
+
+function migration023Verify(db: import('better-sqlite3').Database): void {
+  // 1. manual_entry_lines has FK on account_number
+  const melSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'")
+    .get() as { sql: string }
+  if (!melSchema.sql.includes('REFERENCES accounts(account_number)')) {
+    throw new Error('Migration 023 failed: manual_entry_lines.account_number FK saknas')
+  }
+
+  // 2. payment_batches has FK on account_number
+  const pbSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'")
+    .get() as { sql: string }
+  if (!pbSchema.sql.includes('REFERENCES accounts(account_number)')) {
+    throw new Error('Migration 023 failed: payment_batches.account_number FK saknas')
+  }
+
+  // 3. Index recreated
+  const idx = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pb_fiscal_year'")
+    .get()
+  if (!idx) throw new Error('Migration 023 failed: idx_pb_fiscal_year saknas')
+
+  // 4. Verify all 11 triggers still intact (none should have been affected)
+  const triggerCount = db
+    .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+    .get() as { cnt: number }
+  if (triggerCount.cnt !== 11) {
+    throw new Error(`Migration 023 failed: expected 11 triggers, found ${triggerCount.cnt}`)
   }
 }
 

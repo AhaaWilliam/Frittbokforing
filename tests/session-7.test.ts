@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
+import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
@@ -12,21 +12,6 @@ import {
 } from '../src/main/services/invoice-service'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const m = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(m.sql)
-    if (m.programmatic) m.programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -117,7 +102,7 @@ afterEach(() => {
 describe('Migration 007', () => {
   it('1. user_version = 14, invoice_lines.account_number exists', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(22) // S42: Uppdatera vid nya migrationer
+    expect(v).toBe(23) // S42: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_lines)') as { name: string }[]
