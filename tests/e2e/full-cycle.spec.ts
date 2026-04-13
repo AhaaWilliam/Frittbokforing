@@ -66,7 +66,7 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // ── 3. UI: registrera betalning ────────────────────────────────
     // Navigate to invoices
-    await window.evaluate(() => { window.location.hash = '#/income' })
+    await window.evaluate(() => { location.hash = '#/income' })
     await expect(window.getByTestId('page-income')).toBeVisible({ timeout: 10_000 })
     await expect(window.locator('table tbody tr')).toHaveCount(1, { timeout: 10_000 })
 
@@ -88,7 +88,7 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     await window.waitForTimeout(1000)
 
     // ── 4. UI: skapa manuell C-entry ───────────────────────────────
-    await window.evaluate(() => { window.location.hash = '#/manual-entries/create' })
+    await window.evaluate(() => { location.hash = '#/manual-entries/create' })
     await expect(window.getByTestId('page-manual-entries')).toBeVisible({ timeout: 10_000 })
 
     // Date
@@ -137,7 +137,7 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     expect(cEntries.length).toBeGreaterThanOrEqual(1)
 
     // ── 6. UI: exportera SIE4 ──────────────────────────────────────
-    await window.evaluate(() => { window.location.hash = '#/export' })
+    await window.evaluate(() => { location.hash = '#/export' })
     await expect(window.getByTestId('page-export')).toBeVisible({ timeout: 10_000 })
 
     await window.getByText('Exportera SIE4').click()

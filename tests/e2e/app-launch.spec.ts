@@ -29,11 +29,11 @@ test('hash-router navigation från Playwright fungerar', async () => {
     await expect(window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
 
     // Navigate via hash
-    await window.evaluate(() => { window.location.hash = '#/income' })
+    await window.evaluate(() => { location.hash = '#/income' })
     await expect(window.getByTestId('page-income')).toBeVisible({ timeout: 10_000 })
 
     // Navigate to another page
-    await window.evaluate(() => { window.location.hash = '#/expenses' })
+    await window.evaluate(() => { location.hash = '#/expenses' })
     await expect(window.getByTestId('page-expenses')).toBeVisible({ timeout: 10_000 })
   } finally {
     await cleanup()
