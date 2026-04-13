@@ -76,6 +76,20 @@ Test-fil: tests/renderer/components/ui/FormTextarea.test.tsx
 M-principer täckta: —
 Beteendecase: value/onChange, rows default+override, disabled
 
+## Sprint 18 — S64c
+
+Komponent: useEntityForm (hook)
+Test-fil: tests/renderer/lib/use-entity-form.test.tsx
+M-principer täckta: M77 (dual-schema: formSchema + payloadSchema via transform),
+M79 (hookens kärn-API),
+M100 (IpcError.field → per-fält errors),
+M102 (sticky dirty via dirtyRef, ingen re-render-trigger)
+Beteendecase: init/defaults, getField/setField med error-rensning,
+formSchema-validering, payloadSchema-validering via transform,
+submit happy path, submit errors (IpcError m/u field, generic),
+isDirty + M102-subtlety, reset (full + partial),
+integration med FormField (2 sanity-tester)
+
 ## Exempelformat för PR-beskrivningar
 
 ```
