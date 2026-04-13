@@ -16,7 +16,7 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
 
     testDb.exec('BEGIN EXCLUSIVE')
     testDb.exec(migrations[i].sql)
-    if (migrations[i].programmatic) migrations[i].programmatic(testDb)
+    migrations[i].programmatic?.(testDb)
     testDb.pragma(`user_version = ${i + 1}`)
     testDb.exec('COMMIT')
 

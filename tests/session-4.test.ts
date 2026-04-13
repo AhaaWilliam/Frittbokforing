@@ -18,7 +18,7 @@ function createTestDb(): Database.Database {
   for (let i = 0; i < migrations.length; i++) {
     testDb.exec('BEGIN EXCLUSIVE')
     testDb.exec(migrations[i].sql)
-    if (migrations[i].programmatic) migrations[i].programmatic(testDb)
+    migrations[i].programmatic?.(testDb)
     testDb.pragma(`user_version = ${i + 1}`)
     testDb.exec('COMMIT')
   }
