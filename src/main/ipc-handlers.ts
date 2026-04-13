@@ -182,7 +182,8 @@ export function registerIpcHandlers(): void {
       const version = db.pragma('user_version', { simple: true }) as number
       const tableCount = getTableCount(db)
       return { ok: true, path: getDbPath(), schemaVersion: version, tableCount }
-    } catch {
+    } catch (err) {
+      log.error('db:health-check failed:', err)
       return { ok: false, path: '', schemaVersion: 0, tableCount: 0 }
     }
   })
