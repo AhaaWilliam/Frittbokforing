@@ -39,6 +39,7 @@ export type ErrorCode =
   | 'MANUAL_ENTRY_NOT_FOUND'
   | 'ALREADY_FINALIZED'
   | 'INVOICE_HAS_PAYMENTS'
+  | 'MISSING_ACCOUNT_NUMBER'
 
 // === Page navigation ===
 export type PageId =

@@ -602,8 +602,15 @@ export function finalizeDraft(
 
     return { success: true, data: getDraftInternal(db, id)! }
   } catch (err: unknown) {
-    const e = err as { code?: string; error?: string; field?: string }
-    if (e.code) {
+    const e = err as { code?: string; error?: string; field?: string; message?: string }
+    if (e.code === 'SQLITE_CONSTRAINT_TRIGGER' && e.message?.includes('kontonummer innan fakturan')) {
+      return {
+        success: false,
+        error: 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.',
+        code: 'MISSING_ACCOUNT_NUMBER',
+      }
+    }
+    if (e.code && !e.code.startsWith('SQLITE_')) {
       return {
         success: false,
         error: e.error ?? 'Bokföring misslyckades',

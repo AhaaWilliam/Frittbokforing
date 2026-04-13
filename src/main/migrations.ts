@@ -1161,6 +1161,23 @@ export const migrations: MigrationEntry[] = [
   { sql: '-- Migration 022: öre-suffix rename (se programmatic)', programmatic: migration022Programmatic },
   // Sprint 15 S43: FK på manual_entry_lines + payment_batches (F2, F6)
   { sql: '-- Migration 023: FK account_number (se programmatic)', programmatic: migration023Programmatic },
+  // Sprint 15 S44: invoice_lines.account_number conditional NOT NULL vid finalize (F5)
+  // Trigger validerar att freeform-rader (product_id IS NULL) har account_number.
+  // Produktbaserade rader hämtar konto via products.account_id → accounts, inte invoice_lines.account_number.
+  { sql: `CREATE TRIGGER trg_invoice_lines_account_number_on_finalize
+    BEFORE UPDATE OF status ON invoices
+    WHEN OLD.status = 'draft' AND NEW.status = 'unpaid'
+    BEGIN
+      SELECT CASE
+        WHEN EXISTS (
+          SELECT 1 FROM invoice_lines
+          WHERE invoice_id = NEW.id
+            AND product_id IS NULL
+            AND account_number IS NULL
+        )
+        THEN RAISE(ABORT, 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.')
+      END;
+    END;`, programmatic: migration024Verify },
 ]
 
 /**
@@ -1432,6 +1449,20 @@ function migration023Verify(db: import('better-sqlite3').Database): void {
     .get() as { cnt: number }
   if (triggerCount.cnt !== 11) {
     throw new Error(`Migration 023 failed: expected 11 triggers, found ${triggerCount.cnt}`)
+  }
+}
+
+function migration024Verify(db: import('better-sqlite3').Database): void {
+  const trigger = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_invoice_lines_account_number_on_finalize'")
+    .get()
+  if (!trigger) throw new Error('Migration 024 failed: trigger trg_invoice_lines_account_number_on_finalize saknas')
+
+  const triggerCount = db
+    .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+    .get() as { cnt: number }
+  if (triggerCount.cnt !== 12) {
+    throw new Error(`Migration 024 failed: expected 12 triggers, found ${triggerCount.cnt}`)
   }
 }
 

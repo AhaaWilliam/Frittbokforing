@@ -295,6 +295,7 @@ describe('K4 – deleteDraft atomically removes invoice and lines', () => {
 
   it('returns INVOICE_NOT_DRAFT without deleting when status is not draft', () => {
     const invoiceId = seedDraftInvoice()
+    db.prepare("UPDATE invoice_lines SET account_number = '3002' WHERE invoice_id = ? AND account_number IS NULL").run(invoiceId)
     db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?").run(
       invoiceId,
     )

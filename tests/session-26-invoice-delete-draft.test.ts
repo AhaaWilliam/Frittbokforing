@@ -109,7 +109,8 @@ describe('deleteDraft (K4)', () => {
 
   it('returns error for non-draft invoice', () => {
     const invoiceId = seedDraftInvoice()
-    // Change status to 'sent'
+    // Change status to 'sent' (set account_number first to satisfy trigger)
+    db.prepare("UPDATE invoice_lines SET account_number = '3002' WHERE invoice_id = ? AND account_number IS NULL").run(invoiceId)
     db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?").run(
       invoiceId,
     )

@@ -74,7 +74,7 @@ describe('Migration 013: system accounts', () => {
 
   it('PRAGMA user_version is 14', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(23)
+    expect(version).toBe(24)
   })
 })
 

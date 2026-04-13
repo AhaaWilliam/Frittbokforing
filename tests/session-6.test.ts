@@ -465,7 +465,8 @@ describe('Validering', () => {
     })
     if (!saved.success) return
 
-    // Manually set to 'unpaid'
+    // Manually set to 'unpaid' (set account_number first to satisfy trigger)
+    db.prepare("UPDATE invoice_lines SET account_number = '3002' WHERE invoice_id = ? AND account_number IS NULL").run(saved.data.id)
     db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?").run(
       saved.data.id,
     )
