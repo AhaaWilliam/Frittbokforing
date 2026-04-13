@@ -172,8 +172,8 @@ describe('Full-chain regression (migrations 1→24)', () => {
       entry_date: '2026-01-31',
       description: 'Periodisering',
       lines: [
-        { line_number: 1, account_number: '1790', debit_ore: 5000, credit_ore: 0, description: 'Förutbetald kostnad' },
-        { line_number: 2, account_number: '6110', debit_ore: 0, credit_ore: 5000, description: 'Kontorsmaterial' },
+        { account_number: '1790', debit_ore: 5000, credit_ore: 0, description: 'Förutbetald kostnad' },
+        { account_number: '6110', debit_ore: 0, credit_ore: 5000, description: 'Kontorsmaterial' },
       ],
     })
     if (!meDraft.success) throw new Error(meDraft.error)
