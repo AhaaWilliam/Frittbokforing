@@ -148,8 +148,9 @@ import {
   PayInvoicesBulkPayloadSchema,
   PayExpensesBulkPayloadSchema,
 } from './ipc-schemas'
-import type { HealthCheckResponse } from '../shared/types'
+import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
+import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
 
 function getSettingsPath(): string {
   return path.join(app.getPath('userData'), 'fritt-settings.json')
@@ -181,7 +182,8 @@ export function registerIpcHandlers(): void {
       const version = db.pragma('user_version', { simple: true }) as number
       const tableCount = getTableCount(db)
       return { ok: true, path: getDbPath(), schemaVersion: version, tableCount }
-    } catch {
+    } catch (err) {
+      log.error('db:health-check failed:', err)
       return { ok: false, path: '', schemaVersion: 0, tableCount: 0 }
     }
   })
@@ -506,24 +508,10 @@ export function registerIpcHandlers(): void {
     return payExpensesBulk(db, parsed.data)
   })
 
-  ipcMain.handle('expense:payments', (_event, input: unknown) => {
-    const parsed = GetExpensePaymentsSchema.safeParse(input)
-    if (!parsed.success)
-      return { success: false, error: 'Ogiltigt id.', code: 'VALIDATION_ERROR' }
-    try {
-      return {
-        success: true,
-        data: getExpensePayments(db, parsed.data.expense_id),
-      }
-    } catch (err) {
-      log.error('expense:payments error:', err)
-      return {
-        success: false,
-        error: 'Kunde inte hämta betalningar.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('expense:payments', wrapIpcHandler(
+    GetExpensePaymentsSchema,
+    (parsed) => getExpensePayments(db, parsed.expense_id),
+  ))
 
   ipcMain.handle('expense:get', (_event, input: unknown) => {
     const parsed = GetExpenseSchema.safeParse(input)
@@ -531,26 +519,10 @@ export function registerIpcHandlers(): void {
     return getExpense(db, parsed.data.id)
   })
 
-  ipcMain.handle('expense:list', (_event, input: unknown) => {
-    const parsed = ListExpensesSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const result = listExpenses(db, parsed.data)
-      return { success: true, data: result }
-    } catch (err) {
-      log.error('expense:list error:', err)
-      return {
-        success: false,
-        error: 'Kunde inte lista kostnader.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('expense:list', wrapIpcHandler(
+    ListExpensesSchema,
+    (parsed) => listExpenses(db, parsed),
+  ))
 
   // === Stödjande ===
   ipcMain.handle('vat-code:list', (_event, input: unknown) => {
@@ -646,26 +618,10 @@ export function registerIpcHandlers(): void {
     return nextInvoiceNumber(db, parsed.data.fiscal_year_id)
   })
 
-  ipcMain.handle('invoice:list', (_event, input: unknown) => {
-    const parsed = InvoiceListInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const result = listInvoices(db, parsed.data)
-      return { success: true, data: result }
-    } catch (err) {
-      log.error('invoice:list error:', err)
-      return {
-        success: false,
-        error: 'Kunde inte hämta fakturor',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('invoice:list', wrapIpcHandler(
+    InvoiceListInputSchema,
+    (parsed) => listInvoices(db, parsed),
+  ))
 
   ipcMain.handle('invoice:finalize', (_event, input: unknown) => {
     const parsed = FinalizeInvoiceInputSchema.safeParse(input)
@@ -702,21 +658,10 @@ export function registerIpcHandlers(): void {
     return payInvoicesBulk(db, parsed.data)
   })
 
-  ipcMain.handle('invoice:payments', (_event, input: unknown) => {
-    const parsed = GetPaymentsInputSchema.safeParse(input)
-    if (!parsed.success)
-      return { success: false, error: 'Ogiltigt id.', code: 'VALIDATION_ERROR' }
-    try {
-      return { success: true, data: getPayments(db, parsed.data.invoice_id) }
-    } catch (err) {
-      log.error('invoice:payments error:', err)
-      return {
-        success: false,
-        error: 'Kunde inte hämta betalningar.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('invoice:payments', wrapIpcHandler(
+    GetPaymentsInputSchema,
+    (parsed) => getPayments(db, parsed.invoice_id),
+  ))
 
   ipcMain.handle('invoice:update-sent', (_event, input: unknown) => {
     const parsed = UpdateSentInvoiceInputSchema.safeParse(input)
@@ -730,124 +675,40 @@ export function registerIpcHandlers(): void {
   })
 
   // === Dashboard ===
-  ipcMain.handle('dashboard:summary', (_event, input: unknown) => {
-    const parsed = DashboardSummaryInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const summary = getDashboardSummary(db, parsed.data.fiscalYearId)
-      return { success: true, data: summary }
-    } catch (err) {
-      log.error('[dashboard:summary]', err)
-      return {
-        success: false,
-        error: 'Kunde inte hämta dashboard-data',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('dashboard:summary', wrapIpcHandler(
+    DashboardSummaryInputSchema,
+    (parsed) => getDashboardSummary(db, parsed.fiscalYearId),
+  ))
 
   // === VAT Report ===
-  ipcMain.handle('vat:report', (_event, input: unknown) => {
-    const parsed = VatReportInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const report = getVatReport(db, parsed.data.fiscal_year_id)
-      return { success: true, data: report }
-    } catch (err) {
-      log.error('[vat:report]', err)
-      return {
-        success: false,
-        error: 'Kunde inte generera momsrapport.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('vat:report', wrapIpcHandler(
+    VatReportInputSchema,
+    (parsed) => getVatReport(db, parsed.fiscal_year_id),
+  ))
 
   // === Tax ===
-  ipcMain.handle('tax:forecast', (_event, input: unknown) => {
-    const parsed = TaxForecastInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const forecast = getTaxForecast(db, parsed.data.fiscalYearId)
-      return { success: true, data: forecast }
-    } catch (err) {
-      log.error('[tax:forecast]', err)
-      return {
-        success: false,
-        error: 'Kunde inte beräkna skatteprognos.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('tax:forecast', wrapIpcHandler(
+    TaxForecastInputSchema,
+    (parsed) => getTaxForecast(db, parsed.fiscalYearId),
+  ))
 
   // === SIE5 Export ===
-  ipcMain.handle('export:sie5', (_event, input: unknown) => {
-    const parsed = ExportSie5Schema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const xml = exportSie5(db, {
-        fiscalYearId: parsed.data.fiscal_year_id,
-      })
-      return { success: true, data: xml }
-    } catch (err) {
-      log.error('[export:sie5]', err)
-      return {
-        success: false,
-        error: 'Kunde inte generera SIE5-export.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('export:sie5', wrapIpcHandler(
+    ExportSie5Schema,
+    (parsed) => exportSie5(db, { fiscalYearId: parsed.fiscal_year_id }),
+  ))
 
   // === SIE4 Export ===
-  ipcMain.handle('export:sie4', (_event, input: unknown) => {
-    const parsed = ExportSie4Schema.safeParse(input)
-    if (!parsed.success)
+  ipcMain.handle('export:sie4', wrapIpcHandler(
+    ExportSie4Schema,
+    (parsed) => {
+      const result = exportSie4(db, { fiscalYearId: parsed.fiscal_year_id })
       return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
+        buffer: new Uint8Array(result.content),
+        filename: result.filename,
       }
-    try {
-      const result = exportSie4(db, {
-        fiscalYearId: parsed.data.fiscal_year_id,
-      })
-      return {
-        success: true,
-        data: {
-          buffer: new Uint8Array(result.content),
-          filename: result.filename,
-        },
-      }
-    } catch (err) {
-      log.error('[export:sie4]', err)
-      return {
-        success: false,
-        error: 'Kunde inte generera SIE4-export.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+    },
+  ))
 
   // === Manual Entries ===
   ipcMain.handle('manual-entry:save-draft', (_event, input: unknown) => {
@@ -940,102 +801,37 @@ export function registerIpcHandlers(): void {
   })
 
   // === Excel Export ===
-  ipcMain.handle('export:excel', async (_event, input: unknown) => {
-    const parsed = ExportExcelSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: parsed.error.issues[0]?.message ?? 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
+  ipcMain.handle('export:excel', wrapIpcHandler(
+    ExportExcelSchema,
+    async (parsed) => {
       const result = await exportExcel(db, {
-        fiscalYearId: parsed.data.fiscal_year_id,
-        startDate: parsed.data.start_date,
-        endDate: parsed.data.end_date,
+        fiscalYearId: parsed.fiscal_year_id,
+        startDate: parsed.start_date,
+        endDate: parsed.end_date,
       })
       return {
-        success: true,
-        data: {
-          buffer: new Uint8Array(result.buffer),
-          filename: result.filename,
-        },
+        buffer: new Uint8Array(result.buffer),
+        filename: result.filename,
       }
-    } catch (err) {
-      log.error('[export:excel]', err)
-      return {
-        success: false,
-        error:
-          err instanceof Error
-            ? err.message
-            : 'Kunde inte generera Excel-export.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+    },
+  ))
 
   // === Reports ===
-  ipcMain.handle('report:income-statement', (_event, input: unknown) => {
-    const parsed = ReportRequestSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const result = getIncomeStatement(
-        db,
-        parsed.data.fiscal_year_id,
-        parsed.data.date_range,
-      )
-      return { success: true, data: result }
-    } catch (err) {
-      log.error('[report:income-statement]', err)
-      return {
-        success: false,
-        error: 'Kunde inte generera resultaträkning.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('report:income-statement', wrapIpcHandler(
+    ReportRequestSchema,
+    (parsed) => getIncomeStatement(db, parsed.fiscal_year_id, parsed.date_range),
+  ))
 
-  ipcMain.handle('report:balance-sheet', (_event, input: unknown) => {
-    const parsed = ReportRequestSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const result = getBalanceSheet(
-        db,
-        parsed.data.fiscal_year_id,
-        parsed.data.date_range,
-      )
-      return { success: true, data: result }
-    } catch (err) {
-      log.error('[report:balance-sheet]', err)
-      return {
-        success: false,
-        error: 'Kunde inte generera balansräkning.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('report:balance-sheet', wrapIpcHandler(
+    ReportRequestSchema,
+    (parsed) => getBalanceSheet(db, parsed.fiscal_year_id, parsed.date_range),
+  ))
 
   // === Export Write File ===
-  ipcMain.handle('export:write-file', async (_event, input: unknown) => {
-    const parsed = ExportWriteFileRequestSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const { format, fiscal_year_id, date_range } = parsed.data
+  ipcMain.handle('export:write-file', wrapIpcHandler(
+    ExportWriteFileRequestSchema,
+    async (parsed) => {
+      const { format, fiscal_year_id, date_range } = parsed
       let buffer: Uint8Array
       let defaultFilename: string
       let filterName: string
@@ -1069,10 +865,7 @@ export function registerIpcHandlers(): void {
       const e2eExportPath = getE2EFilePath(defaultFilename, 'save')
       if (e2eExportPath) {
         fs.writeFileSync(e2eExportPath, buffer)
-        return {
-          success: true,
-          data: { filePath: e2eExportPath },
-        }
+        return { filePath: e2eExportPath }
       }
 
       const dialogResult = await dialog.showSaveDialog({
@@ -1081,59 +874,30 @@ export function registerIpcHandlers(): void {
       })
 
       if (dialogResult.canceled || !dialogResult.filePath) {
-        return { success: true, data: { cancelled: true } }
+        return { cancelled: true }
       }
 
       fs.writeFileSync(dialogResult.filePath, buffer)
-      return {
-        success: true,
-        data: { filePath: dialogResult.filePath },
-      }
-    } catch (err) {
-      log.error('[export:write-file]', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Kunde inte exportera fil.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+      return { filePath: dialogResult.filePath }
+    },
+  ))
 
   // === Invoice PDF ===
-  ipcMain.handle('invoice:generate-pdf', async (_event, input: unknown) => {
-    const parsed = GenerateInvoicePdfSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
-      const buffer = await generateInvoicePdf(db, parsed.data.invoiceId)
-      return { success: true, data: { data: buffer.toString('base64') } }
-    } catch (err) {
-      log.error('[invoice:generate-pdf]', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Kunde inte generera PDF.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+  ipcMain.handle('invoice:generate-pdf', wrapIpcHandler<{ invoiceId: number }, { data: string }>(
+    GenerateInvoicePdfSchema,
+    async (parsed) => {
+      const buffer = await generateInvoicePdf(db, parsed.invoiceId)
+      return { data: buffer.toString('base64') }
+    },
+  ))
 
-  ipcMain.handle('invoice:save-pdf', async (_event, input: unknown) => {
-    const parsed = SaveInvoicePdfSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    try {
+  ipcMain.handle('invoice:save-pdf', wrapIpcHandler(
+    SaveInvoicePdfSchema,
+    async (parsed): Promise<IpcResult<{ success: boolean; filePath?: string }>> => {
       // E2E dialog bypass (M63)
-      const e2ePdfPath = getE2EFilePath(parsed.data.defaultFileName, 'save')
+      const e2ePdfPath = getE2EFilePath(parsed.defaultFileName, 'save')
       if (e2ePdfPath) {
-        const buffer = Buffer.from(parsed.data.data, 'base64')
+        const buffer = Buffer.from(parsed.data, 'base64')
         fs.writeFileSync(e2ePdfPath, buffer)
         return { success: true, data: { success: true, filePath: e2ePdfPath } }
       }
@@ -1141,24 +905,17 @@ export function registerIpcHandlers(): void {
       const win =
         BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
       const { canceled, filePath } = await dialog.showSaveDialog(win!, {
-        defaultPath: parsed.data.defaultFileName,
+        defaultPath: parsed.defaultFileName,
         filters: [{ name: 'PDF', extensions: ['pdf'] }],
       })
       if (canceled || !filePath)
         return { success: true, data: { success: false } }
 
-      const buffer = Buffer.from(parsed.data.data, 'base64')
+      const buffer = Buffer.from(parsed.data, 'base64')
       fs.writeFileSync(filePath, buffer)
       return { success: true, data: { success: true, filePath } }
-    } catch (err) {
-      log.error('[invoice:save-pdf]', err)
-      return {
-        success: false,
-        error: 'Kunde inte spara PDF.',
-        code: 'TRANSACTION_ERROR',
-      }
-    }
-  })
+    },
+  ))
 
   // === Settings ===
   ipcMain.handle('settings:get', (_event, key: string) => {

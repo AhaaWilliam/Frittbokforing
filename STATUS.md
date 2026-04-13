@@ -1,35 +1,29 @@
 # Fritt Bokforing -- Projektstatus
 
-## Aktuell sprint: 15 KLAR (S41--S47) -- Kritiska normaliseringar
+## Sprint 16 -- Schema+IPC-normalisering ✅ KLAR (2026-04-13)
 
-Sprint 15 adresserade 16 findings fran kontraktsaudit S41. 7 sessioner,
-M119--M124 + M126 introducerade. PRAGMA user_version = 24, 22 tabeller.
+Sessioner: S57 (F10 expense_lines paritet), S58 (F4 schema-namnkonvention),
+S59 (F9 timezone-konsolidering), S60 (F13 handler error-patterns +
+sprint-stangning). Testbaslinje: 1190 → 1223. Nya M-principer:
+M127 (schema-paritet, S57), M128 (handler error-patterns, S60).
+PRAGMA user_version = 27, 22 tabeller.
 
-### Sprint 15 sessioner
-| Session | Scope | Status |
-|---------|-------|--------|
-| S41 | Kontraktsaudit + rapport (16 findings) | KLAR |
-| S42 | F1: Ore-suffix-renames (5 kolumner), M121 table-recreate | KLAR |
-| S43 | F2: manual_entry_lines FK + payment_batches FK, M122 | KLAR |
-| S44 | F5: invoice_lines.account_number NOT NULL vid finalize | KLAR |
-| S45 | Testkonsolidering + M123 | KLAR |
-| S46 | M100-normalisering over services + dublettdetektion M124 | KLAR |
-| S47 | CLAUDE.md-sync + STATUS.md + M126 bank-fee-policy | KLAR |
-
-### Sprint 16 (B-findings fran S41)
+### Sprint 16 sessioner
 | Session | Scope | Status |
 |---------|-------|--------|
 | S48 | F4: ore-suffix products/price_list_items (M119) | KLAR |
 | S57 | F10: expense_lines paritet (M127) | KLAR |
 | S58 | F4: Schema-namnkonvention (created_by → created_by_id) | KLAR |
 | S59 | F9: Timezone-konsolidering | KLAR |
-| S60 | F13: Handler error-patterns | - |
+| S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
+
+## Nasta sprint -- TBD
 
 ## Test-count
-- Vitest (system + unit): 1204 passed, 2 skipped (1206 totalt)
-- Testfiler: 99
+- Vitest (system + unit): 1223 passed, 2 skipped (1225 totalt)
+- Testfiler: 101
 - Playwright E2E: 10 (kors separat)
-- Korning: ~9s
+- Korning: ~10s
 
 ## Known infrastructure contracts
 - **FRITT_DB_PATH**: guardad till test-env (NODE_ENV=test eller FRITT_TEST=1). Ignoreras i production.
@@ -51,6 +45,30 @@ Dokumenterat i S58 (Sprint 16 F4). Konservativ default: ej andrade.
 2. **ManualEntryListItem.total_amount** -- saknar `_ore`-suffix (M119). Rename ar breaking for renderer. Lagreprioritet.
 3. **E03 supplier-picker** -- saknar data-testid for E2E-selektering.
 
+### Known tech debt (S60)
+
+#### TypeScript strict-compile (hog prio)
+- **91 tsc-fel i ~20 filer.** Pre-existing fran tidigare sprints,
+  ej introducerade av Sprint 16. Aktuell komplexitet: kraver dedikerad
+  sprint (uppskattat 1-2 sessioner). Paverkar inte runtime.
+- Exempel: S12-bank-fee.test.ts-familjen har aterkommande typ-fel
+  i test-fixtures.
+- Atgard: Sprint 17 eller senare. Bor inte blandas med feature-arbete.
+
+#### Renderer-komponenttester via vitest (medel prio)
+- Upptackt i Sprint 16 S59. `vitest.config.ts` utokades for att
+  inkludera `tests/**/*.test.tsx`. Fore S59 korde vitest ENDAST `.ts`-
+  filer. Noll renderer-komponenttester via vitest.
+- Konsekvens: FormField-buggar (Sprint 10+) upptacktes bara via E2E.
+- Atgard: Egen sprint for renderer-komponenttester.
+
+#### ESLint toISOString-regel tacker inte alla varianter (lag prio)
+- Inford i Sprint 16 S60. Tacker `.slice`, `.split`, `.substring`
+  pa `.toISOString()`.
+- Potentiella edge cases: destrukturering, indirekt referens via
+  variabel, andra datum-bibliotek om de infors senare.
+- Atgard: Monitorera. Utoka regeln vid behov.
+
 ### UX-friktioner (upptackta under S51 E2E)
 4. **Picker-komponenter saknar data-testid** -- CustomerPicker/ArticlePicker dropdown-rader har inga testbara selektorer.
 5. **"Bokfor" text-collision** -- Navigation-lank, sidrubriker och submit-knapp delar texten "Bokfor".
@@ -64,7 +82,9 @@ Dokumenterat i S58 (Sprint 16 F4). Konservativ default: ej andrade.
 ## Timezone conventions — medvetna avvikelser
 
 Dokumenterade via Sprint 16 S59 (F9) audit. Varje avvikelse lamnad orord
-med explicit motivering.
+med explicit motivering. ESLint `no-restricted-syntax`-regel inford i S60
+for `.toISOString().slice/.split/.substring`. Klass B-filer och
+test-filer undantagna.
 
 | # | Fil | Rad | Monster | Motivering |
 |---|---|---|---|---|
@@ -75,10 +95,6 @@ med explicit motivering.
 | B5 | src/renderer/pages/PageSettings.tsx | 23 | `new Date().toISOString()` for `last_backup_date` | Metadata-timestamp lagras som UTC, jamfors aldrig med lokala datum. |
 | B6 | src/renderer/components/wizard/StepFiscalYear.tsx | 36, 74 | `new Date().getFullYear()` + `new Date()` for manadsdiff | `getFullYear()` ger lokalt ar (korrekt). Relativ manadsjamforelse utan date-strangar ar safe. |
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
-
-**Future work:** ESLint `no-restricted-syntax`-regel for att forbjuda
-`.toISOString().slice(0, 10)` och `.toISOString().split('T')[0]` i
-`src/renderer/` och `src/main/services/`. Flaggat for S60 eller senare.
 
 ## Tidigare sprintar
 - Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR

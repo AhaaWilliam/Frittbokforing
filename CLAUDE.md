@@ -201,6 +201,20 @@ Konsekvens för paritets-migrationer (F10, F11, etc.): när target-schemat (t.ex
 
 Samma begränsning gäller andra `ADD COLUMN`-restriktioner: kolumnen får inte vara `PRIMARY KEY`, inte ha `UNIQUE`, inte referera en annan tabell i `REFERENCES` med actions, och inte vara `GENERATED`. Vid framtida paritets-findings (F11 CHECK-constraints, etc.) — verifiera att target-kolumnens definition är ADD COLUMN-kompatibel innan migration-design.
 
+## 33. Handler error-patterns (M128)
+
+**M128.** IPC-handlers har två godkända error-pattern-mönster:
+
+1. **Direkt delegation** — handler-body är en enrads `return service(...)` där servicen returnerar `IpcResult<T>` och följer M100. Ingen try/catch i handler. Används för 56+ handlers där ingen logik behövs utöver service-anrop.
+
+2. **`wrapIpcHandler(schema, fn)`** — handler wrappas via helper i `src/main/ipc/wrap-ipc-handler.ts`. Helper hanterar: Zod-validering (VALIDATION_ERROR + field), genomsläpp av IpcResult-retur, wrap av raw T-retur till `{ success: true, data: T }`, mapping av kastade strukturerade fel (M100) till IpcResult, catch av okända fel → UNEXPECTED_ERROR + log.error.
+
+**Generisk catch som kollapsar allt till `TRANSACTION_ERROR` är förbjuden.** Historiskt mönster (15 handlers i Sprint 11–15) migrerat i Sprint 16 S60.
+
+**Nya handlers:** använd mönster 2 om logik utöver service-anrop krävs (t.ex. file I/O, multi-service-composition). Använd mönster 1 om handlern är en ren pass-through.
+
+Korsreferens: M100 (strukturerade valideringsfel), M124 (UNIQUE-mappning).
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
