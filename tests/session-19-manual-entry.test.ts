@@ -46,9 +46,8 @@ describe('Migration 011', () => {
   })
 
   it('manual_entries-tabell skapas', () => {
-    const cols = db
-      .pragma('table_info(manual_entries)')
-      .map((c: { name: string }) => c.name)
+    const cols = (db.pragma('table_info(manual_entries)') as { name: string }[])
+      .map((c) => c.name)
     expect(cols).toContain('id')
     expect(cols).toContain('fiscal_year_id')
     expect(cols).toContain('entry_date')
@@ -58,9 +57,8 @@ describe('Migration 011', () => {
   })
 
   it('manual_entry_lines-tabell skapas med UNIQUE constraint', () => {
-    const cols = db
-      .pragma('table_info(manual_entry_lines)')
-      .map((c: { name: string }) => c.name)
+    const cols = (db.pragma('table_info(manual_entry_lines)') as { name: string }[])
+      .map((c) => c.name)
     expect(cols).toContain('manual_entry_id')
     expect(cols).toContain('line_number')
     expect(cols).toContain('account_number')
@@ -461,6 +459,7 @@ describe('Validation', () => {
     if (!saved.success) return
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('Obalanserad')
   })
 
@@ -475,6 +474,7 @@ describe('Validation', () => {
     if (!saved.success) return
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('Datum')
   })
 
@@ -490,6 +490,7 @@ describe('Validation', () => {
     if (!saved.success) return
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('utanför')
   })
 
@@ -510,6 +511,7 @@ describe('Validation', () => {
     if (!saved.success) return
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('stängd')
   })
 
@@ -525,6 +527,7 @@ describe('Validation', () => {
     if (!saved.success) return
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('Ogiltigt konto')
   })
 
@@ -541,6 +544,7 @@ describe('Validation', () => {
     finalizeManualEntry(db, saved.data.id, fyId)
     const r = finalizeManualEntry(db, saved.data.id, fyId)
     expect(r.success).toBe(false)
+    if (r.success) return
     expect(r.error).toContain('bokförd')
   })
 })
