@@ -116,6 +116,20 @@ describe('Migration 026: expense_lines sort_order + created_at parity', () => {
       expect(elCol.notnull).toBe(ilCol.notnull)
       expect(elCol.type).toBe(ilCol.type)
     }
+
+    // sort_order dflt_value matches exactly
+    const elSort = elInfo.find(c => c.name === 'sort_order')!
+    const ilSort = ilInfo.find(c => c.name === 'sort_order')!
+    expect(elSort.dflt_value).toBe(ilSort.dflt_value)
+
+    // created_at dflt_value diverges: ADD COLUMN cannot use non-constant default
+    // (SQLite restriction, all versions incl. 3.51+). invoice_lines has datetime('now')
+    // via CREATE TABLE; expense_lines has constant placeholder via ADD COLUMN.
+    // expense-service.ts compensates by explicitly setting datetime('now') in INSERT.
+    const elCreated = elInfo.find(c => c.name === 'created_at')!
+    const ilCreated = ilInfo.find(c => c.name === 'created_at')!
+    expect(ilCreated.dflt_value).toBe("datetime('now')")
+    expect(elCreated.dflt_value).toBe("'1970-01-01 00:00:00'")
   })
 
   it('orphan expense_lines causes migration to throw', () => {

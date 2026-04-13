@@ -435,7 +435,6 @@ export interface ExpenseLine {
   line_total_ore: number
   vat_amount_ore: number
   sort_order: number
-  created_at?: string
 }
 
 export interface ExpenseWithLines extends Expense {
