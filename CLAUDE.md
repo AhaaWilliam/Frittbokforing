@@ -188,6 +188,19 @@ Konsekvenser:
 
 Framtida övervägande: proportionell fördelning av bankavgift per faktura för mer precis kostnadsredovisning. Nuvarande lösning är enklast och korrekt ur bokföringsperspektiv (total avgift på rätt konto).
 
+## 32. ADD COLUMN-begränsningar vid schema-paritets-migrationer (M127)
+
+**M127.** SQLite förbjuder non-constant `DEFAULT` i `ALTER TABLE ADD COLUMN` — inklusive `datetime('now')`, `CURRENT_TIMESTAMP`, och alla uttryck inom parenteser. Detta gäller **alla SQLite-versioner** (testat t.o.m. 3.51.3, dokumenterat i [sqlite.org/lang_altertable.html](https://www.sqlite.org/lang_altertable.html)). `CREATE TABLE` har inte denna begränsning — en tabell skapad med `DEFAULT (datetime('now'))` fungerar, men samma kolumndefinition via `ADD COLUMN` failar om tabellen har befintliga rader.
+
+Konsekvens för paritets-migrationer (F10, F11, etc.): när target-schemat (t.ex. `invoice_lines`) har non-constant `DEFAULT`, kan `ADD COLUMN` på syskontabellen (t.ex. `expense_lines`) inte matcha `dflt_value` exakt. Workaround:
+
+1. `ADD COLUMN ... DEFAULT <constant-placeholder>` — gör att schemat accepteras.
+2. Backfill omedelbart med korrekta värden.
+3. Applikations-lagret (service) sätter det dynamiska värdet explicit i alla INSERT-statements.
+4. Paritets-testet dokumenterar divergensen med explicita `dflt_value`-assertions på båda sidor (känd och motiverad, inte paritets-bug).
+
+Samma begränsning gäller andra `ADD COLUMN`-restriktioner: kolumnen får inte vara `PRIMARY KEY`, inte ha `UNIQUE`, inte referera en annan tabell i `REFERENCES` med actions, och inte vara `GENERATED`. Vid framtida paritets-findings (F11 CHECK-constraints, etc.) — verifiera att target-kolumnens definition är ADD COLUMN-kompatibel innan migration-design.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
