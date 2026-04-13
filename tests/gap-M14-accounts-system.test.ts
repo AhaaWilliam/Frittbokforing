@@ -106,7 +106,8 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     const result = createAccount(db, {
       account_number: '1999',
       name: 'Testtillgång',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     expect(result.success).toBe(true)
     const row = db
@@ -119,7 +120,8 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     const result = createAccount(db, {
       account_number: '2999',
       name: 'Testskuld',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     expect(result.success).toBe(true)
     const row = db
@@ -132,7 +134,8 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     const result = createAccount(db, {
       account_number: '3999',
       name: 'Testintäkt',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     expect(result.success).toBe(true)
     const row = db
@@ -145,7 +148,8 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     const result = createAccount(db, {
       account_number: '5999',
       name: 'Testkostnad',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     expect(result.success).toBe(true)
     const row = db
@@ -160,12 +164,14 @@ describe('GAP M14-3: Unikt kontonummer', () => {
     createAccount(db, {
       account_number: '1888',
       name: 'Konto A',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     const dup = createAccount(db, {
       account_number: '1888',
       name: 'Konto B',
-      k2_allowed: 1,
+      k2_allowed: true,
+      k3_only: false,
     })
     expect(dup.success).toBe(false)
   })
@@ -177,8 +183,8 @@ describe('GAP M14-4: K2/K3 runtime-filtrering', () => {
     createAccount(db, {
       account_number: '1777',
       name: 'K3-only konto',
-      k2_allowed: 0,
-      k3_only: 1,
+      k2_allowed: false,
+      k3_only: true,
     })
 
     const k2List = listAccounts(db, { fiscal_rule: 'K2' })
