@@ -35,6 +35,13 @@ function runMigrations(database: Database.Database): void {
 
   for (let i = currentVersion; i < migrations.length; i++) {
     const migration = migrations[i]
+
+    // Migration 022 (index 21) uses table-recreate on invoices + payment tables.
+    // DROP TABLE on parent tables fails FK checks when child tables have data.
+    // PRAGMA foreign_keys must be toggled OUTSIDE the transaction (SQLite limitation).
+    const needsFkOff = i === 21
+    if (needsFkOff) database.pragma('foreign_keys = OFF')
+
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch
     database.exec('BEGIN EXCLUSIVE')
     try {
@@ -47,6 +54,15 @@ function runMigrations(database: Database.Database): void {
     } catch (err) {
       database.exec('ROLLBACK')
       throw err
+    }
+
+    if (needsFkOff) {
+      database.pragma('foreign_keys = ON')
+      // Verify FK integrity after re-enabling
+      const fkCheck = database.pragma('foreign_key_check') as unknown[]
+      if (fkCheck.length > 0) {
+        throw new Error(`Migration 022 FK integrity check failed: ${JSON.stringify(fkCheck)}`)
+      }
     }
   }
 }

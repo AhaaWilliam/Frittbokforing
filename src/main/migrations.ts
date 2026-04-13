@@ -1173,7 +1173,8 @@ function migration022Programmatic(db: import('better-sqlite3').Database): void {
   const ipCols = getTableColumns(db, 'invoice_payments')
   if (ipCols.has('amount_ore')) return
 
-  // === 1. invoice_payments (table-recreate: CHECK references amount) ===
+  // === Phase 1: Create _new tables and copy data ===
+  // invoice_payments (table-recreate: CHECK references amount)
   db.exec(`
     CREATE TABLE invoice_payments_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1195,14 +1196,9 @@ function migration022Programmatic(db: import('better-sqlite3').Database): void {
       amount, payment_method, account_number, bank_fee_ore, bank_fee_account,
       payment_batch_id, created_at
     FROM invoice_payments;
-    DROP TABLE invoice_payments;
-    ALTER TABLE invoice_payments_new RENAME TO invoice_payments;
-    CREATE INDEX idx_ip_invoice ON invoice_payments(invoice_id);
-    CREATE INDEX idx_payments_invoice ON invoice_payments(invoice_id, amount_ore);
-    CREATE INDEX idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
   `)
 
-  // === 2. expense_payments (table-recreate: CHECK references amount) ===
+  // expense_payments (table-recreate: CHECK references amount)
   db.exec(`
     CREATE TABLE expense_payments_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1224,13 +1220,9 @@ function migration022Programmatic(db: import('better-sqlite3').Database): void {
       amount, payment_method, account_number, bank_fee_ore, bank_fee_account,
       payment_batch_id, created_at
     FROM expense_payments;
-    DROP TABLE expense_payments;
-    ALTER TABLE expense_payments_new RENAME TO expense_payments;
-    CREATE INDEX idx_expense_payments_expense ON expense_payments(expense_id, amount_ore);
-    CREATE INDEX idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
   `)
 
-  // === 3. invoices (table-recreate: CHECK references paid_amount) ===
+  // invoices (table-recreate: CHECK references paid_amount)
   db.exec(`
     CREATE TABLE invoices_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1269,8 +1261,20 @@ function migration022Programmatic(db: import('better-sqlite3').Database): void {
       currency, status, paid_amount, journal_entry_id, ocr_number, notes,
       version, created_at, updated_at, fiscal_year_id, payment_terms
     FROM invoices;
+  `)
+
+  // === Phase 2: Drop old tables (children first to avoid FK violations) ===
+  db.exec(`
+    DROP TABLE invoice_payments;
+    DROP TABLE expense_payments;
     DROP TABLE invoices;
+  `)
+
+  // === Phase 3: Rename new tables + recreate indexes + trigger ===
+  db.exec(`
     ALTER TABLE invoices_new RENAME TO invoices;
+    ALTER TABLE invoice_payments_new RENAME TO invoice_payments;
+    ALTER TABLE expense_payments_new RENAME TO expense_payments;
     CREATE INDEX idx_inv_counterparty ON invoices(counterparty_id);
     CREATE INDEX idx_inv_status ON invoices(status);
     CREATE INDEX idx_inv_due ON invoices(due_date);
@@ -1283,6 +1287,11 @@ function migration022Programmatic(db: import('better-sqlite3').Database): void {
     BEGIN
         SELECT RAISE(ABORT, 'Faktura som inte är utkast kan inte raderas. Makulera istället.');
     END;
+    CREATE INDEX idx_ip_invoice ON invoice_payments(invoice_id);
+    CREATE INDEX idx_payments_invoice ON invoice_payments(invoice_id, amount_ore);
+    CREATE INDEX idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
+    CREATE INDEX idx_expense_payments_expense ON expense_payments(expense_id, amount_ore);
+    CREATE INDEX idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
   `)
 
   // === 4. expenses: simple rename (no CHECK on paid_amount) ===

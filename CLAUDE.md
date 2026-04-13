@@ -111,6 +111,12 @@ Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THR
 
 **M120.** `journal_entries.company_id` och `accounting_periods.company_id` ar avsiktlig denormalisering for query-performance trots att `fiscal_year_id` ger company-scope via FK. `accounting_periods` anvander `company_id` i index `idx_ap_dates` och trigger `trg_check_period_on_booking`. Ta inte bort dessa kolumner.
 
+## 27. Table-recreate bevarar inte triggers (M121)
+
+**M121.** Vid `CREATE TABLE ... AS SELECT` / table-recreate-mönstret: alla triggers attached till tabellen måste återskapas explicit, oavsett om trigger-kroppen refererar de kolumner som ändras. SQLite droppar alla triggers vid `DROP TABLE`. Samma gäller index (redan hanterat i alla befintliga migrationer). Dessutom kräver table-recreate med FK-beroenden att `PRAGMA foreign_keys = OFF` sätts UTANFÖR transaktionen (SQLite ignorerar pragma inuti transaction). `runMigrations` i `db.ts` har explicit stöd för detta (index 21 = migration 022). Vid framtida table-recreate: lägg till `needsFkOff`-guard för relevant migrations-index. Kör alltid `PRAGMA foreign_key_check` efter re-enable.
+
+Historik: S42 upptäckte att `trg_prevent_invoice_delete` tappades tyst vid invoices table-recreate. S41:s stoppvillkor ("inga triggers refererar de fem kolumnerna") fångade inte trigger-tillhörighet till tabellen.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
