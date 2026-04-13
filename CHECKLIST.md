@@ -31,11 +31,33 @@ Om fler behöver undantas: lägg till i `BOOTSTRAP_EXCLUSIONS` i
 Filen `.sprint-baseline` innehåller commit-hashen som gate-scriptet
 diffar mot. Uppdateras manuellt vid sprint-start.
 
-## axeCheck (reserverad)
+## A11y-policy
 
-`renderWithProviders` har en `axeCheck`-prop som är no-op i nuläget.
-A11y-policy beslutas separat. Propen finns reserverad så att framtida
-sessioner kan aktivera a11y-kontroll utan att ändra helperens signatur.
+Alla renderer-tester kör `axe-core` default-på via `renderWithProviders`.
+Violation → testet failar.
+
+### När är `axeCheck: false` motiverat?
+
+Endast följande fall:
+
+1. **Intentionally invalid markup för error-state-tester.** Exempel: test
+   som verifierar att en form visar valideringsfel när användaren submittar
+   utan required fields — själva error-state-renderingen kan innehålla
+   ARIA-patterns som axe flaggar i sin mellanliggande form.
+2. **Isolerade sub-komponenter som inte är meningsfulla utan parent.**
+   Exempel: en `<td>` som testas utanför sin `<table>`. Föredra att
+   testa i meningsfull kontext istället; opt-out är sista utvägen.
+
+Om du känner behov av opt-out utanför dessa två fall: pausa och diskutera.
+Det är en signal att antingen komponenten har ett faktiskt a11y-problem
+som behöver fixas, eller att test-setupen saknar nödvändig wrapping.
+
+### Avaktiverade axe-regler
+
+Se kommentar överst i `tests/helpers/render-with-providers.tsx` för aktuell
+lista + motivering. Nuvarande avaktiveringar:
+
+- `color-contrast` — jsdom beräknar inte styles, regeln ger alltid false positive.
 
 ## Exempelformat för PR-beskrivningar
 

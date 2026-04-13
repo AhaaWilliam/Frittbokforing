@@ -5,16 +5,30 @@
  * - HashRouter (real, from src/renderer/lib/router.tsx)
  *
  * No parallel fake-provider — tests exercise the real provider stack.
- * axeCheck prop reserved for future a11y policy (no-op now).
+ *
+ * A11y: axe-core runs by default after render. Violations fail the test.
+ * Opt out with axeCheck: false (see CHECKLIST.md for policy).
+ *
+ * Hash-router convention: initialRoute uses path form (e.g. '/products')
+ * which is set as window.location.hash internally. Note that
+ * window.location.hash includes the '#' prefix — so '/products' becomes
+ * '#/products' when read back. Test assertions should use the '#' form.
+ *
+ * Disabled axe rules (jsdom limitations):
+ *   - color-contrast: jsdom does not compute styles, always fails.
  */
 import { type ReactElement } from 'react'
 import { render, type RenderResult } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import axe, { type AxeResults } from 'axe-core'
 import { FiscalYearProvider } from '../../src/renderer/contexts/FiscalYearContext'
 import { HashRouter } from '../../src/renderer/lib/router'
 import { routes } from '../../src/renderer/lib/routes'
 import { mockIpcResponse, mockIpcPending } from '../setup/mock-ipc'
 import type { FiscalYear } from '../../src/shared/types'
+
+// ── Re-export AxeResults for consumer use ─────────────────────────────
+export type { AxeResults }
 
 // ── Default fiscal year fixture ───────────────────────────────────────
 
@@ -33,6 +47,15 @@ function makeFiscalYear(
   }
 }
 
+// ── Axe config ────────────────────────────────────────────────────────
+
+const AXE_OPTIONS: axe.RunOptions = {
+  rules: {
+    // jsdom does not compute styles — color-contrast always fails
+    'color-contrast': { enabled: false },
+  },
+}
+
 // ── Options ───────────────────────────────────────────────────────────
 
 interface RenderWithProvidersOptions {
@@ -42,40 +65,37 @@ interface RenderWithProvidersOptions {
   initialRoute?: string
   /** Custom QueryClient if test needs cache control. */
   queryClient?: QueryClient
-  /** Reserved for future a11y policy — no-op now. */
+  /** Run axe-core a11y check after render (default: true). */
   axeCheck?: boolean
 }
 
 interface RenderWithProvidersResult extends RenderResult {
   queryClient: QueryClient
+  axeResults: AxeResults | null
 }
 
 // ── Main helper ───────────────────────────────────────────────────────
 
-export function renderWithProviders(
+export async function renderWithProviders(
   ui: ReactElement,
   options: RenderWithProvidersOptions = {},
-): RenderWithProvidersResult {
+): Promise<RenderWithProvidersResult> {
   const {
     fiscalYear = { id: 1, label: '2026' },
     initialRoute = '/overview',
     queryClient: providedQc,
+    axeCheck = true,
   } = options
 
   // Configure mock-IPC for FiscalYearContext dependencies
   if (fiscalYear === 'loading') {
-    // FiscalYearProvider calls useFiscalYears() → window.api.listFiscalYears()
-    // and window.api.getSetting('last_fiscal_year_id')
-    // Both should hang to simulate loading state
     mockIpcPending('fiscal-year:list')
     mockIpcPending('settings:get')
   } else if (fiscalYear === 'none') {
-    // Empty fiscal year list — no years exist
     mockIpcResponse('fiscal-year:list', [])
     mockIpcResponse('settings:get', null)
     mockIpcResponse('settings:set', undefined)
   } else {
-    // Loaded state: return a fiscal year matching the provided id/label
     const fy = makeFiscalYear({
       id: fiscalYear.id,
       year_label: fiscalYear.label,
@@ -85,10 +105,8 @@ export function renderWithProviders(
     mockIpcResponse('settings:set', undefined)
   }
 
-  // Set initial hash route
   window.location.hash = initialRoute
 
-  // Create QueryClient with test-friendly defaults
   const queryClient =
     providedQc ??
     new QueryClient({
@@ -111,5 +129,17 @@ export function renderWithProviders(
 
   const result = render(ui, { wrapper: Wrapper })
 
-  return { ...result, queryClient }
+  // ── Axe a11y check ──────────────────────────────────────────────────
+  let axeResults: AxeResults | null = null
+  if (axeCheck) {
+    axeResults = await axe.run(result.container, AXE_OPTIONS)
+    if (axeResults.violations.length > 0) {
+      const msg = axeResults.violations
+        .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  targets: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
+        .join('\n')
+      throw new Error(`axe-core violations:\n${msg}`)
+    }
+  }
+
+  return { ...result, queryClient, axeResults }
 }

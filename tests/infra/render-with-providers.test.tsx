@@ -5,7 +5,7 @@ import { setupMockIpc } from '../setup/mock-ipc'
 import { renderWithProviders } from '../helpers/render-with-providers'
 import { useFiscalYearContext } from '../../src/renderer/contexts/FiscalYearContext'
 
-// ── Test helper component ─────────────────────────────────────────────
+// ── Test helper components ────────────────────────────────────────────
 
 function FiscalYearDisplay() {
   const { activeFiscalYear, allFiscalYears, isReadOnly } =
@@ -21,13 +21,26 @@ function FiscalYearDisplay() {
   )
 }
 
+function CleanComponent() {
+  return (
+    <main>
+      <button type="button">OK</button>
+    </main>
+  )
+}
+
+function BrokenA11yComponent() {
+  // eslint-disable-next-line jsx-a11y/alt-text
+  return <img src="x" />
+}
+
 describe('render-with-providers', () => {
   beforeEach(() => {
     setupMockIpc()
   })
 
   it('renders with loaded fiscal year from mock-IPC', async () => {
-    renderWithProviders(<FiscalYearDisplay />, {
+    await renderWithProviders(<FiscalYearDisplay />, {
       fiscalYear: { id: 5, label: '2025' },
     })
 
@@ -39,13 +52,10 @@ describe('render-with-providers', () => {
   })
 
   it('renders loading state when fiscalYear is "loading"', async () => {
-    renderWithProviders(<FiscalYearDisplay />, {
+    await renderWithProviders(<FiscalYearDisplay />, {
       fiscalYear: 'loading',
     })
 
-    // In loading state, FiscalYearContext has no activeFiscalYear yet
-    // because useFiscalYears() query hasn't resolved
-    // The provider still renders children — it just has null/empty state
     await waitFor(() => {
       expect(screen.getByTestId('fy-label').textContent).toBe('none')
     })
@@ -57,19 +67,38 @@ describe('render-with-providers', () => {
       return <span data-testid="hash">{window.location.hash}</span>
     }
 
-    renderWithProviders(<RouteDisplay />, {
+    await renderWithProviders(<RouteDisplay />, {
       initialRoute: '/products',
     })
 
     expect(window.location.hash).toBe('#/products')
     expect(screen.getByTestId('hash').textContent).toBe('#/products')
 
-    // Verify navigation works via hash change
     act(() => {
       window.location.hash = '/customers'
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     })
 
     expect(window.location.hash).toBe('#/customers')
+  })
+
+  it('axe-core passes with clean semantic HTML (default-on)', async () => {
+    const { axeResults } = await renderWithProviders(<CleanComponent />)
+
+    expect(axeResults).not.toBeNull()
+    expect(axeResults!.violations).toEqual([])
+  })
+
+  it('axeCheck: false skips check; default detects violations', async () => {
+    // Opt-out: render passes, axeResults is null
+    const { axeResults } = await renderWithProviders(<BrokenA11yComponent />, {
+      axeCheck: false,
+    })
+    expect(axeResults).toBeNull()
+
+    // Default (axeCheck: true): should throw with violation id
+    await expect(
+      renderWithProviders(<BrokenA11yComponent />),
+    ).rejects.toThrow('image-alt')
   })
 })
