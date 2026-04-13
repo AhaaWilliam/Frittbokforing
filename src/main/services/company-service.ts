@@ -1,9 +1,10 @@
 import type Database from 'better-sqlite3'
-import type { Company, IpcResult } from '../../shared/types'
+import type { Company, IpcResult, ErrorCode } from '../../shared/types'
 import {
   CreateCompanyInputSchema,
   UpdateCompanyInputSchema,
 } from '../ipc-schemas'
+import { mapUniqueConstraintError, COMPANY_UNIQUE_MAPPINGS } from './error-helpers'
 import log from 'electron-log'
 
 export interface GeneratedPeriod {
@@ -188,24 +189,18 @@ export function createCompany(
     })()
 
     return { success: true, data: result }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel'
-    if (
-      message.includes('UNIQUE constraint') &&
-      message.includes('org_number')
-    ) {
-      return {
-        success: false,
-        error: 'Ett företag med detta organisationsnummer finns redan.',
-        code: 'DUPLICATE_ORG_NUMBER' as const,
-        field: 'org_number',
-      }
+  } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, COMPANY_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, error: e.error, code: e.code, field: e.field }
     }
-    log.error(message)
+    log.error('[company-service] createCompany:', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid skapande av företag.',
-      code: 'TRANSACTION_ERROR' as const,
+      code: 'UNEXPECTED_ERROR' as const,
     }
   }
 }

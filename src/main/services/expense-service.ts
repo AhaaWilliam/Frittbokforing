@@ -13,6 +13,7 @@ import type {
   IpcResult,
   ErrorCode,
 } from '../../shared/types'
+import { mapUniqueConstraintError, EXPENSE_UNIQUE_MAPPINGS } from './error-helpers'
 import log from 'electron-log'
 import {
   SaveExpenseDraftSchema,
@@ -150,12 +151,19 @@ export function saveExpenseDraft(
 
       return { success: true as const, data: { id: expenseId } }
     })()
-  } catch (err) {
+  } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, EXPENSE_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[expense-service] saveExpenseDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[expense-service] saveExpenseDraft failed:', err)
     return {
       success: false,
       error: 'Kunde inte spara kostnadsutkastet.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -258,12 +266,19 @@ export function updateExpenseDraft(
 
       return { success: true as const, data: { id } }
     })()
-  } catch (err) {
+  } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, EXPENSE_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[expense-service] updateExpenseDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[expense-service] updateExpenseDraft failed:', err)
     return {
       success: false,
       error: 'Kunde inte uppdatera kostnaden.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -524,14 +539,14 @@ export function finalizeExpense(
       return {
         success: false,
         error: err.message,
-        code: 'TRANSACTION_ERROR' as ErrorCode,
+        code: 'UNEXPECTED_ERROR' as ErrorCode,
       }
     }
     log.error('[expense-service] finalizeExpense failed:', err)
     return {
       success: false,
       error: 'Bokföring av kostnad misslyckades.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -823,7 +838,7 @@ export function payExpense(
       return { success: false, error: e.error ?? 'Betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
     }
     log.error('[expense-service] payExpense failed:', err)
-    return { success: false, error: 'Betalning misslyckades.', code: 'TRANSACTION_ERROR' }
+    return { success: false, error: 'Betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
   }
 }
 
@@ -1012,7 +1027,7 @@ export function payExpensesBulk(
       return { success: false, error: e.error ?? 'Bulk-betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
     }
     log.error('[expense-service] payExpensesBulk failed:', err)
-    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'TRANSACTION_ERROR' }
+    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
   }
 }
 

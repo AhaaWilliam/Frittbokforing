@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import type { z } from 'zod'
+import { IpcError } from './ipc-helpers'
 
 export interface UseEntityFormOptions<
   TForm extends Record<string, unknown>,
@@ -117,7 +118,15 @@ export function useEntityForm<
       const result = await onSubmit(payload)
       onSuccess?.(result)
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Ett fel uppstod')
+      if (err instanceof IpcError) {
+        // M100/M125: Propagera field-level-fel från backend till formuläret
+        if (err.field) {
+          setErrors((prev) => ({ ...prev, [err.field!]: err.message }))
+        }
+        setSubmitError(err.message)
+      } else {
+        setSubmitError(err instanceof Error ? err.message : 'Ett fel uppstod')
+      }
     } finally {
       setIsSubmitting(false)
     }

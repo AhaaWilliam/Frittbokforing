@@ -151,20 +151,22 @@ describe('SEC03: Electron-säkerhet', () => {
 
     it('SEC03-06a: getFinalized med icke-existerande id kastar — stack trace syns ej i IPC error', () => {
       // Anropa service direkt — detta simulerar vad IPC-handler catch:ar
-      let caughtError: Error | null = null
+      let caughtError: unknown = null
       try {
         dynCtx.invoiceService.getFinalized(dynCtx.db, 999999)
       } catch (err) {
-        caughtError = err as Error
+        caughtError = err
       }
 
       expect(caughtError).not.toBeNull()
-      // Service FÅR ha detaljerat felmeddelande — det är IPC-lagret som sanerar
-      expect(caughtError!.message).toBeDefined()
+      // M100: Strukturerade fel har code + error (inte Error.message)
+      const e = caughtError as { code?: string; error?: string }
+      expect(e.code).toBe('INVOICE_NOT_FOUND')
+      expect(e.error).toBeDefined()
 
-      // Simulera IPC-handler sanitering (det mönster som ipc-handlers.ts använder)
+      // Simulera IPC-handler sanitering (M100 mönster)
       const sanitized =
-        caughtError instanceof Error ? caughtError.message : 'Ett fel uppstod'
+        e.error ?? (caughtError instanceof Error ? caughtError.message : 'Ett fel uppstod')
 
       // Saniterat meddelande ska INTE innehålla stack traces eller filvägar
       expect(sanitized).not.toMatch(/at\s+\w+\s+\(/) // stack trace frames

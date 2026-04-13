@@ -1,9 +1,10 @@
 import type Database from 'better-sqlite3'
-import type { Counterparty, IpcResult } from '../../shared/types'
+import type { Counterparty, IpcResult, ErrorCode } from '../../shared/types'
 import {
   CreateCounterpartyInputSchema,
   UpdateCounterpartyInputSchema,
 } from '../ipc-schemas'
+import { mapUniqueConstraintError, COUNTERPARTY_UNIQUE_MAPPINGS } from './error-helpers'
 import log from 'electron-log'
 
 // Map DB row (payment_terms_days) to Counterparty type (default_payment_terms)
@@ -99,24 +100,21 @@ export function createCounterparty(
       return {
         success: false,
         error: 'Kunde inte hämta skapad kund',
-        code: 'TRANSACTION_ERROR',
+        code: 'UNEXPECTED_ERROR',
       }
     return { success: true, data: cp }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel'
-    if (message.includes('UNIQUE') && message.includes('org_number')) {
-      return {
-        success: false,
-        error: 'En motpart med detta organisationsnummer finns redan.',
-        code: 'DUPLICATE_ORG_NUMBER',
-        field: 'org_number',
-      }
+  } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, error: e.error, code: e.code, field: e.field }
     }
-    log.error(message)
+    log.error('[counterparty-service] createCounterparty:', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid hantering av motparten.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -189,13 +187,18 @@ export function updateCounterparty(
 
     const updated = getCounterparty(db, id)!
     return { success: true, data: updated }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel'
-    log.error(message)
+  } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[counterparty-service] updateCounterparty:', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid hantering av motparten.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }

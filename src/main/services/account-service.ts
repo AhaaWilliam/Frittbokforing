@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
-import type { Account, IpcResult } from '../../shared/types'
+import type { Account, IpcResult, ErrorCode } from '../../shared/types'
+import { mapUniqueConstraintError, ACCOUNT_UNIQUE_MAPPINGS } from './error-helpers'
 
 export function listAccounts(
   db: Database.Database,
@@ -98,17 +99,8 @@ export function createAccount(
     )
     return { success: true, data: { account_number: input.account_number } }
   } catch (err: unknown) {
-    const sqliteErr = err as { code?: string }
-    if (
-      sqliteErr.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
-      sqliteErr.code === 'SQLITE_CONSTRAINT_PRIMARYKEY'
-    ) {
-      return {
-        success: false,
-        error: `Kontonummer ${input.account_number} finns redan.`,
-        code: 'DUPLICATE_ACCOUNT',
-      }
-    }
+    const mapped = mapUniqueConstraintError(err, ACCOUNT_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
     throw err
   }
 }

@@ -174,12 +174,15 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
     ).run(companyId)
 
     // Should fail because FY for 2026-01-01 already exists
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 10_000_000,
-      }),
-    ).toThrow('Räkenskapsår för denna period finns redan')
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 
     // C-series voucher should NOT exist (rolled back with the transaction)
     const cVouchers = db
@@ -198,12 +201,15 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
       date: '2025-06-15',
     })
 
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 99999,
-      }),
-    ).toThrow('ändrats sedan dialogen öppnades')
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBe('STALE_DATA')
 
     // No C-series voucher
     const cVouchers = db
@@ -234,12 +240,15 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
     // User still has the old netResultOre from when dialog opened
     // The race condition guard catches the mismatch (actual is now 0 due to 8999 booking)
     // OR the double-booking guard catches the existing C-series
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 10_000_000,
-      }),
-    ).toThrow()
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBeDefined()
   })
 })
 
@@ -292,12 +301,15 @@ describe('F2: createNewFiscalYear stänger föregående FY atomärt', () => {
        VALUES (?, '2026', '2026-01-01', '2026-12-31')`,
     ).run(companyId)
 
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: false,
         netResultOre: 0,
-      }),
-    ).toThrow('Räkenskapsår för denna period finns redan')
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 
     // Föregående FY ska FORTFARANDE vara öppet — rollback funkade
     const fy = db

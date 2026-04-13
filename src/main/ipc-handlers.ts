@@ -272,12 +272,16 @@ export function registerIpcHandlers(): void {
       saveSettings(settings)
 
       return { success: true, data: result }
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err) {
+        const e = err as { code: string; error: string; field?: string }
+        return { success: false, error: e.error, code: e.code, field: e.field }
+      }
       return {
         success: false,
         error:
           err instanceof Error ? err.message : 'Kunde inte skapa räkenskapsår.',
-        code: 'TRANSACTION_ERROR' as const,
+        code: 'UNEXPECTED_ERROR' as const,
       }
     }
   })
@@ -319,11 +323,15 @@ export function registerIpcHandlers(): void {
         }
       const result = reTransferOpeningBalance(db, activeFyId)
       return { success: true, data: result }
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err) {
+        const e = err as { code: string; error: string; field?: string }
+        return { success: false, error: e.error, code: e.code, field: e.field }
+      }
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Kunde inte uppdatera IB.',
-        code: 'TRANSACTION_ERROR' as const,
+        code: 'UNEXPECTED_ERROR' as const,
       }
     }
   })

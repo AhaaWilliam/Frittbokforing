@@ -4,6 +4,7 @@ import type {
   CustomerPrice,
   PriceResult,
   IpcResult,
+  ErrorCode,
 } from '../../shared/types'
 import {
   CreateProductInputSchema,
@@ -98,7 +99,7 @@ export function createProduct(
     return {
       success: false,
       error: 'Kunde inte spara artikeln.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -166,7 +167,7 @@ export function updateProduct(
     return {
       success: false,
       error: 'Kunde inte uppdatera artikeln.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -199,7 +200,7 @@ export function deactivateProduct(
     return {
       success: false,
       error: 'Kunde inte inaktivera artikeln.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -260,7 +261,7 @@ export function setCustomerPrice(
     return {
       success: false,
       error: 'Kunde inte spara kundpriset.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -288,7 +289,7 @@ export function removeCustomerPrice(
     return {
       success: false,
       error: 'Kunde inte ta bort kundpriset.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }

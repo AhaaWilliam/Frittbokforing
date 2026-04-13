@@ -40,6 +40,10 @@ export type ErrorCode =
   | 'ALREADY_FINALIZED'
   | 'INVOICE_HAS_PAYMENTS'
   | 'MISSING_ACCOUNT_NUMBER'
+  | 'UNBALANCED_ENTRY'
+  | 'STALE_DATA'
+  | 'DUPLICATE_FISCAL_YEAR'
+  | 'UNEXPECTED_ERROR'
 
 // === Page navigation ===
 export type PageId =

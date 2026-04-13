@@ -137,9 +137,10 @@ export function createOpeningBalance(
       )
       .get(journalEntryId) as { d: number; c: number }
     if (check.d !== check.c) {
-      throw new Error(
-        `IB balanserar inte: debet ${check.d} ≠ kredit ${check.c}`,
-      )
+      throw {
+        code: 'UNBALANCED_ENTRY' as const,
+        error: `IB balanserar inte: debet ${check.d} ≠ kredit ${check.c}`,
+      }
     }
 
     // Book
@@ -195,7 +196,7 @@ export function reTransferOpeningBalance(
     .get(fiscalYearId) as { id: number } | undefined
 
   if (!prevFy) {
-    throw new Error('Inget föregående räkenskapsår hittades.')
+    throw { code: 'NOT_FOUND' as const, error: 'Inget föregående räkenskapsår hittades.' }
   }
 
   return db.transaction(() => {

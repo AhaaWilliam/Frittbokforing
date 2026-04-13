@@ -195,12 +195,15 @@ describe('K1 – atomic year-end result booking', () => {
        VALUES (?, '2026', '2026-01-01', '2026-12-31')`,
     ).run(companyId)
 
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 5_000_000,
-      }),
-    ).toThrow('Räkenskapsår för denna period finns redan')
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 
     // C-series voucher must NOT exist — rolled back with the transaction
     const cVouchers = db
@@ -219,12 +222,15 @@ describe('K1 – atomic year-end result booking', () => {
       date: '2025-06-15',
     })
 
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 1_000, // deliberately wrong
-      }),
-    ).toThrow('ändrats sedan dialogen öppnades')
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBe('STALE_DATA')
 
     // No new FY
     const fys = db
@@ -245,12 +251,15 @@ describe('K1 – atomic year-end result booking', () => {
     bookYearEndResult(db, fyId, 5_000_000)
 
     // Actual net result is now 0 (8999 cancels out 3001) — race condition guard fires
-    expect(() =>
+    let thrown: unknown = null
+    try {
       createNewFiscalYear(db, companyId, fyId, {
         confirmBookResult: true,
         netResultOre: 5_000_000,
-      }),
-    ).toThrow()
+      })
+    } catch (err) { thrown = err }
+    expect(thrown).toBeTruthy()
+    expect((thrown as { code: string }).code).toBeDefined()
   })
 })
 

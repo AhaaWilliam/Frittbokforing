@@ -139,12 +139,17 @@ export function saveDraft(
 
       return { success: true as const, data: getDraftInternal(db, invoiceId)! }
     })()
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[invoice-service] saveDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[invoice-service] saveDraft failed:', err)
     return {
       success: false,
       error: 'Kunde inte spara fakturautkastet.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -239,12 +244,17 @@ export function updateDraft(
         data: getDraftInternal(db, data.id)!,
       }
     })()
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[invoice-service] updateDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[invoice-service] updateDraft failed:', err)
     return {
       success: false,
       error: 'Kunde inte uppdatera fakturautkastet.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -294,12 +304,17 @@ export function deleteDraft(
 
       return { success: true as const, data: undefined }
     })()
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[invoice-service] deleteDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[invoice-service] deleteDraft failed:', err)
     return {
       success: false,
       error: 'Kunde inte radera fakturautkastet.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -420,9 +435,10 @@ function buildJournalLines(
 
   if (diff !== 0) {
     if (Math.abs(diff) > 50) {
-      throw new Error(
-        `Balance error: debit ${totalDebit} - credit ${totalCredit} = ${diff} öre. Diff > 50 indicates a bug.`,
-      )
+      throw {
+        code: 'UNBALANCED_ENTRY' as const,
+        error: `Balance error: debit ${totalDebit} - credit ${totalCredit} = ${diff} öre. Diff > 50 indicates a bug.`,
+      }
     }
     lines.push({
       account_number: '3740',
@@ -436,9 +452,10 @@ function buildJournalLines(
   const finalDebit = lines.reduce((sum, l) => sum + l.debit_ore, 0)
   const finalCredit = lines.reduce((sum, l) => sum + l.credit_ore, 0)
   if (finalDebit !== finalCredit) {
-    throw new Error(
-      `CRITICAL: Balance still wrong after rounding. Debit ${finalDebit} !== Credit ${finalCredit}`,
-    )
+    throw {
+      code: 'UNBALANCED_ENTRY' as const,
+      error: `CRITICAL: Balance still wrong after rounding. Debit ${finalDebit} !== Credit ${finalCredit}`,
+    }
   }
 
   return lines
@@ -603,6 +620,7 @@ export function finalizeDraft(
     return { success: true, data: getDraftInternal(db, id)! }
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string; message?: string }
+    // SQLite trigger: M123 NOT NULL check for freeform invoice lines
     if (e.code === 'SQLITE_CONSTRAINT_TRIGGER' && e.message?.includes('kontonummer innan fakturan')) {
       return {
         success: false,
@@ -610,15 +628,12 @@ export function finalizeDraft(
         code: 'MISSING_ACCOUNT_NUMBER',
       }
     }
-    if (e.code && !e.code.startsWith('SQLITE_')) {
+    // M100: Strukturerade fel från interna throw-sites
+    if (e.code && !e.code.startsWith('SQLITE_') && e.error) {
       return {
         success: false,
-        error: e.error ?? 'Bokföring misslyckades',
-        code: e.code as IpcResult<InvoiceWithLines> extends {
-          success: false
-        }
-          ? IpcResult<InvoiceWithLines>['code']
-          : never,
+        error: e.error,
+        code: e.code as ErrorCode,
         field: e.field,
       }
     }
@@ -626,7 +641,7 @@ export function finalizeDraft(
     return {
       success: false,
       error: 'Bokföring misslyckades.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -683,12 +698,17 @@ export function updateSentInvoice(
       .prepare('SELECT * FROM invoices WHERE id = ?')
       .get(input.id) as Invoice
     return { success: true, data: updated }
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[invoice-service] updateSentInvoice: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
     log.error('[invoice-service] updateSentInvoice failed:', err)
     return {
       success: false,
       error: 'Uppdatering misslyckades.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -1103,7 +1123,7 @@ export function payInvoice(
     return {
       success: false,
       error: 'Betalning misslyckades.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -1295,7 +1315,7 @@ export function payInvoicesBulk(
       return { success: false, error: e.error ?? 'Bulk-betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
     }
     log.error('[invoice-service] payInvoicesBulk failed:', err)
-    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'TRANSACTION_ERROR' }
+    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
   }
 }
 
@@ -1332,7 +1352,7 @@ export function getFinalized(
     )
     .get(invoiceId) as (Invoice & Record<string, unknown>) | undefined
 
-  if (!invoice) throw new Error(`Finalized invoice ${invoiceId} not found`)
+  if (!invoice) throw { code: 'INVOICE_NOT_FOUND' as const, error: `Finalized invoice ${invoiceId} not found` }
 
   const lines = db
     .prepare(

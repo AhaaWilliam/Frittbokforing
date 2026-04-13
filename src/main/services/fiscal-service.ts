@@ -4,6 +4,7 @@ import type {
   FiscalPeriod,
   JournalEntry,
   IpcResult,
+  ErrorCode,
 } from '../../shared/types'
 import { addOneDay, addMonthsMinusOneDay } from '../../shared/date-utils'
 import { generatePeriods } from './company-service'
@@ -94,13 +95,17 @@ export function closePeriod(
 
       return { success: true, data: updated }
     })()
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel'
-    log.error(message)
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[fiscal-service] closePeriod: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[fiscal-service] closePeriod:', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid periodhantering.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -168,13 +173,17 @@ export function reopenPeriod(
 
       return { success: true, data: updated }
     })()
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Okänt fel'
-    log.error(message)
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[fiscal-service] reopenPeriod: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[fiscal-service] reopenPeriod:', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid periodhantering.',
-      code: 'TRANSACTION_ERROR',
+      code: 'UNEXPECTED_ERROR',
     }
   }
 }
@@ -210,9 +219,7 @@ export function createNewFiscalYear(
       // GUARD: Verify result hasn't changed since dialog was opened
       const actualNetResult = calculateNetResult(db, previousFiscalYearId)
       if (actualNetResult !== bookResult.netResultOre) {
-        throw new Error(
-          'Årets resultat har ändrats sedan dialogen öppnades. Försök igen.',
-        )
+        throw { code: 'STALE_DATA' as const, error: 'Årets resultat har ändrats sedan dialogen öppnades. Försök igen.' }
       }
 
       // GUARD: Prevent double booking
@@ -222,7 +229,7 @@ export function createNewFiscalYear(
         )
         .get(previousFiscalYearId) as { cnt: number }
       if (existingBooking.cnt > 0) {
-        throw new Error('Årets resultat är redan bokat.')
+        throw { code: 'ALREADY_FINALIZED' as const, error: 'Årets resultat är redan bokat.' }
       }
 
       bookYearEndResult(db, previousFiscalYearId, actualNetResult)
@@ -231,7 +238,7 @@ export function createNewFiscalYear(
     const prevFY = db
       .prepare('SELECT * FROM fiscal_years WHERE id = ?')
       .get(previousFiscalYearId) as FiscalYear
-    if (!prevFY) throw new Error('Föregående räkenskapsår hittades inte.')
+    if (!prevFY) throw { code: 'NOT_FOUND' as const, error: 'Föregående räkenskapsår hittades inte.' }
 
     const startDate = addOneDay(prevFY.end_date)
     const endDate = addMonthsMinusOneDay(startDate, 12)
@@ -243,7 +250,7 @@ export function createNewFiscalYear(
       )
       .get(companyId, startDate)
     if (existing) {
-      throw new Error('Räkenskapsår för denna period finns redan.')
+      throw { code: 'DUPLICATE_FISCAL_YEAR' as const, error: 'Räkenskapsår för denna period finns redan.' }
     }
 
     const startYear = startDate.substring(0, 4)
