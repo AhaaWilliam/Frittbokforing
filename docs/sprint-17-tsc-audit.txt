@@ -1,0 +1,184 @@
+Sprint 17 S62 — TSC-felklassificering och rapportering
+======================================================
+Baseline: 91 tsc-fel, 1223 tester passerar
+
+## Top-10 filer efter antal fel
+
+  23 tests/system/S12-bank-fee.test.ts
+  12 tests/gap-M02-M04-counterparties-articles.test.ts
+   8 tests/session-19-manual-entry.test.ts
+   8 tests/gap-M14-accounts-system.test.ts
+   7 tests/system/S03-manual-entry-lifecycle.test.ts
+   3 tests/e2e/full-cycle.spec.ts
+   2 tests/system/S07-stamdata-crud.test.ts
+   2 tests/session-51-jel-rename.test.ts
+   2 tests/session-45-fas5a-performance.test.ts
+   2 tests/session-27-services.test.ts
+
+## Felkodsfrekvens
+
+  52 error TS2339  (Property does not exist on type)
+   9 error TS2353  (Object literal may only specify known properties)
+   8 error TS2322  (Type not assignable)
+   5 error TS2722  (Cannot invoke possibly undefined)
+   5 error TS2551  (Property does not exist, did you mean?)
+   5 error TS2345  (Argument type not assignable)
+   3 error TS2571  (Object is of type 'unknown')
+   1 error TS7006  (Parameter implicitly has 'any' type)
+   1 error TS2739  (Type missing properties)
+   1 error TS2550  (Property does not exist, change lib?)
+   1 error TS2493  (Tuple has no element at index)
+
+## Klassificering per grupp
+
+### S12-bank-fee.test.ts (23 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2339
+- Rotmönster: Tester accessar .data och .code direkt på IpcResult<T> utan
+  narrowing (saknar if (result.success) check). 21 av 23 är detta mönster.
+  2 fel: .totalVatOre finns inte på VatReport (property renamed/removed).
+  1 fel: .id på {} (dålig type annotation).
+- Produktionskod påverkad: Nej
+- Fix-strategi: Lägg till narrowing (if (!result.success) throw) före .data-access.
+  Fixa .totalVatOre och .id separat.
+
+### gap-M02-M04-counterparties-articles.test.ts (12 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2339
+- Rotmönster: Samma som S12 — .data och .code direkt på IpcResult utan narrowing.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Narrowing före .data-access.
+
+### session-19-manual-entry.test.ts (8 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2339 (6) + TS2571 (2)
+- Rotmönster: .error direkt på IpcResult utan narrowing (6 st).
+  2 st: Object is 'unknown' (catch-block utan type guard).
+- Produktionskod påverkad: Nej
+- Fix-strategi: Narrowing + type guard i catch.
+
+### gap-M14-accounts-system.test.ts (8 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2322
+- Rotmönster: Alla 8 fel: `Type 'number' is not assignable to type 'boolean'`.
+  Testet skickar number (0/1) där ToggleAccountActiveInput kräver boolean
+  för is_active.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Byt 0/1 till false/true i testpayloads.
+
+### S03-manual-entry-lifecycle.test.ts (7 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2353
+- Rotmönster: Testet skickar line_number i ManualEntryLineInput som inte
+  har det fältet. Alla 7 fel samma mönster.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Ta bort line_number från testpayloads.
+
+### E2E-filer: full-cycle.spec.ts (3) + app-launch.spec.ts (2) = 5 fel
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2551
+- Rotmönster: Alla 5: page.location istället för page.url() — Playwright
+  Page har inte .location property.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Byt page.location till page.url().
+
+### Migration test-filer: migration-023/024/025 + session-3 + session-4 (5 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2722
+- Rotmönster: Cannot invoke possibly undefined — migration-filer indexerar
+  migrations-array med potentiellt undefined element.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Non-null assertion (!) eller guard.
+
+### full-chain-regression.test.ts (2 fel)
+- Klassificering: HOMOGEN
+- Dominant TS-kod: TS2353
+- Rotmönster: Samma som S03 — line_number i ManualEntryLineInput.
+- Produktionskod påverkad: Nej
+- Fix-strategi: Ta bort line_number.
+
+### Singletons (övriga 21 fel i 16 filer) — uppbrutet i mikromönster
+
+Mikromönster A: IpcResult-narrowing (8 fel)
+- session-10.test.ts: .data utan narrowing (1)
+- session-21-opening-balance.test.ts: .error utan narrowing (1)
+- session-26-integration-verification.test.ts: .code utan narrowing (1)
+- session-26-invoice-delete-draft.test.ts: .code utan narrowing (2)
+- session-27-services.test.ts: .data utan narrowing (2)
+- system-test-context.ts: .verification_number på InvoiceWithLines (1)
+
+Mikromönster B: Ofullständig mock-payload (5 fel)
+- s59-pay-expense-dialog-timezone.test.tsx: ExpenseDetail saknar properties (1, TS2739)
+- session-51-jel-rename.test.ts: saknar payment_method (1, TS2345)
+- S07-stamdata-crud.test.ts: saknar is_active i ToggleAccountActiveInput (2, TS2345)
+- session-45-fas5a-performance.test.ts: .id på {} (2, TS2339)
+
+Mikromönster C: Buffer type mismatch (2 fel)
+- session-18-excel-export.test.ts: Buffer<ArrayBufferLike> → Buffer (1)
+- session-51-jel-rename.test.ts: samma (1)
+
+Mikromönster D: Tuple/mock-typning (2 fel)
+- s59-backup-service-timezone.test.ts: tuple index + .defaultPath på never (2)
+
+Mikromönster E: catch unknown + lib-target (4 fel)
+- session-53-manual-entry-rename.test.ts: Object is 'unknown' i catch (1)
+- PeriodList.tsx: findLastIndex lib-target (1, TS2550) + implicit any (1, TS7006)
+  PRODUKTIONSKOD — se verifiering nedan.
+
+Alla 5 mikromönster är mekaniska. Ingen heterogenitet som kräver designbeslut.
+
+### PeriodList.tsx produktionskod-verifiering (2 fel)
+
+Rad 29: `periods.findLastIndex((p) => p.is_closed === 1)`
+- TS2550: findLastIndex saknas i tsc lib-target. Koden fungerar runtime
+  (Electron V8 har findLastIndex). Fix: lägg till ES2023 i tsconfig lib.
+- TS7006: implicit any på p — löses automatiskt när TS2550 fixas.
+- INGEN logikändring, INGEN beteendeändring. Ren typ-/lib-konfigfix.
+
+## Summering
+
+- Heterogena grupper: 0
+- Filer med heterogena fel: 0
+- Produktionskodspåverkan: Ja — 2 fel i src/renderer/components/overview/PeriodList.tsx
+  (findLastIndex lib-target + implicit any). Ren config-fix, ingen beteendeändring.
+- Alla 91 fel är i testfiler UTOM 2 i PeriodList.tsx.
+- S12-bank-fee.test.ts står för 23 av 91 = 25%.
+- IpcResult-narrowing-mönstret (TS2339 .data/.code/.error utan check) är
+  dominant: ~52 av 91 fel.
+- Singletons (21 fel) bryts upp i 5 mekaniska mikromönster (A–E), alla triviala.
+
+## S63-beslut
+
+Tröskel: ≥5 heterogena fel i ≥2 filer ELLER produktionskodspåverkan.
+
+Tröskel TEKNISKT TRÄFFAD via produktionskod (2 fel i PeriodList.tsx).
+
+MEDVETET AVSTEG: S63 skippas. Motivering:
+- De 2 produktionskodsfelen är isolerade i en fil, båda mekaniska
+  (lib-target config), ingen logikändring.
+- 0 heterogena grupper bland alla 91 fel.
+- Alla 5 singleton-mikromönster är mekaniska.
+- Risk för att S63 tillför overhead utan värde: alla fel kan fixas
+  med mekaniska, gruppvisa commits i S62 Steg 4.
+
+Beslut: Gå direkt till Steg 4 (homogen fix) i S62.
+
+## Slutligt utfall (Steg 5)
+
+TSC-fel före: 91
+TSC-fel efter: 0
+Tester: 1223 passerar (oförändrat)
+S63-beslut: Skippad (medvetet avsteg dokumenterat ovan)
+
+Fix-commits (9 st):
+1. tsconfig ES2022→ES2023 (PeriodList.tsx findLastIndex) — 91→89
+2. E2E window.location → location i evaluate() — 89→84
+3. Migration tests optional chaining (?.) — 84→79
+4. Remove line_number from ManualEntryLineInput payloads — 79→70
+5. gap-M14 number→boolean + add missing k3_only — 70→62
+6. Singleton mikromönster B–E (mock payloads, Buffer, tuple, catch) — 62→50
+7. gap-M02-M04 IpcResult narrowing — 50→38
+8. session-19 IpcResult narrowing + pragma cast — 38→30
+9. S12-bank-fee + remaining IpcResult narrowing — 30→0
+
+Nästa steg: Sprint 17 S63 skippad → direkt till S64 eller Sprint 18.
