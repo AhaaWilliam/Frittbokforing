@@ -186,6 +186,7 @@ describe('E2E smoke: invoice lifecycle with renamed columns', () => {
       invoice_id: draft.data.id,
       amount_ore: totalDebit,
       payment_date: '2025-01-20',
+      payment_method: 'bank',
       account_number: '1930',
     })
     if (!pay.success) throw new Error(pay.error)
@@ -269,7 +270,7 @@ describe('M92 export format — no _ore leak', () => {
     const result = await exportExcel(db, { fiscalYearId: seed.fyId })
     const ExcelJS = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.load(result.buffer)
+    await workbook.xlsx.load(result.buffer as unknown as ArrayBuffer)
 
     workbook.eachSheet((sheet) => {
       sheet.eachRow((row) => {

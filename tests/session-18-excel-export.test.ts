@@ -137,7 +137,7 @@ async function parseWorkbook(result: {
   buffer: Buffer
 }): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook()
-  await wb.xlsx.load(result.buffer)
+  await wb.xlsx.load(result.buffer as unknown as ArrayBuffer)
   return wb
 }
 

@@ -46,7 +46,7 @@ describe('S59 F9 — timezone regression: backup-service', () => {
       }),
     )
     // Must NOT contain 2026-04-12 (the UTC date / "yesterday")
-    const callArgs = mockShowSaveDialog.mock.calls[0][1]!
-    expect(callArgs.defaultPath).not.toContain('2026-04-12')
+    const callArgs = mockShowSaveDialog.mock.calls[0] as unknown as [unknown, { defaultPath: string }]
+    expect(callArgs[1].defaultPath).not.toContain('2026-04-12')
   })
 })

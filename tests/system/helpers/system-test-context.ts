@@ -680,7 +680,7 @@ export function seedAndFinalizeInvoice(
 
   return {
     invoiceId: draft.data.id,
-    verificationNumber: result.data.verification_number,
+    verificationNumber: (result.data as unknown as { verification_number: number }).verification_number,
   }
 }
 

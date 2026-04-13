@@ -207,7 +207,7 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
       )
       .run(fy.id, cp.data.id)
     const expenseId = Number(
-      freshDb.prepare('SELECT last_insert_rowid() as id').get()!.id,
+      (freshDb.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id,
     )
 
     // Create a dummy journal entry for FK reference
@@ -223,7 +223,7 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
       )
       .run(companyId, fy.id)
     const jeId = Number(
-      freshDb.prepare('SELECT last_insert_rowid() as id').get()!.id,
+      (freshDb.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id,
     )
 
     // Insert payments directly

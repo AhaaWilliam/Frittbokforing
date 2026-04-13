@@ -28,20 +28,23 @@ describe('S59 F9 — timezone regression: PayExpenseDialog', () => {
 
   const expense = {
     id: 1,
-    company_id: 1,
     fiscal_year_id: 1,
     counterparty_id: 1,
     counterparty_name: 'Test',
+    supplier_invoice_number: null,
     expense_date: '2026-04-01',
     due_date: '2026-04-30',
     description: 'Test',
     total_amount_ore: 10000,
     status: 'unpaid' as const,
-    paid_amount_ore: 0,
-    remaining: 10000,
+    payment_terms: 30,
     journal_entry_id: 1,
-    verification_number: 'B1',
+    paid_amount_ore: 0,
+    notes: '',
     created_at: '2026-04-01',
+    updated_at: '2026-04-01',
+    total_paid: 0,
+    remaining: 10000,
     lines: [],
   }
 

@@ -133,6 +133,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
   it('S07-04: systemkonton kan inte inaktiveras', () => {
     const result = ctx.accountService.toggleAccountActive(ctx.db, {
       account_number: '1930',
+      is_active: false,
     })
     expect(result.success).toBe(false)
   })
@@ -150,6 +151,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
 
     const result = ctx.accountService.toggleAccountActive(ctx.db, {
       account_number: '6210',
+      is_active: false,
     })
     expect(result.success).toBe(false)
   })
