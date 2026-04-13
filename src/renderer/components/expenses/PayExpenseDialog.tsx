@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ExpenseDetail } from '../../../shared/types'
 import { usePayExpense } from '../../lib/hooks'
-import { formatKr, toOre, toKr } from '../../lib/format'
+import { formatKr, toOre, toKr, todayLocal } from '../../lib/format'
 
 interface PayExpenseDialogProps {
   expense: ExpenseDetail
@@ -16,7 +16,7 @@ export function PayExpenseDialog({
   onClose,
   onSuccess,
 }: PayExpenseDialogProps) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayLocal()
   const [amountKr, setAmountKr] = useState(toKr(expense.remaining).toFixed(2))
   const [paymentDate, setPaymentDate] = useState(today)
   const [paymentMethod, setPaymentMethod] = useState<string>('bankgiro')

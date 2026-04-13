@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { formatKr, kronorToOre } from '../../lib/format'
+import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
 
 export interface BulkPaymentRow {
   id: number
@@ -38,7 +38,7 @@ export function BulkPaymentDialog({
         initial[row.id] = (row.remaining / 100).toFixed(2)
       }
       setAmounts(initial)
-      setPaymentDate(new Date().toISOString().slice(0, 10))
+      setPaymentDate(todayLocal())
       setAccountNumber('1930')
       setBankFeeStr('')
       setUserNote('')
