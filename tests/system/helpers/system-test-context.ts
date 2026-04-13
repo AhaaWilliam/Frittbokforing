@@ -605,7 +605,7 @@ export function seedProduct(
   ctx: SystemTestContext,
   overrides?: Partial<{
     name: string
-    default_price: number
+    default_price_ore: number
     vat_code_id: number
     article_type: 'service' | 'goods' | 'expense'
   }>,
@@ -618,7 +618,7 @@ export function seedProduct(
 
   const result = createProduct(ctx.db, {
     name: overrides?.name ?? 'Konsulttjänst',
-    default_price: overrides?.default_price ?? 10000, // 100 kr
+    default_price_ore: overrides?.default_price_ore ?? 10000, // 100 kr
     vat_code_id: vatCode,
     account_id: account.id,
     article_type: overrides?.article_type ?? 'service',

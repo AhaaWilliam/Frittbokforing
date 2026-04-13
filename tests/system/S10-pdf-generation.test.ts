@@ -52,7 +52,7 @@ describe('S10: PDF-generering', () => {
     const customer = seedCustomer(ctx, { name: 'PDF-kund AB' })
     const product = seedProduct(ctx, {
       name: 'Konsulttjänst',
-      default_price: 100000,
+      default_price_ore: 100000,
     })
     const vatCode = getVatCode25Out(ctx)
 
@@ -109,7 +109,7 @@ describe('S10: PDF-generering', () => {
     const customer = seedCustomer(ctx, { name: 'Göran Östberg' })
     const product = seedProduct(ctx, {
       name: 'Rädisa & Rödbeta',
-      default_price: 50000,
+      default_price_ore: 50000,
     })
     const vatCode = getVatCode25Out(ctx)
 
@@ -180,7 +180,7 @@ describe('S10: PDF-generering', () => {
     const customer = seedCustomer(ctx, { name: 'Massrad-kund' })
     const product = seedProduct(ctx, {
       name: 'Massprodukt',
-      default_price: 1000,
+      default_price_ore: 1000,
     })
     const vatCode = getVatCode25Out(ctx)
 
@@ -222,7 +222,7 @@ describe('S10: PDF-generering', () => {
     const customer = seedCustomer(ctx, { name: 'Draft-kund' })
     const product = seedProduct(ctx, {
       name: 'Draft-produkt',
-      default_price: 10000,
+      default_price_ore: 10000,
     })
     const vatCode = getVatCode25Out(ctx)
 

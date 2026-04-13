@@ -70,7 +70,7 @@ function seedTestData(testDb: Database.Database) {
   const product = createProduct(testDb, {
     name: 'Konsulttjänst',
     unit: 'timme',
-    default_price: 95000,
+    default_price_ore: 95000,
     vat_code_id: vatCode.id,
     account_id: account.id,
     article_type: 'service',

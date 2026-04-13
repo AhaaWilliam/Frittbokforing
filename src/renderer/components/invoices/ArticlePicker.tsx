@@ -79,16 +79,16 @@ export function ArticlePicker({
   }, [])
 
   async function handleSelect(product: Product) {
-    let priceOre = product.default_price
+    let priceOre = product.default_price_ore
     if (counterpartyId) {
       try {
         const result = await window.api.getPriceForCustomer({
           product_id: product.id,
           counterparty_id: counterpartyId,
         })
-        priceOre = result.price
+        priceOre = result.price_ore
       } catch {
-        // fallback to default_price
+        // fallback to default_price_ore
       }
     }
 
@@ -130,7 +130,7 @@ export function ArticlePicker({
                 <div className="min-w-0 flex-1">
                   <span className="font-medium">{p.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {formatKr(p.default_price)}
+                    {formatKr(p.default_price_ore)}
                   </span>
                 </div>
                 {typeBadge(p.article_type)}

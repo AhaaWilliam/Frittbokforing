@@ -443,7 +443,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('product:get-price-for-customer', (_event, input: unknown) => {
     const parsed = GetPriceForCustomerInputSchema.safeParse(input)
-    if (!parsed.success) return { price: 0, source: 'default' }
+    if (!parsed.success) return { price_ore: 0, source: 'default' }
     return getPriceForCustomer(db, parsed.data)
   })
 

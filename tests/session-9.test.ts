@@ -42,7 +42,7 @@ function seedAll(testDb: Database.Database) {
     .get() as { id: number }
   const product = createProduct(testDb, {
     name: 'Konsult',
-    default_price: 100000, // 1000 kr for easy math
+    default_price_ore: 100000, // 1000 kr for easy math
     vat_code_id: vatCode.id,
     account_id: account.id,
   })
@@ -381,7 +381,7 @@ describe('Integration', () => {
 
   it('14. Migration 008 — payment_method + account_number columns', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(24) // S43: Uppdatera vid nya migrationer
+    expect(v).toBe(25) // S43: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_payments)') as { name: string }[]

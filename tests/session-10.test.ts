@@ -70,7 +70,7 @@ function seedAll(testDb: Database.Database) {
     .get() as { id: number }
   const product = createProduct(testDb, {
     name: 'Konsult',
-    default_price: 100000,
+    default_price_ore: 100000,
     vat_code_id: vatCodeOut.id,
     account_id: account.id,
   })

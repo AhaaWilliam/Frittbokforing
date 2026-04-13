@@ -77,7 +77,7 @@ export function createTestDbWithFinalizedInvoice() {
   // Seed: produkter
   const product25 = createProduct(db, {
     name: 'Konsulttjänst',
-    default_price: 10000,
+    default_price_ore: 10000,
     vat_code_id: vatCode25.id,
     account_id: account.id,
   })

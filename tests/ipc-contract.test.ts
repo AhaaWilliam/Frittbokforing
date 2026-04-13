@@ -142,14 +142,14 @@ describe('Product schemas', () => {
   const validProduct = {
     name: 'Konsulttimme',
     unit: 'timme',
-    default_price: 100000,
+    default_price_ore: 100000,
     vat_code_id: 1,
     account_id: 1,
     article_type: 'service',
   }
 
   it('CreateProductInputSchema accepts valid', () => valid(CreateProductInputSchema, validProduct))
-  it('CreateProductInputSchema rejects negative price', () => invalid(CreateProductInputSchema, { ...validProduct, default_price: -1 }))
+  it('CreateProductInputSchema rejects negative price', () => invalid(CreateProductInputSchema, { ...validProduct, default_price_ore: -1 }))
   it('CreateProductInputSchema rejects extra fields', () => invalid(CreateProductInputSchema, { ...validProduct, extra: true }))
 
   it('UpdateProductInputSchema requires id', () => invalid(UpdateProductInputSchema, { name: 'X' }))
@@ -161,7 +161,7 @@ describe('Product schemas', () => {
 
 describe('Pricing schemas', () => {
   it('SetCustomerPriceInputSchema accepts valid', () =>
-    valid(SetCustomerPriceInputSchema, { product_id: 1, counterparty_id: 2, price: 50000 }))
+    valid(SetCustomerPriceInputSchema, { product_id: 1, counterparty_id: 2, price_ore: 50000 }))
   it('RemoveCustomerPriceInputSchema rejects missing field', () =>
     invalid(RemoveCustomerPriceInputSchema, { product_id: 1 }))
   it('GetPriceForCustomerInputSchema accepts valid', () =>

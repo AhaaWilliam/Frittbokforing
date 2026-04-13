@@ -153,7 +153,7 @@ export const CreateProductInputSchema = z
     unit: z
       .enum(['timme', 'styck', 'dag', 'månad', 'km', 'pauschal'])
       .default('timme'),
-    default_price: z.number().int().min(0),
+    default_price_ore: z.number().int().min(0),
     vat_code_id: z.number().int().positive(),
     account_id: z.number().int().positive(),
     article_type: z.enum(['service', 'goods', 'expense']).default('service'),
@@ -185,7 +185,7 @@ export const SetCustomerPriceInputSchema = z
   .object({
     product_id: z.number().int().positive(),
     counterparty_id: z.number().int().positive(),
-    price: z.number().int().min(0),
+    price_ore: z.number().int().min(0),
   })
   .strict()
 

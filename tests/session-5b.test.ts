@@ -51,7 +51,7 @@ function createTestProduct(
   return createProduct(testDb, {
     name: 'Webbutveckling',
     unit: 'timme',
-    default_price: 95000, // 950 kr
+    default_price_ore: 95000, // 950 kr
     vat_code_id: vatCodeId,
     account_id: accountId,
     article_type: 'service',
@@ -77,7 +77,7 @@ describe('Produkt-CRUD', () => {
     if (result.success) {
       expect(result.data.name).toBe('Webbutveckling')
       expect(result.data.unit).toBe('timme')
-      expect(result.data.default_price).toBe(95000)
+      expect(result.data.default_price_ore).toBe(95000)
       expect(result.data.article_type).toBe('service')
       expect(result.data.is_active).toBe(1)
       expect(result.data.created_at).toBeTruthy()
@@ -102,7 +102,7 @@ describe('Produkt-CRUD', () => {
     createProduct(db, {
       name: 'Vara',
       unit: 'styck',
-      default_price: 10000,
+      default_price_ore: 10000,
       vat_code_id: vatCodeId,
       account_id: accountId,
       article_type: 'goods',
@@ -121,12 +121,12 @@ describe('Produkt-CRUD', () => {
     const updated = updateProduct(db, {
       id: created.data.id,
       name: 'Nytt namn',
-      default_price: 100000,
+      default_price_ore: 100000,
     })
     expect(updated.success).toBe(true)
     if (updated.success) {
       expect(updated.data.name).toBe('Nytt namn')
-      expect(updated.data.default_price).toBe(100000)
+      expect(updated.data.default_price_ore).toBe(100000)
     }
   })
 
@@ -161,14 +161,14 @@ describe('Prislogik', () => {
     const result = setCustomerPrice(db, {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
-      price: 85000,
+      price_ore: 85000,
     })
     expect(result.success).toBe(true)
 
     const detail = getProduct(db, product.data.id)
     expect(detail).not.toBeNull()
     expect(detail!.customer_prices.length).toBe(1)
-    expect(detail!.customer_prices[0].price).toBe(85000)
+    expect(detail!.customer_prices[0].price_ore).toBe(85000)
     expect(detail!.customer_prices[0].counterparty_name).toBe('Acme AB')
   })
 
@@ -181,14 +181,14 @@ describe('Prislogik', () => {
     setCustomerPrice(db, {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
-      price: 85000,
+      price_ore: 85000,
     })
 
     const result = getPriceForCustomer(db, {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
-    expect(result.price).toBe(85000)
+    expect(result.price_ore).toBe(85000)
     expect(result.source).toBe('customer')
   })
 
@@ -202,7 +202,7 @@ describe('Prislogik', () => {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
-    expect(result.price).toBe(95000) // default_price
+    expect(result.price_ore).toBe(95000) // default_price_ore
     expect(result.source).toBe('default')
   })
 
@@ -215,7 +215,7 @@ describe('Prislogik', () => {
     setCustomerPrice(db, {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
-      price: 85000,
+      price_ore: 85000,
     })
     removeCustomerPrice(db, {
       product_id: product.data.id,
@@ -226,7 +226,7 @@ describe('Prislogik', () => {
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
-    expect(result.price).toBe(95000)
+    expect(result.price_ore).toBe(95000)
     expect(result.source).toBe('default')
   })
 })

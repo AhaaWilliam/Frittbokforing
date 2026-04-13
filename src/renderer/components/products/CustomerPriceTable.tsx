@@ -52,7 +52,7 @@ export function CustomerPriceTable({
       {
         product_id: productId,
         counterparty_id: selectedCounterpartyId,
-        price: toOre(parsed),
+        price_ore: toOre(parsed),
       },
       {
         onSuccess: () => {
@@ -99,7 +99,7 @@ export function CustomerPriceTable({
               <tr key={cp.counterparty_id} className="border-b last:border-b-0">
                 <td className="py-2">{cp.counterparty_name}</td>
                 <td className="py-2">
-                  {formatKr(cp.price)}/{unitLabel(unit)}
+                  {formatKr(cp.price_ore)}/{unitLabel(unit)}
                 </td>
                 <td className="py-2">
                   <button

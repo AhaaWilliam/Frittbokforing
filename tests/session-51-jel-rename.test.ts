@@ -47,7 +47,7 @@ afterEach(() => {
 describe('Migration 018 — journal_entry_lines rename', () => {
   it('user_version = 18 after all migrations', () => {
     const uv = db.prepare('PRAGMA user_version').get() as { user_version: number }
-    expect(uv.user_version).toBe(24)
+    expect(uv.user_version).toBe(25)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {
@@ -138,7 +138,7 @@ describe('E2E smoke: invoice lifecycle with renamed columns', () => {
       .get() as { id: number }
     const prod = createProduct(db, {
       name: 'Konsulttjänst',
-      default_price: 100_000,
+      default_price_ore: 100_000,
       vat_code_id: vatCode.id,
       account_id: account.id,
     })
@@ -220,7 +220,7 @@ describe('M92 export format — no _ore leak', () => {
       .get() as { id: number }
     const prod = createProduct(testDb, {
       name: 'Exportprodukt',
-      default_price: 50_000,
+      default_price_ore: 50_000,
       vat_code_id: vatCode.id,
       account_id: account.id,
     })

@@ -49,7 +49,7 @@ function seedInvoice(testDb: Database.Database) {
     .get() as { id: number }
   const product = createProduct(testDb, {
     name: 'Konsult',
-    default_price: 100000,
+    default_price_ore: 100000,
     vat_code_id: vatCode.id,
     account_id: account.id,
   })
@@ -828,6 +828,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(24)
+    expect(row[0].user_version).toBe(25)
   })
 })

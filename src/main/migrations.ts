@@ -1178,6 +1178,10 @@ export const migrations: MigrationEntry[] = [
         THEN RAISE(ABORT, 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.')
       END;
     END;`, programmatic: migration024Verify },
+  // Sprint 16 S48: öre-suffix rename on products + price_list_items (M119/F4)
+  { sql: `ALTER TABLE products RENAME COLUMN default_price TO default_price_ore;
+    ALTER TABLE price_list_items RENAME COLUMN price TO price_ore;`,
+    programmatic: migration025Verify },
 ]
 
 /**
@@ -1464,6 +1468,18 @@ function migration024Verify(db: import('better-sqlite3').Database): void {
   if (triggerCount.cnt !== 12) {
     throw new Error(`Migration 024 failed: expected 12 triggers, found ${triggerCount.cnt}`)
   }
+}
+
+function migration025Verify(db: import('better-sqlite3').Database): void {
+  const prodCols = db.prepare('PRAGMA table_info(products)').all() as { name: string }[]
+  const prodNames = prodCols.map(c => c.name)
+  if (!prodNames.includes('default_price_ore')) throw new Error('Migration 025 failed: default_price_ore saknas')
+  if (prodNames.includes('default_price')) throw new Error('Migration 025 failed: default_price finns kvar')
+
+  const pliCols = db.prepare('PRAGMA table_info(price_list_items)').all() as { name: string }[]
+  const pliNames = pliCols.map(c => c.name)
+  if (!pliNames.includes('price_ore')) throw new Error('Migration 025 failed: price_ore saknas')
+  if (pliNames.includes('price')) throw new Error('Migration 025 failed: price finns kvar')
 }
 
 function migration018Verify(db: import('better-sqlite3').Database): void {

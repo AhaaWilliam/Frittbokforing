@@ -46,7 +46,7 @@ function seedAll(testDb: Database.Database) {
   const product = createProduct(testDb, {
     name: 'Konsulttjänst',
     unit: 'timme',
-    default_price: 95000,
+    default_price_ore: 95000,
     vat_code_id: vatCode25.id,
     account_id: account.id,
     article_type: 'service',
@@ -102,7 +102,7 @@ afterEach(() => {
 describe('Migration 007', () => {
   it('1. user_version = 14, invoice_lines.account_number exists', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(24) // S43: Uppdatera vid nya migrationer
+    expect(v).toBe(25) // S43: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_lines)') as { name: string }[]

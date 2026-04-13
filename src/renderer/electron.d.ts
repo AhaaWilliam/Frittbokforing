@@ -94,7 +94,7 @@ interface ElectronAPI {
   setCustomerPrice: (data: {
     product_id: number
     counterparty_id: number
-    price: number
+    price_ore: number
   }) => Promise<IpcResult<CustomerPrice>>
   removeCustomerPrice: (data: {
     product_id: number

@@ -90,7 +90,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
   })
 
   it('S07-03: produkt med kundspecifika priser', () => {
-    const product = seedProduct(ctx, { default_price: 10000 })
+    const product = seedProduct(ctx, { default_price_ore: 10000 })
     const customerA = seedCustomer(ctx, { name: 'Kund A' })
     const customerB = seedCustomer(ctx, { name: 'Kund B' })
 
@@ -98,7 +98,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
     ctx.productService.setCustomerPrice(ctx.db, {
       product_id: product.id,
       counterparty_id: customerA.id,
-      price: 8000,
+      price_ore: 8000,
     })
 
     // Kund A → 80 kr
@@ -106,7 +106,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
       product_id: product.id,
       counterparty_id: customerA.id,
     })
-    expect(priceA.price).toBe(8000)
+    expect(priceA.price_ore).toBe(8000)
     expect(priceA.source).toBe('customer')
 
     // Kund B → 100 kr (default)
@@ -114,7 +114,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
       product_id: product.id,
       counterparty_id: customerB.id,
     })
-    expect(priceB.price).toBe(10000)
+    expect(priceB.price_ore).toBe(10000)
     expect(priceB.source).toBe('default')
 
     // Ta bort kundpris → kund A → 100 kr
@@ -126,7 +126,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
       product_id: product.id,
       counterparty_id: customerA.id,
     })
-    expect(priceAfter.price).toBe(10000)
+    expect(priceAfter.price_ore).toBe(10000)
     expect(priceAfter.source).toBe('default')
   })
 

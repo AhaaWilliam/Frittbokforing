@@ -32,7 +32,7 @@ export const PRODUCT_DEFAULTS: ProductFormState = {
 
 /**
  * Mappar formulär-state → payload som backend förväntar sig.
- * _priceKr (kr-sträng) konverteras till default_price (öre-heltal).
+ * _priceKr (kr-sträng) konverteras till default_price_ore (öre-heltal).
  */
 export function transformProductForm(form: ProductFormState): ProductPayload {
   return {
@@ -40,7 +40,7 @@ export function transformProductForm(form: ProductFormState): ProductPayload {
     description: form.description.trim() || null,
     article_type: form.article_type,
     unit: form.unit,
-    default_price: toOre(parseFloat(form._priceKr) || 0),
+    default_price_ore: toOre(parseFloat(form._priceKr) || 0),
     vat_code_id: form.vat_code_id,
     account_id: form.account_id,
   }

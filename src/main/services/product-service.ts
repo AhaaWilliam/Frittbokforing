@@ -47,7 +47,7 @@ export function getProduct(
 
   const customerPrices = db
     .prepare(
-      `SELECT pli.price, cp.id AS counterparty_id, cp.name AS counterparty_name
+      `SELECT pli.price_ore, cp.id AS counterparty_id, cp.name AS counterparty_name
      FROM price_list_items pli
      JOIN price_lists pl ON pl.id = pli.price_list_id
      JOIN counterparties cp ON cp.id = pl.counterparty_id
@@ -76,14 +76,14 @@ export function createProduct(
   try {
     const result = db
       .prepare(
-        `INSERT INTO products (name, description, unit, default_price, vat_code_id, account_id, article_type)
+        `INSERT INTO products (name, description, unit, default_price_ore, vat_code_id, account_id, article_type)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         data.name,
         data.description ?? null,
         data.unit,
-        data.default_price,
+        data.default_price_ore,
         data.vat_code_id,
         data.account_id,
         data.article_type,
@@ -108,7 +108,7 @@ const ALLOWED_PRODUCT_COLUMNS = new Set([
   'name',
   'description',
   'unit',
-  'default_price',
+  'default_price_ore',
   'vat_code_id',
   'account_id',
   'article_type',
@@ -207,7 +207,7 @@ export function deactivateProduct(
 
 export function setCustomerPrice(
   db: Database.Database,
-  input: { product_id: number; counterparty_id: number; price: number },
+  input: { product_id: number; counterparty_id: number; price_ore: number },
 ): IpcResult<CustomerPrice> {
   try {
     return db.transaction(() => {
@@ -237,11 +237,11 @@ export function setCustomerPrice(
       }
 
       db.prepare(
-        `INSERT INTO price_list_items (price_list_id, product_id, price)
+        `INSERT INTO price_list_items (price_list_id, product_id, price_ore)
          VALUES (?, ?, ?)
          ON CONFLICT(price_list_id, product_id)
-         DO UPDATE SET price = excluded.price`,
-      ).run(priceList.id, input.product_id, input.price)
+         DO UPDATE SET price_ore = excluded.price_ore`,
+      ).run(priceList.id, input.product_id, input.price_ore)
 
       const cp = db
         .prepare('SELECT name FROM counterparties WHERE id = ?')
@@ -252,7 +252,7 @@ export function setCustomerPrice(
         data: {
           counterparty_id: input.counterparty_id,
           counterparty_name: cp.name,
-          price: input.price,
+          price_ore: input.price_ore,
         },
       }
     })()
@@ -300,22 +300,22 @@ export function getPriceForCustomer(
 ): PriceResult {
   const customerPrice = db
     .prepare(
-      `SELECT pli.price
+      `SELECT pli.price_ore
      FROM price_list_items pli
      JOIN price_lists pl ON pl.id = pli.price_list_id
      WHERE pl.counterparty_id = ? AND pli.product_id = ?`,
     )
     .get(input.counterparty_id, input.product_id) as
-    | { price: number }
+    | { price_ore: number }
     | undefined
 
   if (customerPrice) {
-    return { price: customerPrice.price, source: 'customer' }
+    return { price_ore: customerPrice.price_ore, source: 'customer' }
   }
 
   const product = db
-    .prepare('SELECT default_price FROM products WHERE id = ?')
-    .get(input.product_id) as { default_price: number } | undefined
+    .prepare('SELECT default_price_ore FROM products WHERE id = ?')
+    .get(input.product_id) as { default_price_ore: number } | undefined
 
-  return { price: product?.default_price ?? 0, source: 'default' }
+  return { price_ore: product?.default_price_ore ?? 0, source: 'default' }
 }
