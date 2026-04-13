@@ -69,41 +69,39 @@ describe('FormSelect', () => {
     await renderWithProviders(<StringHarness />)
     const options = screen.getAllByRole('option')
     expect(options).toHaveLength(3)
-    expect(options[0].textContent).toBe('Röd')
-    expect(options[1].textContent).toBe('Grön')
-    expect(options[2].textContent).toBe('Blå')
+    expect(options[0]).toHaveTextContent('Röd')
+    expect(options[1]).toHaveTextContent('Grön')
+    expect(options[2]).toHaveTextContent('Blå')
   })
 
   it('initial value is selected (string variant)', async () => {
     await renderWithProviders(<StringHarness initialColor="green" />)
-    const select = screen.getByLabelText('Färg') as HTMLSelectElement
-    expect(select.value).toBe('green')
+    expect(screen.getByLabelText('Färg')).toHaveValue('green')
   })
 
   it('initial value is selected (number variant)', async () => {
     await renderWithProviders(<NumberHarness initialAccount={1930} />)
-    const select = screen.getByLabelText('Konto') as HTMLSelectElement
     // DOM value is always string
-    expect(select.value).toBe('1930')
+    expect(screen.getByLabelText('Konto')).toHaveValue('1930')
     // But form state is number
-    expect(screen.getByTestId('account-type').textContent).toBe('number')
-    expect(screen.getByTestId('account-value').textContent).toBe('1930')
+    expect(screen.getByTestId('account-type')).toHaveTextContent('number')
+    expect(screen.getByTestId('account-value')).toHaveTextContent('1930')
   })
 
   it('onChange round-trips number correctly (M78)', async () => {
     const user = userEvent.setup()
     await renderWithProviders(<NumberHarness initialAccount={1930} />)
     await user.selectOptions(screen.getByLabelText('Konto'), '2440')
-    expect(screen.getByTestId('account-value').textContent).toBe('2440')
-    expect(screen.getByTestId('account-type').textContent).toBe('number')
+    expect(screen.getByTestId('account-value')).toHaveTextContent('2440')
+    expect(screen.getByTestId('account-type')).toHaveTextContent('number')
   })
 
   it('onChange preserves string when options are string-typed', async () => {
     const user = userEvent.setup()
     await renderWithProviders(<StringHarness initialColor="red" />)
     await user.selectOptions(screen.getByLabelText('Färg'), 'blue')
-    expect(screen.getByTestId('color-value').textContent).toBe('blue')
-    expect(screen.getByTestId('color-type').textContent).toBe('string')
+    expect(screen.getByTestId('color-value')).toHaveTextContent('blue')
+    expect(screen.getByTestId('color-type')).toHaveTextContent('string')
   })
 
   it('empty options list does not crash', async () => {
@@ -121,7 +119,7 @@ describe('FormSelect', () => {
     }
     // Should render without throwing, axe passes
     await renderWithProviders(<EmptyHarness />)
-    expect(screen.getByLabelText('Färg')).toBeDefined()
+    expect(screen.getByLabelText('Färg')).toBeInTheDocument()
     expect(screen.queryAllByRole('option')).toHaveLength(0)
   })
 })

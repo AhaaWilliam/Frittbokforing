@@ -36,11 +36,11 @@ describe('FormField', () => {
   it('label is coupled to input via htmlFor/id', async () => {
     await renderWithProviders(<Harness />)
     const input = screen.getByLabelText('Namn')
-    expect(input).toBeDefined()
-    expect(input.id).toBe('_name')
+    expect(input).toBeInTheDocument()
+    expect(input).toHaveAttribute('id', '_name')
     // Verify label htmlFor matches input id
     const label = input.closest('div')!.querySelector('label')!
-    expect(label.htmlFor).toBe('_name')
+    expect(label).toHaveAttribute('for', '_name')
   })
 
   it('required indicator shows asterisk when required: true', async () => {
@@ -51,7 +51,7 @@ describe('FormField', () => {
 
   it('disabled prop propagates to input', async () => {
     await renderWithProviders(<Harness disabled />)
-    expect((screen.getByLabelText('Namn') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByLabelText('Namn')).toBeDisabled()
   })
 
   it('type=number sets input type and onChange sends value', async () => {
@@ -69,11 +69,11 @@ describe('FormField', () => {
 
     await renderWithProviders(<NumberHarness />)
     const input = screen.getByLabelText('Namn')
-    expect((input as HTMLInputElement).type).toBe('number')
+    expect(input).toHaveAttribute('type', 'number')
 
     await user.clear(input)
     await user.type(input, '42')
     // FormField always sends string via e.target.value (no Number conversion)
-    expect(screen.getByTestId('value').textContent).toBe('42')
+    expect(screen.getByTestId('value')).toHaveTextContent('42')
   })
 })

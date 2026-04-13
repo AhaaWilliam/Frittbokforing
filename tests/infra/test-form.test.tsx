@@ -33,20 +33,20 @@ describe('useTestForm', () => {
 
   it('getField returns initial value', async () => {
     await renderWithProviders(<TestWrapper />)
-    expect(screen.getByTestId('name-value').textContent).toBe('initial')
-    expect(screen.getByTestId('age-value').textContent).toBe('25')
+    expect(screen.getByTestId('name-value')).toHaveTextContent('initial')
+    expect(screen.getByTestId('age-value')).toHaveTextContent('25')
   })
 
   it('setField updates value reflected by getField', async () => {
     const user = userEvent.setup()
     await renderWithProviders(<TestWrapper />)
     await user.click(screen.getByRole('button', { name: 'Set Name' }))
-    expect(screen.getByTestId('name-value').textContent).toBe('updated')
+    expect(screen.getByTestId('name-value')).toHaveTextContent('updated')
   })
 
   it('overrides replace specific methods without breaking type safety', async () => {
     const customReset = vi.fn()
     await renderWithProviders(<TestWrapper overrides={{ reset: customReset }} />)
-    expect(screen.getByTestId('name-value').textContent).toBe('initial')
+    expect(screen.getByTestId('name-value')).toHaveTextContent('initial')
   })
 })

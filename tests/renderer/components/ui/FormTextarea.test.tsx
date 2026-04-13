@@ -38,22 +38,22 @@ describe('FormTextarea', () => {
     await renderWithProviders(<Harness />)
     const textarea = screen.getByLabelText('Anteckningar')
     await user.type(textarea, 'Hello world')
-    expect(screen.getByTestId('notes-value').textContent).toBe('Hello world')
+    expect(screen.getByTestId('notes-value')).toHaveTextContent('Hello world')
   })
 
   it('rows defaults to 3 and can be overridden', async () => {
     // Default
     const { unmount } = await renderWithProviders(<Harness />)
-    expect((screen.getByLabelText('Anteckningar') as HTMLTextAreaElement).rows).toBe(3)
+    expect(screen.getByLabelText('Anteckningar')).toHaveAttribute('rows', '3')
     unmount()
 
     // Override
     await renderWithProviders(<Harness rows={6} />)
-    expect((screen.getByLabelText('Anteckningar') as HTMLTextAreaElement).rows).toBe(6)
+    expect(screen.getByLabelText('Anteckningar')).toHaveAttribute('rows', '6')
   })
 
   it('disabled prop propagates to textarea', async () => {
     await renderWithProviders(<Harness disabled />)
-    expect((screen.getByLabelText('Anteckningar') as HTMLTextAreaElement).disabled).toBe(true)
+    expect(screen.getByLabelText('Anteckningar')).toBeDisabled()
   })
 })
