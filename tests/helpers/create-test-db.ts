@@ -1,6 +1,10 @@
 import Database from 'better-sqlite3'
 import { migrations } from '../../src/main/migrations'
 
+// Migration indexes (0-based) that require PRAGMA foreign_keys = OFF outside
+// the transaction due to table-recreate on tables with inbound FK. See M122 in CLAUDE.md.
+export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([21, 22])
+
 /**
  * Creates a fresh in-memory DB with all migrations applied.
  * Handles PRAGMA foreign_keys OFF/ON for table-recreate migrations (M122).
@@ -13,7 +17,7 @@ export function createTestDb(): Database.Database {
     const migration = migrations[i]
 
     // M122: table-recreate on tables with inbound FK requires FK off outside transaction
-    const needsFkOff = i === 21 || i === 22
+    const needsFkOff = FK_OFF_MIGRATION_INDEXES.has(i)
     if (needsFkOff) testDb.pragma('foreign_keys = OFF')
 
     testDb.exec('BEGIN EXCLUSIVE')

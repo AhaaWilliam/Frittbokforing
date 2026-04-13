@@ -161,6 +161,23 @@ Exempel: migration 022 (Sprint 15 S42) införde mönstret för `invoices`,
 `invoice_payments`, `expense_payments`. Migration 023 (Sprint 15 S43)
 applicerar det på `payment_batches`.
 
+## 29. invoice_lines.account_number — NULL by design för produktrader (M123)
+
+**M123.** `invoice_lines.account_number` är `NULL` by design för produktbaserade
+rader (`product_id IS NOT NULL`). Kontot resolvas via `products.account_id` i
+journal-entry-byggaren (`buildJournalLines`) med
+`COALESCE(a.account_number, il.account_number)`. NOT NULL gäller **endast**
+freeform-rader (`product_id IS NULL`) och **endast** efter status-övergång
+`draft → unpaid` (trigger `trg_invoice_lines_account_number_on_finalize`,
+migration 024).
+
+Konsekvenser:
+- Lägg aldrig `NOT NULL`-constraint direkt på kolumnen `invoice_lines.account_number`.
+- Rendererens `invoice.ts`-schema sätter `account_number: null` explicit när
+  `product_id` är satt — detta är korrekt beteende, inte en bugg.
+- Triggern filtrerar med `product_id IS NULL AND account_number IS NULL` —
+  produktrader passerar alltid.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
