@@ -22,12 +22,12 @@ M119--M124 + M126 introducerade. PRAGMA user_version = 24, 22 tabeller.
 | S48 | F4: ore-suffix products/price_list_items (M119) | KLAR |
 | S57 | F10: expense_lines paritet (M127) | KLAR |
 | S58 | F4: Schema-namnkonvention (created_by → created_by_id) | KLAR |
-| S59 | F9: Timezone-konsolidering | - |
+| S59 | F9: Timezone-konsolidering | KLAR |
 | S60 | F13: Handler error-patterns | - |
 
 ## Test-count
-- Vitest (system + unit): 1196 passed, 2 skipped (1198 totalt)
-- Testfiler: 95
+- Vitest (system + unit): 1204 passed, 2 skipped (1206 totalt)
+- Testfiler: 99
 - Playwright E2E: 10 (kors separat)
 - Korning: ~9s
 
@@ -60,6 +60,25 @@ Dokumenterat i S58 (Sprint 16 F4). Konservativ default: ej andrade.
 7. **Bank-fee proportionalitet** -- nuvarande policy: hel avgift per batch (M126). Framtida: proportionell fordelning.
 8. **Trigger 6/7-analys** -- opening_balance entries exempterade fran triggers 1-5 men ej 6-7.
 9. **Redundans-audit** -- se tests/REDUNDANCY_AUDIT.md.
+
+## Timezone conventions — medvetna avvikelser
+
+Dokumenterade via Sprint 16 S59 (F9) audit. Varje avvikelse lamnad orord
+med explicit motivering.
+
+| # | Fil | Rad | Monster | Motivering |
+|---|---|---|---|---|
+| B1 | src/main/services/expense-service.ts | 138, 254 | `datetime('now')` for `created_at` INSERT | Matchar migration DEFAULT `datetime('now')` (UTC). Andra till localtime skulle skapa inkonsistens med rows som faller tillbaka pa DEFAULT. Metadata, inte affarsdatum. |
+| B2 | src/main/services/sie5/sie5-export-service.ts | 182 | `new Date().toISOString()` for SIE5 XML-timestamp | SIE5-spec kraver ISO 8601 UTC timestamps. Korrekt per extern standard. |
+| B3 | src/main/services/sie5/sie5-export-service.ts | 87 | `currentDate.toISOString().substring(0,7)` | `currentDate` konstruerad fran `YYYY-MM-01`, inte "now". Ingen timezone-risk. |
+| B4 | src/main/pre-update-backup.ts | 19 | `new Date().toISOString().slice(0,19)` for filnamn | Auto-updater backup. UTC-timestamp i filnamn acceptabelt som unikt ID, inte visningstid. |
+| B5 | src/renderer/pages/PageSettings.tsx | 23 | `new Date().toISOString()` for `last_backup_date` | Metadata-timestamp lagras som UTC, jamfors aldrig med lokala datum. |
+| B6 | src/renderer/components/wizard/StepFiscalYear.tsx | 36, 74 | `new Date().getFullYear()` + `new Date()` for manadsdiff | `getFullYear()` ger lokalt ar (korrekt). Relativ manadsjamforelse utan date-strangar ar safe. |
+| B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
+
+**Future work:** ESLint `no-restricted-syntax`-regel for att forbjuda
+`.toISOString().slice(0, 10)` och `.toISOString().split('T')[0]` i
+`src/renderer/` och `src/main/services/`. Flaggat for S60 eller senare.
 
 ## Tidigare sprintar
 - Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR

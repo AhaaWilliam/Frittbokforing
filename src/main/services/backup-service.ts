@@ -1,11 +1,12 @@
 import { dialog, BrowserWindow } from 'electron'
 import type Database from 'better-sqlite3'
 import { getE2EFilePath } from '../utils/e2e-helpers'
+import { todayLocal } from '../../shared/date-utils'
 
 export async function createBackup(
   db: Database.Database,
 ): Promise<{ filePath: string | null }> {
-  const defaultFilename = `fritt-bokforing-backup-${new Date().toISOString().slice(0, 10)}.db`
+  const defaultFilename = `fritt-bokforing-backup-${todayLocal()}.db`
 
   // E2E dialog bypass (M63)
   const e2ePath = getE2EFilePath(defaultFilename, 'save')

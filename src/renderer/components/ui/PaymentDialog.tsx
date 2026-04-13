@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { formatKr, kronorToOre } from '../../lib/format'
+import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
 
 interface PaymentDialogProps {
   open: boolean
@@ -29,7 +29,7 @@ export function PaymentDialog({
 
   const [amountStr, setAmountStr] = useState(remainingKr)
   const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().slice(0, 10),
+    todayLocal(),
   )
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [errors, setErrors] = useState<{ amount?: string; date?: string }>({})
@@ -37,7 +37,7 @@ export function PaymentDialog({
   useEffect(() => {
     if (open) {
       setAmountStr((remaining / 100).toFixed(2))
-      setPaymentDate(new Date().toISOString().slice(0, 10))
+      setPaymentDate(todayLocal())
       setBankFeeStr('')
       setErrors({})
     }
@@ -59,7 +59,7 @@ export function PaymentDialog({
       newErrors.date = `Betalningsdatum kan inte vara före dokumentdatum (${documentDate})`
     } else if (paymentDate > fiscalYearEnd) {
       newErrors.date = `Betalningsdatum måste vara inom räkenskapsåret (senast ${fiscalYearEnd})`
-    } else if (paymentDate > new Date().toISOString().slice(0, 10)) {
+    } else if (paymentDate > todayLocal()) {
       newErrors.date = 'Betalningsdatum kan inte vara i framtiden'
     }
 
