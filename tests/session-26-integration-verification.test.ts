@@ -311,6 +311,7 @@ describe('K4 – deleteDraft atomically removes invoice and lines', () => {
 
     const result = deleteDraft(db, invoiceId)
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.code).toBe('INVOICE_NOT_DRAFT')
 
     // Invoice and lines must still exist

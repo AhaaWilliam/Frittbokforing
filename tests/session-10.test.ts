@@ -229,6 +229,7 @@ describe('Expense draft CRUD', () => {
 
     const draft = getExpenseDraft(db, saved.data.id)
     expect(draft.success).toBe(true)
+    if (!draft.success) return
     expect(draft.data).toBeNull()
   })
 

@@ -133,14 +133,16 @@ describe('M2: SQL allowlist', () => {
       default_payment_terms: 30,
     })
     expect(cpResult.success).toBe(true)
-    const cpId = cpResult.data!.id
+    if (!cpResult.success) throw new Error(cpResult.error)
+    const cpId = cpResult.data.id
 
     const result = updateCounterparty(db, {
       id: cpId,
       name: 'Updated Supplier',
     })
     expect(result.success).toBe(true)
-    expect(result.data!.name).toBe('Updated Supplier')
+    if (!result.success) throw new Error(result.error)
+    expect(result.data.name).toBe('Updated Supplier')
   })
 })
 

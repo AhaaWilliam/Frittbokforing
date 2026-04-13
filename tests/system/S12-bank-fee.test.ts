@@ -68,12 +68,13 @@ describe('payInvoice with bank_fee_ore', () => {
       bank_fee_ore: 0,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(2) // bank debit + receivables credit
     expect(sumDebit(lines)).toBe(sumCredit(lines))
-    expect(result.data!.payment.bank_fee_ore).toBeNull()
-    expect(result.data!.payment.bank_fee_account).toBeNull()
+    expect(result.data.payment.bank_fee_ore).toBeNull()
+    expect(result.data.payment.bank_fee_account).toBeNull()
   })
 
   it('fee>0 → 3 lines, 6570 with correct amount, balance OK', () => {
@@ -92,8 +93,9 @@ describe('payInvoice with bank_fee_ore', () => {
       bank_fee_ore: feeOre,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(3)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
 
@@ -110,8 +112,8 @@ describe('payInvoice with bank_fee_ore', () => {
     expect(recLine.credit_ore).toBe(inv.total_amount_ore)
 
     // Payment record
-    expect(result.data!.payment.bank_fee_ore).toBe(feeOre)
-    expect(result.data!.payment.bank_fee_account).toBe('6570')
+    expect(result.data.payment.bank_fee_ore).toBe(feeOre)
+    expect(result.data.payment.bank_fee_account).toBe('6570')
   })
 
   it('fee >= amount → validation error', () => {
@@ -129,6 +131,7 @@ describe('payInvoice with bank_fee_ore', () => {
       bank_fee_ore: inv.total_amount_ore,
     })
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.code).toBe('VALIDATION_ERROR')
   })
 
@@ -140,9 +143,9 @@ describe('payInvoice with bank_fee_ore', () => {
           description: 'Tjänst',
           quantity: 1,
           unit_price_ore: 100000, // 1000 kr → 1250 kr with 25% VAT
-          vat_code_id: ctx.db
+          vat_code_id: (ctx.db
             .prepare("SELECT id FROM vat_codes WHERE code = 'MP1' LIMIT 1")
-            .get()!.id as number,
+            .get() as { id: number }).id,
           account_number: '3002',
         },
       ],
@@ -191,12 +194,13 @@ describe('payExpense with bank_fee_ore', () => {
       bank_fee_ore: 0,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(2) // payables debit + bank credit
     expect(sumDebit(lines)).toBe(sumCredit(lines))
-    expect(result.data!.payment.bank_fee_ore).toBeNull()
-    expect(result.data!.payment.bank_fee_account).toBeNull()
+    expect(result.data.payment.bank_fee_ore).toBeNull()
+    expect(result.data.payment.bank_fee_account).toBeNull()
   })
 
   it('fee>0 → 3 lines, 6570 debit, bank credit includes fee', () => {
@@ -215,8 +219,9 @@ describe('payExpense with bank_fee_ore', () => {
       bank_fee_ore: feeOre,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(3)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
 
@@ -232,8 +237,8 @@ describe('payExpense with bank_fee_ore', () => {
     const bankLine = lines.find((l) => l.account_number === '1930')!
     expect(bankLine.credit_ore).toBe(exp.total_amount_ore + feeOre)
 
-    expect(result.data!.payment.bank_fee_ore).toBe(feeOre)
-    expect(result.data!.payment.bank_fee_account).toBe('6570')
+    expect(result.data.payment.bank_fee_ore).toBe(feeOre)
+    expect(result.data.payment.bank_fee_account).toBe('6570')
   })
 
   it('fee >= amount → validation error', () => {
@@ -251,6 +256,7 @@ describe('payExpense with bank_fee_ore', () => {
       bank_fee_ore: exp.total_amount_ore,
     })
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.code).toBe('VALIDATION_ERROR')
   })
 
@@ -303,8 +309,9 @@ describe('Öresutjämning + bank fee combined', () => {
       bank_fee_ore: feeOre,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
 
     // Rounding creates a 3740 debit for the 30 öre shortfall
@@ -339,8 +346,9 @@ describe('Öresutjämning + bank fee combined', () => {
       bank_fee_ore: feeOre,
     })
     expect(result.success).toBe(true)
+    if (!result.success) throw new Error(result.error)
 
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
 
     const updated = ctx.db
@@ -368,10 +376,11 @@ describe('Regression: payments without fee', () => {
       // bank_fee_ore intentionally omitted
     })
     expect(result.success).toBe(true)
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    if (!result.success) throw new Error(result.error)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(2)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
-    expect(result.data!.payment.bank_fee_ore).toBeNull()
+    expect(result.data.payment.bank_fee_ore).toBeNull()
   })
 
   it('expense payment without bank_fee_ore field → works identically', () => {
@@ -388,10 +397,11 @@ describe('Regression: payments without fee', () => {
       account_number: '1930',
     })
     expect(result.success).toBe(true)
-    const lines = getJournalLines(result.data!.payment.journal_entry_id)
+    if (!result.success) throw new Error(result.error)
+    const lines = getJournalLines(result.data.payment.journal_entry_id)
     expect(lines).toHaveLength(2)
     expect(sumDebit(lines)).toBe(sumCredit(lines))
-    expect(result.data!.payment.bank_fee_ore).toBeNull()
+    expect(result.data.payment.bank_fee_ore).toBeNull()
   })
 })
 
@@ -460,7 +470,7 @@ describe('VAT report regression with bank fee', () => {
     )
 
     // VAT report should be identical — bank fees have no VAT impact
-    expect(vatAfter.totalVatOre).toBe(vatBefore.totalVatOre)
+    expect(vatAfter.yearTotal.vatOutTotalOre).toBe(vatBefore.yearTotal.vatOutTotalOre)
   })
 })
 

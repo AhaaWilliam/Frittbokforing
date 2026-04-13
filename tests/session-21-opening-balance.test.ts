@@ -645,6 +645,7 @@ describe('is_closed enforcement', () => {
 
     const result = finalizeManualEntry(db, me.id, fyId)
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.error).toContain('stängt')
   })
 

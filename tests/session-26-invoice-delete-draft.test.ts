@@ -104,6 +104,7 @@ describe('deleteDraft (K4)', () => {
   it('returns error for non-existent invoice', () => {
     const result = deleteDraft(db, 99999)
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.code).toBe('INVOICE_NOT_FOUND')
   })
 
@@ -117,6 +118,7 @@ describe('deleteDraft (K4)', () => {
 
     const result = deleteDraft(db, invoiceId)
     expect(result.success).toBe(false)
+    if (result.success) return
     expect(result.code).toBe('INVOICE_NOT_DRAFT')
   })
 })
