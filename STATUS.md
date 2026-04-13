@@ -1,31 +1,33 @@
 # Fritt Bokforing -- Projektstatus
 
-## Aktuell sprint: 15 (S41--S43) -- Kritiska normaliseringar
+## Aktuell sprint: 15 KLAR (S41--S47) -- Kritiska normaliseringar
 
-S41 (kontraktsaudit) klar. 16 findings identifierade. Scope-gate: 34 normaliseringsatgarder
-=> Sprint 16 utbruten per M109.
+Sprint 15 adresserade 16 findings fran kontraktsaudit S41. 7 sessioner,
+M119--M124 + M126 introducerade. PRAGMA user_version = 24, 22 tabeller.
 
-### Sprint 15 scope (A-findings)
+### Sprint 15 sessioner
 | Session | Scope | Status |
 |---------|-------|--------|
-| S41 | Kontraktsaudit + rapport | KLAR |
-| S42 | F1: Ore-suffix-renames (8 kolumner) | - |
-| S43 | F2: manual_entry_lines FK + F3: fiscalYearId casing | - |
+| S41 | Kontraktsaudit + rapport (16 findings) | KLAR |
+| S42 | F1: Ore-suffix-renames (5 kolumner), M121 table-recreate | KLAR |
+| S43 | F2: manual_entry_lines FK + payment_batches FK, M122 | KLAR |
+| S44 | F5: invoice_lines.account_number NOT NULL vid finalize | KLAR |
+| S45 | Testkonsolidering + M123 | KLAR |
+| S46 | M100-normalisering over services + dublettdetektion M124 | KLAR |
+| S47 | CLAUDE.md-sync + STATUS.md + M126 bank-fee-policy | KLAR |
 
-### Sprint 16 scope (B-findings)
+### Nasta: Sprint 16 (B-findings fran S41)
 | Session | Scope | Status |
 |---------|-------|--------|
-| S44 | F4/F5/F6: Schema-namnkonvention (~30 renames) | - |
-| S45 | F9: Timezone-fix + F10: expense_lines paritet | - |
-| S46 | F13: Handler error-pattern normalisering | - |
-
-Se docs/s41-report.md for full rapport.
+| S48 | F4/F6: Schema-namnkonvention | - |
+| S49 | F9: Timezone-fix + F10: expense_lines paritet | - |
+| S50 | Ovrigt fran S41-rapporten | - |
 
 ## Test-count
-- Vitest (system + unit): 1159 passed, 2 skipped (1161 totalt)
-- Testfiler: 85
+- Vitest (system + unit): 1188 passed, 2 skipped (1190 totalt)
+- Testfiler: 92
 - Playwright E2E: 10 (kors separat)
-- Korning: ~6.7s
+- Korning: ~9s
 
 ## Known infrastructure contracts
 - **FRITT_DB_PATH**: guardad till test-env (NODE_ENV=test eller FRITT_TEST=1). Ignoreras i production.
@@ -36,19 +38,23 @@ Se docs/s41-report.md for full rapport.
 
 ## Kanda fynd vantande
 
-### UX-friktioner (upptackta under S51 E2E)
+### Tech debt (by design, ej blockerande)
+1. **4 invariant-throws i validatePeriodInvariants** -- fangade av PERIOD_GENERATION_ERROR-wrapper, inte user-facing.
+2. **ManualEntryListItem.total_amount** -- saknar `_ore`-suffix (M119). Rename ar breaking for renderer. Lagreprioritet.
+3. **E03 supplier-picker** -- saknar data-testid for E2E-selektering.
 
-1. **Picker-komponenter saknar data-testid** -- CustomerPicker/ArticlePicker dropdown-rader har inga testbara selektorer.
-2. **"Bokfor" text-collision** -- Navigation-lank, sidrubriker och submit-knapp delar texten "Bokfor".
-3. **Payment fran list-row med stopPropagation** -- Betala-knappen finns bara i InvoiceList action-kolumn.
+### UX-friktioner (upptackta under S51 E2E)
+4. **Picker-komponenter saknar data-testid** -- CustomerPicker/ArticlePicker dropdown-rader har inga testbara selektorer.
+5. **"Bokfor" text-collision** -- Navigation-lank, sidrubriker och submit-knapp delar texten "Bokfor".
+6. **Payment fran list-row med stopPropagation** -- Betala-knappen finns bara i InvoiceList action-kolumn.
 
 ### Arkitektur/test-beslut vantande
-
-4. **Bank-fee proportionalitet** -- diskussion fran Sprint 13b.
-5. **Trigger 6/7-analys** -- opening_balance entries exempterade fran triggers 1-5 men ej 6-7.
-6. **Redundans-audit** -- se tests/REDUNDANCY_AUDIT.md.
+7. **Bank-fee proportionalitet** -- nuvarande policy: hel avgift per batch (M126). Framtida: proportionell fordelning.
+8. **Trigger 6/7-analys** -- opening_balance entries exempterade fran triggers 1-5 men ej 6-7.
+9. **Redundans-audit** -- se tests/REDUNDANCY_AUDIT.md.
 
 ## Tidigare sprintar
+- Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR
 - Sprint 14 (S48-S53): E2E-testinfrastruktur -- KLAR
 - Sprint 13 (S55-S56): Bulk-betalningar -- KLAR
 - Sprint 12 (S54): Bankavgifter -- KLAR

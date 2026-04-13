@@ -58,7 +58,7 @@ Historisk bug F27: expense-service hade tidigare en `/100`-division som artefakt
 
 Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THRESHOLD * 2` som blockerade fullbetalning av fakturor med små restbelopp och orsakade tyst datakorruption vid små överbetalningar. Fixat i Sprint 11 Fas 4 med regressionstester i `session-44-rounding-and-errors.test.ts`.
 
-**M100.** Validation helpers som `validateAccountsActive` kastar strukturerade `{ code: ErrorCode, error: string, field?: string }`-objekt, inte plain `Error`. Catch-blocken i service-funktioner hanterar detta mönster genom att kolla `err && typeof err === 'object' && 'code' in err` före fallback till generic `TRANSACTION_ERROR`. Resultatet är att specifika felkoder som `INACTIVE_ACCOUNT` propagerar korrekt till renderer via `IpcResult`. Fixat i Sprint 11 Fas 4 (F9).
+**M100.** Alla service-funktioner kastar strukturerade `{ code: ErrorCode, error: string, field?: string }`-objekt, inte plain `Error`. Catch-block i service-wrappers följer trestegs-mönstret: (1) `err && typeof err === 'object' && 'code' in err` → propagera strukturerat, (2) `err instanceof Error` → logga + `UNEXPECTED_ERROR`, (3) okänt → logga + `UNEXPECTED_ERROR`. Plain `throw new Error` är förbjudet i services utom för genuint oväntade systeminvarianter (t.ex. `validatePeriodInvariants`) som fångas av en yttre wrapper och returneras som specifik `ErrorCode`. `useEntityForm` i renderer fångar `IpcError.field` och sätter per-fält-felmeddelande automatiskt. Introducerat i Sprint 11 Fas 4 (F9), normaliserat över alla services i Sprint 15 S46.
 
 ## 19. Performance: atomär paid_amount (båda sidor) + shared export queries (M101)
 
@@ -89,7 +89,7 @@ Historisk not: Före Sprint 11 Fas 4 fanns ett villkor `remaining > ROUNDING_THR
 
 **M113.** Bulk-operationer använder yttre `db.transaction()` med nestade `db.transaction(single)()` som savepoints. Best-effort: per-rad-fel samlas i `failed[]`, batchen committar så länge `succeeded.length >= 1`. Om alla misslyckas returneras `status: 'cancelled'` utan batch-rad och utan bank-fee. `payment_batches`-tabellen skapas av migration 021 och har `batch_type IN ('invoice', 'expense')`, `status IN ('completed', 'partial', 'cancelled')`. `invoice_payments`/`expense_payments` har nullable `payment_batch_id` FK.
 
-**M114.** Batch-nivå-verifikat (bank-fee) använder samma serie (A för invoices, B för expenses) som underliggande payment-verifikat. Identifieras via `source_type='auto_bank_fee'` och `source_reference='batch:{batch_id}'` som sätts vid INSERT, aldrig via UPDATE (`trg_immutable_booked_entry_update` blockerar annars). `_payExpenseTx` accepterar `skipChronologyCheck: boolean` — publika `payExpense` anropar med `false`, bulk-wrapper validerar M6-kronologin en gång på batch-nivå och anropar med `true`.
+**M114.** Batch-nivå-verifikat (bank-fee) använder samma serie (A för invoices, B för expenses) som underliggande payment-verifikat. Identifieras via `source_type='auto_bank_fee'` och `source_reference='batch:{batch_id}'` som sätts vid INSERT, aldrig via UPDATE (`trg_immutable_booked_entry_update` blockerar annars). `_payExpenseTx` accepterar `skipChronologyCheck: boolean` — publika `payExpense` anropar med `false`, bulk-wrapper validerar M6-kronologin en gång på batch-nivå och anropar med `true`. Bank-fee-policy: se M126.
 
 ## 23. E2E-testinfrastruktur (M115–M117)
 
@@ -177,6 +177,16 @@ Konsekvenser:
   `product_id` är satt — detta är korrekt beteende, inte en bugg.
 - Triggern filtrerar med `product_id IS NULL AND account_number IS NULL` —
   produktrader passerar alltid.
+
+## 30. Dublettdetektion via SQLITE_CONSTRAINT_UNIQUE (M124)
+
+**M124.** `mapUniqueConstraintError(err, mappings)` i `src/main/services/error-helpers.ts` mappar `SqliteError` med `code === 'SQLITE_CONSTRAINT_UNIQUE'` (eller `SQLITE_CONSTRAINT_PRIMARYKEY`) till specifika `ErrorCode`-värden. Matchning sker via substring på `err.message` — robust mot compound-index-format. Varje service importerar sin egen mappning (`COUNTERPARTY_UNIQUE_MAPPINGS`, `COMPANY_UNIQUE_MAPPINGS`, etc.) och anropar helpern som första steg i catch-blocket. Returnerar `{ code, error, field? }` eller `null` vid icke-match. Nya UNIQUE-constraints kräver en ny mapping-entry — annars faller felet till `UNEXPECTED_ERROR`.
+
+## 31. Bank-fee-policy vid bulk-betalningar (M126)
+
+**M126.** Bankavgift (`bank_fee_ore`) vid bulk-betalning bokförs som ett separat verifikat per batch, inte per payment. Avgiften bokförs **hela beloppet** på konto 6570 — ingen proportionell fördelning per faktura/kostnad. Cancelled-batchar (alla payments misslyckades, `succeeded.length === 0`) skapar varken batch-rad eller bank-fee-verifikat. Guards i `payInvoicesBulk` (invoice-service.ts:1216) och `payExpensesBulk` (expense-service.ts:938): `if (succeeded.length === 0) return { status: 'cancelled', batch_id: null, bank_fee_journal_entry_id: null }`.
+
+Framtida övervägande: proportionell fördelning av bankavgift per faktura för mer precis kostnadsredovisning. Nuvarande lösning är enklast och korrekt ur bokföringsperspektiv (total avgift på rätt konto).
 
 ## Projektstatus
 
