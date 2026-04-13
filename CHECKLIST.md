@@ -59,6 +59,23 @@ lista + motivering. Nuvarande avaktiveringar:
 
 - `color-contrast` — jsdom beräknar inte styles, regeln ger alltid false positive.
 
+## Sprint 18 — S64b
+
+Komponent: FormField
+Test-fil: tests/renderer/components/ui/FormField.test.tsx
+M-principer täckta: —
+Beteendecase: label-koppling (id=name, htmlFor=name), required (visuell asterisk), disabled, type=number
+
+Komponent: FormSelect
+Test-fil: tests/renderer/components/ui/FormSelect.test.tsx
+M-principer täckta: M78 (number/string-konvertering via `<select>`)
+Beteendecase: options render, value-display (string+number), onChange round-trip (number), string-bevarande, tom options-lista
+
+Komponent: FormTextarea
+Test-fil: tests/renderer/components/ui/FormTextarea.test.tsx
+M-principer täckta: —
+Beteendecase: value/onChange, rows default+override, disabled
+
 ## Exempelformat för PR-beskrivningar
 
 ```
