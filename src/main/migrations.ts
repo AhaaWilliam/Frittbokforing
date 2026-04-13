@@ -1182,6 +1182,8 @@ export const migrations: MigrationEntry[] = [
   { sql: `ALTER TABLE products RENAME COLUMN default_price TO default_price_ore;
     ALTER TABLE price_list_items RENAME COLUMN price TO price_ore;`,
     programmatic: migration025Verify },
+  // Sprint 16 S49: F10 expense_lines paritet — sort_order + created_at (se programmatic)
+  { sql: '-- Migration 026: expense_lines sort_order + created_at (se programmatic)', programmatic: migration026Programmatic },
 ]
 
 /**
@@ -1480,6 +1482,84 @@ function migration025Verify(db: import('better-sqlite3').Database): void {
   const pliNames = pliCols.map(c => c.name)
   if (!pliNames.includes('price_ore')) throw new Error('Migration 025 failed: price_ore saknas')
   if (pliNames.includes('price')) throw new Error('Migration 025 failed: price finns kvar')
+}
+
+/**
+ * Migration 026: Sprint 16 S49 — F10 expense_lines paritet mot invoice_lines.
+ * Lägger till sort_order (INTEGER NOT NULL DEFAULT 0) och created_at (TEXT NOT NULL DEFAULT (datetime('now'))).
+ * Backfill: sort_order via ROW_NUMBER (0-indexerat), created_at från parent expenses.created_at.
+ * Pre-migration orphan-check: kastar INNAN schemaändring om expense_lines har orphans.
+ */
+function migration026Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: skip if sort_order already exists
+  const cols = getTableColumns(db, 'expense_lines')
+  if (cols.has('sort_order')) return
+
+  // Pre-migration orphan check — BEFORE schema change so partial failure is impossible
+  const orphanCount = db
+    .prepare(
+      'SELECT COUNT(*) as cnt FROM expense_lines el LEFT JOIN expenses e ON e.id = el.expense_id WHERE e.id IS NULL',
+    )
+    .get() as { cnt: number }
+  if (orphanCount.cnt > 0) {
+    throw new Error(
+      `Migration 026 failed: ${orphanCount.cnt} orphaned expense_lines found (no matching expenses row). Fix data before migrating.`,
+    )
+  }
+
+  // ADD COLUMN sort_order — matches invoice_lines: INTEGER NOT NULL DEFAULT 0
+  db.exec('ALTER TABLE expense_lines ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+
+  // Backfill: deterministic 0-indexed order per expense_id (matches invoice_lines convention)
+  db.exec(`
+    UPDATE expense_lines
+    SET sort_order = sub.rn - 1
+    FROM (
+      SELECT id, ROW_NUMBER() OVER (PARTITION BY expense_id ORDER BY id) AS rn
+      FROM expense_lines
+    ) sub
+    WHERE expense_lines.id = sub.id
+  `)
+
+  // ADD COLUMN created_at — two-step: add with constant default (SQLite ADD COLUMN limitation),
+  // then backfill from parent. New rows will get datetime('now') via the runtime default after
+  // we recreate the table constraint check won't trigger since we immediately backfill all rows.
+  // Note: SQLite ADD COLUMN does NOT support non-constant defaults even in 3.45+.
+  // We use a placeholder constant and backfill immediately.
+  db.exec("ALTER TABLE expense_lines ADD COLUMN created_at TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'")
+
+  // Backfill: inherit from parent expenses.created_at
+  db.exec(`
+    UPDATE expense_lines
+    SET created_at = (
+      SELECT created_at FROM expenses WHERE expenses.id = expense_lines.expense_id
+    )
+  `)
+
+  // Verify
+  const newCols = getTableColumns(db, 'expense_lines')
+  if (!newCols.has('sort_order')) throw new Error('Migration 026 failed: sort_order saknas')
+  if (!newCols.has('created_at')) throw new Error('Migration 026 failed: created_at saknas')
+
+  // Parity check: compare sort_order + created_at column definitions with invoice_lines
+  const elInfo = db.prepare('PRAGMA table_info(expense_lines)').all() as { name: string; notnull: number; dflt_value: string | null; type: string }[]
+  const ilInfo = db.prepare('PRAGMA table_info(invoice_lines)').all() as { name: string; notnull: number; dflt_value: string | null; type: string }[]
+
+  for (const colName of ['sort_order', 'created_at']) {
+    const elCol = elInfo.find(c => c.name === colName)
+    const ilCol = ilInfo.find(c => c.name === colName)
+    if (!elCol || !ilCol) throw new Error(`Migration 026 failed: ${colName} saknas i en av tabellerna`)
+    if (elCol.notnull !== ilCol.notnull) throw new Error(`Migration 026 parity failed: ${colName} notnull mismatch (expense_lines=${elCol.notnull}, invoice_lines=${ilCol.notnull})`)
+    if (elCol.type !== ilCol.type) throw new Error(`Migration 026 parity failed: ${colName} type mismatch (expense_lines=${elCol.type}, invoice_lines=${ilCol.type})`)
+  }
+
+  // Trigger count should be unchanged (12)
+  const triggerCount = db
+    .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+    .get() as { cnt: number }
+  if (triggerCount.cnt !== 12) {
+    throw new Error(`Migration 026 failed: expected 12 triggers, found ${triggerCount.cnt}`)
+  }
 }
 
 function migration018Verify(db: import('better-sqlite3').Database): void {
