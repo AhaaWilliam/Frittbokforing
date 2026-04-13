@@ -85,7 +85,8 @@ describe('GAP M02-1: EU VAT-nummer formatvalidering', () => {
       vat_number: 'DE123456789',
     })
     expect(result.success).toBe(true)
-    expect(result.data?.vat_number).toBe('DE123456789')
+    if (!result.success) return
+    expect(result.data.vat_number).toBe('DE123456789')
   })
 })
 
@@ -107,7 +108,8 @@ describe('GAP M02-2: Sortering och filtrering', () => {
       name: 'Inaktiv AB',
       type: 'customer',
     })
-    deactivateCounterparty(db, result.data!.id)
+    if (!result.success) throw new Error(result.error)
+    deactivateCounterparty(db, result.data.id)
 
     const activeOnly = listCounterparties(db, {
       type: 'customer',
@@ -127,11 +129,12 @@ describe('GAP M02-2: Sortering och filtrering', () => {
       name: 'Inaktiv Kund AB',
       type: 'customer',
     })
-    deactivateCounterparty(db, result.data!.id)
+    if (!result.success) throw new Error(result.error)
+    deactivateCounterparty(db, result.data.id)
 
     const row = db
       .prepare('SELECT is_active FROM counterparties WHERE id = ?')
-      .get(result.data!.id) as { is_active: number }
+      .get(result.data.id) as { is_active: number }
     expect(row.is_active).toBe(0)
   })
 })
@@ -142,12 +145,14 @@ describe('GAP M02-3: UpdateCounterparty field guards', () => {
       name: 'Original AB',
       type: 'customer',
     })
+    if (!created.success) throw new Error(created.error)
     const updated = updateCounterparty(db, {
-      id: created.data!.id,
+      id: created.data.id,
       name: 'Nytt Namn AB',
     })
     expect(updated.success).toBe(true)
-    expect(updated.data?.name).toBe('Nytt Namn AB')
+    if (!updated.success) return
+    expect(updated.data.name).toBe('Nytt Namn AB')
   })
 
   it('UpdateCounterpartyInputSchema avvisar extra fält via .strict()', () => {
@@ -174,10 +179,11 @@ describe('GAP M02-4: Snabbskapande returnerar tillräcklig data', () => {
       type: 'customer',
     })
     expect(result.success).toBe(true)
+    if (!result.success) return
     expect(result.data).toHaveProperty('id')
     expect(result.data).toHaveProperty('name')
-    expect(typeof result.data!.id).toBe('number')
-    expect(result.data!.name).toBe('Dropdown Kund')
+    expect(typeof result.data.id).toBe('number')
+    expect(result.data.name).toBe('Dropdown Kund')
   })
 })
 
@@ -198,6 +204,7 @@ describe('GAP M03-1: Leverantör-specifika tester', () => {
       org_number: '556789-0123',
     })
     expect(dup.success).toBe(false)
+    if (dup.success) return
     expect(dup.code).toBe('DUPLICATE_ORG_NUMBER')
   })
 
@@ -242,10 +249,11 @@ describe('GAP M04-1: Artikeltyp → standardkonto', () => {
       article_type: 'service',
     })
     expect(result.success).toBe(true)
+    if (!result.success) return
     // Verify article_type stored
     const row = db
       .prepare('SELECT article_type FROM products WHERE id = ?')
-      .get(result.data!.id) as { article_type: string }
+      .get(result.data.id) as { article_type: string }
     expect(row.article_type).toBe('service')
   })
 
