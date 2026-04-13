@@ -39,7 +39,7 @@ function createDraftEntry(
   const amount = opts.debit ?? 100000
   const res = testDb
     .prepare(
-      `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by)
+      `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by_id)
      VALUES (?, ?, ?, 'Testverifikation', 'draft', ?)`,
     )
     .run(opts.companyId, opts.fyId, date, opts.userId)
@@ -130,7 +130,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(26) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(27) // S48: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {
@@ -214,7 +214,7 @@ describe('CHECK constraints', () => {
     seedHelperData(db)
     expect(() => {
       db.prepare(
-        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by)
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by_id)
          VALUES (1, 1, '2025-01-15', 'Test', 'invalid', 1)`,
       ).run()
     }).toThrow()
@@ -377,7 +377,7 @@ describe('Triggers — balansvalidering', () => {
     seedHelperData(db)
     const res = db
       .prepare(
-        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by)
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, created_by_id)
        VALUES (1, 1, '2025-01-15', 'Enrads', 'draft', 1)`,
       )
       .run()
@@ -455,7 +455,7 @@ describe('Foreign keys', () => {
     seedHelperData(db)
     const res = db
       .prepare(
-        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, created_by)
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, created_by_id)
        VALUES (1, 1, '2025-01-15', 'FK test', 1)`,
       )
       .run()

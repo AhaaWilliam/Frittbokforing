@@ -568,7 +568,7 @@ export function finalizeDraft(
         .prepare(
           `INSERT INTO journal_entries (
           company_id, fiscal_year_id, verification_number, verification_series,
-          journal_date, description, status, source_type, created_by
+          journal_date, description, status, source_type, created_by_id
         ) VALUES (
           (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
           ?, ?, 'draft', 'auto_invoice', NULL

@@ -1184,6 +1184,11 @@ export const migrations: MigrationEntry[] = [
     programmatic: migration025Verify },
   // Sprint 16 S49: F10 expense_lines paritet — sort_order + created_at (se programmatic)
   { sql: '-- Migration 026: expense_lines sort_order + created_at (se programmatic)', programmatic: migration026Programmatic },
+  // Sprint 16 S58: F4 schema-namnkonvention — journal_entries.created_by → created_by_id
+  // FK till users(id) utan _id-suffix. Inkonsistent med corrected_by_id på samma tabell.
+  // Inga triggers refererar kolumnen — enkel RENAME COLUMN räcker.
+  { sql: 'ALTER TABLE journal_entries RENAME COLUMN created_by TO created_by_id;',
+    programmatic: migration027Verify },
 ]
 
 /**
@@ -1830,6 +1835,12 @@ function migration021Programmatic(db: import('better-sqlite3').Database): void {
 
   // Verify
   migration021Verify(db)
+}
+
+function migration027Verify(db: import('better-sqlite3').Database): void {
+  const cols = getTableColumns(db, 'journal_entries')
+  if (!cols.has('created_by_id')) throw new Error('Migration 027 failed: created_by_id saknas')
+  if (cols.has('created_by')) throw new Error('Migration 027 failed: created_by finns kvar')
 }
 
 function migration021Verify(db: import('better-sqlite3').Database): void {
