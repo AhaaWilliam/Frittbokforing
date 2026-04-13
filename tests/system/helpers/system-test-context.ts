@@ -726,7 +726,7 @@ export function seedAndPayInvoice(
 
   const payResult = payInvoice(ctx.db, {
     invoice_id: invoiceId,
-    amount: inv.total_amount_ore,
+    amount_ore: inv.total_amount_ore,
     payment_date: paymentDate,
     payment_method: 'bank',
     account_number: '1930',
@@ -821,7 +821,7 @@ export function seedAndPayExpense(
 
   const payResult = payExpense(ctx.db, {
     expense_id: expenseId,
-    amount: exp.total_amount_ore,
+    amount_ore: exp.total_amount_ore,
     payment_date: paymentDate,
     payment_method: 'bank',
     account_number: '1930',

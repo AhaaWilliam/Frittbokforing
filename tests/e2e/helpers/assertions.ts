@@ -28,7 +28,7 @@ interface JournalEntryLine {
 interface InvoicePayment {
   id: number
   invoice_id: number
-  amount: number
+  amount_ore: number
   payment_batch_id: number | null
   [key: string]: unknown
 }
@@ -47,7 +47,7 @@ interface Invoice {
   id: number
   status: string
   total_amount_ore: number
-  paid_amount: number
+  paid_amount_ore: number
   remaining: number
   [key: string]: unknown
 }

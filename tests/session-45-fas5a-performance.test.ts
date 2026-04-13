@@ -168,25 +168,25 @@ afterEach(() => {
 })
 
 // ═══════════════════════════════════════════════════════════
-// F11: expenses.paid_amount + consistency
+// F11: expenses.paid_amount_ore + consistency
 // ═══════════════════════════════════════════════════════════
 
-describe('F11: expenses.paid_amount column and simplified queries', () => {
-  it('1. Migration 015 adds paid_amount column to expenses', () => {
+describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
+  it('1. Migration 015 adds paid_amount_ore column to expenses', () => {
     const cols = db.pragma('table_info(expenses)') as {
       name: string
       type: string
       notnull: number
       dflt_value: string | null
     }[]
-    const paidCol = cols.find((c) => c.name === 'paid_amount')
+    const paidCol = cols.find((c) => c.name === 'paid_amount_ore')
     expect(paidCol).toBeDefined()
     expect(paidCol!.type).toBe('INTEGER')
     expect(paidCol!.notnull).toBe(1)
     expect(paidCol!.dflt_value).toBe('0')
   })
 
-  it('2. Backfill: expenses with payments get correct paid_amount', () => {
+  it('2. Backfill: expenses with payments get correct paid_amount_ore', () => {
     // Seed company + FY + counterparty before migration
     const freshDb = new Database(':memory:')
     freshDb.pragma('journal_mode = WAL')
@@ -254,24 +254,30 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
       )
       .run(expenseId, jeId)
 
-    // Now run migration 015
-    const m15 = migrations[14] // index 14 = migration 015
-    freshDb.exec('BEGIN EXCLUSIVE')
-    freshDb.exec(m15.sql)
-    if (m15.programmatic) m15.programmatic(freshDb)
-    freshDb.pragma('user_version = 15')
-    freshDb.exec('COMMIT')
+    // Now run remaining migrations (015 onwards)
+    // Disable FK temporarily — table-recreate in later migrations
+    // would fail FK checks against test data inserted above.
+    freshDb.pragma('foreign_keys = OFF')
+    for (let i = 14; i < migrations.length; i++) {
+      const m = migrations[i]
+      freshDb.exec('BEGIN EXCLUSIVE')
+      freshDb.exec(m.sql)
+      if (m.programmatic) m.programmatic(freshDb)
+      freshDb.pragma(`user_version = ${i + 1}`)
+      freshDb.exec('COMMIT')
+    }
+    freshDb.pragma('foreign_keys = ON')
 
     // Verify backfill
     const expense = freshDb
-      .prepare('SELECT paid_amount FROM expenses WHERE id = ?')
-      .get(expenseId) as { paid_amount: number }
-    expect(expense.paid_amount).toBe(50000)
+      .prepare('SELECT paid_amount_ore FROM expenses WHERE id = ?')
+      .get(expenseId) as { paid_amount_ore: number }
+    expect(expense.paid_amount_ore).toBe(50000)
 
     freshDb.close()
   })
 
-  it('3. Backfill: expenses without payments get paid_amount = 0', () => {
+  it('3. Backfill: expenses without payments get paid_amount_ore = 0', () => {
     const freshDb = new Database(':memory:')
     freshDb.pragma('journal_mode = WAL')
     freshDb.pragma('foreign_keys = ON')
@@ -302,23 +308,27 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
       )
       .run(fy.id, cp.data.id)
 
-    // Run migration 015
-    const m15 = migrations[14]
-    freshDb.exec('BEGIN EXCLUSIVE')
-    freshDb.exec(m15.sql)
-    if (m15.programmatic) m15.programmatic(freshDb)
-    freshDb.pragma('user_version = 15')
-    freshDb.exec('COMMIT')
+    // Run remaining migrations (015 onwards)
+    freshDb.pragma('foreign_keys = OFF')
+    for (let i = 14; i < migrations.length; i++) {
+      const m = migrations[i]
+      freshDb.exec('BEGIN EXCLUSIVE')
+      freshDb.exec(m.sql)
+      if (m.programmatic) m.programmatic(freshDb)
+      freshDb.pragma(`user_version = ${i + 1}`)
+      freshDb.exec('COMMIT')
+    }
+    freshDb.pragma('foreign_keys = ON')
 
     const expense = freshDb
-      .prepare('SELECT paid_amount FROM expenses WHERE id = 1')
-      .get() as { paid_amount: number }
-    expect(expense.paid_amount).toBe(0)
+      .prepare('SELECT paid_amount_ore FROM expenses WHERE id = 1')
+      .get() as { paid_amount_ore: number }
+    expect(expense.paid_amount_ore).toBe(0)
 
     freshDb.close()
   })
 
-  it('4. payExpense updates paid_amount on full payment', () => {
+  it('4. payExpense updates paid_amount_ore on full payment', () => {
     const seed = seedExpense(db)
     const expenseId = createUnpaidExpense(db, seed)
     const expense = db
@@ -327,7 +337,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -335,13 +345,13 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     expect(result.success).toBe(true)
 
     const updated = db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
       .get(expenseId) as Expense
-    expect(updated.paid_amount).toBe(expense.total_amount_ore)
+    expect(updated.paid_amount_ore).toBe(expense.total_amount_ore)
     expect(updated.status).toBe('paid')
   })
 
-  it('5. payExpense updates paid_amount on partial payment', () => {
+  it('5. payExpense updates paid_amount_ore on partial payment', () => {
     const seed = seedExpense(db)
     const expenseId = createUnpaidExpense(db, seed)
     const expense = db
@@ -351,7 +361,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: halfAmount,
+      amount_ore: halfAmount,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -359,13 +369,13 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     expect(result.success).toBe(true)
 
     const updated = db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
       .get(expenseId) as Expense
-    expect(updated.paid_amount).toBe(halfAmount)
+    expect(updated.paid_amount_ore).toBe(halfAmount)
     expect(updated.status).toBe('partial')
   })
 
-  it('6. payExpense updates paid_amount on final payment after partial', () => {
+  it('6. payExpense updates paid_amount_ore on final payment after partial', () => {
     const seed = seedExpense(db)
     const expenseId = createUnpaidExpense(db, seed)
     const expense = db
@@ -376,7 +386,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
 
     payExpense(db, {
       expense_id: expenseId,
-      amount: halfAmount,
+      amount_ore: halfAmount,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -384,7 +394,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: remainder,
+      amount_ore: remainder,
       payment_date: '2025-03-16',
       payment_method: 'bank',
       account_number: '1930',
@@ -392,13 +402,13 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     expect(result.success).toBe(true)
 
     const updated = db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
       .get(expenseId) as Expense
-    expect(updated.paid_amount).toBe(expense.total_amount_ore)
+    expect(updated.paid_amount_ore).toBe(expense.total_amount_ore)
     expect(updated.status).toBe('paid')
   })
 
-  it('7. paid_amount correct with öresutjämning (rounding via 3740)', () => {
+  it('7. paid_amount_ore correct with öresutjämning (rounding via 3740)', () => {
     const seed = seedExpense(db)
     const expenseId = createUnpaidExpense(db, seed)
     const expense = db
@@ -408,7 +418,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     // Pay 3 öre less than total — within ROUNDING_THRESHOLD (50 öre)
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore - 3,
+      amount_ore: expense.total_amount_ore - 3,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -416,10 +426,10 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     expect(result.success).toBe(true)
 
     const updated = db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
       .get(expenseId) as Expense
     // Rounding adjustment makes it full payment
-    expect(updated.paid_amount).toBe(expense.total_amount_ore)
+    expect(updated.paid_amount_ore).toBe(expense.total_amount_ore)
     expect(updated.status).toBe('paid')
 
     // Verify 3740 journal line exists with credit 3 öre
@@ -445,14 +455,14 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     // Two partial payments
     payExpense(db, {
       expense_id: expenseId,
-      amount: 30000,
+      amount_ore: 30000,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
     })
     payExpense(db, {
       expense_id: expenseId,
-      amount: 20000,
+      amount_ore: 20000,
       payment_date: '2025-03-16',
       payment_method: 'bank',
       account_number: '1930',
@@ -482,7 +492,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     // Pay inv1 fully
     payInvoice(db, {
       invoice_id: inv1.id,
-      amount: total,
+      amount_ore: total,
       payment_date: '2025-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -492,7 +502,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     const halfAmount = Math.floor(total / 2)
     payInvoice(db, {
       invoice_id: inv2.id,
-      amount: halfAmount,
+      amount_ore: halfAmount,
       payment_date: '2025-03-21',
       payment_method: 'bank',
       account_number: '1930',
@@ -531,7 +541,7 @@ describe('F11: expenses.paid_amount column and simplified queries', () => {
     // Pay exp1 fully
     payExpense(db, {
       expense_id: exp1Id,
-      amount: exp1Total,
+      amount_ore: exp1Total,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -832,6 +842,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(21)
+    expect(row[0].user_version).toBe(22)
   })
 })

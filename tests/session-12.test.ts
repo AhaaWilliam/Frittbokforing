@@ -137,7 +137,7 @@ describe('Session 12: listExpenses', () => {
       .get(paidId) as { total_amount_ore: number }
     payExpense(db, {
       expense_id: paidId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -347,7 +347,7 @@ describe('Session 12: Status counts', () => {
       .get(paidId) as { total_amount_ore: number }
     payExpense(db, {
       expense_id: paidId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -378,7 +378,7 @@ describe('Session 12: Status counts', () => {
     // Pay half
     payExpense(db, {
       expense_id: id,
-      amount: Math.floor(exp.total_amount_ore / 2),
+      amount_ore: Math.floor(exp.total_amount_ore / 2),
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',

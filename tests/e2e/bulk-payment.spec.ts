@@ -322,7 +322,7 @@ test.describe('Bulk-betalning E2E', () => {
       const inv = invoices.find(i => i.id === ctx.invoiceIds[0])
       expect(inv).toBeDefined()
       expect(inv!.status).toBe('partial')
-      expect(inv!.paid_amount).toBe(5000)
+      expect(inv!.paid_amount_ore).toBe(5000)
     } finally {
       await ctx.cleanup()
     }

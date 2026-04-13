@@ -154,7 +154,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // 6. Betala fullt
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: finalized.total_amount_ore,
+      amount_ore: finalized.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -351,7 +351,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     const partAmount = Math.round(totalAmount * 0.6)
     const pay1 = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
-      amount: partAmount,
+      amount_ore: partAmount,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -367,7 +367,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     const remaining = totalAmount - partAmount
     const pay2 = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
-      amount: remaining,
+      amount_ore: remaining,
       payment_date: '2026-03-25',
       payment_method: 'bank',
       account_number: '1930',
@@ -448,7 +448,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
       .get(draftResult.data.id) as any
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2027-01-10',
       payment_method: 'bank',
       account_number: '1930',

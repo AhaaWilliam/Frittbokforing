@@ -77,7 +77,7 @@ export interface ExpenseInfo {
 
 export interface PaymentInfo {
   parent_id: number // invoice_id or expense_id
-  amount: number
+  amount_ore: number
   payment_date: string
 }
 
@@ -407,7 +407,7 @@ export function getInvoicePayments(
   const placeholders = invoiceIds.map(() => '?').join(',')
   return db
     .prepare(
-      `SELECT invoice_id as parent_id, amount, payment_date
+      `SELECT invoice_id as parent_id, amount_ore, payment_date
      FROM invoice_payments
      WHERE invoice_id IN (${placeholders})
      ORDER BY invoice_id, payment_date`,
@@ -441,7 +441,7 @@ export function getExpensePayments(
   const placeholders = expenseIds.map(() => '?').join(',')
   return db
     .prepare(
-      `SELECT expense_id as parent_id, amount, payment_date
+      `SELECT expense_id as parent_id, amount_ore, payment_date
      FROM expense_payments
      WHERE expense_id IN (${placeholders})
      ORDER BY expense_id, payment_date`,

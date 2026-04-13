@@ -279,7 +279,7 @@ describe('Session 13: getDashboardSummary', () => {
     const inv2 = createBookedInvoice(db, seed, { quantity: 5 })
     payInvoice(db, {
       invoice_id: inv2.id,
-      amount: 100_000,
+      amount_ore: 100_000,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -294,7 +294,7 @@ describe('Session 13: getDashboardSummary', () => {
     const inv = createBookedInvoice(db, seed)
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -372,7 +372,7 @@ describe('Session 13: getDashboardSummary', () => {
 
   it('regression: user_version=10 och 20 tabeller oförändrat', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(21) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
@@ -404,7 +404,7 @@ describe('Session 13: getDashboardSummary', () => {
       .get(id2) as { total_amount_ore: number }
     payExpense(db, {
       expense_id: id2,
-      amount: 500,
+      amount_ore: 500,
       payment_date: '2025-04-01',
       payment_method: 'bankgiro',
       account_number: '1930',

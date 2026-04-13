@@ -145,7 +145,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(21) // S24: Uppdatera vid nya migrationer
+    expect(v).toBe(22) // S42: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

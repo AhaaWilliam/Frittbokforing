@@ -181,14 +181,14 @@ describe('Finansiella invarianter', () => {
     // Check invoices
     const invoices = ctx.db
       .prepare(
-        'SELECT net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount FROM invoices',
+        'SELECT net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount_ore FROM invoices',
       )
       .all() as any[]
     for (const inv of invoices) {
       expect(Number.isInteger(inv.net_amount_ore)).toBe(true)
       expect(Number.isInteger(inv.vat_amount_ore)).toBe(true)
       expect(Number.isInteger(inv.total_amount_ore)).toBe(true)
-      expect(Number.isInteger(inv.paid_amount)).toBe(true)
+      expect(Number.isInteger(inv.paid_amount_ore)).toBe(true)
     }
   })
 
@@ -233,7 +233,7 @@ describe('Finansiella invarianter', () => {
     if (inv) {
       ctx.invoiceService.payInvoice(ctx.db, {
         invoice_id: inv.id,
-        amount: inv.total_amount_ore,
+        amount_ore: inv.total_amount_ore,
         payment_date: '2026-04-15',
         payment_method: 'bank',
         account_number: '1930',
@@ -249,7 +249,7 @@ describe('Finansiella invarianter', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: 0,
+      amount_ore: 0,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',

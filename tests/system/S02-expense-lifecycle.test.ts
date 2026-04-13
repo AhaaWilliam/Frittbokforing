@@ -111,7 +111,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     // Betala
     const payResult = ctx.expenseService.payExpense(ctx.db, {
       expense_id: draftResult.data.id,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -151,7 +151,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     // Delbetala
     const pay1 = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: half,
+      amount_ore: half,
       payment_date: '2026-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -165,7 +165,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     // Slutbetala
     const pay2 = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: total - half,
+      amount_ore: total - half,
       payment_date: '2026-03-25',
       payment_method: 'bank',
       account_number: '1930',
@@ -233,7 +233,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
 
     const payResult = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-14', // Före fakturadatum!
       payment_method: 'bank',
       account_number: '1930',
@@ -250,7 +250,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     // Mocked "today" = 2026-06-15
     const payResult = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-06-16', // Framtiden!
       payment_method: 'bank',
       account_number: '1930',

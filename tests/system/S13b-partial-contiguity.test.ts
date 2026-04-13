@@ -115,7 +115,7 @@ describe('PARTIAL1 — period-stängning ger pre-flight fail, inte INSERT-fail',
 
     // Pay i2 to cause ALREADY_PAID fail
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
       payment_method: 'bankgiro', account_number: '1930',
     })
 

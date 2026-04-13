@@ -380,7 +380,7 @@ export function usePayInvoice() {
   return useIpcMutation(
     (input: {
       invoice_id: number
-      amount: number
+      amount_ore: number
       payment_date: string
       payment_method: string
       account_number: string
@@ -549,7 +549,7 @@ export function usePayExpense() {
   return useIpcMutation(
     (input: {
       expense_id: number
-      amount: number
+      amount_ore: number
       payment_date: string
       payment_method: string
       account_number: string

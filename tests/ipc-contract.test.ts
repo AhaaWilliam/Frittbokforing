@@ -248,7 +248,7 @@ describe('PayInvoiceInputSchema', () => {
   it('accepts valid payment', () =>
     valid(PayInvoiceInputSchema, {
       invoice_id: 1,
-      amount: 100000,
+      amount_ore: 100000,
       payment_date: '2026-02-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -256,7 +256,7 @@ describe('PayInvoiceInputSchema', () => {
   it('rejects negative amount', () =>
     invalid(PayInvoiceInputSchema, {
       invoice_id: 1,
-      amount: -1,
+      amount_ore: -1,
       payment_date: '2026-02-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -304,7 +304,7 @@ describe('PayExpenseInputSchema', () => {
   it('accepts valid', () =>
     valid(PayExpenseInputSchema, {
       expense_id: 1,
-      amount: 50000,
+      amount_ore: 50000,
       payment_date: '2026-02-01',
       payment_method: 'swish',
       account_number: '1930',
@@ -312,7 +312,7 @@ describe('PayExpenseInputSchema', () => {
   it('rejects invalid method', () =>
     invalid(PayExpenseInputSchema, {
       expense_id: 1,
-      amount: 50000,
+      amount_ore: 50000,
       payment_date: '2026-02-01',
       payment_method: 'bitcoin',
       account_number: '1930',

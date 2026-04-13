@@ -174,7 +174,7 @@ describe('F3: invoice rounding with small remaining', () => {
 
     const result = payInvoice(db, {
       invoice_id: invoice.id,
-      amount: 100,
+      amount_ore: 100,
       payment_date: '2025-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -210,14 +210,14 @@ describe('F3: invoice rounding with small remaining', () => {
     expect(roundingLine).toBeDefined()
     expect(roundingLine!.credit_ore).toBe(1)
 
-    // Invariant: paid_amount === total_amount
+    // Invariant: paid_amount_ore === total_amount_ore
     const updated = db
       .prepare('SELECT total_amount_ore, status FROM invoices WHERE id = ?')
       .get(invoice.id) as { total_amount_ore: number; status: string }
     expect(updated.status).toBe('paid')
     const payments = db
       .prepare(
-        'SELECT SUM(amount) as total FROM invoice_payments WHERE invoice_id = ?',
+        'SELECT SUM(amount_ore) as total FROM invoice_payments WHERE invoice_id = ?',
       )
       .get(invoice.id) as { total: number }
     expect(payments.total).toBe(updated.total_amount_ore)
@@ -235,7 +235,7 @@ describe('F3: invoice rounding with small remaining', () => {
     // (|diff| ≤ 50 && remaining > 0) även om förhållandet 50/100 är ovanligt.
     const result = payInvoice(db, {
       invoice_id: invoice.id,
-      amount: 100,
+      amount_ore: 100,
       payment_date: '2025-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -249,7 +249,7 @@ describe('F3: invoice rounding with small remaining', () => {
 
     const payments = db
       .prepare(
-        'SELECT SUM(amount) as total FROM invoice_payments WHERE invoice_id = ?',
+        'SELECT SUM(amount_ore) as total FROM invoice_payments WHERE invoice_id = ?',
       )
       .get(invoice.id) as { total: number }
     expect(payments.total).toBe(50)
@@ -265,7 +265,7 @@ describe('F3: invoice rounding with small remaining', () => {
 
     const result = payInvoice(db, {
       invoice_id: invoice.id,
-      amount: 50,
+      amount_ore: 50,
       payment_date: '2025-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -299,7 +299,7 @@ describe('F3: invoice rounding with small remaining', () => {
 
     const result = payInvoice(db, {
       invoice_id: invoice.id,
-      amount: 501,
+      amount_ore: 501,
       payment_date: '2025-03-20',
       payment_method: 'bank',
       account_number: '1930',
@@ -343,7 +343,7 @@ describe('F3: expense rounding with small remaining', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 100,
+      amount_ore: 100,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -383,10 +383,10 @@ describe('F3: expense rounding with small remaining', () => {
       .get(expenseId) as { status: string }
     expect(updated.status).toBe('paid')
 
-    // Invariant: paid_amount === total_amount_ore
+    // Invariant: paid_amount_ore === total_amount_ore
     const payments = db
       .prepare(
-        'SELECT SUM(amount) as total FROM expense_payments WHERE expense_id = ?',
+        'SELECT SUM(amount_ore) as total FROM expense_payments WHERE expense_id = ?',
       )
       .get(expenseId) as { total: number }
     expect(payments.total).toBe(99)
@@ -403,7 +403,7 @@ describe('F3: expense rounding with small remaining', () => {
     // M99: diff = 50, |50| ≤ 50 && remaining > 0 → rounding aktiveras
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 100,
+      amount_ore: 100,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -441,7 +441,7 @@ describe('F3: expense rounding with small remaining', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 50,
+      amount_ore: 50,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',
@@ -469,7 +469,7 @@ describe('F3: expense rounding with small remaining', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 501,
+      amount_ore: 501,
       payment_date: '2025-03-15',
       payment_method: 'bank',
       account_number: '1930',

@@ -334,7 +334,7 @@ describe('SIE5 Export', () => {
     // Pay the full amount in February
     payInvoice(db, {
       invoice_id: invoiceData.id,
-      amount: invoiceData.total_amount_ore,
+      amount_ore: invoiceData.total_amount_ore,
       payment_date: '2026-02-10',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -417,7 +417,7 @@ describe('SIE5 Export', () => {
   // Test 21: regression — no migration
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(21) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

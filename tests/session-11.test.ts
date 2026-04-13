@@ -119,7 +119,7 @@ describe('Session 11: Migration 010', () => {
     expect(colNames).toContain('expense_id')
     expect(colNames).toContain('journal_entry_id')
     expect(colNames).toContain('payment_date')
-    expect(colNames).toContain('amount')
+    expect(colNames).toContain('amount_ore')
     expect(colNames).toContain('payment_method')
     expect(colNames).toContain('account_number')
     expect(colNames).toContain('created_at')
@@ -127,7 +127,7 @@ describe('Session 11: Migration 010', () => {
 
   it('PRAGMA user_version = 10', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(21) // S24: Uppdatera vid nya migrationer
+    expect(version).toBe(22) // S42: Uppdatera vid nya migrationer
   })
 
   it('expense payments use auto_payment source_type in B-series', () => {
@@ -154,7 +154,7 @@ describe('Session 11: payExpense — kontering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -215,7 +215,7 @@ describe('Session 11: payExpense — kontering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: partialAmount,
+      amount_ore: partialAmount,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -234,7 +234,7 @@ describe('Session 11: payExpense — kontering', () => {
     // First partial
     payExpense(db, {
       expense_id: expenseId,
-      amount: half,
+      amount_ore: half,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -243,7 +243,7 @@ describe('Session 11: payExpense — kontering', () => {
     // Final payment
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: rest,
+      amount_ore: rest,
       payment_date: '2025-03-21',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -259,7 +259,7 @@ describe('Session 11: payExpense — kontering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore + 10000,
+      amount_ore: expense.total_amount_ore + 10000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -276,7 +276,7 @@ describe('Session 11: payExpense — kontering', () => {
     // Pay creates B2
     payExpense(db, {
       expense_id: e1,
-      amount: exp1.total_amount_ore,
+      amount_ore: exp1.total_amount_ore,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -289,7 +289,7 @@ describe('Session 11: payExpense — kontering', () => {
     // Pay creates B4
     const result = payExpense(db, {
       expense_id: e2,
-      amount: exp2.total_amount_ore,
+      amount_ore: exp2.total_amount_ore,
       payment_date: '2025-03-22',
       payment_method: 'swish',
       account_number: '1930',
@@ -323,7 +323,7 @@ describe('Session 11: payExpense — öresutjämning', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 100000, // 1000 kr — remaining 50 öre
+      amount_ore: 100000, // 1000 kr — remaining 50 öre
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -376,7 +376,7 @@ describe('Session 11: payExpense — öresutjämning', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: partialAmount,
+      amount_ore: partialAmount,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -423,7 +423,7 @@ describe('Session 11: payExpense — validering', () => {
 
     const result = payExpense(db, {
       expense_id: draftResult.data.id,
-      amount: 100000,
+      amount_ore: 100000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -440,7 +440,7 @@ describe('Session 11: payExpense — validering', () => {
     // Pay fully first
     payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -449,7 +449,7 @@ describe('Session 11: payExpense — validering', () => {
     // Try again
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 1000,
+      amount_ore: 1000,
       payment_date: '2025-03-21',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -470,7 +470,7 @@ describe('Session 11: payExpense — validering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -486,7 +486,7 @@ describe('Session 11: payExpense — validering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2099-01-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -504,7 +504,7 @@ describe('Session 11: payExpense — validering', () => {
 
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2025-03-10',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -526,7 +526,7 @@ describe('Session 11: Integration', () => {
 
     payExpense(db, {
       expense_id: expenseId,
-      amount: half,
+      amount_ore: half,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -534,7 +534,7 @@ describe('Session 11: Integration', () => {
 
     const payments = getExpensePayments(db, expenseId)
     expect(payments).toHaveLength(1)
-    expect(payments[0].amount).toBe(half)
+    expect(payments[0].amount_ore).toBe(half)
     expect(payments[0].payment_date).toBe('2025-03-20')
     expect(payments[0].payment_method).toBe('bankgiro')
   })
@@ -546,14 +546,14 @@ describe('Session 11: Integration', () => {
 
     payExpense(db, {
       expense_id: expenseId,
-      amount: third,
+      amount_ore: third,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
     })
     payExpense(db, {
       expense_id: expenseId,
-      amount: third,
+      amount_ore: third,
       payment_date: '2025-03-21',
       payment_method: 'swish',
       account_number: '1930',
@@ -563,7 +563,7 @@ describe('Session 11: Integration', () => {
     expect(payments).toHaveLength(2)
 
     const totalPaid = payments.reduce(
-      (s: number, p: { amount: number }) => s + p.amount,
+      (s: number, p: { amount_ore: number }) => s + p.amount_ore,
       0,
     )
     expect(totalPaid).toBe(third * 2)
@@ -576,7 +576,7 @@ describe('Session 11: Integration', () => {
 
     payExpense(db, {
       expense_id: expenseId,
-      amount: half,
+      amount_ore: half,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -619,7 +619,7 @@ describe('Session 11: Integration', () => {
     // Pay in 2026
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: expense.total_amount_ore,
+      amount_ore: expense.total_amount_ore,
       payment_date: '2026-01-10',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -654,7 +654,7 @@ describe('Session 11: Integration', () => {
     // Pay 100000 (1000 kr) — 50 öre too much
     const result = payExpense(db, {
       expense_id: expenseId,
-      amount: 100000,
+      amount_ore: 100000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',

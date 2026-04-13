@@ -1157,7 +1157,158 @@ export const migrations: MigrationEntry[] = [
   { sql: '-- Migration 020: bank fee columns (se programmatic)', programmatic: migration020Programmatic },
   // Sprint 13: payment_batches + auto_bank_fee source_type
   { sql: '-- Migration 021: payment_batches + auto_bank_fee (se programmatic)', programmatic: migration021Programmatic },
+  // Sprint 15 S42: öre-suffix på 5 belopp-kolumner (M119/F1)
+  { sql: '-- Migration 022: öre-suffix rename (se programmatic)', programmatic: migration022Programmatic },
 ]
+
+/**
+ * Migration 022: Sprint 15 S42 — öre-suffix rename (M119/F1).
+ * 5 kolumner: invoice_payments.amount → amount_ore, expense_payments.amount → amount_ore,
+ * invoices.paid_amount → paid_amount_ore, expenses.paid_amount → paid_amount_ore,
+ * opening_balances.balance → balance_ore.
+ * Table-recreate för de 3 tabeller med CHECK-constraints, RENAME COLUMN för övriga 2.
+ */
+function migration022Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: if amount_ore already exists, skip
+  const ipCols = getTableColumns(db, 'invoice_payments')
+  if (ipCols.has('amount_ore')) return
+
+  // === 1. invoice_payments (table-recreate: CHECK references amount) ===
+  db.exec(`
+    CREATE TABLE invoice_payments_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_id INTEGER NOT NULL REFERENCES invoices(id),
+      journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
+      payment_date TEXT NOT NULL,
+      amount_ore INTEGER NOT NULL CHECK (amount_ore > 0),
+      payment_method TEXT,
+      account_number TEXT DEFAULT '1930' REFERENCES accounts(account_number),
+      bank_fee_ore INTEGER,
+      bank_fee_account TEXT,
+      payment_batch_id INTEGER REFERENCES payment_batches(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO invoice_payments_new (id, invoice_id, journal_entry_id, payment_date,
+      amount_ore, payment_method, account_number, bank_fee_ore, bank_fee_account,
+      payment_batch_id, created_at)
+    SELECT id, invoice_id, journal_entry_id, payment_date,
+      amount, payment_method, account_number, bank_fee_ore, bank_fee_account,
+      payment_batch_id, created_at
+    FROM invoice_payments;
+    DROP TABLE invoice_payments;
+    ALTER TABLE invoice_payments_new RENAME TO invoice_payments;
+    CREATE INDEX idx_ip_invoice ON invoice_payments(invoice_id);
+    CREATE INDEX idx_payments_invoice ON invoice_payments(invoice_id, amount_ore);
+    CREATE INDEX idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
+  `)
+
+  // === 2. expense_payments (table-recreate: CHECK references amount) ===
+  db.exec(`
+    CREATE TABLE expense_payments_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      expense_id INTEGER NOT NULL REFERENCES expenses(id),
+      journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
+      payment_date TEXT NOT NULL,
+      amount_ore INTEGER NOT NULL CHECK (amount_ore > 0),
+      payment_method TEXT,
+      account_number TEXT DEFAULT '1930' REFERENCES accounts(account_number),
+      bank_fee_ore INTEGER,
+      bank_fee_account TEXT,
+      payment_batch_id INTEGER REFERENCES payment_batches(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO expense_payments_new (id, expense_id, journal_entry_id, payment_date,
+      amount_ore, payment_method, account_number, bank_fee_ore, bank_fee_account,
+      payment_batch_id, created_at)
+    SELECT id, expense_id, journal_entry_id, payment_date,
+      amount, payment_method, account_number, bank_fee_ore, bank_fee_account,
+      payment_batch_id, created_at
+    FROM expense_payments;
+    DROP TABLE expense_payments;
+    ALTER TABLE expense_payments_new RENAME TO expense_payments;
+    CREATE INDEX idx_expense_payments_expense ON expense_payments(expense_id, amount_ore);
+    CREATE INDEX idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
+  `)
+
+  // === 3. invoices (table-recreate: CHECK references paid_amount) ===
+  db.exec(`
+    CREATE TABLE invoices_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      counterparty_id INTEGER NOT NULL REFERENCES counterparties(id),
+      invoice_type TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      invoice_date TEXT NOT NULL,
+      due_date TEXT NOT NULL,
+      net_amount_ore INTEGER NOT NULL,
+      vat_amount_ore INTEGER NOT NULL DEFAULT 0,
+      total_amount_ore INTEGER NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'SEK',
+      status TEXT NOT NULL DEFAULT 'draft',
+      paid_amount_ore INTEGER NOT NULL DEFAULT 0,
+      journal_entry_id INTEGER REFERENCES journal_entries(id),
+      ocr_number TEXT,
+      notes TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      fiscal_year_id INTEGER REFERENCES fiscal_years(id),
+      payment_terms INTEGER NOT NULL DEFAULT 30,
+      CHECK (invoice_type IN ('customer_invoice', 'supplier_invoice', 'credit_note')),
+      CHECK (status IN ('draft', 'unpaid', 'partial', 'paid', 'overdue', 'void')),
+      CHECK (net_amount_ore >= 0),
+      CHECK (vat_amount_ore >= 0),
+      CHECK (total_amount_ore >= 0),
+      CHECK (paid_amount_ore >= 0)
+    );
+    INSERT INTO invoices_new (id, counterparty_id, invoice_type, invoice_number,
+      invoice_date, due_date, net_amount_ore, vat_amount_ore, total_amount_ore,
+      currency, status, paid_amount_ore, journal_entry_id, ocr_number, notes,
+      version, created_at, updated_at, fiscal_year_id, payment_terms)
+    SELECT id, counterparty_id, invoice_type, invoice_number,
+      invoice_date, due_date, net_amount_ore, vat_amount_ore, total_amount_ore,
+      currency, status, paid_amount, journal_entry_id, ocr_number, notes,
+      version, created_at, updated_at, fiscal_year_id, payment_terms
+    FROM invoices;
+    DROP TABLE invoices;
+    ALTER TABLE invoices_new RENAME TO invoices;
+    CREATE INDEX idx_inv_counterparty ON invoices(counterparty_id);
+    CREATE INDEX idx_inv_status ON invoices(status);
+    CREATE INDEX idx_inv_due ON invoices(due_date);
+    CREATE UNIQUE INDEX idx_invoices_year_invnum
+      ON invoices(fiscal_year_id, invoice_number)
+      WHERE invoice_number != '';
+    CREATE TRIGGER trg_prevent_invoice_delete
+    BEFORE DELETE ON invoices
+    WHEN OLD.status != 'draft'
+    BEGIN
+        SELECT RAISE(ABORT, 'Faktura som inte är utkast kan inte raderas. Makulera istället.');
+    END;
+  `)
+
+  // === 4. expenses: simple rename (no CHECK on paid_amount) ===
+  db.exec(`ALTER TABLE expenses RENAME COLUMN paid_amount TO paid_amount_ore;`)
+
+  // === 5. opening_balances: simple rename (no CHECK on balance) ===
+  db.exec(`ALTER TABLE opening_balances RENAME COLUMN balance TO balance_ore;`)
+
+  // Verify
+  migration022Verify(db)
+}
+
+function migration022Verify(db: import('better-sqlite3').Database): void {
+  const checks: Array<[string, string, string]> = [
+    ['invoice_payments', 'amount_ore', 'amount'],
+    ['expense_payments', 'amount_ore', 'amount'],
+    ['invoices', 'paid_amount_ore', 'paid_amount'],
+    ['expenses', 'paid_amount_ore', 'paid_amount'],
+    ['opening_balances', 'balance_ore', 'balance'],
+  ]
+  for (const [table, expected, forbidden] of checks) {
+    const cols = getTableColumns(db, table)
+    if (!cols.has(expected)) throw new Error(`Migration 022 failed: ${table}.${expected} saknas`)
+    if (cols.has(forbidden)) throw new Error(`Migration 022 failed: ${table}.${forbidden} finns kvar`)
+  }
+}
 
 function migration018Verify(db: import('better-sqlite3').Database): void {
   const cols = db.prepare('PRAGMA table_info(journal_entry_lines)').all() as { name: string }[]

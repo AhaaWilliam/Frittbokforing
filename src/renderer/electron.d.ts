@@ -131,7 +131,7 @@ interface ElectronAPI {
   // Invoices
   payInvoice: (data: {
     invoice_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string
@@ -195,7 +195,7 @@ interface ElectronAPI {
   }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>
   payExpense: (data: {
     expense_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string

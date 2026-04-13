@@ -2,7 +2,7 @@
  * Sprint 12 — Bank Fee on Payments
  *
  * Tests for bank_fee_ore on both invoice and expense payments.
- * Verifies journal entry balance, paid_amount isolation, dashboard,
+ * Verifies journal entry balance, paid_amount_ore isolation, dashboard,
  * VAT report, and interaction with öresutjämning.
  */
 
@@ -61,7 +61,7 @@ describe('payInvoice with bank_fee_ore', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -85,7 +85,7 @@ describe('payInvoice with bank_fee_ore', () => {
     const feeOre = 2500 // 25 kr
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -122,7 +122,7 @@ describe('payInvoice with bank_fee_ore', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -132,7 +132,7 @@ describe('payInvoice with bank_fee_ore', () => {
     expect(result.code).toBe('VALIDATION_ERROR')
   })
 
-  it('paid_amount increases by amount, NOT amount + fee', () => {
+  it('paid_amount_ore increases by amount_ore, NOT amount_ore + fee', () => {
     const { invoiceId } = seedAndFinalizeInvoice(ctx, {
       lines: [
         {
@@ -157,7 +157,7 @@ describe('payInvoice with bank_fee_ore', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: halfAmount,
+      amount_ore: halfAmount,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -166,9 +166,9 @@ describe('payInvoice with bank_fee_ore', () => {
     expect(result.success).toBe(true)
 
     const updated = ctx.db
-      .prepare('SELECT paid_amount, status FROM invoices WHERE id = ?')
-      .get(invoiceId) as { paid_amount: number; status: string }
-    expect(updated.paid_amount).toBe(halfAmount) // NOT halfAmount + feeOre
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id = ?')
+      .get(invoiceId) as { paid_amount_ore: number; status: string }
+    expect(updated.paid_amount_ore).toBe(halfAmount) // NOT halfAmount + feeOre
     expect(updated.status).toBe('partial')
   })
 })
@@ -184,7 +184,7 @@ describe('payExpense with bank_fee_ore', () => {
 
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -208,7 +208,7 @@ describe('payExpense with bank_fee_ore', () => {
     const feeOre = 2500
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -244,7 +244,7 @@ describe('payExpense with bank_fee_ore', () => {
 
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -254,7 +254,7 @@ describe('payExpense with bank_fee_ore', () => {
     expect(result.code).toBe('VALIDATION_ERROR')
   })
 
-  it('paid_amount increases by amount, NOT amount + fee', () => {
+  it('paid_amount_ore increases by amount_ore, NOT amount_ore + fee', () => {
     const { expenseId } = seedAndFinalizeExpense(ctx)
     const exp = ctx.db
       .prepare('SELECT total_amount_ore FROM expenses WHERE id = ?')
@@ -265,7 +265,7 @@ describe('payExpense with bank_fee_ore', () => {
 
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: halfAmount,
+      amount_ore: halfAmount,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -274,9 +274,9 @@ describe('payExpense with bank_fee_ore', () => {
     expect(result.success).toBe(true)
 
     const updated = ctx.db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
-      .get(expenseId) as { paid_amount: number; status: string }
-    expect(updated.paid_amount).toBe(halfAmount)
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
+      .get(expenseId) as { paid_amount_ore: number; status: string }
+    expect(updated.paid_amount_ore).toBe(halfAmount)
     expect(updated.status).toBe('partial')
   })
 })
@@ -284,7 +284,7 @@ describe('payExpense with bank_fee_ore', () => {
 // ── Öresutjämning + fee ─────────────────────────────────────────
 
 describe('Öresutjämning + bank fee combined', () => {
-  it('invoice: rounding + fee → balance OK, paid_amount = remaining', () => {
+  it('invoice: rounding + fee → balance OK, paid_amount_ore = remaining', () => {
     const { invoiceId } = seedAndFinalizeInvoice(ctx)
     const inv = ctx.db
       .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
@@ -296,7 +296,7 @@ describe('Öresutjämning + bank fee combined', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: payAmount,
+      amount_ore: payAmount,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -314,10 +314,10 @@ describe('Öresutjämning + bank fee combined', () => {
 
     // Invoice should be fully paid (rounding closed the gap)
     const updated = ctx.db
-      .prepare('SELECT paid_amount, status FROM invoices WHERE id = ?')
-      .get(invoiceId) as { paid_amount: number; status: string }
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id = ?')
+      .get(invoiceId) as { paid_amount_ore: number; status: string }
     expect(updated.status).toBe('paid')
-    expect(updated.paid_amount).toBe(inv.total_amount_ore) // remaining, not payAmount
+    expect(updated.paid_amount_ore).toBe(inv.total_amount_ore) // remaining, not payAmount
   })
 
   it('expense: rounding + fee → balance OK', () => {
@@ -332,7 +332,7 @@ describe('Öresutjämning + bank fee combined', () => {
 
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: payAmount,
+      amount_ore: payAmount,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -344,8 +344,8 @@ describe('Öresutjämning + bank fee combined', () => {
     expect(sumDebit(lines)).toBe(sumCredit(lines))
 
     const updated = ctx.db
-      .prepare('SELECT paid_amount, status FROM expenses WHERE id = ?')
-      .get(expenseId) as { paid_amount: number; status: string }
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id = ?')
+      .get(expenseId) as { paid_amount_ore: number; status: string }
     expect(updated.status).toBe('paid')
   })
 })
@@ -361,7 +361,7 @@ describe('Regression: payments without fee', () => {
 
     const result = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -382,7 +382,7 @@ describe('Regression: payments without fee', () => {
 
     const result = ctx.expenseService.payExpense(ctx.db, {
       expense_id: expenseId,
-      amount: exp.total_amount_ore,
+      amount_ore: exp.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -412,7 +412,7 @@ describe('Dashboard regression with bank fee', () => {
     const feeOre = 2500
     ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -447,7 +447,7 @@ describe('VAT report regression with bank fee', () => {
 
     ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: invoiceId,
-      amount: inv.total_amount_ore,
+      amount_ore: inv.total_amount_ore,
       payment_date: '2026-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -469,7 +469,7 @@ describe('VAT report regression with bank fee', () => {
 describe('Zod schema: bank_fee_ore validation', () => {
   const validInvoicePayment = {
     invoice_id: 1,
-    amount: 100000,
+    amount_ore: 100000,
     payment_date: '2026-03-20',
     payment_method: 'bankgiro' as const,
     account_number: '1930',
@@ -477,7 +477,7 @@ describe('Zod schema: bank_fee_ore validation', () => {
 
   const validExpensePayment = {
     expense_id: 1,
-    amount: 100000,
+    amount_ore: 100000,
     payment_date: '2026-03-20',
     payment_method: 'bankgiro' as const,
     account_number: '1930',

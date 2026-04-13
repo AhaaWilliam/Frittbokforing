@@ -154,7 +154,7 @@ describe('SEC01: IPC Input-validering', () => {
     it('SEC01-A08: PayInvoiceInputSchema avvisar extra fält', () => {
       const result = PayInvoiceInputSchema.safeParse({
         invoice_id: 1,
-        amount: 10000,
+        amount_ore: 10000,
         payment_date: '2026-03-15',
         payment_method: 'bankgiro',
         account_number: '1930',

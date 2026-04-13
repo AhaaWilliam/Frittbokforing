@@ -174,7 +174,7 @@ describe('SEC03: Electron-säkerhet', () => {
     it('SEC03-06b: payInvoice med ogiltigt id returnerar error utan läcka', () => {
       const result = dynCtx.invoiceService.payInvoice(dynCtx.db, {
         invoice_id: 999999,
-        amount: 10000,
+        amount_ore: 10000,
         payment_date: '2026-03-15',
         payment_method: 'bank',
         account_number: '1930',

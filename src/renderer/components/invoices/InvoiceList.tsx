@@ -118,7 +118,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     try {
       await payMutation.mutateAsync({
         invoice_id: payItem.id,
-        amount,
+        amount_ore: amount,
         payment_date: date,
         payment_method: 'bankgiro',
         account_number: '1930',

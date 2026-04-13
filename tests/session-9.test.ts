@@ -117,7 +117,7 @@ describe('Betalning/kontering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -142,7 +142,7 @@ describe('Betalning/kontering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -158,14 +158,14 @@ describe('Betalning/kontering', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
     })
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 750000,
+      amount_ore: 750000,
       payment_date: '2025-03-21',
       payment_method: 'swish',
       account_number: '1930',
@@ -181,7 +181,7 @@ describe('Betalning/kontering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250051, // 51 öre för mycket
+      amount_ore: 1250051, // 51 öre för mycket
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -195,7 +195,7 @@ describe('Betalning/kontering', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -242,7 +242,7 @@ describe('Validering', () => {
 
     const result = payInvoice(db, {
       invoice_id: draft.data.id,
-      amount: 12500,
+      amount_ore: 12500,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -256,7 +256,7 @@ describe('Validering', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -264,7 +264,7 @@ describe('Validering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 100,
+      amount_ore: 100,
       payment_date: '2025-03-21',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -282,7 +282,7 @@ describe('Validering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -296,7 +296,7 @@ describe('Validering', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2099-01-01',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -315,7 +315,7 @@ describe('invoice_payments', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'swish',
       account_number: '1930',
@@ -323,7 +323,7 @@ describe('invoice_payments', () => {
 
     const payments = getPayments(db, inv.id)
     expect(payments.length).toBe(1)
-    expect(payments[0].amount).toBe(500000)
+    expect(payments[0].amount_ore).toBe(500000)
     expect(payments[0].payment_method).toBe('swish')
     expect(payments[0].account_number).toBe('1930')
   })
@@ -334,14 +334,14 @@ describe('invoice_payments', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 400000,
+      amount_ore: 400000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
     })
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 400000,
+      amount_ore: 400000,
       payment_date: '2025-03-21',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -349,7 +349,7 @@ describe('invoice_payments', () => {
 
     const payments = getPayments(db, inv.id)
     expect(payments.length).toBe(2)
-    const totalPaid = payments.reduce((s, p) => s + p.amount, 0)
+    const totalPaid = payments.reduce((s, p) => s + p.amount_ore, 0)
     expect(totalPaid).toBe(800000)
     // remaining = 1250000 - 800000 = 450000
   })
@@ -365,7 +365,7 @@ describe('Integration', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -384,7 +384,7 @@ describe('Integration', () => {
 
     payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -396,7 +396,7 @@ describe('Integration', () => {
 
   it('14. Migration 008 — payment_method + account_number columns', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(21) // S50: Uppdatera vid nya migrationer
+    expect(v).toBe(22) // S42: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_payments)') as { name: string }[]

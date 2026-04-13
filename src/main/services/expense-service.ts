@@ -557,7 +557,7 @@ function _payExpenseTx(
   db: Database.Database,
   input: {
     expense_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string
@@ -593,20 +593,20 @@ function _payExpenseTx(
   // 4. Beräkna remaining
   const paidResult = db
     .prepare(
-      'SELECT COALESCE(SUM(amount), 0) as total_paid FROM expense_payments WHERE expense_id = ?',
+      'SELECT COALESCE(SUM(amount_ore), 0) as total_paid FROM expense_payments WHERE expense_id = ?',
     )
     .get(input.expense_id) as { total_paid: number }
   const remaining = expense.total_amount_ore - paidResult.total_paid
 
   // 5. Öresutjämning (M99)
   const ROUNDING_THRESHOLD = 50
-  const diff = input.amount - remaining
+  const diff = input.amount_ore - remaining
 
   if (diff > ROUNDING_THRESHOLD) {
     throw {
       code: 'OVERPAYMENT',
       error: `Beloppet överstiger kvarstående med mer än ${ROUNDING_THRESHOLD} öre.`,
-      field: 'amount',
+      field: 'amount_ore',
     }
   }
 
@@ -615,8 +615,8 @@ function _payExpenseTx(
   const needsRounding = isAttemptedFullPayment && diff !== 0
   const roundingAmount = needsRounding ? diff : 0
 
-  const effectivePayment = input.amount
-  const actualPayablesDebit = needsRounding ? remaining : input.amount
+  const effectivePayment = input.amount_ore
+  const actualPayablesDebit = needsRounding ? remaining : input.amount_ore
 
   // 5b. Bankavgift
   const bankFeeOre = input.bank_fee_ore ?? 0
@@ -753,7 +753,7 @@ function _payExpenseTx(
   const paymentResult = db
     .prepare(
       `INSERT INTO expense_payments (
-        expense_id, journal_entry_id, payment_date, amount,
+        expense_id, journal_entry_id, payment_date, amount_ore,
         payment_method, account_number, bank_fee_ore, bank_fee_account
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
@@ -771,10 +771,10 @@ function _payExpenseTx(
   // 15. UPDATE expense paid_amount + status atomically (M66)
   db.prepare(
     `UPDATE expenses SET
-        paid_amount = (SELECT COALESCE(SUM(amount), 0) FROM expense_payments WHERE expense_id = expenses.id),
+        paid_amount_ore = (SELECT COALESCE(SUM(amount_ore), 0) FROM expense_payments WHERE expense_id = expenses.id),
         status = CASE
-          WHEN (SELECT COALESCE(SUM(amount), 0) FROM expense_payments WHERE expense_id = expenses.id) >= total_amount_ore THEN 'paid'
-          WHEN (SELECT COALESCE(SUM(amount), 0) FROM expense_payments WHERE expense_id = expenses.id) > 0 THEN 'partial'
+          WHEN (SELECT COALESCE(SUM(amount_ore), 0) FROM expense_payments WHERE expense_id = expenses.id) >= total_amount_ore THEN 'paid'
+          WHEN (SELECT COALESCE(SUM(amount_ore), 0) FROM expense_payments WHERE expense_id = expenses.id) > 0 THEN 'partial'
           ELSE status
         END,
         updated_at = datetime('now','localtime')
@@ -796,7 +796,7 @@ export function payExpense(
   db: Database.Database,
   input: {
     expense_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string
@@ -898,7 +898,7 @@ export function payExpensesBulk(
           db.transaction(() => {
             const txResult = _payExpenseTx(db, {
               expense_id: p.expense_id,
-              amount: p.amount_ore,
+              amount_ore: p.amount_ore,
               payment_date: input.payment_date,
               payment_method: 'bank',
               account_number: input.account_number,
@@ -1121,7 +1121,7 @@ export function listExpenses(
       e.journal_entry_id,
       COALESCE(c.name, 'Okänd leverantör') as counterparty_name,
       je.verification_number, je.verification_series,
-      e.paid_amount as total_paid
+      e.paid_amount_ore as total_paid
     FROM expenses e
     LEFT JOIN counterparties c ON e.counterparty_id = c.id
     LEFT JOIN journal_entries je ON e.journal_entry_id = je.id
@@ -1148,7 +1148,7 @@ export function getExpensePayments(
 ): ExpensePayment[] {
   return db
     .prepare(
-      `SELECT id, expense_id, amount, payment_date, payment_method,
+      `SELECT id, expense_id, amount_ore, payment_date, payment_method,
               account_number, journal_entry_id, created_at
        FROM expense_payments
        WHERE expense_id = ?
@@ -1184,8 +1184,8 @@ export function getExpense(
     data: {
       ...expense,
       lines,
-      total_paid: expense.paid_amount,
-      remaining: expense.total_amount_ore - expense.paid_amount,
+      total_paid: expense.paid_amount_ore,
+      remaining: expense.total_amount_ore - expense.paid_amount_ore,
     },
   }
 }

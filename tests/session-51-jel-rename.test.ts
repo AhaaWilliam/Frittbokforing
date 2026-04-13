@@ -61,7 +61,7 @@ afterEach(() => {
 describe('Migration 018 — journal_entry_lines rename', () => {
   it('user_version = 18 after all migrations', () => {
     const uv = db.prepare('PRAGMA user_version').get() as { user_version: number }
-    expect(uv.user_version).toBe(21)
+    expect(uv.user_version).toBe(22)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {
@@ -198,7 +198,7 @@ describe('E2E smoke: invoice lifecycle with renamed columns', () => {
     // Pay
     const pay = payInvoice(db, {
       invoice_id: draft.data.id,
-      amount: totalDebit,
+      amount_ore: totalDebit,
       payment_date: '2025-01-20',
       account_number: '1930',
     })

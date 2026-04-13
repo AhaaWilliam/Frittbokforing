@@ -44,12 +44,12 @@ export function registerTestHandlers(db: Database.Database): void {
   ipcMain.handle('__test:getInvoices', (_event, fyId?: number) => {
     if (fyId) {
       return db.prepare(
-        `SELECT i.*, (i.total_amount_ore - i.paid_amount) as remaining
+        `SELECT i.*, (i.total_amount_ore - i.paid_amount_ore) as remaining
          FROM invoices i WHERE i.fiscal_year_id = ? ORDER BY i.id`,
       ).all(fyId)
     }
     return db.prepare(
-      `SELECT i.*, (i.total_amount_ore - i.paid_amount) as remaining
+      `SELECT i.*, (i.total_amount_ore - i.paid_amount_ore) as remaining
        FROM invoices i ORDER BY i.id`,
     ).all()
   })

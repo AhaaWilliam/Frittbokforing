@@ -256,7 +256,7 @@ export interface Invoice {
   vat_amount_ore: number
   total_amount_ore: number
   currency: string
-  paid_amount: number
+  paid_amount_ore: number
   journal_entry_id: number | null
   ocr_number: string | null
   notes: string | null
@@ -390,7 +390,7 @@ export interface InvoiceStatusCounts {
 export interface InvoicePayment {
   id: number
   invoice_id: number
-  amount: number
+  amount_ore: number
   payment_date: string
   payment_method: string | null
   account_number: string
@@ -413,7 +413,7 @@ export interface Expense {
   payment_terms: number
   journal_entry_id: number | null
   total_amount_ore: number
-  paid_amount: number
+  paid_amount_ore: number
   notes: string
   created_at: string
   updated_at: string
@@ -440,7 +440,7 @@ export interface ExpenseWithLines extends Expense {
 export interface ExpensePayment {
   id: number
   expense_id: number
-  amount: number
+  amount_ore: number
   payment_date: string
   payment_method: string | null
   account_number: string

@@ -89,7 +89,7 @@ function computeInvoiceBalances(
     let paidToDate = 0
     for (const p of payments) {
       if (p.payment_date.substring(0, 7) <= m) {
-        paidToDate += p.amount
+        paidToDate += p.amount_ore
       }
     }
     const balance = totalOre - paidToDate

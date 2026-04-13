@@ -344,7 +344,7 @@ export const InvoiceListInputSchema = z
 export const PayInvoiceInputSchema = z
   .object({
     invoice_id: z.number().int().positive(),
-    amount: z.number().int().positive(),
+    amount_ore: z.number().int().positive(),
     payment_date: z.string().min(10).max(10),
     payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
     account_number: z.string().min(4).max(4),
@@ -419,7 +419,7 @@ export const FinalizeExpenseSchema = z
 export const PayExpenseInputSchema = z
   .object({
     expense_id: z.number().int().positive(),
-    amount: z.number().int().positive(),
+    amount_ore: z.number().int().positive(),
     payment_date: z.string().min(10).max(10),
     payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
     account_number: z.string().min(4).max(4),

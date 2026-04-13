@@ -779,8 +779,8 @@ export function listInvoices(
       i.status, i.payment_terms, i.journal_entry_id,
       c.name as counterparty_name,
       je.verification_number,
-      i.paid_amount as total_paid,
-      (i.total_amount_ore - i.paid_amount) as remaining
+      i.paid_amount_ore as total_paid,
+      (i.total_amount_ore - i.paid_amount_ore) as remaining
     FROM invoices i
     LEFT JOIN counterparties c ON i.counterparty_id = c.id
     LEFT JOIN journal_entries je ON i.journal_entry_id = je.id
@@ -811,7 +811,7 @@ function _payInvoiceTx(
   db: Database.Database,
   input: {
     invoice_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string
@@ -836,20 +836,20 @@ function _payInvoiceTx(
   // 3. Beräkna remaining (total_amount already includes VAT in our schema)
   const paidResult = db
     .prepare(
-      'SELECT COALESCE(SUM(amount), 0) as total_paid FROM invoice_payments WHERE invoice_id = ?',
+      'SELECT COALESCE(SUM(amount_ore), 0) as total_paid FROM invoice_payments WHERE invoice_id = ?',
     )
     .get(input.invoice_id) as { total_paid: number }
   const remaining = invoice.total_amount_ore - paidResult.total_paid
 
   // 4. Öresutjämning
   const ROUNDING_THRESHOLD = 50
-  const diff = input.amount - remaining
+  const diff = input.amount_ore - remaining
 
   if (diff > ROUNDING_THRESHOLD) {
     throw {
       code: 'OVERPAYMENT',
       error: `Beloppet överstiger kvarstående med mer än ${ROUNDING_THRESHOLD} öre.`,
-      field: 'amount',
+      field: 'amount_ore',
     }
   }
 
@@ -858,8 +858,8 @@ function _payInvoiceTx(
   const needsRounding = isAttemptedFullPayment && diff !== 0
   const roundingAmount = needsRounding ? diff : 0
 
-  const effectivePayment = input.amount
-  const actualReceivablesCredit = needsRounding ? remaining : input.amount
+  const effectivePayment = input.amount_ore
+  const actualReceivablesCredit = needsRounding ? remaining : input.amount_ore
 
   // 4b. Bankavgift
   const bankFeeOre = input.bank_fee_ore ?? 0
@@ -1013,7 +1013,7 @@ function _payInvoiceTx(
   const paymentResult = db
     .prepare(
       `INSERT INTO invoice_payments (
-        invoice_id, journal_entry_id, payment_date, amount,
+        invoice_id, journal_entry_id, payment_date, amount_ore,
         payment_method, account_number, bank_fee_ore, bank_fee_account
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
@@ -1031,10 +1031,10 @@ function _payInvoiceTx(
   // 13. UPDATE invoice paid_amount + status atomically from payments
   db.prepare(
     `UPDATE invoices SET
-        paid_amount = (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id),
+        paid_amount_ore = (SELECT COALESCE(SUM(amount_ore), 0) FROM invoice_payments WHERE invoice_id = invoices.id),
         status = CASE
-          WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount_ore THEN 'paid'
-          WHEN (SELECT COALESCE(SUM(amount), 0) FROM invoice_payments WHERE invoice_id = invoices.id) > 0 THEN 'partial'
+          WHEN (SELECT COALESCE(SUM(amount_ore), 0) FROM invoice_payments WHERE invoice_id = invoices.id) >= total_amount_ore THEN 'paid'
+          WHEN (SELECT COALESCE(SUM(amount_ore), 0) FROM invoice_payments WHERE invoice_id = invoices.id) > 0 THEN 'partial'
           ELSE status
         END,
         updated_at = datetime('now','localtime')
@@ -1056,7 +1056,7 @@ export function payInvoice(
   db: Database.Database,
   input: {
     invoice_id: number
-    amount: number
+    amount_ore: number
     payment_date: string
     payment_method: string
     account_number: string
@@ -1163,7 +1163,7 @@ export function payInvoicesBulk(
           db.transaction(() => {
             const txResult = _payInvoiceTx(db, {
               invoice_id: p.invoice_id,
-              amount: p.amount_ore,
+              amount_ore: p.amount_ore,
               payment_date: input.payment_date,
               payment_method: 'bank',
               account_number: input.account_number,

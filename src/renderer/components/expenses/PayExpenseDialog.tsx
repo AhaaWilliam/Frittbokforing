@@ -34,7 +34,7 @@ export function PayExpenseDialog({
       const feeOre = bankFeeStr ? toOre(parseFloat(bankFeeStr)) : undefined
       await payMutation.mutateAsync({
         expense_id: expense.id,
-        amount: toOre(parseFloat(amountKr)),
+        amount_ore: toOre(parseFloat(amountKr)),
         payment_date: paymentDate,
         payment_method: paymentMethod,
         account_number: accountNumber,

@@ -109,7 +109,7 @@ describe('M3: Atomär paid_amount beräkning', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 500000,
+      amount_ore: 500000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -118,9 +118,9 @@ describe('M3: Atomär paid_amount beräkning', () => {
     if (!result.success) return
 
     const row = db
-      .prepare('SELECT paid_amount, status FROM invoices WHERE id = ?')
-      .get(inv.id) as { paid_amount: number; status: string }
-    expect(row.paid_amount).toBe(500000)
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id = ?')
+      .get(inv.id) as { paid_amount_ore: number; status: string }
+    expect(row.paid_amount_ore).toBe(500000)
     expect(row.status).toBe('partial')
   })
 
@@ -130,7 +130,7 @@ describe('M3: Atomär paid_amount beräkning', () => {
 
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1250000,
+      amount_ore: 1250000,
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',
@@ -139,9 +139,9 @@ describe('M3: Atomär paid_amount beräkning', () => {
     if (!result.success) return
 
     const row = db
-      .prepare('SELECT paid_amount, status FROM invoices WHERE id = ?')
-      .get(inv.id) as { paid_amount: number; status: string }
-    expect(row.paid_amount).toBe(1250000)
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id = ?')
+      .get(inv.id) as { paid_amount_ore: number; status: string }
+    expect(row.paid_amount_ore).toBe(1250000)
     expect(row.status).toBe('paid')
   })
 
@@ -151,7 +151,7 @@ describe('M3: Atomär paid_amount beräkning', () => {
     // Faktura total = 1 250 000 öre (10 × 1000 kr + 25% moms)
     const result = payInvoice(db, {
       invoice_id: inv.id,
-      amount: 1_500_000, // 15 000 kr > 12 500 kr
+      amount_ore: 1_500_000, // 15 000 kr > 12 500 kr
       payment_date: '2025-03-20',
       payment_method: 'bankgiro',
       account_number: '1930',

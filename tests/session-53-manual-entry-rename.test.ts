@@ -52,7 +52,7 @@ afterEach(() => {
 describe('Migration 019 — manual_entry_lines rename', () => {
   it('PRAGMA user_version = 19', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(21)
+    expect(v).toBe(22)
   })
 
   it('column rename: debit_ore/credit_ore exist, debit_amount/credit_amount do not', () => {

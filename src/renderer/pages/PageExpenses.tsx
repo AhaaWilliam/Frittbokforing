@@ -159,7 +159,7 @@ function ExpenseDetailReadonly({ expense }: { expense: ExpenseDetail }) {
                 <tr key={p.id} className="border-b last:border-0">
                   <td className="py-1 pr-4">{p.payment_date}</td>
                   <td className="py-1 pr-4">{p.payment_method ?? '—'}</td>
-                  <td className="py-1 text-right">{formatKr(p.amount)}</td>
+                  <td className="py-1 text-right">{formatKr(p.amount_ore)}</td>
                 </tr>
               ))}
             </tbody>
