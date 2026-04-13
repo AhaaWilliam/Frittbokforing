@@ -38,9 +38,10 @@ function runMigrations(database: Database.Database): void {
 
     // Table-recreate migrations on tables with inbound FK (M122) require
     // PRAGMA foreign_keys = OFF outside the transaction (SQLite limitation).
+    // Migration 021 (index 20): journal_entries CHECK-rebuild (auto_bank_fee) + payment_batches.
     // Migration 022 (index 21): invoices + payment tables öre-suffix rename.
     // Migration 023 (index 22): payment_batches FK on account_number.
-    const needsFkOff = i === 21 || i === 22
+    const needsFkOff = i === 20 || i === 21 || i === 22
     if (needsFkOff) database.pragma('foreign_keys = OFF')
 
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch

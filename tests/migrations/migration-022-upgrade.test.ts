@@ -35,7 +35,7 @@ afterEach(() => {
 function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
   for (let i = from - 1; i < upTo; i++) {
     // M122: migrations that use table-recreate on tables with inbound FK
-    const needsFkOff = i === 21 || i === 22
+    const needsFkOff = i === 20 || i === 21 || i === 22
     if (needsFkOff) testDb.pragma('foreign_keys = OFF')
 
     testDb.exec('BEGIN EXCLUSIVE')
