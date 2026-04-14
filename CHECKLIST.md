@@ -417,3 +417,37 @@ till ExpenseTotals. Bekräftas i S66b → promotion till M-princip.
 - F49 (NY): A11y-konsistens alla formulärfält. Medel prio.
 
 ### Testbaslinje: 1449 → 1451 → 1454 → 1460 → 1462 → 1464
+
+---
+
+## Sprint 21 — S68 (F47 display-lager + F48 IPC-precision + M131 grep-check)
+
+### S68a (F47 `InvoiceLineRow`)
+Alt B heltalsaritmetik i per-rad-beräkning. `toOre(qty * price_kr)` → `Math.round(Math.round(qty*100) * Math.round(price_kr*100) / 100)`. data-testid + data-value tillagt på netto-cellen.
+
+Tester: 2 per-rad-canaries (B2.4-speglad: qty=1.5×99.99→14999, B2.5-speglad: qty=0.5×64.99→3250) + 1 DOM-rendering-smoke mot InvoiceTotals. Fall B — båda komponenterna använder samma Alt B-formel, så testet fångar render-fel och props-drift men är inte ett M131-konsistensbevis. +3 tester.
+
+### S68b (F47 `ExpenseLineRow`)
+Defensiv Alt B. I produktion blockerar `z.number().int()` på alla tre lager (form, IPC, DB) fraktional qty. Alt B appliceras för M131-konsistens och regressionsskydd.
+
+Tester: 1 int-sanity (qty=3×25.50→7650) + 1 Zod-regression-guard (qty=0.5×99.99→5000, kringgår Zod via prop, skiljer deterministiskt Alt B från gamla formeln). +2 tester.
+
+### S68c (F48 IPC-precision)
+Decimal-gate på invoice:save-draft + invoice:update-draft. Positiv kontroll inkluderar read-back av qty-värdet.
+
+Tester: qty=1.333 förkastas (create + update) + qty=1.33 accepteras med read-back. +3 tester.
+
+### S68d (M131 grep-check)
+`npm run check:m131` — två-lagers-grep (bar `qty * price_kr` utan Math.round + `toOre`/`toKr`-wrapping av multiplikation). Använder `price_kr` (inte `price`) för att undvika false positive på `unit_price_ore` (int × int, M92). Självtest mot historisk F47-brottspunkt verifierat (exit 1 på gammal kod, exit 0 på fixad). 0 tester, CI-hygien.
+
+### Patterns etablerade
+- DOM-smoke-tester med explicit Fall A/B-framing för att undvika falskt konsistens-bevis
+- Zod-regression-guards som faktiskt skiljer fix från baseline (deterministisk canary)
+- Maskinverifierad principefterlevnad via två-lagers-grep med självtest mot historiskt brott
+
+### Backlog-ändringar
+- F47: STÄNGD (display-lager fixat, all M131-yta nu konsekvent)
+- F48: STÄNGD (IPC-precision-gate verifierad med read-back)
+- F46, F49 kvarstår öppna
+
+### Testbaslinje: 1464 → 1467 → 1469 → 1472

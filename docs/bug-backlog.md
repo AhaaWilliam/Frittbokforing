@@ -263,19 +263,16 @@ M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") g�
 **Förslag:** `.max(9999)` eller liknande. Designfråga — vad är rimlig max-qty?
 **Prioritet:** Låg — ingen datakvalitetspåverkan.
 
-### F47 — M131-efterlevnad i display-lager (InvoiceLineRow, ExpenseLineRow) 🟡
-**Filer:** `InvoiceLineRow.tsx:63`, `ExpenseLineRow.tsx:26`
-**Problem:** Per-rad display-beräkning använder fortfarande gammal formel (`toOre(qty * price_kr)` resp. `qty * price_kr`). Service-lagret (invoice-service.ts) och Totals-komponenterna fixade i Sprint 20.
-**Effekt:** Lågrisk — display visar, inte bokför. Per-rad-belopp kan avvika med ±1 öre från total-raden i edge-cases med fraktionell qty. ExpenseLineRow har int qty i produktion (Z blockerar).
-**Förslag:** Byt till M131-formel i båda LineRow-komponenterna.
-**Prioritet:** Medel — konsistens med Totals och service. Ingen bokföringspåverkan.
-**Historik:** Identifierat i Sprint 20 Steg 0.5b. Service-lager fixat i Sprint 20 S67b commit 6.
+### F47 — M131-efterlevnad i display-lager (InvoiceLineRow, ExpenseLineRow) ✅ Sprint 21 S68a+S68b
+**Status:** STÄNGD. Alt B applicerad i båda LineRow-komponenterna.
+**Fix:** InvoiceLineRow (S68a): formel bytt från `toOre(qty * price_kr)` till Alt B. 3 tester (2 canaries B2.4/B2.5 + DOM-smoke). ExpenseLineRow (S68b): defensiv Alt B (int qty i produktion). 2 tester (int-sanity + Zod-regression-guard).
+**Referens:** Commit a6b9aeb (S68a), eea4687 (S68b).
+**Historik:** Identifierat i Sprint 20 Steg 0.5b. Service-lager fixat i Sprint 20 S67b. Display-lager fixat i Sprint 21 S68a+S68b.
 
-### F48 — IPC-lager-test för invoice quantity decimal-precision 🟢
-**Fil:** `tests/ipc-contract.test.ts`
-**Problem:** Testar bara zero-rejection (qty=0). Saknar test för ≤2 decimaler-refinen tillagd i Sprint 20.
-**Förslag:** Lägg till test att qty=1.333 förkastas av InvoiceDraftLineSchema.
-**Prioritet:** Låg — form-schema-tester (A2b.4) täcker grundläggande invariant. IPC-lagret har samma refine.
+### F48 — IPC-lager-test för invoice quantity decimal-precision ✅ Sprint 21 S68c
+**Status:** STÄNGD. Decimal-gate verifierad på invoice:save-draft + invoice:update-draft med read-back.
+**Fix:** 3 tester: qty=1.333 förkastas (create + update), qty=1.33 accepteras med read-back.
+**Referens:** Commit 22edb75 (S68c), `tests/session-68-ipc-precision.test.ts`.
 
 ### F49 — A11y-konsistens i formulärfält 🟡
 **Filer:** `ExpenseForm.tsx`, `InvoiceForm.tsx`
@@ -309,3 +306,4 @@ När en bug hittas under en session:
 - **2026-04-14:** F42 omklassad från bug till dokumenterad designdivergens (M130). F44 uppdaterad.
 - **2026-04-14:** Sprint 20 S67a — F45 stängd (datum-felrendering i ExpenseForm + InvoiceForm)
 - **2026-04-14:** Sprint 20 S67b — F44 stängd (Alt B heltalsaritmetik), F47 service-lager stängd (samma sprint). F46, F47 (display-lager), F48, F49 tillagda.
+- **2026-04-14:** Sprint 21 S68 — F47 stängd (display-lager, S68a+S68b), F48 stängd (IPC-precision-gate, S68c). M131 grep-check tillagd (S68d).
