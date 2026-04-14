@@ -119,6 +119,7 @@ export function SupplierPicker({
         onFocus={() => setOpen(true)}
         placeholder="Sök leverantör..."
         disabled={disabled}
+        aria-label="Sök leverantör"
         className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
       />
       {open && (
@@ -164,6 +165,7 @@ export function SupplierPicker({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Namn"
+                  aria-label="Nytt leverantörsnamn"
                   className="block w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
                   autoFocus
                 />
@@ -172,6 +174,7 @@ export function SupplierPicker({
                   value={newOrgNumber}
                   onChange={(e) => setNewOrgNumber(e.target.value)}
                   placeholder="Org.nr (valfritt)"
+                  aria-label="Organisationsnummer"
                   className="block w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
                 />
                 <div className="flex gap-2">
