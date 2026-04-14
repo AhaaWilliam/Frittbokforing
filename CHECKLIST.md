@@ -376,3 +376,44 @@ till ExpenseTotals. Bekräftas i S66b → promotion till M-princip.
 - IPC→DB-täckning utanför scope
 
 ### Testbaslinje: 1403 → 1413 → 1413 → 1424 → 1449
+
+## Sprint 20 — S67a + S67b: F45 datum-felrendering + F44 Alt B heltalsaritmetik
+
+### S67a (F45): Datum-valideringsfel renderas i UI
+- ExpenseForm: error-rendering med role="alert" + aria-describedby + aria-invalid
+- InvoiceForm: symmetrisk fix
+- +5 tester (2 ExpenseForm C8.2b/C8.2c + 3 InvoiceForm C6.4/C6.4b/C6.4c)
+- C8.2 uppdaterad in-place (utökade assertions)
+
+### S67b (F44): Alt B heltalsaritmetik efter empirisk karakterisering
+- Reproducerbart script: scripts/characterize-totals.mjs (10M kombinationer)
+- Karakteriseringsdokument: docs/s67b-characterization.md
+- Zod-refine: invoice quantity ≤2 decimaler (form + IPC schema, defense-in-depth)
+- Alt B-formel: Math.round(Math.round(qty * 100) * Math.round(price_kr * 100) / 100)
+- Applicerad i: InvoiceTotals, ExpenseTotals, invoice-service.ts processLines
+- M131 promoted i CLAUDE.md (sektion 36)
+- +10 tester (6 schema, 2 totals canaries, 2 system canaries)
+
+### Scope-utökning under sprint
+- F47 (invoice-service.ts) togs in i Sprint 20 efter Steg 0.5b-identifiering.
+  Motivering: UI↔bokföring-divergens oacceptabel. Formelbyte trivialt.
+- Display-lager (InvoiceLineRow, ExpenseLineRow) lämnade som F47-backlog (lågrisk).
+- A11y-inkonsistens dokumenterad som F49 (medel prio) istället för scope-ökning.
+
+### Patterns etablerade
+- Karakteriseringsdrivet fix-beslut (empiri före implementation, reproducerbart script)
+- Zod-invariant-säkring före formel-byte (separata commits för revertability)
+- B2.4 InvoiceTotals som F44-canary (divergens-fall); B2.6 som aritmetik-sanity
+- a11y-assertions i form-tester (aria-describedby-koppling)
+- System-test canaries som speglar renderer-tester (F47)
+- M131: monetär heltalsaritmetik som arkitekturprincip med definierat scope
+
+### Backlog-ändringar
+- F44: STÄNGD (Alt B heltalsaritmetik)
+- F45: STÄNGD (datum-error-rendering)
+- F47: STÄNGD service-lager; display-lager kvarstår (lågrisk)
+- F46 (NY): Invoice max-qty UX-guard. Låg prio.
+- F48 (NY): IPC-lager-test quantity precision. Låg prio.
+- F49 (NY): A11y-konsistens alla formulärfält. Medel prio.
+
+### Testbaslinje: 1449 → 1451 → 1454 → 1460 → 1462 → 1464
