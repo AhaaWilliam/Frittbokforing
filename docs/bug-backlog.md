@@ -256,12 +256,14 @@ M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") g�
 **Fix:** Error-rendering tillagd efter datum-input i båda formulären. htmlFor/id-koppling på label/input. A11y-attribut (role="alert", aria-invalid, aria-describedby) för skärmläsar-tillgänglighet.
 **Not:** A11y-attribut tillagda enbart för datum-fält. Övriga fält (supplier, description, lines) saknar fortfarande a11y-kopplingar — se F49.
 
-### F46 — Invoice quantity saknar övre gräns 🟢
-**Fil:** `src/shared/ipc-schemas.ts` (InvoiceDraftLineSchema), `src/renderer/lib/form-schemas/invoice.ts`
-**Problem:** `z.number().positive().refine(≤2 dec)` saknar `.max()`. Användaren kan ange qty=999999 utan validering.
-**Effekt:** UX-problem, inte precision. Rimlighetsgräns för användarfel saknas.
-**Förslag:** `.max(9999)` eller liknande. Designfråga — vad är rimlig max-qty?
-**Prioritet:** Låg — ingen datakvalitetspåverkan.
+### F46 — Invoice+Expense quantity saknar övre gräns ✅ Sprint 22a
+**Status:** STÄNGD. Max-qty UX-guard på invoice (9999.99, float ≤2 dec) och expense (9999, int) quantity i form-schema + IPC-schema. 9 tester i `tests/session-22a-f46-max-qty.test.ts`. Error-meddelanden lokaliserade till svensk formatering. Read-tolerans verifierad (safeParse fail utan krasch).
+**Referens:** `src/shared/constants.ts` (MAX_QTY_INVOICE, MAX_QTY_EXPENSE).
+
+### F46b — DB-CHECK defense-in-depth för quantity max 🟢
+**Problem:** Zod-validering i form-schema + IPC-schema täcker alla write-paths via IPC, men DB har ingen CHECK-constraint. Defense-in-depth kräver table-recreate (M122-procedur).
+**Prioritet:** Låg — IPC är single entry-point för writes. Zod-validering täcker.
+**Förslag:** `CHECK(quantity <= 9999.99)` på invoice_lines, `CHECK(quantity <= 9999)` på expense_lines via M122 table-recreate-migration.
 
 ### F47 — M131-efterlevnad i display-lager (InvoiceLineRow, ExpenseLineRow) ✅ Sprint 21 S68a+S68b
 **Status:** STÄNGD. Alt B applicerad i båda LineRow-komponenterna.
@@ -307,3 +309,4 @@ När en bug hittas under en session:
 - **2026-04-14:** Sprint 20 S67a — F45 stängd (datum-felrendering i ExpenseForm + InvoiceForm)
 - **2026-04-14:** Sprint 20 S67b — F44 stängd (Alt B heltalsaritmetik), F47 service-lager stängd (samma sprint). F46, F47 (display-lager), F48, F49 tillagda.
 - **2026-04-14:** Sprint 21 S68 — F47 stängd (display-lager, S68a+S68b), F48 stängd (IPC-precision-gate, S68c). M131 grep-check tillagd (S68d).
+- **2026-04-14:** Sprint 22a — F46 stängd (max-qty UX-guard, 9 tester). F46b öppnad (DB-CHECK defense-in-depth).

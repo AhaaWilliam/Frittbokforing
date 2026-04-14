@@ -451,3 +451,30 @@ Tester: qty=1.333 förkastas (create + update) + qty=1.33 accepteras med read-ba
 - F46, F49 kvarstår öppna
 
 ### Testbaslinje: 1464 → 1467 → 1469 → 1472
+
+## Sprint 22a — F46: Max-qty UX-guard
+
+Max-qty-gräns på invoice (9999.99, float) och expense (9999, int) quantity
+i form-schema + IPC-schema. 9 nya tester i dedikerad sprint-fil.
+Error-meddelanden lokaliserade till svensk formatering (9 999,99) via
+ny helper formatSwedishNumber().
+Magic numbers + error-meddelanden extraherade till src/shared/constants.ts
+för att undvika DRY-drift (samma skuld-klass som S68c skyddade mot).
+Refine-ordning spikad: .max() körs före decimal-refine för att ge
+korrekt "för stort"-fel istället för missvisande decimal-fel vid edge-cases
+som 9999.995.
+Read-tolerans verifierad: existerande data med qty > 9999 ger safeParse-fail
+utan krasch. Appen kan rendera, men spara blockeras tills korrigering.
+DB-CHECK-constraint medvetet skippad denna sprint (SQLite-table-recreate-
+begränsning; IPC är single entry-point för writes).
+
+### Patterns etablerade
+- M132: Shared constants för cross-schema-gränser i src/shared/constants.ts
+- Svensk lokalisering av validation-error-meddelanden via central helper
+
+### Backlog-ändringar
+- F46: STÄNGD (Zod-validering + read-tolerans)
+- F46b: ÖPPNAD — DB-CHECK defense-in-depth via table-recreate-migration (M122)
+- F49 kvarstår öppen
+
+### Testbaslinje: 1472 → 1481

@@ -278,6 +278,23 @@ men lämnade som F47-backlog (lågrisk — display, inte bokföring).
 **Konsekvens:** Framtida komponenter med monetära beräkningar följer samma
 mönster. Zod-scheman för qty-fält måste inkludera 2-decimaler-invarianten.
 
+## 37. Cross-schema-gränser i shared constants (M132)
+
+**M132.** Validerings-gränser som delas mellan form-schema (renderer) och
+IPC-schema (main-process) placeras i `src/shared/constants.ts` som namngivna
+konstanter. Error-meddelanden som refererar dessa gränser definieras i samma
+fil för att undvika DRY-drift.
+
+**Varför:** Form-schema och IPC-schema validerar samma invarianter oberoende.
+Hårdkodade magic numbers i respektive schema-fil driver isär över tid —
+samma skuldklass som F48 (decimal-precision) exponerade.
+
+**Konsekvens:** Nya validerings-gränser som gäller i båda lagren (form + IPC)
+ska definieras i `src/shared/constants.ts`, inte hårdkodas i schema-filerna.
+
+**Referens:** `MAX_QTY_INVOICE`, `MAX_QTY_EXPENSE`, `ERR_MSG_MAX_QTY_*`
+(Sprint 22a F46).
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
