@@ -185,6 +185,50 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 
 ---
 
+## Sprint 18 S65b findings (2026-04-14)
+
+### F39 — Formulärtyper använder _kr-suffix utan dokumenterad konvention 🟡
+**Filer:** `src/renderer/lib/form-schemas/invoice.ts` (InvoiceLineForm.unit_price_kr), `src/renderer/lib/form-schemas/expense.ts` (ExpenseLineForm.unit_price_kr)
+**Problem:** M119 kräver `_ore`-suffix på alla belopp-kolumner i SQLite, men formulärtyper i renderer använder `_kr`-suffix medvetet (undviker dubbelkonvertering under inmatning). Konvertering sker vid submit (`toOre(line.unit_price_kr)` i `transformInvoiceForm`). Denna konvention är odokumenterad.
+**Risk:** Framtida utvecklare (eller AI-assistenter) som läser M119 kan anta att allt ska vara öre och introducera felaktig konvertering i renderer-lager.
+**Förslag:** Dokumentera som explicit undantag, t.ex. M129: "Formulärtyper (renderer-lager) använder `_kr`-suffix för pris-fält. Konvertering till öre sker i `transform*Form`-funktioner vid submit/beräkning. Inga öre-värden i formulär-state."
+**Prioritet:** Dokumentation, ingen kodändring krävs.
+
+### F40 — F27-testskydd täcker bara netto, moms-skalning otestad i InvoiceLineRow 🟡
+**Filer:** `src/renderer/components/invoices/InvoiceLineRow.tsx`, `src/renderer/components/invoices/InvoiceTotals.tsx`
+**Problem:** InvoiceLineRow visar netto per rad. Moms beräknas separat i InvoiceTotals: `vatOre = Math.round(nettoOre * line.vat_rate)`. S65b:s F27-regressionstester skyddar netto-skalningen men inte moms-skalningen. En bugg i InvoiceTotals (t.ex. `rate_percent / 100`-fel) fångas inte.
+**Förslag:** Isolerade tester för InvoiceTotals (sprint TBD). Alternativt: InvoiceForm-integrationstester som verifierar "Att betala"-summan.
+**Prioritet:** Medel — moms-beräkningen i InvoiceTotals är enkel men otestad.
+
+### F41 — Konto-input på friformsrad saknar validering 🟡
+**Fil:** `src/renderer/components/invoices/InvoiceLineRow.tsx:79`
+**Problem:** Konto-fältet på friformsrader är fritext (`<input type="text">`). Användaren kan skriva ogiltiga kontonummer ("3OO1", "abc", inaktiva konton). Fråga: valideras kontonumret i InvoiceForm vid submit, eller först vid backend-bearbetning?
+**Effekt:** Om ingen validering: datakvalitetsbugg som kan manifestera sig i SIE-export (ogiltigt konto i verifikat).
+**Förslag:** Granska submit-kedjan. Om validering saknas: lägg till either (a) konto-select istället för fritext, eller (b) Zod-validering av kontoformat i InvoiceFormStateSchema.
+**Prioritet:** Medel — potentiell datakvalitetsbugg, behöver granskning.
+
+### F42 — quantity-parser-divergens mellan InvoiceLineRow och ExpenseLineRow 🟡
+**Filer:** `src/renderer/components/invoices/InvoiceLineRow.tsx:101`, `src/renderer/components/expenses/ExpenseLineRow.tsx`
+**Problem:**
+- InvoiceLineRow: `parseFloat(e.target.value) || 0` → quantity=0 möjlig
+- ExpenseLineRow: `parseInt(e.target.value, 10) || 1` → quantity=0 ger 1
+**Fråga:**
+- Är 0-kvantitet meningsfull på en faktura? (Möjligt: "0 × licens, ingen avgift denna månad")
+- Är 0-kvantitet meningsfull på en utgift? (Troligen inte: varför bokföra 0 av något?)
+- Om båda är avsiktliga: dokumentera divergensen. Om inte: en av dem har en bugg.
+**Förslag:** Designbeslut krävs. Sannolikt är InvoiceLineRow korrekt (parseFloat, tillåt 0) och ExpenseLineRow borde uppdateras. Alternativt: backend-validering som sista guard.
+**Prioritet:** Medel — inkonsistens mellan systerkomponenter.
+
+### F43 — parseFloat hanterar inte svenskt decimalformat 🟡
+**Filer:** InvoiceLineRow.tsx, ExpenseLineRow.tsx (alla `parseFloat(e.target.value)`)
+**Problem:** `parseFloat("1 234,50")` returnerar `1` (stannar vid mellanslag). `parseFloat("99,50")` returnerar `99` (stannar vid komma). Svensk inmatning med tusentalsavgränsare eller decimalkomma trunkeras tyst.
+**Effekt:** Användaren skriver "1 234,50", sparar 1 kr. Tyst dataförlust.
+**Förslag:** Shared parser som normaliserar svensk inmatning: ta bort mellanslag, ersätt komma med punkt.
+**Prioritet:** Medel — UX-bugg, delad mellan S65a och S65b. Reproducerbar i browser med number-input.
+**Not:** Dokumenterad redan i S65a (CHECKLIST.md gap-sektion). Uppgraderas till F-nummer här.
+
+---
+
 ## Process för att lägga till nya findings
 
 När en bug hittas under en session:
@@ -203,3 +247,4 @@ När en bug hittas under en session:
 - **2026-04-10:** Session 46 — F21 + F22 + F33 fixade (Fas 5b)
 - **2026-04-10:** Session 47 — F23 fixad (Fas 5c)
 - **2026-04-10:** Session 48 — F-NY fixad (payInvoice OVERPAYMENT-felkod)
+- **2026-04-14:** S65b — F39 (kr-suffix-konvention), F40 (moms-skalning otestad), F41 (konto-fritext-validering), F42 (quantity-parser-divergens), F43 (parseFloat svensk decimal)

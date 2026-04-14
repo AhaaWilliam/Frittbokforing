@@ -115,6 +115,12 @@ M102 (memo-kontrakt) och M123 (fork produkt/friform) finns dokumenterade i CLAUD
 Notion-verifiering skippas — CLAUDE.md är codebase-kanonisk källa.
 **Alternativ 2:** Inga icke-kanoniska M-referenser i commit.
 
+**OBS:** M123 beskriver fork-principen som "account_number NULL for produktrader".
+Den verkliga forken i InvoiceLineRow är smalare än den mentala modellen:
+ArticlePicker renderas ALLTID (båda grenarna), bara konto-inputen styrs av
+`product_id === null`. Notion/CLAUDE.md bör uppdateras så M123 matchar
+verkligheten — annars skrivs S65d mot felaktig mental model.
+
 ## 0.13 — Test 1.4 (read-only produkt-info)
 Komponenten visar INGEN read-only produktinformation. Beskrivning är alltid redigerbar.
 ArticlePicker visas alltid. Ingen article_number-label.
