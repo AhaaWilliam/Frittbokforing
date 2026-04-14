@@ -61,7 +61,8 @@ function processLines(
   let totalAmount = 0
   let vatAmount = 0
   const processed = lines.map((line) => {
-    const lineTotal = Math.round(line.quantity * line.unit_price_ore)
+    // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F47/F44)
+    const lineTotal = Math.round(Math.round(line.quantity * 100) * line.unit_price_ore / 100)
     const rate = vatRateMap.get(line.vat_code_id) ?? 0
     // rate_percent is stored as 25, 12, 6, 0 — convert to decimal
     const effectiveRate = rate / 100
