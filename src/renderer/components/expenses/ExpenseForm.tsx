@@ -6,9 +6,7 @@ import type {
   VatCode,
 } from '../../../shared/types'
 import {
-  toOre,
   toKr,
-  formatKr,
   todayLocal,
   addDaysLocal,
 } from '../../lib/format'
@@ -35,6 +33,7 @@ import {
   type ExpenseLineForm,
 } from '../../lib/form-schemas/expense'
 import { ExpenseLineRow } from './ExpenseLineRow'
+import { ExpenseTotals } from './ExpenseTotals'
 
 // === Helpers ===
 
@@ -189,22 +188,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
     form.setField('dueDate', addDaysLocal(form.getField('expenseDate') as string, terms) as ExpenseFormState['dueDate'])
   }
 
-  // Compute totals
-  const totals = useMemo(() => {
-    let net = 0
-    let vat = 0
-    for (const line of lines) {
-      const lineNet = line.quantity * line.unit_price_kr
-      const lineVat = lineNet * line.vat_rate
-      net += lineNet
-      vat += lineVat
-    }
-    return {
-      netOre: toOre(net),
-      vatOre: toOre(vat),
-      totalOre: toOre(net + vat),
-    }
-  }, [lines])
+  // Totals computed by ExpenseTotals component (per-rad avrundning, M129)
 
   async function handleDelete() {
     if (!expenseId) return
@@ -355,22 +339,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
         </div>
 
         {/* Totals */}
-        <div className="flex justify-end">
-          <div className="w-64 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Netto</span>
-              <span className="tabular-nums">{formatKr(totals.netOre)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Moms</span>
-              <span className="tabular-nums">{formatKr(totals.vatOre)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-1 font-medium">
-              <span>Totalt</span>
-              <span className="tabular-nums">{formatKr(totals.totalOre)}</span>
-            </div>
-          </div>
-        </div>
+        <ExpenseTotals lines={lines} />
 
         {/* Notes */}
         <div>

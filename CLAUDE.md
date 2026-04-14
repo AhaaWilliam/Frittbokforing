@@ -215,6 +215,21 @@ Samma begränsning gäller andra `ADD COLUMN`-restriktioner: kolumnen får inte 
 
 Korsreferens: M100 (strukturerade valideringsfel), M124 (UNIQUE-mappning).
 
+## 34. Form-totals som separerad komponent (M129)
+
+**M129.** Formulärtotaler som beräknar F27-kritisk aritmetik (qty × price, per-rad avrundning, moms-beräkning) ska extraheras till en separat `<EntityTotals>`-komponent — inte beräknas inline via `useMemo` i formulärkomponenten.
+
+Denna princip dokumenterar det mönster som redan etablerats i InvoiceTotals (S66a) och nu också i ExpenseTotals (S66b). Framtida formulärtotaler ska följa samma mönster.
+
+**Varför:**
+- **F27-isolering:** Totals-aritmetiken är den yta där F27-klassens buggar uppstår (felaktig ordning av multiplikation/avrundning/ackumulering).
+- **Testpyramid-symmetri:** Möjliggör tre-nivå-verifiering: per-rad, ackumulerad, kedja.
+- **Paritetsgaranti:** Alla form-totals ska följa samma per-rad-avrundningsmönster: `toOre(qty * price_kr)` per rad, sedan ackumulera i öre. Inte `toOre()` på total (ger annorlunda avrundningsbeteende vid fraktionella belopp — se `docs/s66b-characterization.md`).
+
+**Referens:** InvoiceTotals (S66a), ExpenseTotals (S66b).
+
+**Konsekvens:** Framtida formulär med belopps-totaler (kreditfakturor, offerter) följer samma mönster.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

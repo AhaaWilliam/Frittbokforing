@@ -30,7 +30,7 @@ export function InvoiceTotals({ lines }: InvoiceTotalsProps) {
     <div className="ml-auto w-64 space-y-1 text-sm">
       <div className="flex justify-between">
         <span className="text-muted-foreground">Netto</span>
-        <span>{formatKr(totalNetto)}</span>
+        <span data-testid="total-net-ore" data-value={totalNetto}>{formatKr(totalNetto)}</span>
       </div>
       {vatRates.map(([rate, amount]) => (
         <div key={rate} className="flex justify-between">
@@ -46,10 +46,11 @@ export function InvoiceTotals({ lines }: InvoiceTotalsProps) {
           <span>{formatKr(0)}</span>
         </div>
       )}
+      <span data-testid="total-vat-ore" data-value={totalVat} className="hidden" />
       <div className="border-t pt-1" />
       <div className="flex justify-between font-semibold">
         <span>Att betala</span>
-        <span>{formatKr(totalAtt)}</span>
+        <span data-testid="total-sum-ore" data-value={totalAtt}>{formatKr(totalAtt)}</span>
       </div>
     </div>
   )
