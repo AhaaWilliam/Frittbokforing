@@ -115,6 +115,7 @@ export function ArticlePicker({
         }}
         onFocus={() => setOpen(true)}
         placeholder="S&ouml;k artikel..."
+        aria-label="Sök artikel"
         data-testid={testId}
         className="block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
