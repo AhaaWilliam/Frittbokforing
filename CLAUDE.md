@@ -237,8 +237,8 @@ Denna princip dokumenterar det mönster som redan etablerats i InvoiceTotals (S6
 | Lager | Invoice | Expense |
 |---|---|---|
 | SQLite | `quantity REAL` | `quantity INTEGER` |
-| Zod IPC-schema | `z.number().positive()` | `z.number().int().min(1)` |
-| Form-schema | `z.number()` | `z.number().int()` |
+| Zod IPC-schema | `z.number().positive().refine(≤2 dec)` | `z.number().int().min(1)` |
+| Form-schema | `z.number().refine(≤2 dec)` | `z.number().int()` |
 | LineRow parser | `parseFloat` | `parseInt` |
 
 **Motivering:** Fakturor kräver fraktionell quantity (konsultfakturering: 1.5 timmar, 0.75 meter). Kostnader har styckantal (1 st, 2 st) — leverantörsfakturor anger alltid heltal.
@@ -248,6 +248,35 @@ M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") g�
 Divergensen är avsiktlig. Framtida entiteter med quantity måste explicit välja semantik — inte defaulta till ena lägret.
 
 **Konsekvens för F27-testning:** Float-precision-fel (F44) kan uppstå i InvoiceTotals vid fraktionell qty × decimalpris. ExpenseTotals skyddas av heltalsinvarianten. B2.4-tester i ExpenseTotals är defensiva, inte produktionsscenarier.
+
+## 36. Monetära beräkningar via heltalsaritmetik (M131)
+
+**M131.** Monetära beräkningar där operander kan vara fraktionella (qty × price_kr)
+ska använda heltalsaritmetik via öre-konvertering av båda operander, inte
+native float-multiplikation.
+
+**Formel:** `Math.round(Math.round(a * 100) * Math.round(b * 100) / 100)`
+
+**Invariant:** Båda operander har ≤2 decimalers precision (låst via Zod-refine
+i form- och IPC-scheman).
+
+**Varför:**
+- **IEEE 754-fel:** `0.29 * 50 = 14.499...` ger felaktig avrundning
+- **Karakteriseringsresultat (F44, Sprint 20):** 0.346% fel i gammal formel,
+  0% fel med heltalsaritmetik (domän: qty ∈ [0.01, 5.00], price ∈ [0.01, 200.00])
+- **Konvergens med öre-arkitektur:** Systemets databas-nivå är öre (heltal);
+  beräkningar bör spegla det
+
+**Referens:** InvoiceTotals, ExpenseTotals, invoice-service.ts `processLines`
+(Sprint 20 S67b), `docs/s67b-characterization.md`, `scripts/characterize-totals.mjs`.
+
+**Scope:** Gäller alla monetära beräkningar i systemet. Sprint 20 täcker
+renderer-sidans Totals-komponenter och invoice-service.ts bokföringsgenerering.
+InvoiceLineRow.tsx och ExpenseLineRow.tsx (display-lager) är identifierade
+men lämnade som F47-backlog (lågrisk — display, inte bokföring).
+
+**Konsekvens:** Framtida komponenter med monetära beräkningar följer samma
+mönster. Zod-scheman för qty-fält måste inkludera 2-decimaler-invarianten.
 
 ## Projektstatus
 

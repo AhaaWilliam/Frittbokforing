@@ -107,12 +107,13 @@ describe('ExpenseTotals — per-rad F27', () => {
     expect(screen.getByText(byKr(124))).toBeDefined()
   })
 
-  it('B2.4: fraktionell qty — F44 float-trap: qty: 1.5, price_kr: 100.33 → netto 15050, VAT 3763', () => {
-    // F44: Float-precision ger avrundning som kan avvika från matematiskt förväntat
-    // värde. Se docs/bug-backlog.md F44 för fix-plan. När F44 fixas uppdateras:
-    //   - InvoiceTotals.test.tsx B2.4
-    //   - ExpenseTotals.test.tsx B2.4
-    // toOre(1.5 * 100.33) = Math.round(150.495 * 100) = Math.round(15049.5) = 15050
+  it('B2.4 (defensiv): fraktionell qty=1.5, price_kr=100.33 → netto 15050, VAT 3763', () => {
+    // B2.4 defensiv: qty=1.5 är inte produktionsmöjligt i expense (z.number().int()
+    // blockerar fraktionella värden), men testet fångar regressioner om den
+    // Zod-invarianten någonsin bryts. 1.5 × 100.33 ger 15050 med Alt B (S67b),
+    // vilket råkar sammanfalla med gammal formel — scenariot är alltså inte
+    // en F44-canary utan ett heltäckande-skydd.
+    // Alt B: Math.round(Math.round(150) * Math.round(10033) / 100) = Math.round(15049.5) = 15050
     // VAT: Math.round(15050 * 0.25) = Math.round(3762.5) = 3763
     const lines = [makeLine({ quantity: 1.5, unit_price_kr: 100.33, vat_rate: 0.25 })]
     render(<ExpenseTotals lines={lines} />)

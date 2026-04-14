@@ -8,7 +8,8 @@ interface InvoiceTotalsProps {
 export function InvoiceTotals({ lines }: InvoiceTotalsProps) {
   // Calculate per-line amounts in oren
   const lineAmounts = lines.map((line) => {
-    const nettoOre = toOre(line.quantity * line.unit_price_kr)
+    // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44)
+    const nettoOre = Math.round(Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100)
     const vatOre = Math.round(nettoOre * line.vat_rate)
     return { nettoOre, vatOre, vatRate: line.vat_rate }
   })

@@ -11,7 +11,8 @@ export function ExpenseTotals({ lines }: ExpenseTotalsProps) {
     let netOre = 0
     let vatOre = 0
     for (const line of lines) {
-      const lineNetOre = toOre(line.quantity * line.unit_price_kr)
+      // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44)
+      const lineNetOre = Math.round(Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100)
       const lineVatOre = Math.round(lineNetOre * line.vat_rate)
       netOre += lineNetOre
       vatOre += lineVatOre

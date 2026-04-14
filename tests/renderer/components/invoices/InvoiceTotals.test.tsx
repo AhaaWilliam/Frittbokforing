@@ -95,18 +95,53 @@ describe('InvoiceTotals — per-rad F27', () => {
     expect(screen.getByText(byKr(124))).toBeDefined()
   })
 
-  it('B2.4: fraktionell qty — F44 float-trap: qty: 1.5, price_kr: 99.99 → netto 14998 (off-by-1)', () => {
-    // Exakt aritmetik: 1.5 * 99.99 = 149.985 → 14998.5 → 14999 öre
-    // IEEE 754: 1.5 * 99.99 = 149.98499...998 → * 100 = 14998.499... → Math.round = 14998
-    // F44: toOre(qty * price_kr) has a float-precision weakness.
-    // VAT: Math.round(14998 * 0.25) = Math.round(3749.5) = 3750
+  it('B2.4 (F44 canary): qty=1.5 × 99.99 → Alt B ger 14999, gammal formel gav 14998', () => {
+    // Detta test fångar F44-regression. Gammal formel:
+    //   Math.round(1.5 * 99.99 * 100) = Math.round(14998.499999...) = 14998 (FEL)
+    // Alt B:
+    //   Math.round(Math.round(150) * Math.round(9999) / 100) = Math.round(14998.5) = 14999
+    // VAT: Math.round(14999 * 0.25) = Math.round(3749.75) = 3750
     const lines = [makeLine({ quantity: 1.5, unit_price_kr: 99.99, vat_rate: 0.25 })]
     render(<InvoiceTotals lines={lines} />)
 
-    expect(screen.getByText(byKr(14998))).toBeDefined() // F44: 14998, not 14999
+    expect(screen.getByText(byKr(14999))).toBeDefined() // F44 fixed: 14999, was 14998
     expect(screen.getByText(byKr(3750))).toBeDefined() // VAT
-    // Total: 14998 + 3750 = 18748
-    expect(screen.getByText(byKr(18748))).toBeDefined()
+    // Total: 14999 + 3750 = 18749
+    expect(screen.getByText(byKr(18749))).toBeDefined()
+  })
+
+  it('B2.5 (F44 canary): qty=0.5 × 64.99 → Alt B ger 3250, gammal formel gav 3249', () => {
+    // Spikat via scripts/characterize-totals.mjs — äkta divergens-fall.
+    // Gammal: Math.round(0.5 * 64.99 * 100) = Math.round(3249.4999...) = 3249 (FEL)
+    // Alt B: Math.round(Math.round(50) * Math.round(6499) / 100) = Math.round(3249.5) = 3250
+    // VAT: Math.round(3250 * 0.25) = Math.round(812.5) = 813
+    const lines = [makeLine({ quantity: 0.5, unit_price_kr: 64.99, vat_rate: 0.25 })]
+    render(<InvoiceTotals lines={lines} />)
+
+    expect(screen.getByText(byKr(3250))).toBeDefined()
+    expect(screen.getByText(byKr(813))).toBeDefined()
+    // Total: 3250 + 813 = 4063
+    expect(screen.getByText(byKr(4063))).toBeDefined()
+  })
+
+  it('B2.6: qty=1.33 × 99.99 → Alt B-aritmetik 13299 öre (sanity check, ingen divergens)', () => {
+    // Båda formler ger 13299. Testet dokumenterar Alt B-mekaniken för
+    // ett "rent" 3-sig-fig-scenario där IEEE754 inte orsakar avvikelse.
+    // Skyddar mot framtida formel-brytning som orsakar regression.
+    //
+    // Alt B-härledning:
+    //   Math.round(Math.round(133) * Math.round(9999) / 100)
+    //   = Math.round(133 * 9999 / 100)
+    //   = Math.round(13298.67)
+    //   = 13299
+    // VAT: Math.round(13299 * 0.25) = Math.round(3324.75) = 3325
+    const lines = [makeLine({ quantity: 1.33, unit_price_kr: 99.99, vat_rate: 0.25 })]
+    render(<InvoiceTotals lines={lines} />)
+
+    expect(screen.getByText(byKr(13299))).toBeDefined()
+    expect(screen.getByText(byKr(3325))).toBeDefined()
+    // Total: 13299 + 3325 = 16624
+    expect(screen.getByText(byKr(16624))).toBeDefined()
   })
 })
 
