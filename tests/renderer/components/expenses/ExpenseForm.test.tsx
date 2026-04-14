@@ -395,7 +395,7 @@ describe('ExpenseForm — validation', () => {
     expect(window.api.saveExpenseDraft).not.toHaveBeenCalled()
   })
 
-  it('C8.2: submit utan expenseDate → valideringsfel, IPC ej anropad', async () => {
+  it('C8.2: submit utan expenseDate → valideringsfel, IPC ej anropad + felmeddelande renderas', async () => {
     await renderForm()
 
     // Select supplier
@@ -422,9 +422,76 @@ describe('ExpenseForm — validation', () => {
       fireEvent.click(screen.getByText('Spara utkast'))
     })
 
-    // expenseDate error not rendered in UI (no form.errors.expenseDate display),
-    // but validation blocks submit — IPC not called
+    // F45: validation blocks submit AND error message is rendered in UI
     expect(window.api.saveExpenseDraft).not.toHaveBeenCalled()
+    expect(screen.getByTestId('expense-date-error')).toBeDefined()
+    expect(screen.getByTestId('expense-date-error').textContent).toMatch(/datum/i)
+  })
+
+  it('C8.2b: expenseDate-felmeddelande försvinner när datum fylls i', async () => {
+    await renderForm()
+
+    // Select supplier, clear date, fill description, add line
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+    })
+    const dateInput = screen.getByDisplayValue('2026-01-01')
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '' } })
+    })
+    const descInput = screen.getByPlaceholderText(/kontorsmaterial/i)
+    await act(async () => {
+      fireEvent.change(descInput, { target: { value: 'Test' } })
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lägg till rad'))
+    })
+
+    // Submit without date → error appears
+    await act(async () => {
+      fireEvent.click(screen.getByText('Spara utkast'))
+    })
+    expect(screen.getByTestId('expense-date-error')).toBeDefined()
+
+    // Fill in date → setField clears field error
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '2026-03-15' } })
+    })
+    expect(screen.queryByTestId('expense-date-error')).toBeNull()
+  })
+
+  it('C8.2c: expenseDate-felmeddelande har role=alert och aria-koppling', async () => {
+    await renderForm()
+
+    // Select supplier, clear date, fill description, add line
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+    })
+    const dateInput = screen.getByDisplayValue('2026-01-01')
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '' } })
+    })
+    const descInput = screen.getByPlaceholderText(/kontorsmaterial/i)
+    await act(async () => {
+      fireEvent.change(descInput, { target: { value: 'Test' } })
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lägg till rad'))
+    })
+
+    // Submit without date → error appears
+    await act(async () => {
+      fireEvent.click(screen.getByText('Spara utkast'))
+    })
+
+    const errorEl = screen.getByTestId('expense-date-error')
+    expect(errorEl.getAttribute('role')).toBe('alert')
+
+    // Input ↔ error-koppling via aria-describedby
+    const input = document.getElementById('expense-date')!
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe('expense-date-error')
+    expect(errorEl.id).toBe('expense-date-error')
   })
 
   it('C8.3: submit utan description → valideringsfel', async () => {

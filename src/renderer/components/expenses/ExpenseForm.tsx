@@ -242,13 +242,19 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Datum</label>
+            <label htmlFor="expense-date" className="mb-1 block text-sm font-medium">Datum</label>
             <input
+              id="expense-date"
               type="date"
               value={form.getField('expenseDate') as string}
               onChange={(e) => handleDateChange(e.target.value)}
+              aria-invalid={!!form.errors.expenseDate}
+              aria-describedby={form.errors.expenseDate ? 'expense-date-error' : undefined}
               className={inputClass}
             />
+            {form.errors.expenseDate && (
+              <p id="expense-date-error" role="alert" data-testid="expense-date-error" className="mt-1 text-xs text-red-600">{form.errors.expenseDate}</p>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
