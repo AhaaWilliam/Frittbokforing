@@ -2,18 +2,8 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { InvoiceTotals } from '../../../../src/renderer/components/invoices/InvoiceTotals'
-import { formatKr } from '../../../../src/renderer/lib/format'
 import type { InvoiceLineForm } from '../../../../src/renderer/lib/form-schemas/invoice'
-
-// ── Helpers ──────────────────────────────────────────────────────────
-
-/** Match text that contains NBSP (char 160) — testing-library normalizes it */
-function byKr(ore: number) {
-  const formatted = formatKr(ore)
-  // formatKr uses Intl which inserts NBSP (U+00A0). Use regex to match either space type.
-  const escaped = formatted.replace(/[\s\u00a0]/g, '[\\s\\u00a0]')
-  return new RegExp(`^${escaped}$`)
-}
+import { byKr } from '../../utils/format-matchers'
 
 function makeLine(overrides?: Partial<InvoiceLineForm>): InvoiceLineForm {
   return {
