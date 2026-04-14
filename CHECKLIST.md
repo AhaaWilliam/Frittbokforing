@@ -102,6 +102,18 @@ isReadOnly-derivering (open/closed),
 edge cases (tom lista, ogiltigt restoredId),
 useFiscalYearContext utanför provider (throw)
 
+## Sprint 18 — S65-pre
+
+Leverans: docs/s65-audit.md
+Typ: Audit, ingen kod
+Resultat: 5 komponenter auditerade (CustomerPicker, SupplierPicker, ArticlePicker,
+InvoiceLineRow, ExpenseLineRow), sessionsplan S65a–d definierad
+Blockerande findings: 0
+Uppskattat totalt testantal: ~48 (16 + 19 + 15 + 21 + 15, men CustomerPicker+SupplierPicker
+samlas i S65c = 36)
+Föreslagen sessionsordning: S65a ExpenseLineRow, S65b InvoiceLineRow,
+S65c CustomerPicker+SupplierPicker, S65d ArticlePicker
+
 ## Exempelformat för PR-beskrivningar
 
 ```
