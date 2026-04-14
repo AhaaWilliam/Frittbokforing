@@ -156,3 +156,29 @@ Beteendecase: rendering (4), callback-propagering med parser-fallbacks (6), ber�
 - Komma-decimal i price-input otestad (parseFloat hanterar inte `"99,50"`)
 - F27-regression ligger i S65b (InvoiceLineRow)
 - `"0"` i quantity-input triggar `||1`-fallback — quantity=0 ej möjlig via input (känd begränsning, dokumenterad i test)
+
+## Sprint 18 — S65b
+
+Komponent: InvoiceLineRow (fork-komponent: produktrad vs friformsrad, ArticlePicker-child, useVatCodes-hook)
+Test-fil: tests/renderer/components/invoices/InvoiceLineRow.test.tsx
+M-principer täckta: M102 (memo-kontrakt via $$typeof), M123 (fork produkt/friform via product_id === null)
+Beteendecase: produktrad rendering (4), produktrad callbacks inkl. ArticlePicker-integration (4), friformsrad rendering+callbacks (5), F27-regression öre-precision NETTO (3), memo-kontrakt (1), edge vat/fork-byte/stale-state/qty=0 (4)
+
+### Patterns etablerade inför S65c/d
+
+- Modulnivå vi.mock för child-komponenter (ArticlePicker) med minimal stub — enbart callback-kontrakt
+- Fork-komponenter testas med separata describe-block per gren
+- F27-pattern: standardfall + stort tal + minsta belopp med avrundningsregel spikad i Steg 0.8
+- useVatCodes-hook mockas via `mockIpcResponse('vat-code:list', data)` i beforeEach
+- Viktigt: InvoiceLineRow arbetar i KR (unit_price_kr), inte ÖRE — total beräknas som toOre(qty × price_kr)
+
+### Föregående bugg-commit
+
+- `fix(a11y)`: aria-label på alla inputs/selects + remove-knapp i InvoiceLineRow (4edce88)
+- Upptäckt vid S65b-preflight (axe-core default-on policy)
+
+### Gap
+
+- Komma-decimal i price-input otestad (parseFloat hanterar inte `"99,50"`)
+- ArticlePicker-integration enbart kontraktstestad (full integration i S65d)
+- `"0"` i quantity-input triggar `||0`-fallback via parseFloat — quantity=0 möjlig (skiljer sig från S65a:s parseInt||1)
