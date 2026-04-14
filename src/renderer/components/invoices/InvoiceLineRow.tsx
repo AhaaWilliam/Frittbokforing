@@ -75,6 +75,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
             <input
               type="text"
               placeholder="Konto"
+              aria-label="Konto"
               value={line.account_number ?? ''}
               onChange={(e) => onUpdate(index, { account_number: e.target.value || null })}
               data-testid={`invoice-line-${index}-account`}
@@ -86,6 +87,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
       <td className="px-2 py-2">
         <input
           type="text"
+          aria-label="Beskrivning"
           value={line.description}
           onChange={(e) => onUpdate(index, { description: e.target.value })}
           data-testid={`invoice-line-${index}-description`}
@@ -96,6 +98,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
         <input
           type="number"
           step="0.01"
+          aria-label="Antal"
           value={line.quantity}
           onChange={(e) =>
             onUpdate(index, { quantity: parseFloat(e.target.value) || 0 })
@@ -108,6 +111,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
         <input
           type="number"
           step="0.01"
+          aria-label="Pris"
           value={line.unit_price_kr}
           onChange={(e) =>
             onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
@@ -118,6 +122,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
       </td>
       <td className="px-2 py-2">
         <select
+          aria-label="Moms"
           value={line.vat_rate}
           onChange={handleVatChange}
           data-testid={`invoice-line-${index}-vat`}
@@ -134,6 +139,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
       <td className="px-2 py-2 text-center">
         <button
           type="button"
+          aria-label="Ta bort rad"
           onClick={() => onRemove(index)}
           className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
         >
