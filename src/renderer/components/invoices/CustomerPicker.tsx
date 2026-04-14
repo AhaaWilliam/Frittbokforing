@@ -59,6 +59,7 @@ export function CustomerPicker({ value, onChange }: CustomerPickerProps) {
         <button
           type="button"
           onClick={handleClear}
+          aria-label="Rensa val"
           className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <svg
