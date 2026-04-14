@@ -220,3 +220,47 @@ Beteendecase per komponent:
 - useCreateCounterparty isolerat otestad (hook-test, ej komponent-test)
 - Dropdown saknar ARIA combobox/listbox roles (a11y-gap, ej scope för S65c)
 - Debounced search-filtrering otestad
+
+## Sprint 18 — S65d
+
+Komponent: ArticlePicker (145 rader, invoices)
+Test-fil: tests/renderer/components/invoices/ArticlePicker.test.tsx
+Delad fixtur: tests/renderer/components/__fixtures__/products.ts
+M-principer: Inga nya (F27-regel via M91/M92)
+Beteendecase:
+- Rendering (3): smoke, focus-open med badges, counterparty-aware (kundpris-IPC ej triggas vid rendering)
+- Sök+filter (2): debounced IPC-search, outside-click close
+- Val utan counterparty (3): default-pris-propagering, description-fallback (product.description ?? product.name), ingen kundpris-IPC
+- Val med counterparty (4): kundpris-IPC anropas, customer-source override, default-source pass-through, fel-fallback till default_price_ore
+- F27-klass toKr (4): jämnt belopp, decimal kundpris, decimal fallback, edge 99 öre → 0.99 kr
+- Empty (1): tom lista utan krasch
+- Re-val (1): dubbel-klick propagerar olika payloads
+
+### Patterns etablerade/återanvända
+
+- Async-picker-mönster från S65c (IPC-mock i beforeEach, findBy*/waitFor med timeout 2000ms)
+- Sekundär async-IPC i select-handler testas som kontrakt + fallback
+- F27-klass-verifiering som dedikerad testgrupp, förutsätter direkta toKr-enhetstester
+- Re-val-test för fire-and-forget pickers (ingen value-prop)
+- IPC-assertions via getMockApi() (inte hook-assertions) — debounce-robust
+- toHaveBeenCalledTimes(N) — aldrig bara toHaveBeenCalled()
+- mockIpcError för reject-baserad felhantering (getPriceForCustomer anropas direkt, inte via ipcCall)
+
+### Föregående fix-commits
+
+- `fix(a11y)`: aria-label på sök-input (c10b460)
+- `test(money)`: direkta toKr/toOre-enhetstester (6d8edb3) — prerequisite för Grupp 5
+
+### Gap
+
+- account_id propageras inte via onSelect (M123 COALESCE löser i journal-entry-builder)
+- vat_rate: 0 hårdkodning — parent resolvar via vat_code_id (InvoiceForm-integration)
+- Keyboard-nav saknas i ArticlePicker — a11y-skuld, framtida sprint
+- Dropdown saknar ARIA combobox/listbox roles — a11y-skuld, delad med CP/SP
+- counterpartyId={0} hoppar över kundpris-IPC (truthy-guard, känd semantik)
+- getPriceForCustomer anropas direkt (ej via ipcCall) — error-mocking kräver mockIpcError (reject), inte mockIpcResponse med success:false
+- Integration med InvoiceLineRow testas i kommande sprint (S66)
+
+### S65-serien komplett
+
+Fem komponenter isolerade: ExpenseLineRow (S65a), InvoiceLineRow (S65b), CustomerPicker (S65c), SupplierPicker (S65c), ArticlePicker (S65d). Nästa steg: formulär-nivå-integrationstester (InvoiceForm, ExpenseForm) i S66.
