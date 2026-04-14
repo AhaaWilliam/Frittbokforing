@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { ExpenseLineForm } from '../../lib/form-schemas/expense'
 import type { Account, VatCode } from '../../../shared/types'
-import { formatKr, toOre } from '../../lib/format'
+import { formatKr } from '../../lib/format'
 
 interface ExpenseLineRowProps {
   line: ExpenseLineForm
@@ -23,8 +23,11 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
   onUpdate,
   onRemove,
 }: ExpenseLineRowProps) {
-  const lineTotal = line.quantity * line.unit_price_kr
-  const lineVat = lineTotal * line.vat_rate
+  // M131: heltalsaritmetik — defensiv, qty är int i produktion (F47)
+  const lineNetOre = Math.round(
+    Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100
+  )
+  const lineVatOre = Math.round(lineNetOre * line.vat_rate)
 
   return (
     <tr className="border-b">
@@ -109,8 +112,8 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           ))}
         </select>
       </td>
-      <td className="px-2 py-1 text-right tabular-nums">
-        {formatKr(toOre(lineTotal + lineVat))}
+      <td className="px-2 py-1 text-right tabular-nums" data-testid={`expense-line-net-ore-${index}`} data-value={lineNetOre}>
+        {formatKr(lineNetOre + lineVatOre)}
       </td>
       <td className="px-2 py-1">
         <button

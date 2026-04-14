@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fireEvent } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { setupMockIpc } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
 import { ExpenseLineRow } from '../../../../src/renderer/components/expenses/ExpenseLineRow'
@@ -305,5 +305,53 @@ describe('ExpenseLineRow — edge cases', () => {
     // Verifiera att vat_rate INTE ingår i uppdateringen
     const updateArg = vi.mocked(props.onUpdate).mock.calls[0][1]
     expect(updateArg).not.toHaveProperty('vat_rate')
+  })
+})
+
+// ── Grupp 6: F47 precision — M131 Alt B (Sprint 21 S68b, defensiv) ────
+//
+// ExpenseLineRow är Alt B-beräknad som defensiv M131-efterlevnad.
+// I produktion blockerar z.number().int() fraktional qty på alla lager
+// (form-schema, IPC-schema, DB — verifierat i Steg 0.3e), så IEEE754-fel
+// kan inte uppstå via normal användning. Zod-regression-guard-testet
+// skyddar om Zod-invarianten någonsin bryts.
+
+describe('ExpenseLineRow — F47 M131 precision (S68b, defensiv)', () => {
+  it('6.1 int-sanity: qty=3 × price=25.50 → 7650 öre', async () => {
+    const line: ExpenseLineForm = {
+      ...defaultLine,
+      quantity: 3,
+      unit_price_kr: 25.50,
+      vat_rate: 0,
+    }
+    const props = makeProps({ line })
+    await renderRow(props)
+
+    expect(screen.getByTestId('expense-line-net-ore-0').dataset.value).toBe('7650')
+  })
+
+  /**
+   * Zod-regression-guard: verifierar att Alt B är faktiskt applicerad,
+   * inte bara gamla formeln (quantity * unit_price_kr).
+   *
+   * Med Alt B: round(round(0.5*100) * round(99.99*100) / 100)
+   *          = round(50 * 9999 / 100) = round(4999.5) = 5000 (deterministisk)
+   *
+   * Detta test kringgår Zod (komponenten får fraktional qty via prop)
+   * och verifierar att Alt B ger rätt heltalsresultat. Om int-invarianten
+   * skulle brytas i framtiden (Zod-schema ändras) är komponenten redan skyddad.
+   */
+  it('6.2 Zod-regression-guard: Alt B appliceras även om int-invarianten skulle brytas', async () => {
+    const line: ExpenseLineForm = {
+      ...defaultLine,
+      quantity: 0.5,
+      unit_price_kr: 99.99,
+      vat_rate: 0,
+    }
+    const props = makeProps({ line })
+    await renderRow(props)
+
+    // Alt B ger deterministiskt 5000; gamla formeln kan ge 4999 eller 5000
+    expect(screen.getByTestId('expense-line-net-ore-0').dataset.value).toBe('5000')
   })
 })
