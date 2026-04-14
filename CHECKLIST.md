@@ -264,3 +264,78 @@ Beteendecase:
 ### S65-serien komplett
 
 Fem komponenter isolerade: ExpenseLineRow (S65a), InvoiceLineRow (S65b), CustomerPicker (S65c), SupplierPicker (S65c), ArticlePicker (S65d). Nästa steg: formulär-nivå-integrationstester (InvoiceForm, ExpenseForm) i S66.
+
+---
+
+## Sprint 19 — S66a: InvoiceTotals + InvoiceForm
+
+**Komponenter:** InvoiceForm (324 rader) + InvoiceTotals (56 rader) + transformInvoiceForm (84 rader)
+
+**Testfiler (4):**
+
+1. `tests/renderer/lib/form-schemas/invoice.test.ts` (8 tester) — prereq-commit
+   - Struktur (3): strip _fields, sort_order per index, fiscal_year_id propagering
+   - toOre-precondition (3): jämn (1250→125000), decimal (123.45→12345), edge (0.99→99)
+   - Defensiv (2): tom lines (Zod blockerar i prod), null customer → TypeError
+
+2. `tests/renderer/components/invoices/InvoiceTotals.test.tsx` (11 tester)
+   - Rendering (3): tom, en rad, tre momssatser
+   - Per-rad F27 (4): jämn, decimal, edge 99 öre, fraktionell qty (F44 float-trap)
+   - Ackumulerad F27 (2): summa(round) ≠ round(summa), stora belopp
+   - Grupperad VAT (2): tre momssatser, 0%-behandling
+
+3. `tests/renderer/components/invoices/InvoiceForm.test.tsx` (19 tester, mockade pickers + totals)
+   - Rendering (2): create-mode, edit-mode
+   - Cascading customer→terms+dueDate (3): inkl. dokumentationstest för no-dirty-check
+   - Cascading datum→dueDate (2)
+   - Cascading edit-mode initial render (1): regressionstest mot useEffect-överskrivning
+   - Line-hantering (3): add, remove, add×3
+   - Validation (3): customer, customer+lines, lines min 1
+   - Save-kontrakt (2): edit-mode save, payload-valideringsfel
+   - Delete-flow (3): confirm+IPC+onSave, ej synlig i create, confirm-false-avbryt
+
+4. `tests/renderer/components/invoices/InvoiceForm.integration.test.tsx` (2 tester, utan mocks)
+   - F27-kedja: reella totaler med äkta InvoiceTotals
+   - F27-kedja: 3×0.99 kr → ackumulerad VAT = 75 öre (inte 74)
+
+### M-kandidat (ny)
+
+Form-totals extraherad till separat komponent (<EntityTotals lines={...} />).
+InvoiceTotals existerar redan. ExpenseForm har inline useMemo — refaktoreras i S66b-prereq
+till ExpenseTotals. Bekräftas i S66b → promotion till M-princip.
+
+### Beteendecase
+
+- **transform:** struktur + toOre-precondition + defensiv
+- **totals:** per-rad F27 (inkl. fraktionell qty F44) + ackumulerad + grupperad VAT (inkl. 0%)
+- **form:** rendering + cascading (inkl. edit-mode initial render-fälla) + lines + validation + save-kontrakt + delete
+- **integration:** F27-kedja rad → totaler → save-payload
+
+### Patterns etablerade
+
+- vi.mock av pickers + totals i form-tester (liten IPC-yta)
+- Full-integration som egen fil (ej vi.doUnmock i samma fil)
+- vi.useFakeTimers({ shouldAdvanceTime: true }) + vi.setSystemTime i beforeEach för cascading
+- Parametriserad CustomerPicker-mock (pickerReturn-variabel) för multi-kund-scenarios
+- F27-verifiering på tre nivåer: per-rad (totals), ackumulerad (totals), kedja (integration)
+- Save-kontrakt testar kontrakt (kanal + anrop), struktur testas i transform-fil
+- byKr() helper för NBSP-säker text-matchning av formatKr-output
+- InvoiceLineRow-mock renderar "Radera rad" (ej "Ta bort") för att undvika kollision med delete-knapp
+
+### Findings
+
+- **F44** (🟡): `toOre(qty * price_kr)` float-precision off-by-1 vid fraktionell qty.
+  B2.4 asserterar faktiskt beteende (14998, inte 14999). Dokumenterad i bug-backlog.md.
+- **UX-gap:** Manuell dueDate-override överlever inte kundbyte (ingen dirty-tracking).
+  dueDate-input är readOnly — användaren kan inte ändra den manuellt. Inte prioriterat.
+- **UX-gap:** 0%-rader exkluderas från vatByRate-gruppering utom när alla rader har 0%.
+  Renderar "Moms 0 kr" separat i det fallet. Konsekvent men potentiellt förvirrande.
+
+### Gap
+
+- Full-integration täcker inte IPC→DB (S01 täcker det)
+- ExpenseForm har inline useMemo-totals — refaktoreras i S66b
+- Finalize-flow (extern från form) — out of scope
+- Create-mode save med reellt data i mockad form kräver InvoiceLineRow-onUpdate (testbar i Fil D)
+
+### Testbaslinje: 1363 → 1371 → 1403

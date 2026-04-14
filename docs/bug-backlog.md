@@ -231,6 +231,16 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 
 ---
 
+### F44 — toOre(qty * price_kr) float-precision off-by-1 🟡
+**Fil:** `src/renderer/components/invoices/InvoiceTotals.tsx:11`, `src/renderer/lib/format.ts:1`
+**Problem:** `toOre(line.quantity * line.unit_price_kr)` = `Math.round(qty * price_kr * 100)` kan ge off-by-1 öre vid IEEE 754-olycka. Exempel: `toOre(1.5 * 99.99)` = `Math.round(149.98499... * 100)` = `Math.round(14998.499...)` = 14998 öre, men exakt aritmetik ger 14998.5 → 14999 öre.
+**Effekt:** Belopp i faktura-preview kan avvika med 1 öre från exakt aritmetik vid fraktionell quantity + decimal-priser. Påverkar bara renderer-preview (InvoiceTotals), inte bokföring (server beräknar från öre-värden).
+**Alternativ fix:** `Math.round(qty * Math.round(price_kr * 100))` — konvertera pris till öre först, sedan multiplicera med qty. Ger korrekt resultat för 1.5 * 99.99: `1.5 * 9999 = 14998.5 → 14999`. Kräver refaktor av InvoiceTotals.
+**Prioritet:** Medel — kosmetisk i preview, ingen påverkan på bokföring.
+**Upptäckt:** S66a B2.4 float-precision-test.
+
+---
+
 ## Process för att lägga till nya findings
 
 När en bug hittas under en session:
@@ -250,3 +260,4 @@ När en bug hittas under en session:
 - **2026-04-10:** Session 47 — F23 fixad (Fas 5c)
 - **2026-04-10:** Session 48 — F-NY fixad (payInvoice OVERPAYMENT-felkod)
 - **2026-04-14:** S65b — F39 (kr-suffix-konvention), F40 (moms-skalning otestad), F41 (konto-fritext-validering), F42 (quantity-parser-divergens), F43 (parseFloat svensk decimal)
+- **2026-04-14:** S66a — F44 (toOre float-precision off-by-1 vid fraktionell qty)
