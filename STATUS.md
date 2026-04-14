@@ -1,5 +1,26 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 21 -- M131-precision + CI-verifiering ✅ KLAR (2026-04-14)
+
+Session S68: F47 display-lager (InvoiceLineRow + ExpenseLineRow Alt B),
+F48 IPC-precision-gate (invoice channels), M131 grep-check med självtest.
+Testbaslinje: 1464 → 1472. Hela M131-ytan nu konsekvent: service (S20) +
+totals (S20) + display (S68a/b) + IPC-gate (S68c) + statisk verifiering (S68d).
+
+### Sprint 21 sessioner
+| Session | Scope | Status |
+|---------|-------|--------|
+| S68a | F47: InvoiceLineRow Alt B + DOM-smoke | KLAR |
+| S68b | F47: ExpenseLineRow Alt B + Zod-regression-guard | KLAR |
+| S68c | F48: IPC decimal-precision-gate | KLAR |
+| S68d | M131 grep-check med självtest | KLAR |
+
+## Sprint 20 -- M131 heltalsaritmetik ✅ KLAR (2026-04-14)
+
+Sessioner: S67a (F45 datum-felrendering), S67b (F44 Alt B heltalsaritmetik).
+Testbaslinje: 1449 → 1464. Ny M-princip: M131 (monetära beräkningar via
+heltalsaritmetik). Zod-refine for invoice quantity ≤2 decimaler.
+
 ## Sprint 16 -- Schema+IPC-normalisering ✅ KLAR (2026-04-13)
 
 Sessioner: S57 (F10 expense_lines paritet), S58 (F4 schema-namnkonvention),
@@ -17,13 +38,13 @@ PRAGMA user_version = 27, 22 tabeller.
 | S59 | F9: Timezone-konsolidering | KLAR |
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
-## Nasta sprint -- TBD
+## Nasta sprint -- F46 (max-qty UX) eller F49 (a11y-konsistens)
 
 ## Test-count
-- Vitest (system + unit): 1223 passed, 2 skipped (1225 totalt)
-- Testfiler: 101
+- Vitest (system + unit): 1472 passed, 2 skipped (1474 totalt)
+- Testfiler: 125
 - Playwright E2E: 10 (kors separat)
-- Korning: ~10s
+- Korning: ~13s
 
 ## Known infrastructure contracts
 - **FRITT_DB_PATH**: guardad till test-env (NODE_ENV=test eller FRITT_TEST=1). Ignoreras i production.
