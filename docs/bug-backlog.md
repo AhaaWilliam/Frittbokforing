@@ -191,21 +191,22 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 **Filer:** `src/renderer/lib/form-schemas/invoice.ts` (InvoiceLineForm.unit_price_kr), `src/renderer/lib/form-schemas/expense.ts` (ExpenseLineForm.unit_price_kr)
 **Problem:** M119 kräver `_ore`-suffix på alla belopp-kolumner i SQLite, men formulärtyper i renderer använder `_kr`-suffix medvetet (undviker dubbelkonvertering under inmatning). Konvertering sker vid submit (`toOre(line.unit_price_kr)` i `transformInvoiceForm`). Denna konvention är odokumenterad.
 **Risk:** Framtida utvecklare (eller AI-assistenter) som läser M119 kan anta att allt ska vara öre och introducera felaktig konvertering i renderer-lager.
-**Förslag:** Dokumentera som explicit undantag, t.ex. M129: "Formulärtyper (renderer-lager) använder `_kr`-suffix för pris-fält. Konvertering till öre sker i `transform*Form`-funktioner vid submit/beräkning. Inga öre-värden i formulär-state."
+**Förslag:** Dokumentera som explicit undantag, t.ex. M129: "Formulärtyper (`*Form`-suffix) får använda `_kr`-suffix för prisfält. Konvertering till öre sker i dedikerad transformer (t.ex. `transformInvoiceForm`) vid submit. Ingen `_kr`-data får passera IPC-gränsen." Sista meningen skyddar M119 — utan den kan undantaget läcka till main process.
 **Prioritet:** Dokumentation, ingen kodändring krävs.
 
-### F40 — F27-testskydd täcker bara netto, moms-skalning otestad i InvoiceLineRow 🟡
-**Filer:** `src/renderer/components/invoices/InvoiceLineRow.tsx`, `src/renderer/components/invoices/InvoiceTotals.tsx`
-**Problem:** InvoiceLineRow visar netto per rad. Moms beräknas separat i InvoiceTotals: `vatOre = Math.round(nettoOre * line.vat_rate)`. S65b:s F27-regressionstester skyddar netto-skalningen men inte moms-skalningen. En bugg i InvoiceTotals (t.ex. `rate_percent / 100`-fel) fångas inte.
-**Förslag:** Isolerade tester för InvoiceTotals (sprint TBD). Alternativt: InvoiceForm-integrationstester som verifierar "Att betala"-summan.
-**Prioritet:** Medel — moms-beräkningen i InvoiceTotals är enkel men otestad.
+### F40 — F27-testskydd täcker bara netto, moms-skalning otestad i InvoiceTotals 🟠
+**Filer:** `src/renderer/components/invoices/InvoiceTotals.tsx`
+**Problem:** InvoiceLineRow visar netto per rad. Moms beräknas separat i InvoiceTotals: `vatOre = Math.round(nettoOre * line.vat_rate)`. S65b:s F27-regressionstester skyddar netto-skalningen men inte moms-skalningen. En bugg i InvoiceTotals (t.ex. `rate_percent / 100`-fel, eller `vat_rate` redan dividerad dubbelgånger) fångas inte.
+**Varför 🟠:** F27 var 🔴 i produktion — samma klass av bugg (division på fel nivå). Moms är svårare att ögonkolla: 25% "känns rätt" oavsett om totalen är 1 187,50 eller 1,19. Om den finns och inte fångas → SIE-fel hos riktig kund.
+**Förslag:** Isolerade tester för InvoiceTotals — kandidat för nästa regressionstestsprint, inte "någon gång". Tre testfall: standardmoms 25%, blandad moms (25% + 6%), momsfritt.
+**Prioritet:** Hög — samma buggklass som F27, otestad.
 
 ### F41 — Konto-input på friformsrad saknar validering 🟡
 **Fil:** `src/renderer/components/invoices/InvoiceLineRow.tsx:79`
 **Problem:** Konto-fältet på friformsrader är fritext (`<input type="text">`). Användaren kan skriva ogiltiga kontonummer ("3OO1", "abc", inaktiva konton). Fråga: valideras kontonumret i InvoiceForm vid submit, eller först vid backend-bearbetning?
 **Effekt:** Om ingen validering: datakvalitetsbugg som kan manifestera sig i SIE-export (ogiltigt konto i verifikat).
 **Förslag:** Granska submit-kedjan. Om validering saknas: lägg till either (a) konto-select istället för fritext, eller (b) Zod-validering av kontoformat i InvoiceFormStateSchema.
-**Prioritet:** Medel — potentiell datakvalitetsbugg, behöver granskning.
+**Prioritet:** Okänd — behöver 15-min spike. En enda grep i submit-kedjan (`transformInvoiceForm` → IPC-handler → `invoice-service` → SQLite FK/CHECK) avgör om validering finns. Med det: antingen 🔴 (ingen validering, reproducerbar datakvalitetsbugg) eller stängd (validering finns).
 
 ### F42 — quantity-parser-divergens mellan InvoiceLineRow och ExpenseLineRow 🟡
 **Filer:** `src/renderer/components/invoices/InvoiceLineRow.tsx:101`, `src/renderer/components/expenses/ExpenseLineRow.tsx`
@@ -218,6 +219,7 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 - Om båda är avsiktliga: dokumentera divergensen. Om inte: en av dem har en bugg.
 **Förslag:** Designbeslut krävs. Sannolikt är InvoiceLineRow korrekt (parseFloat, tillåt 0) och ExpenseLineRow borde uppdateras. Alternativt: backend-validering som sista guard.
 **Prioritet:** Medel — inkonsistens mellan systerkomponenter.
+**Ägare/deadline:** Ingen dedikerad session. Beslutet tas opportunistiskt nästa gång ExpenseLineRow eller InvoiceLineRow öppnas för annan anledning. Tills dess: dokumenterad divergens, inget mer.
 
 ### F43 — parseFloat hanterar inte svenskt decimalformat 🟡
 **Filer:** InvoiceLineRow.tsx, ExpenseLineRow.tsx (alla `parseFloat(e.target.value)`)

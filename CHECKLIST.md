@@ -182,3 +182,8 @@ Beteendecase: produktrad rendering (4), produktrad callbacks inkl. ArticlePicker
 - Komma-decimal i price-input otestad (parseFloat hanterar inte `"99,50"`)
 - ArticlePicker-integration enbart kontraktstestad (full integration i S65d)
 - `"0"` i quantity-input triggar `||0`-fallback via parseFloat — quantity=0 möjlig (skiljer sig från S65a:s parseInt||1)
+
+### Sprint-stängning TODO
+
+- M123-beskrivning: aligna CLAUDE.md och Notion. Forken gäller enbart konto-input, inte ArticlePicker-synlighet. Nuvarande text missvisande.
+- STATUS.md: uppdatera testbaslinje till 1313, lägg till Sprint 17/18 sessioner.
