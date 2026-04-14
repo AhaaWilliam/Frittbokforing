@@ -256,7 +256,10 @@ export const InvoiceDraftLineSchema = z
   .object({
     product_id: z.number().int().positive().nullable(),
     description: z.string().min(1).max(500),
-    quantity: z.number().positive(),
+    quantity: z.number().positive().refine(
+      (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
+      { message: 'Quantity kan ha högst 2 decimaler' },
+    ),
     unit_price_ore: z.number().int().min(0), // ören
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0),

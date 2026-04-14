@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   transformInvoiceForm,
+  InvoiceFormStateSchema,
   type InvoiceFormState,
 } from '../../../../src/renderer/lib/form-schemas/invoice'
 
@@ -95,6 +96,48 @@ describe('transformInvoiceForm — toOre-precondition', () => {
     const payload = transformInvoiceForm(form, 1)
 
     expect(payload.lines[0].unit_price_ore).toBe(99)
+  })
+})
+
+// ── A2b: Quantity precision (F44 invariant) ─────────────────────────
+
+describe('InvoiceFormStateSchema — quantity precision', () => {
+  function parseWithQty(qty: number) {
+    return InvoiceFormStateSchema.safeParse(makeForm({
+      lines: [makeLine({ quantity: qty })],
+    }))
+  }
+
+  it('A2b.1: qty=1 (heltal) accepteras', () => {
+    expect(parseWithQty(1).success).toBe(true)
+  })
+
+  it('A2b.2: qty=1.5 (en decimal) accepteras', () => {
+    expect(parseWithQty(1.5).success).toBe(true)
+  })
+
+  it('A2b.3: qty=1.33 (två decimaler) accepteras', () => {
+    expect(parseWithQty(1.33).success).toBe(true)
+  })
+
+  it('A2b.4: qty=1.333 (tre decimaler) förkastas', () => {
+    const result = parseWithQty(1.333)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/högst 2 decimaler/)
+    }
+  })
+
+  it('A2b.5: qty=0.01 (minsta giltiga) accepteras', () => {
+    expect(parseWithQty(0.01).success).toBe(true)
+  })
+
+  it('A2b.6: qty=0.001 förkastas', () => {
+    const result = parseWithQty(0.001)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/högst 2 decimaler/)
+    }
   })
 })
 

@@ -6,7 +6,10 @@ const InvoiceLineFormSchema = z.object({
   temp_id: z.string(),
   product_id: z.number().nullable(),
   description: z.string(),
-  quantity: z.number(),
+  quantity: z.number().refine(
+    (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
+    { message: 'Quantity kan ha högst 2 decimaler' },
+  ),
   unit_price_kr: z.number(),
   vat_code_id: z.number(),
   vat_rate: z.number(),
