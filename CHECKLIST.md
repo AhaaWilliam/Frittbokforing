@@ -187,3 +187,36 @@ Beteendecase: produktrad rendering (4), produktrad callbacks inkl. ArticlePicker
 
 - M123-beskrivning: aligna CLAUDE.md och Notion. Forken gäller enbart konto-input, inte ArticlePicker-synlighet. Nuvarande text missvisande.
 - STATUS.md: uppdatera testbaslinje till 1313, lägg till Sprint 17/18 sessioner.
+
+## Sprint 18 — S65c
+
+Komponenter: CustomerPicker (invoices), SupplierPicker (expenses)
+Test-filer: tests/renderer/components/invoices/CustomerPicker.test.tsx, tests/renderer/components/expenses/SupplierPicker.test.tsx
+Delad fixtur: tests/renderer/components/__fixtures__/counterparties.ts
+M-principer: Inga (ingen memo på komponenterna)
+Beteendecase per komponent:
+- CustomerPicker (9): rendering med/utan value (3), onChange med payment_terms + byte av val + ej vid mount/rerender (4), empty list + pending IPC graceful (2)
+- SupplierPicker (13): rendering med/utan value (3), onChange med payment_terms + byte av val + ej vid mount/rerender (4), empty list (1), inline-skapa-flöde: trigger synlig + IPC-payload + auto-onChange + felhantering (4), disabled-prop (1)
+
+### Patterns etablerade inför S65d
+
+- Delad fixtur-fil (`__fixtures__/counterparties.ts`) för syster-komponenter med identisk datatyp, `makeCounterparty`-factory
+- Async-picker-mönster: IPC-mock i beforeEach (`counterparty:list`), test empty + pending graceful
+- Inline-skapa-flöde: trigger -> hook-anrop via `mutateAsync` -> auto-onChange-propagering -> felhantering (catch swallows, onChange ej anropad)
+- Create-IPC (`counterparty:create`) kräver separat mock i beforeEach med `{ success: true, data: ... }` (IpcResult-format), fel-case via per-test `mockIpcResponse` med `{ success: false, ... }`
+- `mockIpcError`-helper tillagd i mock-ipc.ts (rejectar promise med Error)
+- Async-assertioner: `findBy*`/`waitFor` efter IPC-trigger, `getMockApi()` helper för att assert:a IPC-anrop
+
+### Föregående fix-commits
+
+- `fix(a11y)`: aria-label på sök-inputs (006bea2)
+- `fix(a11y)`: aria-label på clear-knappar (f619f3d)
+- `test(infra)`: mockIpcError-helper (2ade4b9)
+
+### Gap
+
+- Felmeddelande vid create-error renderas ej lokalt (hanteras via global onError) — dokumenterat gap
+- Integration med InvoiceForm/ExpenseForm testas i kommande sprint
+- useCreateCounterparty isolerat otestad (hook-test, ej komponent-test)
+- Dropdown saknar ARIA combobox/listbox roles (a11y-gap, ej scope för S65c)
+- Debounced search-filtrering otestad
