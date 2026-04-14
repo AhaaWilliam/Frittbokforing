@@ -238,6 +238,16 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 **Alternativ fix:** `Math.round(qty * Math.round(price_kr * 100))` — konvertera pris till öre först, sedan multiplicera med qty. Ger korrekt resultat för 1.5 * 99.99: `1.5 * 9999 = 14998.5 → 14999`. Kräver refaktor av InvoiceTotals.
 **Prioritet:** Medel — kosmetisk i preview, ingen påverkan på bokföring.
 **Upptäckt:** S66a B2.4 float-precision-test.
+**Eskalering:** Fix när (a) första användaren rapporterar öres-mismatch i faktura-preview, eller (b) nästa bug-fix-sprint, vilket som kommer först. Konsulter som fakturerar fraktionella timmar (1.5h × 950 kr) kan träffa det — synligt om kunden jämför preview med eget system. ExpenseForm har samma bugg i inline useMemo-totals (rad 193–207); fix ska gälla båda.
+**Testskydd:** B2.4 i InvoiceTotals.test.tsx asserterar faktiskt beteende (14998). B2.4 i ExpenseTotals.test.tsx asserterar motsvarande (15050/3763 för 1.5 * 100.33). Båda testerna MÅSTE uppdateras när fix landar, annars regressionsfel.
+
+### F45 — ExpenseForm och InvoiceForm saknar datum-valideringsmeddelande i UI 🟡
+**Fil:** `src/renderer/components/expenses/ExpenseForm.tsx`, `src/renderer/components/invoices/InvoiceForm.tsx`
+**Problem:** Båda formulären har `expenseDate`/`invoiceDate` som obligatoriskt fält via Zod (`z.string().min(1, 'Välj datum')`), men ingen av dem renderar `form.errors.expenseDate` / `form.errors.invoiceDate` i JSX. Valideringsfelet blockerar submit korrekt (IPC anropas inte), men användaren får ingen visuell feedback om vad som är fel.
+**Effekt:** UX — användaren kan klicka "Spara utkast" med tomt datum utan att se varför det inte sparas. Alla andra obligatoriska fält (supplier, description, lines) har synliga felmeddelanden.
+**Förslag på fix:** Lägg till `{form.errors.expenseDate && <p>...</p>}` under datum-inputen i båda formulären. Symmetrisk fix.
+**Prioritet:** Medel — submit blockeras korrekt, men UX-feedback saknas.
+**Upptäckt:** S66b C8.2 (ExpenseForm validation-test justerades pga detta).
 
 ---
 
@@ -261,3 +271,4 @@ När en bug hittas under en session:
 - **2026-04-10:** Session 48 — F-NY fixad (payInvoice OVERPAYMENT-felkod)
 - **2026-04-14:** S65b — F39 (kr-suffix-konvention), F40 (moms-skalning otestad), F41 (konto-fritext-validering), F42 (quantity-parser-divergens), F43 (parseFloat svensk decimal)
 - **2026-04-14:** S66a — F44 (toOre float-precision off-by-1 vid fraktionell qty)
+- **2026-04-14:** S66b — F45 (datum-valideringsmeddelande saknas i ExpenseForm + InvoiceForm)
