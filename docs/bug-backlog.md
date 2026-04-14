@@ -208,18 +208,33 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 **Förslag:** Granska submit-kedjan. Om validering saknas: lägg till either (a) konto-select istället för fritext, eller (b) Zod-validering av kontoformat i InvoiceFormStateSchema.
 **Prioritet:** Okänd — behöver 15-min spike. En enda grep i submit-kedjan (`transformInvoiceForm` → IPC-handler → `invoice-service` → SQLite FK/CHECK) avgör om validering finns. Med det: antingen 🔴 (ingen validering, reproducerbar datakvalitetsbugg) eller stängd (validering finns).
 
-### F42 — quantity-parser-divergens mellan InvoiceLineRow och ExpenseLineRow 🟡
-**Filer:** `src/renderer/components/invoices/InvoiceLineRow.tsx:101`, `src/renderer/components/expenses/ExpenseLineRow.tsx`
-**Problem:**
-- InvoiceLineRow: `parseFloat(e.target.value) || 0` → quantity=0 möjlig
-- ExpenseLineRow: `parseInt(e.target.value, 10) || 1` → quantity=0 ger 1
-**Fråga:**
-- Är 0-kvantitet meningsfull på en faktura? (Möjligt: "0 × licens, ingen avgift denna månad")
-- Är 0-kvantitet meningsfull på en utgift? (Troligen inte: varför bokföra 0 av något?)
-- Om båda är avsiktliga: dokumentera divergensen. Om inte: en av dem har en bugg.
-**Förslag:** Designbeslut krävs. Sannolikt är InvoiceLineRow korrekt (parseFloat, tillåt 0) och ExpenseLineRow borde uppdateras. Alternativt: backend-validering som sista guard.
-**Prioritet:** Medel — inkonsistens mellan systerkomponenter.
-**Ägare/deadline:** Ingen dedikerad session. Beslutet tas opportunistiskt nästa gång ExpenseLineRow eller InvoiceLineRow öppnas för annan anledning. Tills dess: dokumenterad divergens, inget mer.
+### F42 — Invoice vs Expense quantity-parsing [STÄNGD: DOKUMENTERAD DESIGNDIVERGENS, EJ BUG] ✅
+**Status:** Stängd som design, inte bug. Omklassad 2026-04-14.
+
+**Tidigare formulering:** "InvoiceLineRow använder parseFloat, ExpenseLineRow använder parseInt — unifiera."
+
+**Korrekt analys:** Invoice och Expense har avsiktligt olika quantity-semantik genom hela stacken:
+
+| Lager | Invoice | Expense |
+|---|---|---|
+| SQLite | `quantity REAL` | `quantity INTEGER` |
+| Zod IPC-schema | `z.number().positive()` | `z.number().int().min(1)` |
+| Form-schema | `z.number()` | `z.number().int()` |
+| LineRow parser | `parseFloat` | `parseInt` |
+
+**Motivering:**
+- Fakturor: konsultfakturering (1.5 h, 0.75 m) kräver fraktionell qty.
+- Kostnader: leverantörsfakturor har styckantal (1 st, 2 st) — heltal.
+
+M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") gäller expense_lines, inte invoice_lines. Invoice_lines har haft `quantity REAL` sedan session 6.
+
+**Konsekvens för tester:**
+- ExpenseForm.integration "heltal-qty pga F42"-kommentarer borttagna — heltals-qty i expense-tester är arkitekturkrav, inte workaround.
+- InvoiceForm-tester kan fortsätta använda fraktionell qty — korrekt beteende.
+
+**Kvarvarande 0-qty-fråga:** InvoiceLineRow tillåter qty=0 via `parseFloat(v) || 0`, ExpenseLineRow blockerar via `parseInt(v) || 1`. Huruvida qty=0 är meningsfull på faktura (t.ex. "0 × licens, ingen avgift denna månad") är en separat designfråga, inte relaterad till parseFloat/parseInt-divergensen.
+
+**Referens:** M130 i CLAUDE.md (sektion 35). Bekräftad via stack-genomgång (SQLite + Zod + form-schema + LineRow) 2026-04-14.
 
 ### F43 — parseFloat hanterar inte svenskt decimalformat 🟡
 **Filer:** InvoiceLineRow.tsx, ExpenseLineRow.tsx (alla `parseFloat(e.target.value)`)
@@ -238,7 +253,7 @@ Uppdatera dashboard-service, tax-service, report-service, opening-balance-servic
 **Alternativ fix:** `Math.round(qty * Math.round(price_kr * 100))` — konvertera pris till öre först, sedan multiplicera med qty. Ger korrekt resultat för 1.5 * 99.99: `1.5 * 9999 = 14998.5 → 14999`. Kräver refaktor av InvoiceTotals.
 **Prioritet:** Medel — kosmetisk i preview, ingen påverkan på bokföring.
 **Upptäckt:** S66a B2.4 float-precision-test.
-**Eskalering:** Fix när (a) första användaren rapporterar öres-mismatch i faktura-preview, eller (b) nästa bug-fix-sprint, vilket som kommer först. Konsulter som fakturerar fraktionella timmar (1.5h × 950 kr) kan träffa det — synligt om kunden jämför preview med eget system. ExpenseForm har samma bugg i inline useMemo-totals (rad 193–207); fix ska gälla båda.
+**Eskalering:** Fix när (a) första användaren rapporterar öres-mismatch i faktura-preview, eller (b) nästa bug-fix-sprint, vilket som kommer först. Konsulter som fakturerar fraktionella timmar (1.5h × 950 kr) kan träffa det — synligt om kunden jämför preview med eget system. Notera: ExpenseTotals påverkas inte i praktiken — expense quantity är INTEGER (M130), fraktionell qty blockeras av Zod `.int()` + `parseInt` i UI. B2.4 i ExpenseTotals.test.tsx testar ett defensivt scenario.
 **Testskydd:** B2.4 i InvoiceTotals.test.tsx asserterar faktiskt beteende (14998). B2.4 i ExpenseTotals.test.tsx asserterar motsvarande (15050/3763 för 1.5 * 100.33). Båda testerna MÅSTE uppdateras när fix landar, annars regressionsfel.
 
 ### F45 — ExpenseForm och InvoiceForm saknar datum-valideringsmeddelande i UI 🟡
@@ -272,3 +287,4 @@ När en bug hittas under en session:
 - **2026-04-14:** S65b — F39 (kr-suffix-konvention), F40 (moms-skalning otestad), F41 (konto-fritext-validering), F42 (quantity-parser-divergens), F43 (parseFloat svensk decimal)
 - **2026-04-14:** S66a — F44 (toOre float-precision off-by-1 vid fraktionell qty)
 - **2026-04-14:** S66b — F45 (datum-valideringsmeddelande saknas i ExpenseForm + InvoiceForm)
+- **2026-04-14:** F42 omklassad från bug till dokumenterad designdivergens (M130). F44 uppdaterad.

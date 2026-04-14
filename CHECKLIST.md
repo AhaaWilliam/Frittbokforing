@@ -361,17 +361,17 @@ till ExpenseTotals. Bekräftas i S66b → promotion till M-princip.
 - Delad test-util (byKr) med SINGLE SOURCE-kommentar
 - data-testid-baserad paritetstest mellan syskonkomponenter (B4.x)
 - DST-edge-test för date-arithmetic-funktioner (C6.1)
-- F42-hantering genom explicit heltal-qty i integrationstester
+- Expense heltal-qty i integrationstester (arkitekturkrav M130, inte workaround)
 - QueryClient.setQueryData för edit-mode-tester med async draft-hämtning
 - vi.hoisted() för pickerState i mock-setup (race condition-säker)
 
 ### Findings
-- **F42** (🟡): ExpenseLineRow parseInt vs InvoiceLineRow parseFloat. Out of scope S66b.
+- **F42** stängd som dokumenterad designdivergens (M130). Inte en bug.
 - **F44** (🟡): Float-precision. B2.4 asserterar faktiskt beteende i båda totals-komponenter.
 - **UX-gap:** expenseDate-fält saknar error-rendering (form.errors.expenseDate inte renderad i JSX).
 
 ### Gap
-- F42-fix i separat sprint
+- F42 stängd (designdivergens M130, inte bug)
 - VAT-gruppering per momssats: framtida feature för ExpenseTotals
 - IPC→DB-täckning utanför scope
 

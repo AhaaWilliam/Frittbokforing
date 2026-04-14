@@ -6,8 +6,8 @@
  * These tests exercise the full render tree. Heavier IPC mock setup required.
  * Focus: F27-kedjan (form → lines → totals → save-payload).
  *
- * F42: ExpenseLineRow uses parseInt for quantity. All integration tests
- * use explicit integer qty to avoid collision between F42 and F27.
+ * Expense quantity is INTEGER by design (M130) — all tests use integer qty.
+ * This is an architectural requirement, not a workaround.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { fireEvent, screen, waitFor, act } from '@testing-library/react'
@@ -75,7 +75,7 @@ async function selectSupplier(name: string) {
 // ── D1: Full-integration ─────────────────────────────────────────────
 
 describe('ExpenseForm — full integration (no mocks)', () => {
-  it('D1.1: end-to-end create med äkta pickers + äkta totals (heltal-qty)', async () => {
+  it('D1.1: end-to-end create med äkta pickers + äkta totals', async () => {
     await renderForm()
 
     // Select supplier via real SupplierPicker
@@ -94,7 +94,7 @@ describe('ExpenseForm — full integration (no mocks)', () => {
       })
     }
 
-    // Fill lines with integer qty (F42 workaround)
+    // Expense qty is integer by design (M130)
     // Line 0: qty=1, price=100 kr → netto 10000, VAT 2500
     // Line 1: qty=2, price=50 kr → netto 10000, VAT 2500
     const numberInputs = screen.getAllByRole('spinbutton')
@@ -155,7 +155,7 @@ describe('ExpenseForm — full integration (no mocks)', () => {
       })
     }
 
-    // All lines: qty=1, price=0.99 kr (explicit integer qty due to F42)
+    // All lines: qty=1, price=0.99 kr (expense qty is integer by design, M130)
     // Expected per-rad: net=99 öre, VAT=Math.round(99*0.25)=25 öre
     // Ackumulerad: net=297, VAT=75 (3×25, not 74), total=372
     const numberInputs = screen.getAllByRole('spinbutton')

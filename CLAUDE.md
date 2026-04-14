@@ -230,6 +230,25 @@ Denna princip dokumenterar det mönster som redan etablerats i InvoiceTotals (S6
 
 **Konsekvens:** Framtida formulär med belopps-totaler (kreditfakturor, offerter) följer samma mönster.
 
+## 35. Invoice vs Expense quantity-semantik (M130)
+
+**M130.** Invoice och Expense har avsiktligt olika quantity-semantik genom hela stacken:
+
+| Lager | Invoice | Expense |
+|---|---|---|
+| SQLite | `quantity REAL` | `quantity INTEGER` |
+| Zod IPC-schema | `z.number().positive()` | `z.number().int().min(1)` |
+| Form-schema | `z.number()` | `z.number().int()` |
+| LineRow parser | `parseFloat` | `parseInt` |
+
+**Motivering:** Fakturor kräver fraktionell quantity (konsultfakturering: 1.5 timmar, 0.75 meter). Kostnader har styckantal (1 st, 2 st) — leverantörsfakturor anger alltid heltal.
+
+M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") gäller **expense_lines**, inte invoice_lines. Invoice_lines har haft `quantity REAL` sedan session 6.
+
+Divergensen är avsiktlig. Framtida entiteter med quantity måste explicit välja semantik — inte defaulta till ena lägret.
+
+**Konsekvens för F27-testning:** Float-precision-fel (F44) kan uppstå i InvoiceTotals vid fraktionell qty × decimalpris. ExpenseTotals skyddas av heltalsinvarianten. B2.4-tester i ExpenseTotals är defensiva, inte produktionsscenarier.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
