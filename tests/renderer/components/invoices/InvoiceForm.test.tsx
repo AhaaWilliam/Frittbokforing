@@ -362,6 +362,93 @@ describe('InvoiceForm — validation', () => {
     expect(screen.getByText('Lägg till minst en fakturarad')).toBeDefined()
     expect(onSave).not.toHaveBeenCalled()
   })
+
+  it('C6.4: submit utan invoiceDate → valideringsfel, IPC ej anropad + felmeddelande renderas', async () => {
+    const { onSave } = await renderForm()
+
+    // Select customer
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('customer-picker-mock'))
+    })
+
+    // Clear date
+    const dateInput = screen.getByDisplayValue('2026-01-01')
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '' } })
+    })
+
+    // Add a line
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lägg till rad'))
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Spara utkast'))
+    })
+
+    // F45: validation blocks submit AND error message is rendered in UI
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByTestId('invoice-date-error')).toBeDefined()
+    expect(screen.getByTestId('invoice-date-error').textContent).toMatch(/fakturadatum/i)
+  })
+
+  it('C6.4b: invoiceDate-felmeddelande försvinner när datum fylls i', async () => {
+    await renderForm()
+
+    // Select customer, clear date, add line
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('customer-picker-mock'))
+    })
+    const dateInput = screen.getByDisplayValue('2026-01-01')
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '' } })
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lägg till rad'))
+    })
+
+    // Submit without date → error appears
+    await act(async () => {
+      fireEvent.click(screen.getByText('Spara utkast'))
+    })
+    expect(screen.getByTestId('invoice-date-error')).toBeDefined()
+
+    // Fill in date → setField clears field error
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '2026-03-15' } })
+    })
+    expect(screen.queryByTestId('invoice-date-error')).toBeNull()
+  })
+
+  it('C6.4c: invoiceDate-felmeddelande har role=alert och aria-koppling', async () => {
+    await renderForm()
+
+    // Select customer, clear date, add line
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('customer-picker-mock'))
+    })
+    const dateInput = screen.getByDisplayValue('2026-01-01')
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '' } })
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lägg till rad'))
+    })
+
+    // Submit without date → error appears
+    await act(async () => {
+      fireEvent.click(screen.getByText('Spara utkast'))
+    })
+
+    const errorEl = screen.getByTestId('invoice-date-error')
+    expect(errorEl.getAttribute('role')).toBe('alert')
+
+    // Input ↔ error-koppling via aria-describedby
+    const input = document.getElementById('invoice-date')!
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe('invoice-date-error')
+    expect(errorEl.id).toBe('invoice-date-error')
+  })
 })
 
 // ── C7: Save-kontrakt ────────────────────────────────────────────────

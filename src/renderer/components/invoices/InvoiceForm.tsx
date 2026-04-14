@@ -194,15 +194,21 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="invoice-date" className="mb-1 block text-sm font-medium">
               Fakturadatum
             </label>
             <input
+              id="invoice-date"
               type="date"
               value={form.getField('invoiceDate') as string}
               onChange={(e) => handleDateChange(e.target.value)}
+              aria-invalid={!!form.errors.invoiceDate}
+              aria-describedby={form.errors.invoiceDate ? 'invoice-date-error' : undefined}
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
+            {form.errors.invoiceDate && (
+              <p id="invoice-date-error" role="alert" data-testid="invoice-date-error" className="mt-1 text-xs text-red-600">{form.errors.invoiceDate}</p>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
