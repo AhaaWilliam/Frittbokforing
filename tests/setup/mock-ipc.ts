@@ -139,7 +139,11 @@ interface DelayedOverride {
   value: unknown
   delayMs: number
 }
-type Override = ResponseOverride | PendingOverride | DelayedOverride
+interface ErrorOverride {
+  type: 'error'
+  error: Error
+}
+type Override = ResponseOverride | PendingOverride | DelayedOverride | ErrorOverride
 
 let overrides = new Map<string, Override>()
 
@@ -184,6 +188,8 @@ function createMockApi(): Record<string, ReturnType<typeof vi.fn>> {
             return new Promise((resolve) =>
               setTimeout(() => resolve(override.value), override.delayMs),
             )
+          case 'error':
+            return Promise.reject(override.error)
         }
       }
 
@@ -219,6 +225,11 @@ export function mockIpcResponse(channel: string, response: unknown): void {
 /** Make a channel return a promise that never resolves (loading state). */
 export function mockIpcPending(channel: string): void {
   overrides.set(channel, { type: 'pending' })
+}
+
+/** Make a channel reject with an error. */
+export function mockIpcError(channel: string, error: Error): void {
+  overrides.set(channel, { type: 'error', error })
 }
 
 /** Make a channel return a response after a delay. */
