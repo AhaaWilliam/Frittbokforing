@@ -339,3 +339,40 @@ till ExpenseTotals. Bekräftas i S66b → promotion till M-princip.
 - Create-mode save med reellt data i mockad form kräver InvoiceLineRow-onUpdate (testbar i Fil D)
 
 ### Testbaslinje: 1363 → 1371 → 1403
+
+---
+
+## Sprint 19 — S66b: ExpenseForm + ExpenseTotals + transform
+
+### Komponenter
+- ExpenseForm (419 rader) + ExpenseTotals (ny, 48 rader) + transformExpenseForm
+- Test-filer: fyra (transform, ExpenseTotals, ExpenseForm, ExpenseForm.integration)
+- Delad util: tests/renderer/utils/format-matchers.ts (byKr() utbruten från S66a)
+- M-princip promoted: M129 — form-totals som separerad komponent (se CLAUDE.md sektion 34)
+
+### Beteendeändring
+- ExpenseTotals konvergerar till InvoiceTotals-mönstret (per-rad toOre).
+- Delta dokumenterat i docs/s66b-characterization.md med go-beslut.
+- Max delta 1 öre (VAT) i 2/7 testscenarier.
+
+### Patterns etablerade
+- Refaktor-prereq med transformtester i egen commit (revertability)
+- Karakteriseringssteg (0.8b) för refaktorer som ändrar produktionsberäkning
+- Delad test-util (byKr) med SINGLE SOURCE-kommentar
+- data-testid-baserad paritetstest mellan syskonkomponenter (B4.x)
+- DST-edge-test för date-arithmetic-funktioner (C6.1)
+- F42-hantering genom explicit heltal-qty i integrationstester
+- QueryClient.setQueryData för edit-mode-tester med async draft-hämtning
+- vi.hoisted() för pickerState i mock-setup (race condition-säker)
+
+### Findings
+- **F42** (🟡): ExpenseLineRow parseInt vs InvoiceLineRow parseFloat. Out of scope S66b.
+- **F44** (🟡): Float-precision. B2.4 asserterar faktiskt beteende i båda totals-komponenter.
+- **UX-gap:** expenseDate-fält saknar error-rendering (form.errors.expenseDate inte renderad i JSX).
+
+### Gap
+- F42-fix i separat sprint
+- VAT-gruppering per momssats: framtida feature för ExpenseTotals
+- IPC→DB-täckning utanför scope
+
+### Testbaslinje: 1403 → 1413 → 1413 → 1424 → 1449
