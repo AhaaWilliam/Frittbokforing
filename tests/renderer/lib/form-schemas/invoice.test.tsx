@@ -132,11 +132,12 @@ describe('InvoiceFormStateSchema — quantity precision', () => {
     expect(parseWithQty(0.01).success).toBe(true)
   })
 
-  it('A2b.6: qty=0.001 förkastas', () => {
+  it('A2b.6: qty=0.001 förkastas (under min 0.01)', () => {
     const result = parseWithQty(0.001)
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues[0].message).toMatch(/högst 2 decimaler/)
+      // 0.001 < 0.01 → min-check fires before decimal-refine (F46 refine-ordning)
+      expect(result.error.issues[0].code).toBe('too_small')
     }
   })
 })

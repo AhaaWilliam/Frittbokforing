@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import {
+  MAX_QTY_INVOICE, MAX_QTY_EXPENSE,
+  ERR_MSG_MAX_QTY_INVOICE, ERR_MSG_MAX_QTY_EXPENSE,
+} from './constants'
 
 /**
  * Luhn-kontroll (modulus 10) för svenska organisationsnummer.
@@ -256,10 +260,12 @@ export const InvoiceDraftLineSchema = z
   .object({
     product_id: z.number().int().positive().nullable(),
     description: z.string().min(1).max(500),
-    quantity: z.number().positive().refine(
-      (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
-      { message: 'Quantity kan ha högst 2 decimaler' },
-    ),
+    quantity: z.number().positive()
+      .max(MAX_QTY_INVOICE, { message: ERR_MSG_MAX_QTY_INVOICE })
+      .refine(
+        (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
+        { message: 'Quantity kan ha högst 2 decimaler' },
+      ),
     unit_price_ore: z.number().int().min(0), // ören
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0),
@@ -362,11 +368,11 @@ export const GetPaymentsInputSchema = z
   .strict()
 
 // === Expenses ===
-const ExpenseLineInputSchema = z
+export const ExpenseLineInputSchema = z
   .object({
     description: z.string().min(1),
     account_number: z.string().min(4).max(4),
-    quantity: z.number().int().min(1),
+    quantity: z.number().int().min(1).max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
     unit_price_ore: z.number().int(),
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0).optional(),

@@ -1,12 +1,13 @@
 import { z } from 'zod'
 import { SaveExpenseDraftSchema } from '../../../shared/ipc-schemas'
+import { MAX_QTY_EXPENSE, ERR_MSG_MAX_QTY_EXPENSE } from '../../../shared/constants'
 import { toOre } from '../format'
 
-const ExpenseLineFormSchema = z.object({
+export const ExpenseLineFormSchema = z.object({
   temp_id: z.string(),
   description: z.string(),
   account_number: z.string(),
-  quantity: z.number().int(),
+  quantity: z.number().int().min(1, { message: 'Antal måste vara minst 1' }).max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
   unit_price_kr: z.number(),
   vat_code_id: z.number(),
   vat_rate: z.number(),

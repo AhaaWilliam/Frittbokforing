@@ -1,15 +1,19 @@
 import { z } from 'zod'
 import { SaveDraftInputSchema } from '../../../shared/ipc-schemas'
+import { MAX_QTY_INVOICE, ERR_MSG_MAX_QTY_INVOICE } from '../../../shared/constants'
 import { toOre } from '../format'
 
-const InvoiceLineFormSchema = z.object({
+export const InvoiceLineFormSchema = z.object({
   temp_id: z.string(),
   product_id: z.number().nullable(),
   description: z.string(),
-  quantity: z.number().refine(
-    (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
-    { message: 'Quantity kan ha högst 2 decimaler' },
-  ),
+  quantity: z.number()
+    .min(0.01, { message: 'Antal måste vara minst 0,01' })
+    .max(MAX_QTY_INVOICE, { message: ERR_MSG_MAX_QTY_INVOICE })
+    .refine(
+      (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
+      { message: 'Quantity kan ha högst 2 decimaler' },
+    ),
   unit_price_kr: z.number(),
   vat_code_id: z.number(),
   vat_rate: z.number(),
