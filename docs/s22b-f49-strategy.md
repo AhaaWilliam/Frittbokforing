@@ -6,7 +6,7 @@
 
 ## Executive summary (maskin-extraherbart)
 
-- **Compliance:** WCAG 2.1 AA (arbetshypotes, ej bekräftad av William)
+- **Compliance:** WCAG 2.1 AA (bekräftad av William 2026-04-14)
 - **Scope:** F49 = forms + dialoger + submitError + LoadingSpinner, 14 ytor in, kb-nav + lists out
 - **Arkitektur:** Nivå D (kombination: B för shared UI-komponenter, A för inline forms)
 - **Test-verktyg:** axe-core (redan installerat) + renderWithProviders (redan integrerat) + M133 grep-check
@@ -15,14 +15,12 @@
 
 ## 1. Compliance-scope
 
-**Arbetshypotes:** WCAG 2.1 AA, best practice.
+**Bekräftat:** WCAG 2.1 AA. Bekräftad av William 2026-04-14.
 
-Fritt Bokföring är en desktop Electron-app för svensk bokföring. Troligtvis
-B2B/B2C (ej offentlig sektor). EU:s webbtillgänglighetsdirektiv (WAD) och
-svenska DOS-lagen gäller primärt offentlig sektor. European Accessibility Act
-(EAA, juni 2025) kan gälla om appen distribueras kommersiellt som tjänst.
-
-Oavsett juridiskt krav är WCAG AA god praxis för formulärtung programvara.
+Fritt Bokföring är B2B-SaaS för svenska AB:n. Direkt WAD/DOS-scope osäkert,
+men kunder kan vara under WAD (stora bolag, offentlig sektor). AA är
+industri-standard och enda rimliga säljargumentet. AAA overkill för
+bokföringsverktyg.
 De relevanta WCAG-kriterierna för F49:
 
 | Kriterium | Rubrik | Relevans |
@@ -34,7 +32,7 @@ De relevanta WCAG-kriterierna för F49:
 | 4.1.2 | Name, Role, Value | Programmatiskt bestämbart state (aria-invalid) |
 | 4.1.3 | Status Messages | Statusmeddelanden (loading, success, error) presenteras utan fokusflyttning |
 
-**Kräver Williams bekräftelse:** Ja — se sektion 11.
+**Bekräftad av William:** Ja (2026-04-14).
 
 ## 2. Yt-inventering och scope-beslut
 
@@ -300,11 +298,22 @@ exit $EXIT
 
 Gate: `npm run check:m133` i package.json. Körs manuellt (inget CI).
 
-### 7.5 axeCheck: false-avveckling
+**Timing (bekräftad av William):** M133 etableras i **sista härdnings-commit**
+(commit 8), inte första. Samma mönster som M131 (etablerad efter koden var
+grön). Att bygga regeln samtidigt som man bryter mot den = frustrerande
+iteration. En eller två M-regler (M133 + ev. M134 för axeCheck:false-warn)
+beslutas i commit 8 baserat på false-positive-profil.
 
-F49-implementation ska avsluta med att **ta bort alla 4 `axeCheck: false`**
-från InvoiceForm/ExpenseForm-tester. Om de fortfarande failar efter F49
-→ kvarvarande violations är ny tech debt att dokumentera.
+### 7.5 axeCheck: false-avveckling (gradvis, bekräftad av William)
+
+`axeCheck: false` tas bort **gradvis, per commit**, inte big-bang:
+- Varje commit som härdar en yta tar bort `axeCheck: false` för den ytans
+  testfiler i samma commit.
+- Commit 7 (sista härdnings-commit): verifiera att alla `axeCheck: false`
+  är borta. Om edge-case kvarstår: dokumentera explicit varför.
+- M133/M134 grep-check kan inkludera `axeCheck: false`-detektion som warn.
+
+Gradvis borttagning fungerar som **progress-mätare** commit-för-commit.
 
 ### 7.6 CI-rekommendation
 
@@ -323,11 +332,11 @@ manuellt. `check:m131` körs manuellt.
 | 1 | FormField + FormSelect + FormTextarea: ARIA-triad | 3 src-filer, 3 testfiler | +0 (befintliga tester täcker, uppdatera assertions) |
 | 2 | submitError: `role="alert"` i alla 5 formulär | 5 src-filer | +5 assertions i befintliga tester |
 | 3 | LoadingSpinner: `role="status"` + `aria-label` | 1 src-fil | +1 nytt test |
-| 4 | InvoiceForm: ARIA på alla inline-fält, ta bort F45-datum-isolering | 1 src-fil, 2 testfiler (ta bort axeCheck:false) | +0 (axe-gate ger coverage) |
-| 5 | ExpenseForm: ARIA på alla inline-fält | 1 src-fil, 2 testfiler (ta bort axeCheck:false) | +0 |
-| 6 | ManualEntryForm: ARIA på alla inline-fält | 1 src-fil | +1 nytt renderer-test |
+| 4 | InvoiceForm: ARIA på alla inline-fält + noValidate, ta bort axeCheck:false | 1 src-fil, 2 testfiler (ta bort axeCheck:false) | +0 (axe-gate ger coverage) |
+| 5 | ExpenseForm: ARIA på alla inline-fält + noValidate, ta bort axeCheck:false | 1 src-fil, 2 testfiler (ta bort axeCheck:false) | +0 |
+| 6 | ManualEntryForm: ARIA på alla inline-fält + noValidate | 1 src-fil | +1 nytt renderer-test |
 | 7 | Dialoger: PaymentDialog, PayExpenseDialog, BulkPaymentDialog, CreateFY | 4 src-filer | +4 nya renderer-tester |
-| 8 | M133 grep-check + noValidate på forms + docs + sprint-stängning | scripts/, package.json, CLAUDE.md, STATUS.md, CHECKLIST.md, docs/bug-backlog.md | +1 (m133 självtest) |
+| 8 | M133 grep-check + verifiera alla axeCheck:false borta + docs + sprint-stängning | scripts/, package.json, CLAUDE.md, STATUS.md, CHECKLIST.md, docs/bug-backlog.md | +1 (m133 självtest) |
 
 ### Testantal-estimat
 
@@ -383,19 +392,14 @@ i renderer. Inte 3 separata. M133 grep-check enforcar regeln statiskt.
 - List/table semantik (`role="row"`, `aria-sort`)
 - Wizard-pattern (steg-announcering)
 
-## 11. Öppna frågor för William
+## 11. Öppna frågor för William — ALLA BESVARADE (2026-04-14)
 
-1. **Compliance-nivå:** Är WCAG 2.1 AA korrekt arbetshypotes, eller finns
-   juridiska krav (WAD, EAA) som kräver specifik nivå?
-2. **Scope:** Är F49 = forms+dialoger+spinner rätt avgränsning, eller vill
-   du inkludera lists/kb-nav i samma sprint?
-3. **axeCheck:false-avveckling:** OK att F49 tar bort alla `axeCheck: false`
-   som gate? (Om violations kvarstår efter F49 → ny tech debt.)
-4. **M133:** Godkänner du en ny M-regel + grep-check för a11y error-rendering?
-5. **VoiceOver-test:** Vill du ha ett manuellt VoiceOver-test som release-gate,
-   eller räcker axe-core + grep-check?
-6. **noValidate:** OK att explicit sätta `noValidate` på alla `<form>`-element
-   för att förhindra nativa browser-tooltips?
+1. **Compliance-nivå:** AA bekräftad. Industri-standard, enda rimliga säljargumentet.
+2. **Scope:** forms+dialoger+spinner godkänt. Lists/reports → F50/F51 vid behov.
+3. **axeCheck:false-avveckling:** Ja, men **gradvis per commit** (inte big-bang). Borttagning som progress-mätare. Edge-cases dokumenteras explicit.
+4. **M133:** Ja, men **i sista härdnings-commit** (commit 8). Samma mönster som M131. En eller två M-regler beslutas baserat på false-positive-profil.
+5. **VoiceOver-test:** Ja, som **per-sprint-sampling** (inte per-commit). 1 runthrough av InvoiceForm-flow innan sprint-avslut. Dokumenteras i CHECKLIST.md.
+6. **noValidate:** Ja. Standard-mönster vid Zod-validering. Single source of truth.
 
 ## 12. Bilaga: Baseline-rapport
 
