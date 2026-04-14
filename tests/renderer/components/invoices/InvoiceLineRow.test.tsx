@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fireEvent, waitFor } from '@testing-library/react'
+import { fireEvent, waitFor, screen } from '@testing-library/react'
 import { setupMockIpc, mockIpcResponse } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
 import { InvoiceLineRow } from '../../../../src/renderer/components/invoices/InvoiceLineRow'
+import { InvoiceTotals } from '../../../../src/renderer/components/invoices/InvoiceTotals'
 import { formatKr, toOre } from '../../../../src/renderer/lib/format'
 import type { InvoiceLineForm } from '../../../../src/renderer/lib/form-schemas/invoice'
 import type { VatCode } from '../../../../src/shared/types'
@@ -357,5 +358,91 @@ describe('InvoiceLineRow — edge-cases', () => {
     expect(getByLabelText('Beskrivning')).toHaveValue('Borttagen produkt')
     expect(getByLabelText('Antal')).toHaveValue(2)
     expect(getByLabelText('Pris')).toHaveValue(950)
+  })
+})
+
+// ── Grupp 7: F47 precision — M131 Alt B (Sprint 21 S68a) ──────────────
+
+describe('InvoiceLineRow — F47 M131 precision (S68a)', () => {
+  it('7.1 per-rad canary B2.4: qty=1.5 × price=99.99 → 14999 öre', async () => {
+    const line: InvoiceLineForm = {
+      ...freeformLine,
+      quantity: 1.5,
+      unit_price_kr: 99.99,
+    }
+    const props = makeFreeformProps({ line })
+    await renderRow(props)
+
+    expect(screen.getByTestId('line-net-ore-0').dataset.value).toBe('14999')
+  })
+
+  it('7.2 per-rad canary B2.5: qty=0.5 × price=64.99 → 3250 öre', async () => {
+    const line: InvoiceLineForm = {
+      ...freeformLine,
+      quantity: 0.5,
+      unit_price_kr: 64.99,
+    }
+    const props = makeFreeformProps({ line })
+    await renderRow(props)
+
+    expect(screen.getByTestId('line-net-ore-0').dataset.value).toBe('3250')
+  })
+
+  /**
+   * DOM-rendering-smoke: InvoiceLineRow och InvoiceTotals använder samma
+   * Alt B-formel (Fall B, se docs/s68-step0-output.md), så matematiken är
+   * tautologisk. Testet fångar ändå:
+   *   - Render-fel (crasher, tomma värden, felaktiga testid)
+   *   - Props-drift (olika line-strukturer mellan komponenter)
+   *   - Formaterings-buggar (data-value saknas på någondera sida)
+   * Det är INTE ett M131-konsistensbevis (det görs av per-rad-canaries +
+   * InvoiceTotals-canaries var för sig + grep-checken S68d).
+   */
+  it('7.3 DOM-smoke: per-rad + totals renderar konsekvent för B2.4/B2.5', async () => {
+    const lines: InvoiceLineForm[] = [
+      { ...freeformLine, quantity: 1.5, unit_price_kr: 99.99 },
+      { ...freeformLine, quantity: 0.5, unit_price_kr: 64.99, temp_id: 'line-3' },
+    ]
+
+    await renderWithProviders(
+      <table>
+        <tbody>
+          {lines.map((line, idx) => (
+            <InvoiceLineRow
+              key={line.temp_id}
+              line={line}
+              index={idx}
+              counterpartyId={1}
+              onUpdate={vi.fn()}
+              onRemove={vi.fn()}
+            />
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>
+              <InvoiceTotals lines={lines} />
+            </td>
+          </tr>
+        </tfoot>
+      </table>,
+    )
+
+    // Per-rad-värden mot canary-sanningar
+    expect(screen.getByTestId('line-net-ore-0').dataset.value).toBe('14999')
+    expect(screen.getByTestId('line-net-ore-1').dataset.value).toBe('3250')
+
+    // Total finns och är läsbar
+    const totalEl = screen.getByTestId('total-net-ore')
+    expect(totalEl).toBeInTheDocument()
+    expect(totalEl.dataset.value).toMatch(/^\d+$/)
+
+    // Sum-invariant: per-rad-DOM === total-DOM
+    const perLineNet = lines.map((_, idx) =>
+      parseInt(screen.getByTestId(`line-net-ore-${idx}`).dataset.value!, 10)
+    )
+    const sumFromRows = perLineNet.reduce((a, b) => a + b, 0)
+    const totalNet = parseInt(totalEl.dataset.value!, 10)
+    expect(sumFromRows).toBe(totalNet)
   })
 })

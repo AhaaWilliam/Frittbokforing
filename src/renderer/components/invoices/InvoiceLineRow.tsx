@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { InvoiceLineForm } from '../../lib/form-schemas/invoice'
-import { formatKr, toOre } from '../../lib/format'
+import { formatKr } from '../../lib/format'
 import { useVatCodes } from '../../lib/hooks'
 import { ArticlePicker } from './ArticlePicker'
 
@@ -60,7 +60,10 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
     onUpdate(index, updates)
   }
 
-  const lineNettoOre = toOre(line.quantity * line.unit_price_kr)
+  // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44/F47)
+  const lineNettoOre = Math.round(
+    Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100
+  )
 
   return (
     <tr className="border-b">
@@ -135,7 +138,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           ))}
         </select>
       </td>
-      <td className="px-2 py-2 text-right text-sm">{formatKr(lineNettoOre)}</td>
+      <td className="px-2 py-2 text-right text-sm" data-testid={`line-net-ore-${index}`} data-value={lineNettoOre}>{formatKr(lineNettoOre)}</td>
       <td className="px-2 py-2 text-center">
         <button
           type="button"
