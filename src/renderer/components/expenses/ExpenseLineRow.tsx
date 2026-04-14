@@ -35,6 +35,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { description: e.target.value })
           }
+          aria-label="Beskrivning"
           data-testid={`expense-line-${index}-description`}
           className={inputClass}
         />
@@ -45,6 +46,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { account_number: e.target.value })
           }
+          aria-label="Konto"
           data-testid={`expense-line-${index}-account`}
           className={inputClass}
         >
@@ -65,6 +67,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { quantity: parseInt(e.target.value, 10) || 1 })
           }
+          aria-label="Antal"
           data-testid={`expense-line-${index}-quantity`}
           className={inputClass}
         />
@@ -78,6 +81,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           onChange={(e) =>
             onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
           }
+          aria-label="Pris"
           data-testid={`expense-line-${index}-price`}
           className={inputClass}
         />
@@ -85,6 +89,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
       <td className="px-2 py-1">
         <select
           value={line.vat_code_id}
+          aria-label="Moms"
           data-testid={`expense-line-${index}-vat`}
           onChange={(e) => {
             const vcId = parseInt(e.target.value, 10)
