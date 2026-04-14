@@ -127,3 +127,29 @@ Test-fil: tests/renderer/components/invoices/InvoiceForm.test.tsx
 M-principer täckta: M12 (öre), M15 (quantity × unit_price_ore)
 Beteendecase: draft save, line add/remove, validation errors
 ```
+
+## Sprint 18 — S65a
+
+Komponent: ExpenseLineRow (props-driven, ingen hook-beroende)
+Test-fil: tests/renderer/components/expenses/ExpenseLineRow.test.tsx
+M-principer täckta: M102 (memo-kontrakt via $$typeof-marker)
+Beteendecase: rendering (4), callback-propagering med parser-fallbacks (6), beräkningsrimlighet kr→öre (4), memo-kontrakt (1), edge vat_code_id=0 (1)
+
+### Patterns etablerade inför S65b
+
+- `renderWithProviders` + `<table><tbody>`-wrap för `<tr>`-rot-komponenter
+- `setupMockIpc()` i `beforeEach` krävs för alla renderer-tester (FiscalYearContext)
+- Memo-kontrakt via `$$typeof`-marker, inte beteende
+- Parser-fallbacks spikas via Steg 0-grep, inte antagande
+- `formatKr`-assertions kräver `\u00a0`→space-normalisering (`expectedTotal`-helper)
+
+### Föregående bugg-commit
+
+- `fix(a11y)`: aria-label på alla inputs/selects i ExpenseLineRow (e84e58d)
+- Upptäckt vid S65a-preflight (axe-core default-on policy)
+
+### Gap
+
+- Komma-decimal i price-input otestad (parseFloat hanterar inte `"99,50"`)
+- F27-regression ligger i S65b (InvoiceLineRow)
+- `"0"` i quantity-input triggar `||1`-fallback — quantity=0 ej möjlig via input (känd begränsning, dokumenterad i test)
