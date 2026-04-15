@@ -277,6 +277,8 @@ export const SaveDraftInputSchema = z
   .object({
     counterparty_id: z.number().int().positive(),
     fiscal_year_id: z.number().int().positive(),
+    invoice_type: z.enum(['customer_invoice', 'credit_note']).default('customer_invoice'),
+    credits_invoice_id: z.number().int().positive().nullable().optional(),
     invoice_date: z.string().min(10).max(10),
     due_date: z.string().min(10).max(10),
     payment_terms: z.number().int().min(1).max(365).default(30),
@@ -309,6 +311,13 @@ export const DraftListInputSchema = z
 
 export const NextNumberInputSchema = z
   .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const CreateCreditNoteDraftSchema = z
+  .object({
+    original_invoice_id: z.number().int().positive(),
     fiscal_year_id: z.number().int().positive(),
   })
   .strict()
@@ -758,6 +767,7 @@ export const channelMap = {
   'invoice:payments': GetPaymentsInputSchema,
   'invoice:generate-pdf': GenerateInvoicePdfSchema,
   'invoice:save-pdf': SaveInvoicePdfSchema,
+  'invoice:create-credit-note-draft': CreateCreditNoteDraftSchema,
 
   // Expenses
   'expense:save-draft': SaveExpenseDraftSchema,

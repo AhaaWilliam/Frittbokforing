@@ -93,7 +93,7 @@ afterEach(() => {
 describe('Migration 012', () => {
   it('user_version = 14 efter migration', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(28) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(29) // S48: Uppdatera vid nya migrationer
   })
 
   it('fiscal_years har is_closed-kolumn', () => {

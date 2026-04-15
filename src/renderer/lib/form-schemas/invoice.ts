@@ -26,6 +26,8 @@ export type InvoiceLineForm = z.infer<typeof InvoiceLineFormSchema>
 export const InvoiceFormStateSchema = z.object({
   _customer: z.object({ id: z.number(), name: z.string() }).nullable()
     .refine(v => v !== null, 'Välj en kund'),
+  invoice_type: z.enum(['customer_invoice', 'credit_note']).default('customer_invoice'),
+  credits_invoice_id: z.number().nullable(),
   invoiceDate: z.string().min(1, 'Välj fakturadatum'),
   paymentTerms: z.number(),
   dueDate: z.string().min(1),
@@ -37,6 +39,8 @@ export type InvoiceFormState = z.infer<typeof InvoiceFormStateSchema>
 
 export const INVOICE_DEFAULTS: InvoiceFormState = {
   _customer: null as unknown as InvoiceFormState['_customer'],
+  invoice_type: 'customer_invoice',
+  credits_invoice_id: null,
   invoiceDate: '',
   paymentTerms: 30,
   dueDate: '',
@@ -54,6 +58,8 @@ export function transformInvoiceForm(
   return {
     counterparty_id: form._customer!.id,
     fiscal_year_id: fiscalYearId,
+    invoice_type: form.invoice_type,
+    credits_invoice_id: form.credits_invoice_id,
     invoice_date: form.invoiceDate,
     due_date: form.dueDate,
     payment_terms: form.paymentTerms,

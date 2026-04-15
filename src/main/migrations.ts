@@ -1193,6 +1193,10 @@ export const migrations: MigrationEntry[] = [
   { sql: `DROP TABLE IF EXISTS verification_sequences;
 ALTER TABLE counterparties RENAME COLUMN payment_terms_days TO payment_terms;`,
     programmatic: migration028Verify },
+  // Sprint 28: Kreditfakturor — credits_invoice_id FK
+  { sql: `ALTER TABLE invoices ADD COLUMN credits_invoice_id INTEGER REFERENCES invoices(id);
+CREATE INDEX idx_inv_credits ON invoices(credits_invoice_id);`,
+    programmatic: migration029Verify },
 ]
 
 /**
@@ -1858,6 +1862,16 @@ function migration028Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'counterparties')
   if (!cols.has('payment_terms')) throw new Error('Migration 028 failed: counterparties.payment_terms saknas')
   if (cols.has('payment_terms_days')) throw new Error('Migration 028 failed: counterparties.payment_terms_days finns kvar')
+}
+
+function migration029Verify(db: import('better-sqlite3').Database): void {
+  const cols = getTableColumns(db, 'invoices')
+  if (!cols.has('credits_invoice_id')) throw new Error('Migration 029 failed: invoices.credits_invoice_id saknas')
+
+  const idxRows = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='invoices' AND name='idx_inv_credits'")
+    .all() as { name: string }[]
+  if (idxRows.length === 0) throw new Error('Migration 029 failed: idx_inv_credits index saknas')
 }
 
 function migration021Verify(db: import('better-sqlite3').Database): void {

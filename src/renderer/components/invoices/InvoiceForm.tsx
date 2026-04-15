@@ -36,6 +36,8 @@ function buildInitialData(
     _customer: draft.counterparty_name
       ? { id: draft.counterparty_id, name: draft.counterparty_name }
       : { id: draft.counterparty_id, name: '' },
+    invoice_type: draft.invoice_type as 'customer_invoice' | 'credit_note',
+    credits_invoice_id: draft.credits_invoice_id,
     invoiceDate: draft.invoice_date,
     paymentTerms: draft.payment_terms,
     dueDate: draft.due_date,
@@ -176,6 +178,16 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
         {form.submitError && (
           <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {form.submitError}
+          </div>
+        )}
+
+        {/* Credit note indicator */}
+        {(form.getField('invoice_type') as string) === 'credit_note' && (
+          <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
+            <span className="font-medium">Kreditfaktura (utkast)</span>
+            {draft?.notes && (
+              <span className="ml-1">&mdash; {draft.notes}</span>
+            )}
           </div>
         )}
 

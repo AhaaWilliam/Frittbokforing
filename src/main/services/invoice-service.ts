@@ -94,18 +94,34 @@ export function saveDraft(
     return db.transaction(() => {
       const { processed, totalAmount, vatAmount } = processLines(db, data.lines)
 
+      const invoiceType = data.invoice_type ?? 'customer_invoice'
+
+      // Validate credits_invoice_id if credit note
+      if (invoiceType === 'credit_note' && data.credits_invoice_id) {
+        const original = db
+          .prepare('SELECT id, status FROM invoices WHERE id = ?')
+          .get(data.credits_invoice_id) as { id: number; status: string } | undefined
+        if (!original) {
+          throw { code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const, error: 'Originalfakturan hittades inte.' }
+        }
+        if (original.status === 'draft') {
+          throw { code: 'VALIDATION_ERROR' as const, error: 'Kan inte kreditera ett utkast.' }
+        }
+      }
+
       // INSERT invoice with status='draft', empty invoice_number
       const result = db
         .prepare(
           `INSERT INTO invoices (
           counterparty_id, fiscal_year_id, invoice_type, invoice_number,
           invoice_date, due_date, status, net_amount_ore, vat_amount_ore, total_amount_ore,
-          currency, notes, payment_terms
-        ) VALUES (?, ?, 'customer_invoice', '', ?, ?, 'draft', ?, ?, ?, ?, ?, ?)`,
+          currency, notes, payment_terms, credits_invoice_id
+        ) VALUES (?, ?, ?, '', ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           data.counterparty_id,
           data.fiscal_year_id,
+          invoiceType,
           data.invoice_date,
           data.due_date,
           totalAmount,
@@ -114,6 +130,7 @@ export function saveDraft(
           data.currency ?? 'SEK',
           data.notes ?? null,
           data.payment_terms,
+          data.credits_invoice_id ?? null,
         )
       const invoiceId = Number(result.lastInsertRowid)
 
@@ -364,8 +381,11 @@ function buildJournalLines(
   invoiceId: number,
   counterpartyName: string,
   invoiceNumber: string,
+  invoiceType: string = 'customer_invoice',
 ): AggregatedJournalLine[] {
-  const desc = `Kundfaktura #${invoiceNumber} — ${counterpartyName}`
+  const isCreditNote = invoiceType === 'credit_note'
+  const label = isCreditNote ? 'Kreditfaktura' : 'Kundfaktura'
+  const desc = `${label} #${invoiceNumber} — ${counterpartyName}`
   const lines: AggregatedJournalLine[] = []
 
   // Aggregera intäkter per account_number med SQL GROUP BY
@@ -401,31 +421,31 @@ function buildJournalLines(
   const totalVat = vatRows.reduce((sum, r) => sum + r.total_vat, 0)
   const totalInclVat = totalRevenue + totalVat
 
-  // DEBET — Kundfordringar (1510)
+  // Kundfordringar (1510) — DEBET vid kundfaktura, KREDIT vid kreditfaktura
   lines.push({
     account_number: '1510',
-    debit_ore: totalInclVat,
-    credit_ore: 0,
+    debit_ore: isCreditNote ? 0 : totalInclVat,
+    credit_ore: isCreditNote ? totalInclVat : 0,
     description: desc,
   })
 
-  // KREDIT — Intäktskonton
+  // Intäktskonton — KREDIT vid kundfaktura, DEBET vid kreditfaktura
   for (const row of revenueRows) {
     lines.push({
       account_number: row.acct_number,
-      debit_ore: 0,
-      credit_ore: row.total_amount_ore,
+      debit_ore: isCreditNote ? row.total_amount_ore : 0,
+      credit_ore: isCreditNote ? 0 : row.total_amount_ore,
       description: desc,
     })
   }
 
-  // KREDIT — Momskonton
+  // Momskonton — KREDIT vid kundfaktura, DEBET vid kreditfaktura
   for (const row of vatRows) {
     if (!row.vat_account_number || row.total_vat === 0) continue
     lines.push({
       account_number: row.vat_account_number,
-      debit_ore: 0,
-      credit_ore: row.total_vat,
+      debit_ore: isCreditNote ? row.total_vat : 0,
+      credit_ore: isCreditNote ? 0 : row.total_vat,
       description: desc,
     })
   }
@@ -559,6 +579,7 @@ export function finalizeDraft(
         id,
         counterparty.name,
         invoiceNumber,
+        invoice.invoice_type,
       )
 
       // 8b. Validate all referenced accounts are active
@@ -566,6 +587,17 @@ export function finalizeDraft(
       validateAccountsActive(db, allAccountNumbers)
 
       // 9. INSERT journal_entry (status='draft' first, then book)
+      // Bygg beskrivning — inkludera referens till originalfaktura för kreditnotor (SIE-synligt)
+      let journalDesc = `${invoice.invoice_type === 'credit_note' ? 'Kreditfaktura' : 'Kundfaktura'} #${invoiceNumber} — ${counterparty.name}`
+      if (invoice.invoice_type === 'credit_note' && invoice.credits_invoice_id) {
+        const orig = db
+          .prepare('SELECT invoice_number FROM invoices WHERE id = ?')
+          .get(invoice.credits_invoice_id) as { invoice_number: string } | undefined
+        if (orig) {
+          journalDesc += ` (avser faktura #${orig.invoice_number})`
+        }
+      }
+
       const entryResult = db
         .prepare(
           `INSERT INTO journal_entries (
@@ -580,7 +612,7 @@ export function finalizeDraft(
           invoice.fiscal_year_id,
           verificationNumber,
           invoice.invoice_date,
-          `Kundfaktura #${invoiceNumber} — ${counterparty.name}`,
+          journalDesc,
         )
       const journalEntryId = Number(entryResult.lastInsertRowid)
 
@@ -804,9 +836,11 @@ export function listInvoices(
   const items = db
     .prepare(
       `SELECT
-      i.id, i.invoice_number, i.invoice_date, i.due_date,
+      i.id, i.invoice_type, i.invoice_number, i.invoice_date, i.due_date,
       i.net_amount_ore, i.vat_amount_ore, i.total_amount_ore,
       i.status, i.payment_terms, i.journal_entry_id,
+      i.credits_invoice_id,
+      (SELECT 1 FROM invoices cn WHERE cn.credits_invoice_id = i.id LIMIT 1) as has_credit_note,
       c.name as counterparty_name,
       je.verification_number,
       i.paid_amount_ore as total_paid,
@@ -1348,9 +1382,11 @@ export function getFinalized(
     .prepare(
       `SELECT i.*, c.name as customer_name, c.org_number as customer_org_number,
               c.address_line1 as customer_address, c.postal_code as customer_postal_code,
-              c.city as customer_city
+              c.city as customer_city,
+              orig.invoice_number as credits_invoice_number
        FROM invoices i
        JOIN counterparties c ON i.counterparty_id = c.id
+       LEFT JOIN invoices orig ON i.credits_invoice_id = orig.id
        WHERE i.id = ? AND i.status != 'draft'`,
     )
     .get(invoiceId) as (Invoice & Record<string, unknown>) | undefined
@@ -1368,4 +1404,94 @@ export function getFinalized(
     .all(invoiceId) as FinalizedInvoiceLine[]
 
   return { ...invoice, lines } as unknown as FinalizedInvoice
+}
+
+export function createCreditNoteDraft(
+  db: Database.Database,
+  input: { original_invoice_id: number; fiscal_year_id: number },
+): IpcResult<InvoiceWithLines> {
+  try {
+    // Hämta originalfakturan (måste vara finaliserad)
+    const original = db
+      .prepare('SELECT * FROM invoices WHERE id = ? AND status != ?')
+      .get(input.original_invoice_id, 'draft') as Invoice | undefined
+
+    if (!original) {
+      return {
+        success: false,
+        error: 'Originalfakturan hittades inte eller är fortfarande ett utkast.',
+        code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND',
+      }
+    }
+
+    // Guard: kan inte kreditera en kreditfaktura
+    if (original.invoice_type === 'credit_note') {
+      return {
+        success: false,
+        error: 'Kan inte kreditera en kreditfaktura.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Guard: kan inte kreditera samma faktura två gånger
+    const existingCreditNote = db
+      .prepare('SELECT id FROM invoices WHERE credits_invoice_id = ? LIMIT 1')
+      .get(input.original_invoice_id) as { id: number } | undefined
+    if (existingCreditNote) {
+      return {
+        success: false,
+        error: 'Fakturan har redan en kreditfaktura.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Hämta originalfakturans rader
+    const originalLines = db
+      .prepare('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY sort_order')
+      .all(input.original_invoice_id) as InvoiceLine[]
+
+    if (originalLines.length === 0) {
+      return {
+        success: false,
+        error: 'Originalfakturan har inga rader.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Bygg SaveDraft-input med kopierade rader
+    const draftInput = {
+      counterparty_id: original.counterparty_id,
+      fiscal_year_id: input.fiscal_year_id,
+      invoice_type: 'credit_note' as const,
+      credits_invoice_id: original.id,
+      invoice_date: todayLocal(),
+      due_date: todayLocal(), // Kreditfakturor har normalt inget förfallodatum — sätts till idag
+      payment_terms: original.payment_terms,
+      notes: `Krediterar faktura #${original.invoice_number}`,
+      currency: 'SEK' as const,
+      lines: originalLines.map((l, i) => ({
+        product_id: l.product_id,
+        description: l.description,
+        quantity: l.quantity,
+        unit_price_ore: l.unit_price_ore,
+        vat_code_id: l.vat_code_id,
+        sort_order: i,
+        account_number: l.account_number ?? null,
+      })),
+    }
+
+    return saveDraft(db, draftInput)
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[invoice-service] createCreditNoteDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[invoice-service] createCreditNoteDraft failed:', err)
+    return {
+      success: false,
+      error: 'Kunde inte skapa kreditfakturautkast.',
+      code: 'UNEXPECTED_ERROR',
+    }
+  }
 }

@@ -176,6 +176,10 @@ interface ElectronAPI {
   nextInvoiceNumber: (data: {
     fiscal_year_id: number
   }) => Promise<{ preview: number }>
+  createCreditNoteDraft: (data: {
+    original_invoice_id: number
+    fiscal_year_id: number
+  }) => Promise<IpcResult<InvoiceWithLines>>
   // Expenses
   saveExpenseDraft: (
     data: SaveExpenseDraftInput,

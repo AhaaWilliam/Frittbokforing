@@ -7,7 +7,7 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useBulkPayInvoices, useDebouncedSearch } from '../../lib/hooks'
+import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useBulkPayInvoices, useDebouncedSearch, useCreateCreditNoteDraft } from '../../lib/hooks'
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
@@ -66,6 +66,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const finalizeMutation = useFinalizeInvoice(activeFiscalYear?.id)
   const payMutation = usePayInvoice()
   const bulkPayMutation = useBulkPayInvoices()
+  const creditNoteMutation = useCreateCreditNoteDraft(activeFiscalYear?.id)
 
   // PDF hooks
   const generatePdfMutation = useIpcMutation(
@@ -341,6 +342,16 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                     </td>
                     <td className="px-4 py-3">
                       {item.invoice_number || '\u2014'}
+                      {item.invoice_type === 'credit_note' && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                          Kredit
+                        </span>
+                      )}
+                      {!!item.has_credit_note && item.invoice_type !== 'credit_note' && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                          Krediterad
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">{item.invoice_date}</td>
                     <td className="px-4 py-3">{item.counterparty_name}</td>
@@ -395,6 +406,29 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                           >
                             <CreditCard className="h-3 w-3" />
                             Betala
+                          </button>
+                        )}
+                        {item.status !== 'draft' && item.invoice_type !== 'credit_note' && !item.has_credit_note && (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!activeFiscalYear) return
+                              try {
+                                const result = await creditNoteMutation.mutateAsync({
+                                  original_invoice_id: item.id,
+                                  fiscal_year_id: activeFiscalYear.id,
+                                })
+                                onNavigate({ edit: result.id })
+                                toast.success('Kreditfaktura-utkast skapat')
+                              } catch (err) {
+                                toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditfaktura')
+                              }
+                            }}
+                            title="Skapa kreditfaktura"
+                            className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+                          >
+                            Kreditera
                           </button>
                         )}
                         {item.status !== 'draft' && (

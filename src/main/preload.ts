@@ -136,6 +136,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('invoice:list-drafts', data),
   nextInvoiceNumber: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('invoice:next-number', data),
+  createCreditNoteDraft: (data: { original_invoice_id: number; fiscal_year_id: number }) =>
+    ipcRenderer.invoke('invoice:create-credit-note-draft', data),
   // Invoice PDF
   generateInvoicePdf: (data: { invoiceId: number }) =>
     ipcRenderer.invoke('invoice:generate-pdf', data),

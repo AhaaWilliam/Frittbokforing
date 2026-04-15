@@ -50,6 +50,7 @@ import {
   payInvoice,
   payInvoicesBulk,
   getPayments,
+  createCreditNoteDraft,
 } from './services/invoice-service'
 import {
   saveExpenseDraft,
@@ -147,6 +148,7 @@ import {
   SaveInvoicePdfSchema,
   PayInvoicesBulkPayloadSchema,
   PayExpensesBulkPayloadSchema,
+  CreateCreditNoteDraftSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -673,6 +675,11 @@ export function registerIpcHandlers(): void {
       }
     return updateSentInvoice(db, parsed.data)
   })
+
+  ipcMain.handle('invoice:create-credit-note-draft', wrapIpcHandler(
+    CreateCreditNoteDraftSchema,
+    (parsed) => createCreditNoteDraft(db, parsed),
+  ))
 
   // === Dashboard ===
   ipcMain.handle('dashboard:summary', wrapIpcHandler(

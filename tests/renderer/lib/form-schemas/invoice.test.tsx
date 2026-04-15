@@ -26,6 +26,8 @@ function makeLine(overrides?: Partial<InvoiceFormState['lines'][0]>): InvoiceFor
 function makeForm(overrides?: Partial<InvoiceFormState>): InvoiceFormState {
   return {
     _customer: { id: 1, name: 'Acme AB' },
+    invoice_type: 'customer_invoice',
+    credits_invoice_id: null,
     invoiceDate: '2026-01-15',
     paymentTerms: 30,
     dueDate: '2026-02-14',

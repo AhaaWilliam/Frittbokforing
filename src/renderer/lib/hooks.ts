@@ -376,6 +376,20 @@ export function useDeleteDraft(fiscalYearId: number | undefined) {
   )
 }
 
+export function useCreateCreditNoteDraft(fiscalYearId: number | undefined) {
+  return useIpcMutation<
+    { original_invoice_id: number; fiscal_year_id: number },
+    InvoiceWithLines
+  >(
+    (data) => window.api.createCreditNoteDraft(data),
+    {
+      invalidate: fiscalYearId
+        ? [queryKeys.invoiceDrafts(fiscalYearId), queryKeys.allInvoices()]
+        : [],
+    },
+  )
+}
+
 export function usePayInvoice() {
   return useIpcMutation(
     (input: {

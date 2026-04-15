@@ -43,6 +43,7 @@ export type ErrorCode =
   | 'UNBALANCED_ENTRY'
   | 'STALE_DATA'
   | 'DUPLICATE_FISCAL_YEAR'
+  | 'CREDIT_NOTE_ORIGINAL_NOT_FOUND'
   | 'UNEXPECTED_ERROR'
 
 // === Page navigation ===
@@ -266,6 +267,7 @@ export interface Invoice {
   ocr_number: string | null
   notes: string | null
   payment_terms: number
+  credits_invoice_id: number | null
   version: number
   created_at: string
   updated_at: string
@@ -281,6 +283,7 @@ export interface InvoiceLine {
   vat_code_id: number
   line_total_ore: number // ören
   vat_amount_ore: number // ören
+  account_number: string | null
   sort_order: number
 }
 
@@ -367,6 +370,7 @@ export interface JournalEntryLine {
 // === Invoice List ===
 export interface InvoiceListItem {
   id: number
+  invoice_type: string
   invoice_number: string
   invoice_date: string
   due_date: string
@@ -378,6 +382,8 @@ export interface InvoiceListItem {
   counterparty_name: string
   verification_number: number | null
   journal_entry_id: number | null
+  credits_invoice_id: number | null
+  has_credit_note: number | null
   total_paid: number
   remaining: number
 }
@@ -673,6 +679,7 @@ export interface FinalizedInvoice {
   id: number
   fiscal_year_id: number
   counterparty_id: number
+  invoice_type: string
   invoice_number: string
   status: string
   invoice_date: string
@@ -681,6 +688,8 @@ export interface FinalizedInvoice {
   total_amount_ore: number // öre
   net_amount_ore: number // öre
   vat_amount_ore: number // öre
+  credits_invoice_id: number | null
+  credits_invoice_number: string | null
   // JOINade fält:
   customer_name: string
   customer_org_number: string | null

@@ -104,13 +104,13 @@ function renderPdf(data: RenderData): Promise<Buffer> {
     doc.on('error', reject)
 
     let y = MARGIN
-    y = renderHeader(doc, data.company, y)
+    y = renderHeader(doc, data.company, data.invoice, y)
     y = renderCustomerAddress(doc, data.invoice, y)
     y = renderInvoiceMeta(doc, data.invoice, y)
     y = renderLineItemsHeader(doc, y)
     y = renderLineItems(doc, data.invoice.lines, y)
-    y = renderSummary(doc, data.vatSummary, data.totalAmount, y)
-    renderPaymentInfo(doc, data.company, data.ocr, data.totalAmount, y)
+    y = renderSummary(doc, data.vatSummary, data.totalAmount, y, data.invoice.invoice_type === 'credit_note')
+    renderPaymentInfo(doc, data.company, data.ocr, data.totalAmount, y, data.invoice.invoice_type === 'credit_note')
     renderFooter(doc, data.company)
 
     doc.end()
@@ -122,11 +122,13 @@ function renderPdf(data: RenderData): Promise<Buffer> {
 function renderHeader(
   doc: PDFKit.PDFDocument,
   company: Company,
+  invoice: FinalizedInvoice,
   startY: number,
 ): number {
-  // "FAKTURA" vänster
+  // "FAKTURA" / "KREDITFAKTURA" vänster
+  const title = invoice.invoice_type === 'credit_note' ? 'KREDITFAKTURA' : 'FAKTURA'
   doc.font(FONT_BOLD).fontSize(FONT_SIZE_HEADER)
-  doc.text('FAKTURA', MARGIN, startY)
+  doc.text(title, MARGIN, startY)
 
   // Företagsnamn top-right
   doc.font(FONT_BOLD).fontSize(11)
@@ -201,6 +203,9 @@ function renderInvoiceMeta(
   doc.font(FONT_NORMAL).fontSize(FONT_SIZE_LABEL)
   const meta: [string, string][] = [
     ['Fakturanummer', invoice.invoice_number],
+    ...(invoice.credits_invoice_number
+      ? [['Avser faktura', `#${invoice.credits_invoice_number}`] as [string, string]]
+      : []),
     ['Fakturadatum', invoice.invoice_date],
     ['Förfallodatum', invoice.due_date],
     ['Betalningsvillkor', `${invoice.payment_terms} dagar`],
@@ -302,6 +307,7 @@ function renderSummary(
   vatSummary: VatGroup[],
   totalAmount: number,
   startY: number,
+  isCreditNote: boolean = false,
 ): number {
   let y = startY + 8
 
@@ -341,7 +347,7 @@ function renderSummary(
   y += 8
 
   doc.font(FONT_BOLD).fontSize(FONT_SIZE_NORMAL + 1)
-  doc.text('Att betala:', rightX, y)
+  doc.text(isCreditNote ? 'Att kreditera:' : 'Att betala:', rightX, y)
   doc.text(formatKronor(totalAmount), rightX + 100, y, {
     width: 100,
     align: 'right',
@@ -357,6 +363,7 @@ function renderPaymentInfo(
   ocr: string,
   totalAmount: number,
   startY: number,
+  isCreditNote: boolean = false,
 ): void {
   let y = startY + 10
 
@@ -385,7 +392,7 @@ function renderPaymentInfo(
   doc.text(`OCR: ${ocr}`, MARGIN, y)
   y += 14
   doc.font(FONT_BOLD)
-  doc.text(`Belopp att betala: ${formatKronor(totalAmount)}`, MARGIN, y)
+  doc.text(`Belopp att ${isCreditNote ? 'kreditera' : 'betala'}: ${formatKronor(totalAmount)}`, MARGIN, y)
 }
 
 function renderFooter(doc: PDFKit.PDFDocument, company: Company | null): void {
