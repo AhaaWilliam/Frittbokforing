@@ -7,7 +7,7 @@ Denna fil innehåller findings från djupanalysen som föregick Sprint 11 (Sessi
 **Sprint 11 faser:**
 - Fas 1: F27 → Session 41 ✅
 - Fas 2: F26, F2, F1 → Session 42 ✅
-- Fas 3: F19, F4 → pending
+- Fas 3: F19, F4 → Sprint 24b ✅
 - Fas 4: F3, F9 → pending
 - Fas 5a: F11, F17 → Session 45 ✅
 - Fas 5b: F21, F22, F33 → Session 46 ✅
@@ -51,31 +51,29 @@ Denna fil innehåller findings från djupanalysen som föregick Sprint 11 (Sessi
 
 ## Höga buggar — Rapport-konsistens (Fas 3)
 
-### F19 — Tre olika definitioner av "årets resultat" 🟠
-**Filer:** `dashboard-service.ts`, `tax-service.ts`, `report-service.ts`, `opening-balance-service.ts`
-**Problem:**
-- Dashboard: `revenue (3xxx exkl 3740) - expenses (4xxx-7xxx)` — exkluderar klass 8
-- Tax forecast: samma — exkluderar klass 8
-- Resultaträkning (report-service): K2-config ranges 3000–8999 — inkluderar klass 8
-- calculateNetResult: `SUM(credit-debit) WHERE 3000-8999` — inkluderar klass 8
+### F19 — Tre olika definitioner av "årets resultat" ✅ STÄNGD (Sprint 24b)
+**Stängd:** Sprint 24b (S24b). BR:s `calculatedNetResult` läser nu från
+`calculateResultSummary().netResultOre` (M134). Alla 4 konsument-vägar
+(result-service, re-export via opening-balance, getIncomeStatement, getBalanceSheet)
+ger identisk siffra. Verifierat via all-consumers-identical-test + E2E.
 
-**Effekt:** Användaren ser olika resultat i Dashboard vs Skatteprognos vs Resultaträkning för samma räkenskapsår. Särskilt märkbart om det finns räntekostnader eller finansiella intäkter.
+**Historik:** Sprint 11 Fas 3 (S43) skapade `result-service.ts` (M96) och
+migrerade Dashboard, Tax, RR. BR missades — den behöll sin egen
+filter-reduce (`!startsWith('1') && !startsWith('2')`). Sprint 24b stängde
+det sista gapet.
 
-**Förslag på fix:** Skapa `src/main/services/result-service.ts` med `getOperatingResult(db, fiscalYearId, dateRange?)`:
-```ts
-{
-  operatingProfitOre: number  // klass 3-7, exkl 3740
-  netResultOre: number        // klass 3-8, exkl 3740
-}
-```
-Uppdatera dashboard-service, tax-service, report-service, opening-balance-service att använda samma källa.
+### F4 — Lexikografisk account_number-jämförelse ✅ STÄNGD (Sprint 24b)
+**Stängd:** Sprint 24b (S24b). 5 SQL `ORDER BY CAST(account_number AS INTEGER)` +
+1 application-layer `localeCompare → compareAccountNumbers`. Ny shared helper
+`src/shared/account-number.ts` med 5 unit-tester + 4 fast-check property-tester.
 
-### F4 — Lexikografisk account_number-jämförelse 🟠 Fas 3
-**Filer:** `opening-balance-service.ts` (calculateNetResult, getOpeningBalancesFromPreviousYear)
-**Problem:** `WHERE account_number >= '3000' AND account_number <= '8999'` är lexikografisk. Bryter för 5-siffriga konton.
-**Not:** `k2-mapping.ts` och `report-service.ts` är INTE drabbade — de har egen numerisk parsing (testat i session-20).
-**Fix:** Byt till `CAST(account_number AS INTEGER) BETWEEN 3000 AND 8999`. Eller skapa shared helper `accountNumberToInt()` i `src/shared/account-utils.ts`.
-**Relaterat test:** F37 — session-21 rad 230 replikerar samma bugg i testet (speglar koden). Måste fixas tillsammans.
+**Kvarvarande defense-in-depth (S24c):** `CHECK(length(account_number) BETWEEN 4 AND 5)`
+på `accounts`-tabellen. Kräver M122 table-recreate. Eskaleringstriggers:
+(1) import-väg läggs till, (2) BAS 5-siffriga konton, (3) backup-restore
+kringgår app-layer-validering.
+
+**Relaterat:** F37 (test session-21 speglade bugg) — opening-balance-service
+fixad i Sprint 11 S43 (M98). Sprint 24b fixade kvarvarande ORDER BY + localeCompare.
 
 ---
 
