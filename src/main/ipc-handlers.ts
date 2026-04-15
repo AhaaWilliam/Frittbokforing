@@ -97,6 +97,7 @@ import {
   toggleAccountActive,
 } from './services/account-service'
 import { createBackup, restoreBackup } from './services/backup-service'
+import { getAccountStatement } from './services/account-statement-service'
 import { getE2EFilePath } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -134,6 +135,7 @@ import {
   AccountCreateInputSchema,
   AccountUpdateInputSchema,
   AccountToggleActiveInputSchema,
+  AccountStatementInputSchema,
   ExportSie5Schema,
   ExportSie4Schema,
   ExportExcelSchema,
@@ -583,6 +585,20 @@ export function registerIpcHandlers(): void {
         code: 'VALIDATION_ERROR',
       }
     return toggleAccountActive(db, parsed.data)
+  })
+
+  ipcMain.handle('account:get-statement', (_event, input: unknown) => {
+    const parsed = AccountStatementInputSchema.safeParse(input)
+    if (!parsed.success)
+      return {
+        success: false,
+        error: 'Ogiltigt input.',
+        code: 'VALIDATION_ERROR',
+      }
+    return {
+      success: true,
+      data: getAccountStatement(db, parsed.data),
+    }
   })
 
   ipcMain.handle('backup:create', async () => {

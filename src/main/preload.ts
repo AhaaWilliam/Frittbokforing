@@ -112,6 +112,12 @@ contextBridge.exposeInMainWorld('api', {
   }) => ipcRenderer.invoke('account:update', data),
   accountToggleActive: (data: { account_number: string; is_active: boolean }) =>
     ipcRenderer.invoke('account:toggle-active', data),
+  getAccountStatement: (data: {
+    fiscal_year_id: number
+    account_number: string
+    date_from?: string
+    date_to?: string
+  }) => ipcRenderer.invoke('account:get-statement', data),
   backupCreate: () => ipcRenderer.invoke('backup:create'),
   backupRestore: () => ipcRenderer.invoke('backup:restore-dialog'),
   // Invoices

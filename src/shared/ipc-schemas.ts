@@ -255,6 +255,16 @@ export const AccountToggleActiveInputSchema = z
   })
   .strict()
 
+// === Account Statement ===
+export const AccountStatementInputSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    account_number: z.string().min(4).max(5),
+    date_from: z.string().min(10).max(10).optional(),
+    date_to: z.string().min(10).max(10).optional(),
+  })
+  .strict()
+
 // === Invoice Draft ===
 export const InvoiceDraftLineSchema = z
   .object({
@@ -760,6 +770,7 @@ export const channelMap = {
   'account:create': AccountCreateInputSchema,
   'account:update': AccountUpdateInputSchema,
   'account:toggle-active': AccountToggleActiveInputSchema,
+  'account:get-statement': AccountStatementInputSchema,
 
   // Invoices
   'invoice:save-draft': SaveDraftInputSchema,

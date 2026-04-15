@@ -74,6 +74,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   accountUpdate: 'account:update',
   accountToggleActive: 'account:toggle-active',
   // Backup
+  getAccountStatement: 'account:get-statement',
   backupCreate: 'backup:create',
   backupRestore: 'backup:restore-dialog',
   // Invoices

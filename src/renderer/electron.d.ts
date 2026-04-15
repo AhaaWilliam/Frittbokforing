@@ -127,6 +127,24 @@ interface ElectronAPI {
     account_number: string
     is_active: boolean
   }) => Promise<IpcResult<{ success: true }>>
+  getAccountStatement: (data: {
+    fiscal_year_id: number
+    account_number: string
+    date_from?: string
+    date_to?: string
+  }) => Promise<IpcResult<{
+    account_number: string
+    account_name: string
+    lines: Array<{
+      date: string
+      verification_series: string
+      verification_number: number
+      description: string
+      debit_ore: number
+      credit_ore: number
+      running_balance_ore: number
+    }>
+  }>>
   backupCreate: () => Promise<{ filePath: string | null }>
   backupRestore: () => Promise<{ restored: boolean; message?: string }>
   // Invoices
