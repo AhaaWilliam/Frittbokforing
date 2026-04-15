@@ -128,6 +128,7 @@ interface ElectronAPI {
     is_active: boolean
   }) => Promise<IpcResult<{ success: true }>>
   backupCreate: () => Promise<{ filePath: string | null }>
+  backupRestore: () => Promise<{ restored: boolean; message?: string }>
   // Invoices
   payInvoice: (data: {
     invoice_id: number

@@ -96,7 +96,7 @@ import {
   updateAccount,
   toggleAccountActive,
 } from './services/account-service'
-import { createBackup } from './services/backup-service'
+import { createBackup, restoreBackup } from './services/backup-service'
 import { getE2EFilePath } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -587,6 +587,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('backup:create', async () => {
     return createBackup(db)
+  })
+
+  ipcMain.handle('backup:restore-dialog', async () => {
+    return restoreBackup(db)
   })
 
   // === Invoices ===

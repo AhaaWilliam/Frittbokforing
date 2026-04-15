@@ -113,6 +113,7 @@ contextBridge.exposeInMainWorld('api', {
   accountToggleActive: (data: { account_number: string; is_active: boolean }) =>
     ipcRenderer.invoke('account:toggle-active', data),
   backupCreate: () => ipcRenderer.invoke('backup:create'),
+  backupRestore: () => ipcRenderer.invoke('backup:restore-dialog'),
   // Invoices
   listInvoices: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('invoice:list', data),

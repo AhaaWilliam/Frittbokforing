@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useCompany, useUpdateCompany } from '../lib/hooks'
 import type { UpdateCompanyInput } from '../../shared/types'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
 function BackupSection() {
   const [lastBackup, setLastBackup] = useState<string | null>(null)
   const [backupMessage, setBackupMessage] = useState<string | null>(null)
   const [isBackingUp, setIsBackingUp] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
 
   useEffect(() => {
     window.api.getSetting('last_backup_date').then((val) => {
@@ -51,11 +54,46 @@ function BackupSection() {
       >
         {isBackingUp ? 'Skapar backup...' : 'Skapa säkerhetskopia'}
       </button>
+      <button
+        onClick={() => setShowRestoreConfirm(true)}
+        disabled={isRestoring || isBackingUp}
+        className="ml-3 rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+      >
+        {isRestoring ? 'Återställer...' : 'Återställ från backup'}
+      </button>
       {backupMessage && (
-        <div className="mt-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className={`mt-3 rounded-md border px-4 py-3 text-sm ${
+          backupMessage.startsWith('Säkerhetskopia sparad')
+            ? 'border-green-200 bg-green-50 text-green-700'
+            : 'border-red-200 bg-red-50 text-red-700'
+        }`}>
           {backupMessage}
         </div>
       )}
+      <ConfirmDialog
+        open={showRestoreConfirm}
+        onOpenChange={setShowRestoreConfirm}
+        title="Återställ från backup"
+        description="Detta ersätter hela databasen med den valda backupen. En säkerhetskopia av nuvarande data skapas automatiskt. Appen startar om efter återställning."
+        confirmLabel="Välj backup-fil"
+        variant="warning"
+        onConfirm={async () => {
+          setShowRestoreConfirm(false)
+          setIsRestoring(true)
+          setBackupMessage(null)
+          try {
+            const result = await window.api.backupRestore()
+            if (!result.restored && result.message) {
+              setBackupMessage(result.message)
+            }
+            // If restored=true, app relaunches — we never reach here
+          } catch {
+            setBackupMessage('Kunde inte återställa backup.')
+          } finally {
+            setIsRestoring(false)
+          }
+        }}
+      />
     </div>
   )
 }

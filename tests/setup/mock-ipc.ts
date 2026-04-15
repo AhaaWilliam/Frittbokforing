@@ -23,6 +23,7 @@ const NO_SCHEMA_CHANNELS = [
   'fiscal-year:list',
   'opening-balance:re-transfer',
   'backup:create',
+  'backup:restore-dialog',
   'settings:get',
   'settings:set',
 ] as const
@@ -74,6 +75,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   accountToggleActive: 'account:toggle-active',
   // Backup
   backupCreate: 'backup:create',
+  backupRestore: 'backup:restore-dialog',
   // Invoices
   saveDraft: 'invoice:save-draft',
   getDraft: 'invoice:get-draft',

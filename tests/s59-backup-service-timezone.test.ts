@@ -12,10 +12,23 @@ vi.mock('electron', () => ({
     getFocusedWindow: () => null,
     getAllWindows: () => [{}],
   },
+  app: {
+    relaunch: vi.fn(),
+    exit: vi.fn(),
+  },
 }))
 
 vi.mock('../src/main/utils/e2e-helpers', () => ({
   getE2EFilePath: () => null,
+}))
+
+vi.mock('electron-log/main', () => ({
+  default: { info: vi.fn(), error: vi.fn() },
+}))
+
+vi.mock('../src/main/db', () => ({
+  closeDb: vi.fn(),
+  getDbPath: () => '/tmp/mock-db-path.db',
 }))
 
 import { dialog } from 'electron'
