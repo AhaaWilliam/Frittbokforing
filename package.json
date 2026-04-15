@@ -29,7 +29,8 @@
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' 'tests/**/*.ts' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "dump:source": "node scripts/dump-source.mjs",
-    "check:m131": "bash scripts/m131-check.sh"
+    "check:m131": "bash scripts/m131-check.sh",
+    "check:m133": "node scripts/check-m133.mjs"
   },
   "keywords": [
     "bokföring",
