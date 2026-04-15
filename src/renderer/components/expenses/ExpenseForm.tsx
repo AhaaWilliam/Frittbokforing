@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react'
+import { useMemo, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import type {
   ExpenseWithLines,
@@ -11,6 +11,7 @@ import {
   addDaysLocal,
 } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { errorIdFor } from '../../lib/a11y'
 import { SupplierPicker } from './SupplierPicker'
 import {
   useCompany,
@@ -190,6 +191,22 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
   // Totals computed by ExpenseTotals component (per-rad avrundning, M129)
 
+  // F49: Focus-management on submit failure
+  const formRef = useRef<HTMLDivElement>(null)
+  const submitCountRef = useRef(0)
+
+  const handleSubmitWithFocus = useCallback(async () => {
+    submitCountRef.current += 1
+    await form.handleSubmit()
+  }, [form.handleSubmit])
+
+  useEffect(() => {
+    if (submitCountRef.current === 0) return
+    if (Object.keys(form.errors).length === 0) return
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    firstInvalid?.focus()
+  }, [form.errors])
+
   async function handleDelete() {
     if (!expenseId) return
     const confirmed = window.confirm('Vill du verkligen ta bort detta utkast?')
@@ -203,10 +220,10 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
+    <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
       <div className="space-y-6 px-8 py-6">
         {form.submitError && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {form.submitError}
           </div>
         )}
@@ -219,19 +236,22 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
           <SupplierPicker
             value={form.getField('_supplier') as ExpenseFormState['_supplier']}
             onChange={handleSupplierChange}
+            aria-invalid={!!form.errors._supplier}
+            aria-describedby={form.errors._supplier ? errorIdFor('expense-supplier') : undefined}
           />
           {form.errors._supplier && (
-            <p className="mt-1 text-xs text-red-600">{form.errors._supplier}</p>
+            <p role="alert" id={errorIdFor('expense-supplier')} className="mt-1 text-xs text-red-600">{form.errors._supplier}</p>
           )}
         </div>
 
         {/* Supplier invoice number + dates */}
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="expense-supplier-invoice-number" className="mb-1 block text-sm font-medium">
               Leverant&ouml;rsfakturanr
             </label>
             <input
+              id="expense-supplier-invoice-number"
               type="text"
               value={form.getField('supplierInvoiceNumber') as string}
               onChange={(e) =>
@@ -257,10 +277,11 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             )}
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="expense-payment-terms" className="mb-1 block text-sm font-medium">
               Betalningsvillkor
             </label>
             <select
+              id="expense-payment-terms"
               value={form.getField('paymentTerms') as number}
               onChange={(e) =>
                 handlePaymentTermsChange(parseInt(e.target.value, 10))
@@ -275,10 +296,11 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="expense-due-date" className="mb-1 block text-sm font-medium">
               F&ouml;rfallodatum
             </label>
             <input
+              id="expense-due-date"
               type="date"
               readOnly
               value={form.getField('dueDate') as string}
@@ -289,18 +311,21 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
         {/* Description */}
         <div>
-          <label className="mb-1 block text-sm font-medium">Beskrivning</label>
+          <label htmlFor="expense-description" className="mb-1 block text-sm font-medium">Beskrivning</label>
           <input
+            id="expense-description"
             type="text"
             value={form.getField('description') as string}
             onChange={(e) =>
               form.setField('description', e.target.value as ExpenseFormState['description'])
             }
             placeholder="T.ex. kontorsmaterial, konsulttj&auml;nst..."
+            aria-invalid={form.errors.description ? true : undefined}
+            aria-describedby={form.errors.description ? errorIdFor('expense-description') : undefined}
             className={inputClass}
           />
           {form.errors.description && (
-            <p className="mt-1 text-xs text-red-600">{form.errors.description}</p>
+            <p role="alert" id={errorIdFor('expense-description')} className="mt-1 text-xs text-red-600">{form.errors.description}</p>
           )}
         </div>
 
@@ -315,10 +340,10 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
                 <th className="px-2 py-2 w-24">Pris (kr)</th>
                 <th className="px-2 py-2 w-32">Moms</th>
                 <th className="px-2 py-2 w-24 text-right">Summa</th>
-                <th className="px-2 py-2 w-10" />
+                <th className="px-2 py-2 w-10"><span className="sr-only">Åtgärd</span></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody aria-live="polite">
               {lines.map((line, i) => (
                 <ExpenseLineRow
                   key={line.temp_id}
@@ -340,7 +365,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             L&auml;gg till rad
           </button>
           {form.errors.lines && (
-            <p className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+            <p role="alert" id={errorIdFor('expense-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
           )}
         </div>
 
@@ -349,8 +374,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
         {/* Notes */}
         <div>
-          <label className="mb-1 block text-sm font-medium">Anteckningar</label>
+          <label htmlFor="expense-notes" className="mb-1 block text-sm font-medium">Anteckningar</label>
           <textarea
+            id="expense-notes"
             value={form.getField('notes') as string}
             onChange={(e) =>
               form.setField('notes', e.target.value as ExpenseFormState['notes'])
@@ -364,7 +390,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
         <div className="flex items-center gap-3 border-t pt-4">
           <button
             type="button"
-            onClick={() => form.handleSubmit()}
+            onClick={() => handleSubmitWithFocus()}
             disabled={!activeFiscalYear || form.isSubmitting}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >

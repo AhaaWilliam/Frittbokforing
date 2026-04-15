@@ -49,7 +49,7 @@ async function renderForm() {
 
   const result = await renderWithProviders(
     <ExpenseForm onSave={onSave} onCancel={onCancel} />,
-    { axeCheck: false },
+    {},
   )
 
   return { ...result, onSave, onCancel }

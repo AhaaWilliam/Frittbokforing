@@ -119,7 +119,7 @@ async function renderForm(expenseId?: number, draftOverrides?: Parameters<typeof
 
   const result = await renderWithProviders(
     <ExpenseForm expenseId={expenseId} onSave={onSave} onCancel={onCancel} />,
-    { axeCheck: false, queryClient },
+    { queryClient },
   )
 
   return { ...result, onSave, onCancel }

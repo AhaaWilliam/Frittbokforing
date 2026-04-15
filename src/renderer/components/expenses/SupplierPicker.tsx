@@ -9,12 +9,15 @@ interface SupplierPickerProps {
     default_payment_terms: number
   }) => void
   disabled?: boolean
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
 }
 
 export function SupplierPicker({
   value,
   onChange,
   disabled,
+  ...ariaProps
 }: SupplierPickerProps) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -121,6 +124,8 @@ export function SupplierPicker({
         placeholder="Sök leverantör..."
         disabled={disabled}
         aria-label="Sök leverantör"
+        aria-invalid={ariaProps['aria-invalid'] || undefined}
+        aria-describedby={ariaProps['aria-describedby']}
         className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
       />
       {open && (
