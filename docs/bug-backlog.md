@@ -8,7 +8,7 @@ Denna fil innehåller findings från djupanalysen som föregick Sprint 11 (Sessi
 - Fas 1: F27 → Session 41 ✅
 - Fas 2: F26, F2, F1 → Session 42 ✅
 - Fas 3: F19, F4 → Sprint 24b ✅
-- Fas 4: F3, F9 → pending
+- Fas 4: F3, F9 → Session 44 ✅
 - Fas 5a: F11, F17 → Session 45 ✅
 - Fas 5b: F21, F22, F33 → Session 46 ✅
 - Fas 5c: F23 → Session 47 ✅
@@ -79,15 +79,15 @@ fixad i Sprint 11 S43 (M98). Sprint 24b fixade kvarvarande ORDER BY + localeComp
 
 ## Medel — Öresutjämning & felkoder (Fas 4)
 
-### F3 — Små restbelopp kan inte betalas fullständigt 🟡 Fas 4
-**Filer:** `payInvoice`, `payExpense`
-**Problem:** Guard `remaining > ROUNDING_THRESHOLD * 2` låser ut fullbetalning av restbelopp ≤ 100 öre.
-**Fix:** Ändra till `Math.abs(diff) < remaining`.
+### F3 — Små restbelopp kan inte betalas fullständigt ✅ Session 44
+**Stängd:** Sprint 11 Fas 4 (S44). Guard `remaining > ROUNDING_THRESHOLD * 2` borttagen, ersatt med `remaining > 0`. Öresutjämning aktiveras nu korrekt för alla fullbetalningar inom ±50 öre.
+**Rule:** M99
+**Not:** Var redan fixad men inte markerad som stängd i backloggen. Upptäckt vid S24b backlog-audit.
 
-### F9 — validateAccountsActive ger generic error 🟡 Fas 4
-**Fil:** `account-service.ts`
-**Problem:** `throw new Error(...)` ger `TRANSACTION_ERROR`-kod till frontend. Användaren ser inte vilka konton som är inaktiva.
-**Fix:** Structured throw med `code: 'ACCOUNT_INACTIVE'` + `inactiveAccounts: string[]`. Uppdatera finalize-handlers att fånga den separat.
+### F9 — validateAccountsActive ger generic error ✅ Session 44
+**Stängd:** Sprint 11 Fas 4 (S44). Kastar nu strukturerat `{ code: 'INACTIVE_ACCOUNT', error, field: 'account_number' }` istället för plain Error. Alla tre finalize-flöden (invoice, expense, manual-entry) returnerar korrekt felkod.
+**Rule:** M100
+**Not:** Var redan fixad men inte markerad som stängd i backloggen. Upptäckt vid S24b backlog-audit.
 
 ---
 
@@ -143,9 +143,9 @@ fixad i Sprint 11 S43 (M98). Sprint 24b fixade kvarvarande ORDER BY + localeComp
 **Fil:** `invoice-service.ts`, `expense-service.ts`
 **Fix:** Ta bort `ensureInvoiceIndexes`/`ensureExpenseIndexes`, behåll bara i migrationen.
 
-### F14 — manual-entry-service litar på IPC-validering 🟢
-**Fil:** `manual-entry-service.ts`
-**Fix:** Lägg till Zod-parse i service-funktionerna för konsistens med andra services.
+### F14 — manual-entry-service litar på IPC-validering ✅ Stale-close
+**Stängd:** Service har egen validering (balanschecker, datumvalidering, FY-bounds, periodkontroll, kontoexistens). Inte enbart IPC-beroende.
+**Not:** Var redan fixad men inte markerad. Upptäckt vid S24b backlog-audit.
 
 ### F20 — VAT-report SQL-string-interpolation 🟢
 **Fil:** `vat-report-service.ts`
@@ -314,3 +314,5 @@ När en bug hittas under en session:
 - **2026-04-14:** Sprint 22a — F46 stängd (max-qty UX-guard, 9 tester). F46b öppnad (DB-CHECK defense-in-depth).
 - **2026-04-14:** Sprint 22b — F49 research klar. Strategi-dokument + baseline-rapport. Arkitektur D, 14 ytor, M133-kandidat.
 - **2026-04-15:** Sprint 22c — F49 stängd (8 commits). axeCheck:false 4→0. M133 etablerad. F49-b öppnad.
+- **2026-04-15:** Sprint 24b — F19 stängd (M134), F4 stängd (compareAccountNumbers + CAST ORDER BY).
+- **2026-04-15:** S24b backlog-audit mot M1–M134: F3 (M99), F9 (M100), F14 stale-closed. 3 findings var redan fixade men inte markerade. Ny rutin: audit findings mot M-regler vid sprint-avslut.
