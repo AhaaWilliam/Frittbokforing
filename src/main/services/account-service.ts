@@ -30,7 +30,7 @@ export function listAccounts(
     params.push(input.is_active ? 1 : 0)
   }
 
-  sql += ' ORDER BY account_number ASC'
+  sql += ' ORDER BY CAST(account_number AS INTEGER) ASC'
   return db.prepare(sql).all(...params) as Account[]
 }
 
@@ -46,7 +46,7 @@ export function listAllAccounts(
     params.push(input.is_active ? 1 : 0)
   }
 
-  sql += ' ORDER BY account_number ASC'
+  sql += ' ORDER BY CAST(account_number AS INTEGER) ASC'
   return db.prepare(sql).all(...params) as Account[]
 }
 

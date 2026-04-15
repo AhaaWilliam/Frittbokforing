@@ -155,7 +155,7 @@ export function getUsedAccounts(
        WHERE je.fiscal_year_id = ? AND je.status = 'booked'
      )
      OR a.is_active = 1
-     ORDER BY a.account_number`,
+     ORDER BY CAST(a.account_number AS INTEGER)`,
     )
     .all(fiscalYearId) as AccountInfo[]
 }
@@ -217,7 +217,7 @@ export function getMonthlyTotals(
      JOIN journal_entries je ON jel.journal_entry_id = je.id
      WHERE ${conditions.join(' AND ')}
      GROUP BY jel.account_number, strftime('%Y-%m', je.journal_date)
-     ORDER BY jel.account_number, month`,
+     ORDER BY CAST(jel.account_number AS INTEGER), month`,
     )
     .all(...params) as MonthlyTotal[]
 }

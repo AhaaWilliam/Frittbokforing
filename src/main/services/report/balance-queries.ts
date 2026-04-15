@@ -40,7 +40,7 @@ export function getAccountBalances(
       LEFT JOIN accounts a ON jel.account_number = a.account_number
       WHERE ${conditions.join(' AND ')}
       GROUP BY jel.account_number
-      ORDER BY jel.account_number`,
+      ORDER BY CAST(jel.account_number AS INTEGER)`,
     )
     .all(...params) as AccountBalance[]
 }

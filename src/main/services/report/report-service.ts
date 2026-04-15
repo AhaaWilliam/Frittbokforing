@@ -12,6 +12,7 @@ import {
   getOpeningBalancesFromPreviousYear,
   getBalanceAtDate,
 } from '../export/export-data-queries'
+import { compareAccountNumbers } from '../../../shared/account-number'
 import type {
   AccountBalance,
   IncomeStatementResult,
@@ -124,7 +125,7 @@ export function getBalanceSheet(
     }
   }
 
-  bsBalances.sort((a, b) => a.account_number.localeCompare(b.account_number))
+  bsBalances.sort((a, b) => compareAccountNumbers(a.account_number, b.account_number))
 
   // 4. Build asset groups
   const assetGroups = buildGroups(BALANCE_SHEET_ASSETS_CONFIG, bsBalances)
