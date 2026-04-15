@@ -144,6 +144,9 @@ export function getUsedAccounts(
   db: Database.Database,
   fiscalYearId: number,
 ): AccountInfo[] {
+  // F25: only accounts with booked entries in this FY or IB from previous FY
+  // (not all active accounts — that bloats exports for unused chart entries)
+  const prevFyId = getPreviousFiscalYearId(db, fiscalYearId)
   return db
     .prepare(
       `SELECT DISTINCT a.account_number, a.name
@@ -154,10 +157,15 @@ export function getUsedAccounts(
        JOIN journal_entries je ON jel.journal_entry_id = je.id
        WHERE je.fiscal_year_id = ? AND je.status = 'booked'
      )
-     OR a.is_active = 1
+     OR (? IS NOT NULL AND a.account_number IN (
+       SELECT DISTINCT jel2.account_number
+       FROM journal_entry_lines jel2
+       JOIN journal_entries je2 ON jel2.journal_entry_id = je2.id
+       WHERE je2.fiscal_year_id = ? AND je2.status = 'booked'
+     ))
      ORDER BY CAST(a.account_number AS INTEGER)`,
     )
-    .all(fiscalYearId) as AccountInfo[]
+    .all(fiscalYearId, prevFyId, prevFyId) as AccountInfo[]
 }
 
 export function getOpeningBalancesFromPreviousYear(
