@@ -22,6 +22,7 @@ import {
   type ManualEntrySavePayload,
   type ManualEntryLineForm,
 } from '../../lib/form-schemas/manual-entry'
+import { calculateManualEntryTotals, formatDiffLabel } from '../../lib/manual-entry-calcs'
 
 // === Helpers ===
 
@@ -123,9 +124,8 @@ export function ManualEntryForm({
   }, [accounts])
 
   // Derived state (totals + balance indicator)
-  const totalDebit = lines.reduce((sum, l) => sum + parseSwedishAmount(l.debitKr), 0)
-  const totalCredit = lines.reduce((sum, l) => sum + parseSwedishAmount(l.creditKr), 0)
-  const diff = totalDebit - totalCredit
+  const { totalDebit, totalCredit, diff } = calculateManualEntryTotals(lines)
+  const diffLabel = formatDiffLabel(diff)
   const canFinalize = (form.getField('entryDate') as string) !== '' &&
     lines.filter(l => parseSwedishAmount(l.debitKr) > 0 || parseSwedishAmount(l.creditKr) > 0).length >= 2 &&
     diff === 0
@@ -341,10 +341,14 @@ export function ManualEntryForm({
           <span className="text-muted-foreground">Differens:</span>{' '}
           <span
             className={`font-medium font-mono ${
-              diff === 0 ? 'text-green-600' : 'text-red-600'
+              diffLabel.balanced ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            {formatKr(Math.abs(diff))}
+            {diff === 0
+              ? formatKr(0)
+              : diff > 0
+                ? `${formatKr(diff)} (debet > kredit)`
+                : `${formatKr(Math.abs(diff))} (kredit > debet)`}
           </span>
         </span>
       </div>
