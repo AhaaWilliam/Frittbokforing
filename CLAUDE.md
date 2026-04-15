@@ -345,6 +345,15 @@ Referens: `tests/s24b-br-rr-consistency.test.ts` (all-consumers-identical),
 `tests/s25-vat-parity.test.ts` (renderer↔backend VAT),
 `tests/fixtures/vat-scenarios.ts` (delad fixture-mall).
 
+## 41. Renderer form-types använder _kr-suffix (M136)
+
+**M136.** Form-types (`*Form`-suffix i `src/renderer/lib/form-schemas/`)
+använder `_kr`-suffix för prisfält (t.ex. `unit_price_kr`). Användaren
+matar in kronor; konvertering till öre sker i form-transformern vid submit.
+`_kr`-data får ALDRIG korsa IPC-gränsen — IPC-scheman använder uteslutande
+`_ore`-suffix. Denna konvention kompletterar M119 (öre i SQLite) med
+renderer-sidans spegelbild.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
