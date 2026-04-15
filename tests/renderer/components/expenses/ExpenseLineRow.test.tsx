@@ -308,6 +308,17 @@ describe('ExpenseLineRow — edge cases', () => {
   })
 })
 
+// ── Grupp 5b: F35 — HTML min-attribut ───────────────────────────────
+
+describe('ExpenseLineRow — F35 quantity min', () => {
+  it('quantity input has min=1 (M130: expense qty integer >= 1)', async () => {
+    const props = makeProps()
+    await renderRow(props)
+    const input = screen.getByLabelText('Antal')
+    expect(input).toHaveAttribute('min', '1')
+  })
+})
+
 // ── Grupp 6: F47 precision — M131 Alt B (Sprint 21 S68b, defensiv) ────
 //
 // ExpenseLineRow är Alt B-beräknad som defensiv M131-efterlevnad.

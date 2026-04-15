@@ -64,7 +64,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
       <td className="px-2 py-1">
         <input
           type="number"
-          min={0}
+          min={1}
           step={1}
           value={line.quantity}
           onChange={(e) =>
