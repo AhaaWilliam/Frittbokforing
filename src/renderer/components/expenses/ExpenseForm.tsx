@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useEffect } from 'react'
+import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type {
   ExpenseWithLines,
@@ -35,6 +35,7 @@ import {
 } from '../../lib/form-schemas/expense'
 import { ExpenseLineRow } from './ExpenseLineRow'
 import { ExpenseTotals } from './ExpenseTotals'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 // === Helpers ===
 
@@ -116,6 +117,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
   const isEditing = !!expenseId
   const isDeleting = deleteDraft.isPending
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const initialData = useMemo(
     () => (existingDraft ? buildInitialData(existingDraft, vatCodes) : undefined),
@@ -209,10 +211,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
     firstInvalid?.focus()
   }, [form.errors])
 
-  async function handleDelete() {
+  async function handleDeleteConfirmed() {
     if (!expenseId) return
-    const confirmed = window.confirm('Vill du verkligen ta bort detta utkast?')
-    if (!confirmed) return
+    setShowDeleteConfirm(false)
     try {
       await deleteDraft.mutateAsync({ id: expenseId })
       onSave()
@@ -418,7 +419,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
           {isEditing && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
               className="ml-auto rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
@@ -427,6 +428,15 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Ta bort utkast"
+        description="Vill du verkligen ta bort detta utkast? Åtgärden kan inte ångras."
+        confirmLabel="Ta bort"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+      />
     </div>
   )
 }

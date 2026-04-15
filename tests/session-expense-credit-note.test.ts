@@ -53,7 +53,7 @@ function createFinalizedExpense(testDb: Database.Database, seed: ReturnType<type
   if (!result.success) throw new Error('Draft failed: ' + result.error)
   const fResult = finalizeExpense(testDb, result.data.id)
   if (!fResult.success) throw new Error('Finalize failed: ' + fResult.error)
-  return { id: result.data.id, ...fResult.data }
+  return { ...fResult.data, id: result.data.id }
 }
 
 beforeEach(() => { db = createTestDb() })

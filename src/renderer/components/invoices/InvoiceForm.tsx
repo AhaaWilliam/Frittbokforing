@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback, useEffect } from 'react'
+import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { InvoiceWithLines } from '../../../shared/types'
 import { toKr, todayLocal, addDaysLocal } from '../../lib/format'
@@ -25,6 +25,7 @@ import { errorIdFor } from '../../lib/a11y'
 import { CustomerPicker } from './CustomerPicker'
 import { InvoiceLineRow } from './InvoiceLineRow'
 import { InvoiceTotals } from './InvoiceTotals'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 // === Helpers ===
 
@@ -75,6 +76,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   const updateDraft = useUpdateDraft(activeFiscalYear?.id)
   const deleteDraft = useDeleteDraft(activeFiscalYear?.id)
   const { data: nextNum } = useNextInvoiceNumber(activeFiscalYear?.id)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const initialData = useMemo(
     () => (draft ? buildInitialData(draft, vatCodes) : undefined),
@@ -160,10 +162,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     firstInvalid?.focus()
   }, [form.errors])
 
-  async function handleDelete() {
+  async function handleDeleteConfirmed() {
     if (!draft) return
-    const confirmed = window.confirm('Vill du verkligen ta bort detta utkast?')
-    if (!confirmed) return
+    setShowDeleteConfirm(false)
     try {
       await deleteDraft.mutateAsync({ id: draft.id })
       onSave()
@@ -351,7 +352,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
           {draft && draft.status === 'draft' && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
               className="ml-auto rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
@@ -360,6 +361,15 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Ta bort utkast"
+        description="Vill du verkligen ta bort detta utkast? Åtgärden kan inte ångras."
+        confirmLabel="Ta bort"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+      />
     </div>
   )
 }

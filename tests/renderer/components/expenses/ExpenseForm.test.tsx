@@ -594,36 +594,51 @@ describe('ExpenseForm — save-kontrakt', () => {
 
 describe('ExpenseForm — delete-flow', () => {
   it('C10.1: delete confirm=true → expense:delete-draft + onSave() + onCancel not-called', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-
     const { onSave, onCancel } = await renderForm(42)
 
+    // Click "Ta bort" to open confirm dialog
     await act(async () => {
       fireEvent.click(screen.getByText('Ta bort'))
     })
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1)
-    expect(window.api.deleteExpenseDraft).toHaveBeenCalledTimes(1)
-    expect(onSave).toHaveBeenCalledTimes(1)
-    expect(onCancel).not.toHaveBeenCalled()
+    // Confirm dialog should appear
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
 
-    confirmSpy.mockRestore()
+    // Click confirm button in dialog
+    await act(async () => {
+      fireEvent.click(screen.getAllByText('Ta bort').find(
+        (el) => el.closest('[role="alertdialog"]'),
+      )!)
+    })
+
+    await waitFor(() => {
+      expect(window.api.deleteExpenseDraft).toHaveBeenCalledTimes(1)
+      expect(onSave).toHaveBeenCalledTimes(1)
+      expect(onCancel).not.toHaveBeenCalled()
+    })
   })
 
   it('C10.2: delete confirm=false → IPC ej anropad, onSave ej anropad', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
-
     const { onSave } = await renderForm(42)
 
+    // Click "Ta bort" to open confirm dialog
     await act(async () => {
       fireEvent.click(screen.getByText('Ta bort'))
     })
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    // Confirm dialog should appear
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+
+    // Click cancel in the dialog (not the form's Avbryt)
+    const dialog = screen.getByRole('alertdialog')
+    await act(async () => {
+      fireEvent.click(dialog.querySelector('button')!)
+    })
+
+    // Dialog closed, no IPC call
+    expect(screen.queryByRole('alertdialog')).toBeNull()
     expect(window.api.deleteExpenseDraft).not.toHaveBeenCalled()
     expect(onSave).not.toHaveBeenCalled()
-
-    confirmSpy.mockRestore()
   })
 
   it('C10.3: delete-knapp ej synlig i create-mode', async () => {

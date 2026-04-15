@@ -501,21 +501,28 @@ describe('InvoiceForm — save-kontrakt', () => {
 
 describe('InvoiceForm — delete-flow', () => {
   it('C8.1: delete i edit-mode → confirm + IPC + onSave', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     const draft = makeDraft()
     const { onSave, onCancel } = await renderForm(draft)
 
+    // Click "Ta bort" to open confirm dialog
     await act(async () => {
       fireEvent.click(screen.getByText('Ta bort'))
     })
 
-    await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalledTimes(1)
-      expect(onSave).toHaveBeenCalledTimes(1)
-      expect(onCancel).not.toHaveBeenCalled() // delete följer save-vägen
+    // Confirm dialog should appear
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+
+    // Click confirm button in dialog
+    await act(async () => {
+      fireEvent.click(screen.getAllByText('Ta bort').find(
+        (el) => el.closest('[role="alertdialog"]'),
+      )!)
     })
 
-    confirmSpy.mockRestore()
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledTimes(1)
+      expect(onCancel).not.toHaveBeenCalled()
+    })
   })
 
   it('C8.2: delete-knapp ej synlig i create-mode', async () => {
@@ -525,18 +532,26 @@ describe('InvoiceForm — delete-flow', () => {
   })
 
   it('C8.3: användaren avbryter confirm → IPC ej anropad, onSave ej anropad', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
     const draft = makeDraft()
     const { onSave, onCancel } = await renderForm(draft)
 
+    // Click "Ta bort" to open confirm dialog
     await act(async () => {
       fireEvent.click(screen.getByText('Ta bort'))
     })
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    // Confirm dialog should appear
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+
+    // Click cancel in the dialog (not the form's Avbryt)
+    const dialog = screen.getByRole('alertdialog')
+    await act(async () => {
+      fireEvent.click(dialog.querySelector('button')!)
+    })
+
+    // Dialog should close, no IPC call
+    expect(screen.queryByRole('alertdialog')).toBeNull()
     expect(onSave).not.toHaveBeenCalled()
     expect(onCancel).not.toHaveBeenCalled()
-
-    confirmSpy.mockRestore()
   })
 })
