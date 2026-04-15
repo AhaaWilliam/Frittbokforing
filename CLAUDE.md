@@ -354,6 +354,63 @@ matar in kronor; konvertering till öre sker i form-transformern vid submit.
 `_ore`-suffix. Denna konvention kompletterar M119 (öre i SQLite) med
 renderer-sidans spegelbild.
 
+## 42. Sign-flip-doktrin: belopp alltid positiva i DB (M137)
+
+**M137.** Alla belopp i `invoices`, `invoice_lines`, `expenses` och
+`expense_lines` lagras som positiva heltal (öre). Domän-semantik —
+om en transaktion representerar en reversering (kreditfaktura, retur,
+makulering) — appliceras **enbart** i journal-byggaren (`buildJournalLines`)
+genom att byta vilken sida som får debet respektive kredit.
+
+**Varför:**
+- CHECK-constraints (`>= 0`) behöver inte modifieras per transaktionstyp
+- Aggregeringar (`SUM(total_amount_ore)`, `SUM(paid_amount_ore)`) förblir
+  triviala — inga sign-aware `CASE WHEN`-villkor
+- Dashboard, VAT-rapport och export-logik fungerar utan ändringar
+- PDF visar naturligt positiva belopp med korrekt rubrik
+
+**Konsekvens:** Framtida entiteter med "negativ" semantik (leverantörs-
+kreditnotor, returer, makuleringar) följer samma mönster: positiva belopp
+i DB, omvänd D/K i journal-byggaren.
+
+**Referens:** Sprint 28 `buildJournalLines` (invoice-service.ts), `isCreditNote`-
+flagga som swappar `debit_ore`/`credit_ore` per rad.
+
+## 43. Defense-in-depth för irreversibla relationer (M138)
+
+**M138.** När en relation är irreversibel (t.ex. kreditfaktura → original,
+framtida: makulering → original) ska skyddet finnas i **fyra oberoende
+lager**:
+
+1. **DB-constraint:** FK (`credits_invoice_id REFERENCES invoices(id)`)
+2. **Service-validering:** subquery-guard (`SELECT id FROM invoices WHERE
+   credits_invoice_id = ? LIMIT 1`) + typ-guard (`invoice_type !== 'credit_note'`)
+3. **UI-döljning:** knappen döljs (`!item.has_credit_note`)
+4. **Visuell indikator:** badge ("Krediterad") som kommunicerar status
+
+Varje lager kan kringgås isolerat — FK skyddar inte mot UI-dubbelklick,
+UI-döljning skyddar inte mot API-anrop, service-guard skyddar inte mot
+direkt SQL. Alla fyra behövs.
+
+**Konsekvens:** Framtida irreversibla relationer (makulering, arkivering)
+ska implementera alla fyra lagren.
+
+## 44. Cross-reference i verifikationstext (M139)
+
+**M139.** När en transaktion semantiskt refererar en annan (kreditfaktura
+→ originalfaktura, korrigeringsverifikat → originalverifikat) ska referensen
+finnas **i verifikationstexten** (`journal_entries.description`), inte bara
+i en relationstabell.
+
+Format: `Kreditfaktura #3 — Acme AB (avser faktura #1)`
+
+**Varför:** SIE4/SIE5-export inkluderar `description` men inte applikations-
+specifika FK-relationer. Utan referens i texten går spårbarheten förlorad
+för revisorn som arbetar i ett annat system.
+
+**Konsekvens:** Framtida korsrefererade transaktioner (korrigeringsverifikat,
+makuleringar) inkluderar referens i description-fältet.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
