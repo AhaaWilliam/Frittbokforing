@@ -18,3 +18,4 @@ e2e/playwright-report/
 fritt-bokforing-source-dump.txt
 notion-diffs/
 notion-snapshots/
+.s24a-tmp/
