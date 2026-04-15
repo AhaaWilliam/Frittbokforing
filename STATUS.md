@@ -1,5 +1,33 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 29 -- UX-polish + Kontoutdrag ✅ KLAR
+
+Session S29. 7 findings stängda (F50–F56) + 2 features (B1 testhardering, B2 kontoutdrag-service).
+
+**Testbaslinje:** 1566 → 1604 vitest (+38). 150 testfiler.
+**PRAGMA user_version:** 30 (oförändrat — inga nya migrationer).
+**Nya komponenter:** ConfirmDialog, Tooltip, AccountStatementService.
+
+### Del A: UX-fixar
+| Finding | Fix |
+|---------|-----|
+| F50 | ConfirmDialog ersätter window.confirm i InvoiceForm + ExpenseForm. 7 tester. |
+| F51 | Företagsnamn/org.nr redan read-only i UI — ingen ändring krävs. |
+| F52 | Backup-restore: validering, pre-restore-backup, atomic rename, user_version-hantering. 8 tester. |
+| F53 | YearPicker timezone-fix: string-slice istället för new Date().getFullYear(). |
+| F54 | Tooltip-komponent med aria-describedby + hover/focus. 6 tester. |
+| F55 | A11y: M133 rent, inga nya violations. |
+| F56 | minWidth: 900, minHeight: 600 på BrowserWindow. |
+
+### Del B: Features
+| Feature | Scope |
+|---------|-------|
+| B1 | 6 tester: partiell kreditering med justerad qty, blandade momssatser 25%+12%, balanscheck. |
+| B2 | AccountStatementService: running balance från 0, O-serie sorterad först, named params, datumfilter. 7 tester. UI-sida ej inkluderad — service+IPC klart. |
+
+### Backlog: 0 öppna findings
+Alla F50–F56 stängda. B2 renderer-sida kvarstår som feature-backlog (ej bug).
+
 ## Sprint 27 -- TSC strict + Fas 6 cleanup ✅ KLAR
 
 Session S27. TSC strict: 37→0 fel (alla i testfiler). Fas 6: alla 5 kvarvarande
@@ -165,11 +193,11 @@ PRAGMA user_version = 27, 22 tabeller.
 | S59 | F9: Timezone-konsolidering | KLAR |
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
-## Nasta sprint -- Fas 6 cleanup-batch eller S24c (CHECK-constraint account_number)
+## Nasta sprint -- Sprint 30: Kontoutdrag-UI + Global sökning + Korrigeringsverifikat
 
 ## Test-count
-- Vitest (system + unit): 1550 passed, 2 skipped (1552 totalt)
-- Testfiler: 143
+- Vitest (system + unit): 1604 passed, 2 skipped (1606 totalt)
+- Testfiler: 150
 - Playwright E2E: 11 (kors separat)
 - Korning: ~15s
 - TSC: 0 errors (`npm run typecheck`)
@@ -250,6 +278,7 @@ test-filer undantagna.
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
 
 ## Tidigare sprintar
+- Sprint 29 (S29): UX-polish + Kontoutdrag — F50–F56, B1 tester, B2 service -- KLAR
 - Sprint 27 (S27): TSC strict + Fas 6 cleanup — 0 tsc-fel, 0 findings -- KLAR
 - Sprint 26 (S26): B-light — F35, F38, F8 stängda, CI etablerad -- KLAR
 - Sprint 25 (S25): F40 VAT-testhardering -- KLAR

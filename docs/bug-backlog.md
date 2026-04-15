@@ -290,6 +290,36 @@ eftersom webbläsarens number-input aldrig returnerar komma-format till JS.
 
 ---
 
+## Sprint 29 findings (2026-04-15)
+
+### F50 — window.confirm ersatt med ConfirmDialog ✅ Sprint 29
+**Filer:** InvoiceForm.tsx, ExpenseForm.tsx
+**Fix:** Ny ConfirmDialog-komponent med role="alertdialog", fokus-trap, Escape. 7 tester.
+
+### F51 — Företagsredigering historisk integritet ✅ Sprint 29
+**Status:** Stängd — företagsnamn och org.nr redan read-only i PageSettings UI.
+
+### F52 — Backup-restore ✅ Sprint 29
+**Fil:** backup-service.ts
+**Fix:** Fullständig restore med validering (SQLite, schema, integrity), pre-restore-backup, atomic rename, user_version-migrering. 8 tester.
+
+### F53 — YearPicker timezone-fix ✅ Sprint 29
+**Fil:** YearPicker.tsx
+**Fix:** String-slice istället för new Date(fy.start_date).getFullYear(). Förhindrar att FY-start Jan 1 visar fel år i UTC+1.
+
+### F54 — Tooltip-komponent ✅ Sprint 29
+**Fil:** Tooltip.tsx
+**Fix:** A11y-korrekt tooltip med aria-describedby, hover+focus. 6 tester.
+
+### F55 — A11y-pass ✅ Sprint 29
+**Status:** M133 rent, inga nya violations.
+
+### F56 — Minimum fönsterstorlek ✅ Sprint 29
+**Fil:** index.ts
+**Fix:** minWidth: 900, minHeight: 600.
+
+---
+
 ## Process för att lägga till nya findings
 
 När en bug hittas under en session:
@@ -322,3 +352,4 @@ När en bug hittas under en session:
 - **2026-04-15:** S24b backlog-audit mot M1–M134: F3 (M99), F9 (M100), F14 stale-closed. 3 findings var redan fixade men inte markerade. Ny rutin: audit findings mot M-regler vid sprint-avslut.
 - **2026-04-15:** S25 pre-skoping research: F41 stale-closed (FK + validateAccountsActive hanterar), F43 stale-closed (type="number" normaliserar). F39 pinnad som dokumentations-finding. Totalt 6 stale-closes under S24b/S25 process-audit.
 - **2026-04-15:** Sprint 25 — F40 stängd (18 tester: 6 renderer + 6 backend + 6 parity via shared fixture). M135 etablerad.
+- **2026-04-15:** Sprint 29 — F50 stängd (ConfirmDialog ersätter window.confirm), F51 stängd (name/org redan read-only), F52 stängd (backup-restore), F53 stängd (YearPicker tz-fix), F54 stängd (Tooltip), F55 stängd (a11y rent), F56 stängd (minWidth).
