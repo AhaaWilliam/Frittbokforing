@@ -18,8 +18,8 @@ export function BulkPaymentResultDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
-        <h2 className="mb-2 text-base font-semibold">
+      <div role="dialog" aria-modal="true" aria-labelledby="bulk-result-title" className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+        <h2 id="bulk-result-title" className="mb-2 text-base font-semibold">
           Bulk-betalning {result.status === 'cancelled' ? 'avbruten' : 'klar'}
         </h2>
 

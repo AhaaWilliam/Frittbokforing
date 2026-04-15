@@ -66,8 +66,8 @@ export function BulkPaymentDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-lg bg-background p-6 shadow-xl">
-        <h2 className="mb-4 text-base font-semibold">{title}</h2>
+      <div role="dialog" aria-modal="true" aria-labelledby="bulk-payment-title" className="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-lg bg-background p-6 shadow-xl">
+        <h2 id="bulk-payment-title" className="mb-4 text-base font-semibold">{title}</h2>
 
         {/* Per-row amounts */}
         <div className="mb-4 rounded-md border">
@@ -92,6 +92,7 @@ export function BulkPaymentDialog({
                       step="0.01"
                       value={amounts[row.id] ?? ''}
                       onChange={e => setAmounts(prev => ({ ...prev, [row.id]: e.target.value }))}
+                      aria-label={`Betala ${row.label}`}
                       className="w-28 rounded-md border border-input bg-background px-2 py-1 text-right text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   </td>
@@ -108,8 +109,9 @@ export function BulkPaymentDialog({
         {/* Global fields */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">Betaldatum</label>
+            <label htmlFor="bulk-payment-date" className="mb-1 block text-sm font-medium">Betaldatum</label>
             <input
+              id="bulk-payment-date"
               type="date"
               value={paymentDate}
               onChange={e => setPaymentDate(e.target.value)}
@@ -117,8 +119,9 @@ export function BulkPaymentDialog({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Bankkonto</label>
+            <label htmlFor="bulk-bank-account" className="mb-1 block text-sm font-medium">Bankkonto</label>
             <input
+              id="bulk-bank-account"
               type="text"
               value={accountNumber}
               onChange={e => setAccountNumber(e.target.value)}
@@ -126,8 +129,9 @@ export function BulkPaymentDialog({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Bankavgift (kr)</label>
+            <label htmlFor="bulk-bank-fee" className="mb-1 block text-sm font-medium">Bankavgift (kr)</label>
             <input
+              id="bulk-bank-fee"
               type="number"
               step="0.01"
               min="0"
@@ -138,8 +142,9 @@ export function BulkPaymentDialog({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Notering</label>
+            <label htmlFor="bulk-user-note" className="mb-1 block text-sm font-medium">Notering</label>
             <input
+              id="bulk-user-note"
               type="text"
               value={userNote}
               onChange={e => setUserNote(e.target.value)}

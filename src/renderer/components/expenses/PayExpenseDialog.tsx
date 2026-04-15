@@ -49,8 +49,8 @@ export function PayExpenseDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-4">Registrera betalning</h2>
+      <div role="dialog" aria-modal="true" aria-labelledby="pay-expense-title" className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+        <h2 id="pay-expense-title" className="text-lg font-semibold mb-4">Registrera betalning</h2>
 
         <div className="space-y-2 mb-6 text-sm">
           <div className="flex justify-between">
@@ -81,10 +81,11 @@ export function PayExpenseDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label htmlFor="pay-expense-amount" className="block text-sm font-medium mb-1">
               Belopp (kr)
             </label>
             <input
+              id="pay-expense-amount"
               type="number"
               step="0.01"
               min="0"
@@ -95,8 +96,9 @@ export function PayExpenseDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Datum</label>
+            <label htmlFor="pay-expense-date" className="block text-sm font-medium mb-1">Datum</label>
             <input
+              id="pay-expense-date"
               type="date"
               value={paymentDate}
               max={today}
@@ -106,8 +108,9 @@ export function PayExpenseDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Konto</label>
+            <label htmlFor="pay-expense-account" className="block text-sm font-medium mb-1">Konto</label>
             <select
+              id="pay-expense-account"
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
@@ -119,10 +122,11 @@ export function PayExpenseDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label htmlFor="pay-expense-method" className="block text-sm font-medium mb-1">
               Betalningsmetod
             </label>
             <select
+              id="pay-expense-method"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
@@ -135,10 +139,11 @@ export function PayExpenseDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label htmlFor="pay-expense-bank-fee" className="block text-sm font-medium mb-1">
               Bankavgift (kr)
             </label>
             <input
+              id="pay-expense-bank-fee"
               type="number"
               step="0.01"
               min="0"
@@ -150,7 +155,7 @@ export function PayExpenseDialog({
           </div>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
 
         <div className="flex justify-end gap-3 mt-6">
           <button
