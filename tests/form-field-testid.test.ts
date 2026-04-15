@@ -44,17 +44,17 @@ describe('FormField data-testid', () => {
     expect(() => screen.getByTestId('product-_priceKr')).toThrow()
   })
 
-  it('preserves id={name} for a11y (label htmlFor)', () => {
+  it('id matches formName-strippedName for a11y (label htmlFor)', () => {
     const form = mockForm({ _priceKr: '100' })
     render(
       FormField({ form, formName: 'product', name: '_priceKr', label: 'Pris' }),
     )
     const input = screen.getByTestId('product-priceKr')
-    // id should be the raw name, including underscore
-    expect(input.getAttribute('id')).toBe('_priceKr')
+    // id uses formName-name with leading underscore stripped (same as data-testid)
+    expect(input.getAttribute('id')).toBe('product-priceKr')
     // Label's htmlFor should match the id
     const label = input.closest('div')?.querySelector('label')
-    expect(label?.getAttribute('for')).toBe('_priceKr')
+    expect(label?.getAttribute('for')).toBe('product-priceKr')
   })
 
   it('different formNames produce different testids for same field name', () => {
@@ -86,7 +86,7 @@ describe('FormSelect data-testid', () => {
     )
     const select = screen.getByTestId('customer-type')
     expect(select.tagName).toBe('SELECT')
-    expect(select.getAttribute('id')).toBe('type')
+    expect(select.getAttribute('id')).toBe('customer-type')
   })
 })
 
@@ -103,6 +103,6 @@ describe('FormTextarea data-testid', () => {
     )
     const textarea = screen.getByTestId('product-description')
     expect(textarea.tagName).toBe('TEXTAREA')
-    expect(textarea.getAttribute('id')).toBe('description')
+    expect(textarea.getAttribute('id')).toBe('product-description')
   })
 })

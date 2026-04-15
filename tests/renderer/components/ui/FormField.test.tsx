@@ -37,10 +37,10 @@ describe('FormField', () => {
     await renderWithProviders(<Harness />)
     const input = screen.getByLabelText('Namn')
     expect(input).toBeInTheDocument()
-    expect(input).toHaveAttribute('id', '_name')
+    expect(input).toHaveAttribute('id', 'test-name')
     // Verify label htmlFor matches input id
     const label = input.closest('div')!.querySelector('label')!
-    expect(label).toHaveAttribute('for', '_name')
+    expect(label).toHaveAttribute('for', 'test-name')
   })
 
   it('required indicator shows asterisk when required: true', async () => {
