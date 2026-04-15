@@ -225,7 +225,7 @@ export function createNewFiscalYear(
       // GUARD: Prevent double booking
       const existingBooking = db
         .prepare(
-          "SELECT COUNT(*) as cnt FROM journal_entries WHERE verification_series = 'C' AND fiscal_year_id = ? AND description LIKE '%årets resultat%'",
+          "SELECT COUNT(*) as cnt FROM journal_entries WHERE verification_series = 'C' AND fiscal_year_id = ? AND description LIKE '%årets resultat%'", // like-exempt: hardcoded pattern
         )
         .get(previousFiscalYearId) as { cnt: number }
       if (existingBooking.cnt > 0) {

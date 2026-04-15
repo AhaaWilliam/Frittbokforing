@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { todayLocal } from '../../shared/date-utils'
+import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
   Invoice,
@@ -782,10 +783,11 @@ export function listInvoices(
   }
 
   if (input.search) {
+    const escaped = escapeLikePattern(input.search)
     conditions.push(
-      "(c.name LIKE '%' || ? || '%' OR CAST(i.invoice_number AS TEXT) LIKE '%' || ? || '%')",
+      "(c.name LIKE '%' || ? || '%' ESCAPE '!' OR CAST(i.invoice_number AS TEXT) LIKE '%' || ? || '%' ESCAPE '!')",
     )
-    params.push(input.search, input.search)
+    params.push(escaped, escaped)
   }
 
   const sortColumnMap: Record<string, string> = {

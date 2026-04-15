@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import { escapeLikePattern } from '../../shared/escape-like'
 import type {
   Product,
   CustomerPrice,
@@ -27,8 +28,8 @@ export function listProducts(
     params.push(input.type)
   }
   if (input.search) {
-    sql += ' AND (name LIKE ? OR description LIKE ?)'
-    const term = `%${input.search}%`
+    sql += " AND (name LIKE ? ESCAPE '!' OR description LIKE ? ESCAPE '!')"
+    const term = `%${escapeLikePattern(input.search)}%`
     params.push(term, term)
   }
 

@@ -83,7 +83,7 @@ export function getDbPath(): string {
 export function getTableCount(database: Database.Database): number {
   const result = database
     .prepare(
-      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", // like-exempt: hardcoded pattern
     )
     .get() as { count: number }
   return result.count

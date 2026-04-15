@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import { escapeLikePattern } from '../../shared/escape-like'
 import type { Counterparty, IpcResult, ErrorCode } from '../../shared/types'
 import {
   CreateCounterpartyInputSchema,
@@ -39,8 +40,8 @@ export function listCounterparties(
     }
   }
   if (input.search) {
-    sql += ' AND (name LIKE ? OR org_number LIKE ? OR vat_number LIKE ?)'
-    const term = `%${input.search}%`
+    sql += " AND (name LIKE ? ESCAPE '!' OR org_number LIKE ? ESCAPE '!' OR vat_number LIKE ? ESCAPE '!')"
+    const term = `%${escapeLikePattern(input.search)}%`
     params.push(term, term, term)
   }
 
