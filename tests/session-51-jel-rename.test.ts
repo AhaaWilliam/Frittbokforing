@@ -31,7 +31,6 @@ function seedBase(testDb: Database.Database) {
     INSERT INTO fiscal_years (id, company_id, year_label, start_date, end_date) VALUES (1, 1, '2025', '2025-01-01', '2025-12-31');
     INSERT INTO accounting_periods (company_id, fiscal_year_id, period_number, start_date, end_date)
       VALUES (1, 1, 1, '2025-01-01', '2025-01-31');
-    INSERT INTO verification_sequences (fiscal_year_id, series, last_number) VALUES (1, 'A', 0);
   `)
   return { companyId: 1, userId: 1, fyId: 1 }
 }
@@ -47,7 +46,7 @@ afterEach(() => {
 describe('Migration 018 — journal_entry_lines rename', () => {
   it('user_version = 18 after all migrations', () => {
     const uv = db.prepare('PRAGMA user_version').get() as { user_version: number }
-    expect(uv.user_version).toBe(27)
+    expect(uv.user_version).toBe(28)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {

@@ -1189,6 +1189,10 @@ export const migrations: MigrationEntry[] = [
   // Inga triggers refererar kolumnen — enkel RENAME COLUMN räcker.
   { sql: 'ALTER TABLE journal_entries RENAME COLUMN created_by TO created_by_id;',
     programmatic: migration027Verify },
+  // Sprint 27: F7 — drop unused verification_sequences + rename payment_terms_days
+  { sql: `DROP TABLE IF EXISTS verification_sequences;
+ALTER TABLE counterparties RENAME COLUMN payment_terms_days TO payment_terms;`,
+    programmatic: migration028Verify },
 ]
 
 /**
@@ -1841,6 +1845,19 @@ function migration027Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'journal_entries')
   if (!cols.has('created_by_id')) throw new Error('Migration 027 failed: created_by_id saknas')
   if (cols.has('created_by')) throw new Error('Migration 027 failed: created_by finns kvar')
+}
+
+function migration028Verify(db: import('better-sqlite3').Database): void {
+  // 1. verification_sequences should not exist
+  const vsTable = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='verification_sequences'")
+    .get() as { name: string } | undefined
+  if (vsTable) throw new Error('Migration 028 failed: verification_sequences still exists')
+
+  // 2. counterparties should have payment_terms, not payment_terms_days
+  const cols = getTableColumns(db, 'counterparties')
+  if (!cols.has('payment_terms')) throw new Error('Migration 028 failed: counterparties.payment_terms saknas')
+  if (cols.has('payment_terms_days')) throw new Error('Migration 028 failed: counterparties.payment_terms_days finns kvar')
 }
 
 function migration021Verify(db: import('better-sqlite3').Database): void {

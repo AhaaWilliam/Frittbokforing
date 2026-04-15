@@ -8,12 +8,12 @@ import {
 import { mapUniqueConstraintError, COUNTERPARTY_UNIQUE_MAPPINGS } from './error-helpers'
 import log from 'electron-log'
 
-// Map DB row (payment_terms_days) to Counterparty type (default_payment_terms)
+// Map DB row to Counterparty type (payment_terms → default_payment_terms)
 function mapRow(row: Record<string, unknown>): Counterparty {
   return {
     ...row,
     default_payment_terms:
-      (row.payment_terms_days as number) ??
+      (row.payment_terms as number) ??
       (row.default_payment_terms as number) ??
       30,
   } as Counterparty
@@ -79,7 +79,7 @@ export function createCounterparty(
   try {
     const result = db
       .prepare(
-        `INSERT INTO counterparties (name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms_days)
+        `INSERT INTO counterparties (name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
@@ -154,7 +154,7 @@ export function updateCounterparty(
     'city',
     'country',
     'contact_person',
-    'payment_terms_days',
+    'payment_terms',
   ])
 
   try {
@@ -162,7 +162,7 @@ export function updateCounterparty(
     const params: unknown[] = []
 
     const fieldMap: Record<string, string> = {
-      default_payment_terms: 'payment_terms_days',
+      default_payment_terms: 'payment_terms',
     }
 
     const entries = Object.entries(data).filter(([key]) => {

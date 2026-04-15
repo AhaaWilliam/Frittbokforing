@@ -103,13 +103,7 @@ export function registerTestHandlers(db: Database.Database): void {
       cursor.setDate(1)
     }
 
-    // Verification sequences
-    for (const series of ['A', 'B', 'C', 'O']) {
-      db.prepare(
-        `INSERT OR IGNORE INTO verification_sequences (fiscal_year_id, series, last_number)
-         VALUES (?, ?, 0)`,
-      ).run(fyId, series)
-    }
+    // verification_sequences table dropped in migration 028 (F7)
 
     return { id: fyId }
   })

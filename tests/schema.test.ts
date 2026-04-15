@@ -18,7 +18,6 @@ function seedHelperData(testDb: Database.Database): {
       VALUES (1, 1, 1, '2025-01-01', '2025-01-31');
     INSERT INTO accounting_periods (company_id, fiscal_year_id, period_number, start_date, end_date)
       VALUES (1, 1, 2, '2025-02-01', '2025-02-28');
-    INSERT INTO verification_sequences (fiscal_year_id, series, last_number) VALUES (1, 'A', 0);
   `)
   return { companyId: 1, userId: 1, fyId: 1 }
 }
@@ -108,10 +107,9 @@ describe('Struktur', () => {
       'products',
       'users',
       'vat_codes',
-      'verification_sequences',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(23)
+    expect(tables.length).toBe(22)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -130,7 +128,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(27) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(28) // S48: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

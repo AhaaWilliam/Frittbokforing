@@ -178,8 +178,7 @@ export function createCompany(
         )
       }
 
-      // TODO: verification_sequences table exists but is unused — all verification numbers
-      // are calculated via MAX(verification_number)+1. Consider atomic increment in future.
+      // verification_sequences table dropped in migration 028 (F7).
 
       // e) Hämta det skapade företaget
       const company = db

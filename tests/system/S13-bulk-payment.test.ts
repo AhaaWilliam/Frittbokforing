@@ -627,11 +627,7 @@ describe('payInvoicesBulk — cross fiscal year', () => {
       ).run(companyId, fy2025.id, m, start, end)
     }
 
-    for (const series of ['A', 'B', 'C', 'O']) {
-      ctx.db.prepare(
-        'INSERT OR IGNORE INTO verification_sequences (fiscal_year_id, series, last_number) VALUES (?, ?, 0)',
-      ).run(fy2025.id, series)
-    }
+    // verification_sequences table dropped in migration 028 (F7)
 
     // Create customer with correct schema fields
     const custResult = ctx.counterpartyService.createCounterparty(ctx.db, {

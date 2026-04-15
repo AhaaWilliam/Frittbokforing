@@ -193,11 +193,11 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
     const fy = freshDb
       .prepare('SELECT id FROM fiscal_years LIMIT 1')
       .get() as { id: number }
-    const cp = createCounterparty(freshDb, {
-      name: 'Leverantör AB',
-      type: 'supplier',
-    })
-    if (!cp.success) throw new Error('CP failed')
+    // Direct SQL — DB is at migration 014, column is still payment_terms_days
+    freshDb.prepare(
+      "INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)",
+    ).run('Leverantör AB', 'supplier')
+    const cpId = (freshDb.prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'").get() as { id: number }).id
 
     // Insert expense directly (status = 'unpaid' to mimic finalized)
     freshDb
@@ -205,7 +205,7 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
         `INSERT INTO expenses (fiscal_year_id, counterparty_id, expense_date, description, status, total_amount_ore, payment_terms, notes)
          VALUES (?, ?, '2025-03-01', 'Test', 'unpaid', 100000, 30, '')`,
       )
-      .run(fy.id, cp.data.id)
+      .run(fy.id, cpId)
     const expenseId = Number(
       (freshDb.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id,
     )
@@ -281,18 +281,18 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
     const fy = freshDb
       .prepare('SELECT id FROM fiscal_years LIMIT 1')
       .get() as { id: number }
-    const cp = createCounterparty(freshDb, {
-      name: 'Leverantör AB',
-      type: 'supplier',
-    })
-    if (!cp.success) throw new Error('CP failed')
+    // Direct SQL — DB is at migration 014, column is still payment_terms_days
+    freshDb.prepare(
+      "INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)",
+    ).run('Leverantör AB', 'supplier')
+    const cpId = (freshDb.prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'").get() as { id: number }).id
 
     freshDb
       .prepare(
         `INSERT INTO expenses (fiscal_year_id, counterparty_id, expense_date, description, status, total_amount_ore, payment_terms, notes)
          VALUES (?, ?, '2025-03-01', 'Unpaid', 'unpaid', 50000, 30, '')`,
       )
-      .run(fy.id, cp.data.id)
+      .run(fy.id, cpId)
 
     // Run remaining migrations (015 onwards)
     freshDb.pragma('foreign_keys = OFF')
@@ -828,6 +828,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(27)
+    expect(row[0].user_version).toBe(28)
   })
 })

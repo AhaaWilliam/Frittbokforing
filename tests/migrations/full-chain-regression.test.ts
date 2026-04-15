@@ -59,11 +59,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
       ).run(m, start, end)
     }
 
-    for (const series of ['A', 'B', 'C', 'O']) {
-      db.prepare(
-        'INSERT OR IGNORE INTO verification_sequences (fiscal_year_id, series, last_number) VALUES (1, ?, 0)'
-      ).run(series)
-    }
+    // verification_sequences table dropped in migration 028 (F7)
 
     // === Seed counterparties ===
     const cust1 = createCounterparty(db, { name: 'Kund Alfa AB', type: 'customer', org_number: null, default_payment_terms: 30 })
