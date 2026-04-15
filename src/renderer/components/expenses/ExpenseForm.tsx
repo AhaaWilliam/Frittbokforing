@@ -46,6 +46,8 @@ function buildInitialData(
     _supplier: draft.counterparty_name
       ? { id: draft.counterparty_id, name: draft.counterparty_name }
       : { id: draft.counterparty_id, name: '' },
+    expense_type: (draft.expense_type as 'normal' | 'credit_note') ?? 'normal',
+    credits_expense_id: draft.credits_expense_id ?? null,
     supplierInvoiceNumber: draft.supplier_invoice_number ?? '',
     expenseDate: draft.expense_date,
     paymentTerms: draft.payment_terms,
@@ -225,6 +227,16 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
         {form.submitError && (
           <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {form.submitError}
+          </div>
+        )}
+
+        {/* Credit note indicator */}
+        {(form.getField('expense_type') as string) === 'credit_note' && (
+          <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
+            <span className="font-medium">Leverantörskredit (utkast)</span>
+            {existingDraft?.notes && (
+              <span className="ml-1">&mdash; {existingDraft.notes}</span>
+            )}
           </div>
         )}
 

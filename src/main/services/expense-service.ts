@@ -107,6 +107,21 @@ export function saveExpenseDraft(
         }
       }
 
+      const expenseType = data.expense_type ?? 'normal'
+
+      // Validate credits_expense_id if credit note
+      if (expenseType === 'credit_note' && data.credits_expense_id) {
+        const original = db
+          .prepare('SELECT id, status FROM expenses WHERE id = ?')
+          .get(data.credits_expense_id) as { id: number; status: string } | undefined
+        if (!original) {
+          throw { code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const, error: 'Originalkostnaden hittades inte.' }
+        }
+        if (original.status === 'draft') {
+          throw { code: 'VALIDATION_ERROR' as const, error: 'Kan inte kreditera ett utkast.' }
+        }
+      }
+
       const { processed, totalInclVat } = processExpenseLines(db, data.lines)
       const dueDate =
         data.due_date ?? addDays(data.expense_date, data.payment_terms)
@@ -114,14 +129,17 @@ export function saveExpenseDraft(
       const result = db
         .prepare(
           `INSERT INTO expenses (
-          fiscal_year_id, counterparty_id, supplier_invoice_number,
+          fiscal_year_id, counterparty_id, expense_type, credits_expense_id,
+          supplier_invoice_number,
           expense_date, due_date, description, status, payment_terms,
           total_amount_ore, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
         )
         .run(
           data.fiscal_year_id,
           data.counterparty_id,
+          expenseType,
+          data.credits_expense_id ?? null,
           data.supplier_invoice_number ?? null,
           data.expense_date,
           dueDate,
@@ -438,7 +456,19 @@ export function finalizeExpense(
       }
 
       // 8. INSERT journal_entry
-      const description = `Leverantörsfaktura — ${cp.name}`
+      const isCreditNote = expense.expense_type === 'credit_note'
+      const label = isCreditNote ? 'Leverantörskredit' : 'Leverantörsfaktura'
+      let description = `${label} — ${cp.name}`
+      if (isCreditNote && expense.credits_expense_id) {
+        const orig = db
+          .prepare('SELECT supplier_invoice_number, description FROM expenses WHERE id = ?')
+          .get(expense.credits_expense_id) as { supplier_invoice_number: string | null; description: string } | undefined
+        if (orig) {
+          const ref = orig.supplier_invoice_number ?? orig.description
+          description += ` (avser kostnad: ${ref})`
+        }
+      }
+
       const entryResult = db
         .prepare(
           `INSERT INTO journal_entries (
@@ -461,52 +491,52 @@ export function finalizeExpense(
         ) VALUES (?, ?, ?, ?, ?, ?)`,
       )
 
-      // DEBET: kostnadskonton
+      // Kostnadskonton — DEBET vid normal, KREDIT vid kreditnota
       for (const [acctNum, amount] of costTotals) {
         insertLine.run(
           journalEntryId,
           lineNum++,
           acctNum,
-          amount,
-          0,
+          isCreditNote ? 0 : amount,
+          isCreditNote ? amount : 0,
           description,
         )
       }
 
-      // DEBET: momskonton (ingående moms → 2640)
+      // Momskonton (2640) — DEBET vid normal, KREDIT vid kreditnota
       for (const [acctNum, amount] of vatTotals) {
         insertLine.run(
           journalEntryId,
           lineNum++,
           acctNum,
-          amount,
-          0,
+          isCreditNote ? 0 : amount,
+          isCreditNote ? amount : 0,
           description,
         )
       }
 
       // Öresutjämning 3740
       if (diff > 0) {
-        insertLine.run(journalEntryId, lineNum++, '3740', diff, 0, description)
+        insertLine.run(journalEntryId, lineNum++, '3740', isCreditNote ? 0 : diff, isCreditNote ? diff : 0, description)
         totalDebit += diff
       } else if (diff < 0) {
         insertLine.run(
           journalEntryId,
           lineNum++,
           '3740',
-          0,
-          Math.abs(diff),
+          isCreditNote ? Math.abs(diff) : 0,
+          isCreditNote ? 0 : Math.abs(diff),
           description,
         )
       }
 
-      // KREDIT: 2440 Leverantörsskulder
+      // 2440 Leverantörsskulder — KREDIT vid normal, DEBET vid kreditnota
       insertLine.run(
         journalEntryId,
         lineNum++,
         '2440',
-        0,
-        totalInclVat,
+        isCreditNote ? totalInclVat : 0,
+        isCreditNote ? 0 : totalInclVat,
         description,
       )
 
@@ -1136,7 +1166,9 @@ export function listExpenses(
   const rows = db
     .prepare(
       `SELECT
-      e.id, e.expense_date, e.due_date, e.description,
+      e.id, e.expense_type, e.credits_expense_id,
+      (SELECT 1 FROM expenses cn WHERE cn.credits_expense_id = e.id LIMIT 1) as has_credit_note,
+      e.expense_date, e.due_date, e.description,
       e.supplier_invoice_number, e.status, e.total_amount_ore,
       e.journal_entry_id,
       COALESCE(c.name, 'Okänd leverantör') as counterparty_name,
@@ -1207,5 +1239,96 @@ export function getExpense(
       total_paid: expense.paid_amount_ore,
       remaining: expense.total_amount_ore - expense.paid_amount_ore,
     },
+  }
+}
+
+export function createExpenseCreditNoteDraft(
+  db: Database.Database,
+  input: { original_expense_id: number; fiscal_year_id: number },
+): IpcResult<{ id: number }> {
+  try {
+    // Hämta originalkostnaden (måste vara finaliserad)
+    const original = db
+      .prepare('SELECT * FROM expenses WHERE id = ? AND status != ?')
+      .get(input.original_expense_id, 'draft') as Expense | undefined
+
+    if (!original) {
+      return {
+        success: false,
+        error: 'Originalkostnaden hittades inte eller är fortfarande ett utkast.',
+        code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND',
+      }
+    }
+
+    // Guard: kan inte kreditera en kreditnota
+    if (original.expense_type === 'credit_note') {
+      return {
+        success: false,
+        error: 'Kan inte kreditera en kreditnota.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Guard: kan inte kreditera samma kostnad två gånger
+    const existing = db
+      .prepare('SELECT id FROM expenses WHERE credits_expense_id = ? LIMIT 1')
+      .get(input.original_expense_id) as { id: number } | undefined
+    if (existing) {
+      return {
+        success: false,
+        error: 'Kostnaden har redan en kreditnota.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Hämta originalens rader
+    const originalLines = db
+      .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order')
+      .all(input.original_expense_id) as ExpenseLine[]
+
+    if (originalLines.length === 0) {
+      return {
+        success: false,
+        error: 'Originalkostnaden har inga rader.',
+        code: 'VALIDATION_ERROR',
+      }
+    }
+
+    // Bygg SaveExpenseDraft-input med kopierade rader
+    const ref = original.supplier_invoice_number ?? original.description
+    const draftInput = {
+      fiscal_year_id: input.fiscal_year_id,
+      counterparty_id: original.counterparty_id,
+      expense_type: 'credit_note' as const,
+      credits_expense_id: original.id,
+      supplier_invoice_number: null,
+      expense_date: todayLocal(),
+      due_date: todayLocal(),
+      payment_terms: original.payment_terms,
+      description: `Krediterar: ${ref}`,
+      notes: '',
+      lines: originalLines.map((l, i) => ({
+        description: l.description,
+        account_number: l.account_number,
+        quantity: l.quantity,
+        unit_price_ore: l.unit_price_ore,
+        vat_code_id: l.vat_code_id,
+        sort_order: i,
+      })),
+    }
+
+    return saveExpenseDraft(db, draftInput)
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[expense-service] createExpenseCreditNoteDraft: ${e.error}`)
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[expense-service] createExpenseCreditNoteDraft failed:', err)
+    return {
+      success: false,
+      error: 'Kunde inte skapa kreditnotautkast.',
+      code: 'UNEXPECTED_ERROR',
+    }
   }
 }

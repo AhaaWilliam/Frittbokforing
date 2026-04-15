@@ -416,6 +416,8 @@ export interface Expense {
   id: number
   fiscal_year_id: number
   counterparty_id: number
+  expense_type: string
+  credits_expense_id: number | null
   supplier_invoice_number: string | null
   expense_date: string
   due_date: string | null
@@ -472,6 +474,9 @@ export interface ExpenseDetail extends Expense {
 // === Expense List ===
 export interface ExpenseListItem {
   id: number
+  expense_type: string
+  credits_expense_id: number | null
+  has_credit_note: number | null
   expense_date: string
   due_date: string | null
   description: string

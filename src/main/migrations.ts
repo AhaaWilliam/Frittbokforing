@@ -1197,6 +1197,12 @@ ALTER TABLE counterparties RENAME COLUMN payment_terms_days TO payment_terms;`,
   { sql: `ALTER TABLE invoices ADD COLUMN credits_invoice_id INTEGER REFERENCES invoices(id);
 CREATE INDEX idx_inv_credits ON invoices(credits_invoice_id);`,
     programmatic: migration029Verify },
+  // Sprint 28b: Leverantörskreditnotor — expense_type + credits_expense_id
+  { sql: `ALTER TABLE expenses ADD COLUMN expense_type TEXT NOT NULL DEFAULT 'normal'
+  CHECK(expense_type IN ('normal', 'credit_note'));
+ALTER TABLE expenses ADD COLUMN credits_expense_id INTEGER REFERENCES expenses(id);
+CREATE INDEX idx_exp_credits ON expenses(credits_expense_id);`,
+    programmatic: migration030Verify },
 ]
 
 /**
@@ -1862,6 +1868,17 @@ function migration028Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'counterparties')
   if (!cols.has('payment_terms')) throw new Error('Migration 028 failed: counterparties.payment_terms saknas')
   if (cols.has('payment_terms_days')) throw new Error('Migration 028 failed: counterparties.payment_terms_days finns kvar')
+}
+
+function migration030Verify(db: import('better-sqlite3').Database): void {
+  const cols = getTableColumns(db, 'expenses')
+  if (!cols.has('expense_type')) throw new Error('Migration 030 failed: expenses.expense_type saknas')
+  if (!cols.has('credits_expense_id')) throw new Error('Migration 030 failed: expenses.credits_expense_id saknas')
+
+  const idxRows = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='expenses' AND name='idx_exp_credits'")
+    .all() as { name: string }[]
+  if (idxRows.length === 0) throw new Error('Migration 030 failed: idx_exp_credits index saknas')
 }
 
 function migration029Verify(db: import('better-sqlite3').Database): void {

@@ -18,6 +18,8 @@ export type ExpenseLineForm = z.infer<typeof ExpenseLineFormSchema>
 export const ExpenseFormStateSchema = z.object({
   _supplier: z.object({ id: z.number(), name: z.string() }).nullable()
     .refine(v => v !== null, 'Välj en leverantör'),
+  expense_type: z.enum(['normal', 'credit_note']).default('normal'),
+  credits_expense_id: z.number().nullable(),
   supplierInvoiceNumber: z.string(),
   expenseDate: z.string().min(1, 'Välj datum'),
   paymentTerms: z.number(),
@@ -31,6 +33,8 @@ export type ExpenseFormState = z.infer<typeof ExpenseFormStateSchema>
 
 export const EXPENSE_DEFAULTS: ExpenseFormState = {
   _supplier: null as unknown as ExpenseFormState['_supplier'],
+  expense_type: 'normal',
+  credits_expense_id: null,
   supplierInvoiceNumber: '',
   expenseDate: '',
   paymentTerms: 30,
@@ -50,6 +54,8 @@ export function transformExpenseForm(
   return {
     fiscal_year_id: fiscalYearId,
     counterparty_id: form._supplier!.id,
+    expense_type: form.expense_type,
+    credits_expense_id: form.credits_expense_id,
     supplier_invoice_number: form.supplierInvoiceNumber.trim() || null,
     expense_date: form.expenseDate,
     due_date: form.dueDate,

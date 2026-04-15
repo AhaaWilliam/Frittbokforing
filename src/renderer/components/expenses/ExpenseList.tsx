@@ -7,7 +7,7 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useExpenses, useFinalizeExpense, usePayExpense, useBulkPayExpenses, useDebouncedSearch } from '../../lib/hooks'
+import { useExpenses, useFinalizeExpense, usePayExpense, useBulkPayExpenses, useDebouncedSearch, useCreateExpenseCreditNoteDraft } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -66,6 +66,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const finalizeMutation = useFinalizeExpense()
   const payMutation = usePayExpense()
   const bulkPayMutation = useBulkPayExpenses()
+  const creditNoteMutation = useCreateExpenseCreditNoteDraft(activeFiscalYear?.id)
 
   useKeyboardShortcuts({
     'mod+k': () => searchRef.current?.focus(),
@@ -317,6 +318,16 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                     <td className="px-4 py-3">{item.counterparty_name}</td>
                     <td className="max-w-[200px] truncate px-4 py-3">
                       {item.description}
+                      {item.expense_type === 'credit_note' && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                          Kredit
+                        </span>
+                      )}
+                      {!!item.has_credit_note && item.expense_type !== 'credit_note' && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                          Krediterad
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {item.supplier_invoice_number || '\u2014'}
@@ -372,6 +383,29 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                           >
                             <CreditCard className="h-3 w-3" />
                             Betala
+                          </button>
+                        )}
+                        {item.status !== 'draft' && item.expense_type !== 'credit_note' && !item.has_credit_note && (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!activeFiscalYear) return
+                              try {
+                                const result = await creditNoteMutation.mutateAsync({
+                                  original_expense_id: item.id,
+                                  fiscal_year_id: activeFiscalYear.id,
+                                })
+                                onNavigate({ edit: result.id })
+                                toast.success('Kreditnota-utkast skapat')
+                              } catch (err) {
+                                toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditnota')
+                              }
+                            }}
+                            title="Skapa kreditnota"
+                            className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+                          >
+                            Kreditera
                           </button>
                         )}
                       </div>

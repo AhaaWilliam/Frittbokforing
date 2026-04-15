@@ -86,6 +86,8 @@ contextBridge.exposeInMainWorld('api', {
   getExpense: (data: { id: number }) => ipcRenderer.invoke('expense:get', data),
   listExpenses: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:list', data),
+  createExpenseCreditNoteDraft: (data: { original_expense_id: number; fiscal_year_id: number }) =>
+    ipcRenderer.invoke('expense:create-credit-note-draft', data),
   // Stödjande
   listVatCodes: (data: { direction?: string }) =>
     ipcRenderer.invoke('vat-code:list', data),

@@ -12,6 +12,8 @@ import {
 function makeForm(overrides?: Partial<ExpenseFormState>): ExpenseFormState {
   return {
     _supplier: { id: 3, name: 'Leverantör Ett AB' },
+    expense_type: 'normal',
+    credits_expense_id: null,
     supplierInvoiceNumber: 'INV-001',
     expenseDate: '2026-01-15',
     paymentTerms: 30,

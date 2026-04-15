@@ -392,6 +392,8 @@ export const SaveExpenseDraftSchema = z
   .object({
     fiscal_year_id: z.number().int().positive(),
     counterparty_id: z.number().int().positive(),
+    expense_type: z.enum(['normal', 'credit_note']).default('normal'),
+    credits_expense_id: z.number().int().positive().nullable().optional(),
     supplier_invoice_number: z.string().nullable().optional(),
     expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     due_date: z
@@ -406,6 +408,13 @@ export const SaveExpenseDraftSchema = z
       z.string().optional().default(''),
     ),
     lines: z.array(ExpenseLineInputSchema).min(1),
+  })
+  .strict()
+
+export const CreateExpenseCreditNoteDraftSchema = z
+  .object({
+    original_expense_id: z.number().int().positive(),
+    fiscal_year_id: z.number().int().positive(),
   })
   .strict()
 
@@ -781,6 +790,7 @@ export const channelMap = {
   'expense:payments': GetExpensePaymentsSchema,
   'expense:get': GetExpenseSchema,
   'expense:list': ListExpensesSchema,
+  'expense:create-credit-note-draft': CreateExpenseCreditNoteDraftSchema,
 
   // Manual Entries
   'manual-entry:save-draft': SaveManualEntryDraftSchema,

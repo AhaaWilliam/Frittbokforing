@@ -31,6 +31,8 @@ describe('S59 F9 — timezone regression: PayExpenseDialog', () => {
     fiscal_year_id: 1,
     counterparty_id: 1,
     counterparty_name: 'Test',
+    expense_type: 'normal',
+    credits_expense_id: null,
     supplier_invoice_number: null,
     expense_date: '2026-04-01',
     due_date: '2026-04-30',

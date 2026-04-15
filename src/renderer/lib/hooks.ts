@@ -559,6 +559,20 @@ export function useExpense(id: number | undefined) {
   )
 }
 
+export function useCreateExpenseCreditNoteDraft(fiscalYearId: number | undefined) {
+  return useIpcMutation<
+    { original_expense_id: number; fiscal_year_id: number },
+    { id: number }
+  >(
+    (data) => window.api.createExpenseCreditNoteDraft(data),
+    {
+      invalidate: fiscalYearId
+        ? [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()]
+        : [],
+    },
+  )
+}
+
 export function usePayExpense() {
   return useIpcMutation(
     (input: {

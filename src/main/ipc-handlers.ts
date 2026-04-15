@@ -66,6 +66,7 @@ import {
   refreshExpenseStatuses,
   ensureExpenseIndexes,
   listExpenses,
+  createExpenseCreditNoteDraft,
 } from './services/expense-service'
 import { getDashboardSummary } from './services/dashboard-service'
 import { getTaxForecast } from './services/tax-service'
@@ -149,6 +150,7 @@ import {
   PayInvoicesBulkPayloadSchema,
   PayExpensesBulkPayloadSchema,
   CreateCreditNoteDraftSchema,
+  CreateExpenseCreditNoteDraftSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -524,6 +526,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('expense:list', wrapIpcHandler(
     ListExpensesSchema,
     (parsed) => listExpenses(db, parsed),
+  ))
+
+  ipcMain.handle('expense:create-credit-note-draft', wrapIpcHandler(
+    CreateExpenseCreditNoteDraftSchema,
+    (parsed) => createExpenseCreditNoteDraft(db, parsed),
   ))
 
   // === Stödjande ===

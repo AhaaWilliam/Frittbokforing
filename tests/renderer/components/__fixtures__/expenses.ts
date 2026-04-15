@@ -12,6 +12,8 @@ export function makeExpenseDraft(overrides?: Partial<ExpenseWithLines>): Expense
     fiscal_year_id: 1,
     counterparty_id: 3,
     counterparty_name: 'Leverantör Ett AB',
+    expense_type: 'normal',
+    credits_expense_id: null,
     supplier_invoice_number: 'LF-001',
     expense_date: '2025-12-15',
     due_date: '2026-01-14',

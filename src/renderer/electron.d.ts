@@ -228,6 +228,10 @@ interface ElectronAPI {
       counts: import('../shared/types').ExpenseStatusCounts
     }>
   >
+  createExpenseCreditNoteDraft: (data: {
+    original_expense_id: number
+    fiscal_year_id: number
+  }) => Promise<IpcResult<{ id: number }>>
   // Invoice PDF
   generateInvoicePdf: (data: {
     invoiceId: number
