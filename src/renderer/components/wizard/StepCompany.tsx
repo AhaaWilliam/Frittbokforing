@@ -43,10 +43,11 @@ export function StepCompany({
   return (
     <div className="space-y-5">
       <div>
-        <label className="mb-1 block text-sm font-medium">
+        <label htmlFor="wizard-name" className="mb-1 block text-sm font-medium">
           Vad heter ditt företag?
         </label>
         <input
+          id="wizard-name"
           type="text"
           value={name}
           onChange={(e) => onChange('name', e.target.value)}
@@ -59,10 +60,11 @@ export function StepCompany({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">
+        <label htmlFor="wizard-org-number" className="mb-1 block text-sm font-medium">
           Organisationsnummer
         </label>
         <input
+          id="wizard-org-number"
           type="text"
           value={org_number}
           onChange={handleOrgChange}
@@ -120,11 +122,12 @@ export function StepCompany({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">
+        <label htmlFor="wizard-share-capital" className="mb-1 block text-sm font-medium">
           Insatt aktiekapital vid registrering
         </label>
         <div className="relative">
           <input
+            id="wizard-share-capital"
             type="number"
             value={share_capital}
             onChange={(e) => onChange('share_capital', e.target.value)}
@@ -142,10 +145,11 @@ export function StepCompany({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">
+        <label htmlFor="wizard-registration-date" className="mb-1 block text-sm font-medium">
           När registrerades bolaget?
         </label>
         <input
+          id="wizard-registration-date"
           type="date"
           value={registration_date}
           onChange={(e) => onChange('registration_date', e.target.value)}

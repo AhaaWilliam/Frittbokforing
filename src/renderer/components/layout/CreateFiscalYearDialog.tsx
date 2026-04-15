@@ -95,11 +95,11 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-semibold">Skapa nytt räkenskapsår</h2>
+      <div role="dialog" aria-modal="true" aria-labelledby="create-fy-title" className="w-full max-w-md rounded-lg border bg-background p-6 shadow-xl">
+        <h2 id="create-fy-title" className="mb-4 text-lg font-semibold">Skapa nytt räkenskapsår</h2>
 
         {error && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div role="alert" className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {error}
           </div>
         )}
