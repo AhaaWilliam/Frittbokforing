@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import {
   useCompany,
@@ -9,6 +9,7 @@ import {
 } from '../../lib/hooks'
 import { formatKr, toKr, todayLocal } from '../../lib/format'
 import type { ManualEntryWithLines, Account } from '../../../shared/types'
+import { errorIdFor } from '../../lib/a11y'
 import { useEntityForm } from '../../lib/use-entity-form'
 import {
   ManualEntryFormStateSchema,
@@ -157,11 +158,27 @@ export function ManualEntryForm({
     }
   }
 
+  // F49: Focus-management on submit failure
+  const formRef = useRef<HTMLDivElement>(null)
+  const submitCountRef = useRef(0)
+
+  const handleSubmitWithFocus = useCallback(async () => {
+    submitCountRef.current += 1
+    await form.handleSubmit()
+  }, [form.handleSubmit])
+
+  useEffect(() => {
+    if (submitCountRef.current === 0) return
+    if (Object.keys(form.errors).length === 0) return
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    firstInvalid?.focus()
+  }, [form.errors])
+
   const isSaving =
     saveDraft.isPending || updateDraft.isPending || finalize.isPending || form.isSubmitting
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto px-8 py-6">
+    <div ref={formRef} className="flex flex-1 flex-col overflow-auto px-8 py-6">
       <h2 className="mb-6 text-lg font-medium">
         {initialData
           ? 'Redigera bokf\u00f6ringsorder'
@@ -169,7 +186,7 @@ export function ManualEntryForm({
       </h2>
 
       {form.submitError && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {form.submitError}
         </div>
       )}
@@ -177,22 +194,26 @@ export function ManualEntryForm({
       {/* Header inputs */}
       <div className="mb-6 grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">Datum</label>
+          <label htmlFor="manual-entry-date" className="mb-1 block text-sm font-medium">Datum</label>
           <input
+            id="manual-entry-date"
             type="date"
             value={form.getField('entryDate') as string}
             onChange={(e) =>
               form.setField('entryDate', e.target.value as ManualEntryFormState['entryDate'])
             }
+            aria-invalid={form.errors.entryDate ? true : undefined}
+            aria-describedby={form.errors.entryDate ? errorIdFor('manual-entry-date') : undefined}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {form.errors.entryDate && (
-            <p className="mt-1 text-xs text-red-600">{form.errors.entryDate}</p>
+            <p role="alert" id={errorIdFor('manual-entry-date')} className="mt-1 text-xs text-red-600">{form.errors.entryDate}</p>
           )}
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Beskrivning</label>
+          <label htmlFor="manual-entry-description" className="mb-1 block text-sm font-medium">Beskrivning</label>
           <input
+            id="manual-entry-description"
             type="text"
             value={form.getField('description') as string}
             onChange={(e) =>
@@ -215,7 +236,7 @@ export function ManualEntryForm({
               <th className="w-32 pb-2 pr-2 font-medium text-right">Debet</th>
               <th className="w-32 pb-2 pr-2 font-medium text-right">Kredit</th>
               <th className="pb-2 pr-2 font-medium">Text</th>
-              <th className="w-8 pb-2 font-medium" />
+              <th className="w-8 pb-2 font-medium"><span className="sr-only">Åtgärd</span></th>
             </tr>
           </thead>
           <tbody>
@@ -234,6 +255,7 @@ export function ManualEntryForm({
                         updateLineField(index, 'accountNumber', e.target.value)
                       }
                       placeholder="1910"
+                      aria-label={`Rad ${index + 1} konto`}
                       className="w-full rounded border bg-background px-2 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </td>
@@ -248,6 +270,7 @@ export function ManualEntryForm({
                         updateLineField(index, 'debitKr', e.target.value)
                       }
                       placeholder="0"
+                      aria-label={`Rad ${index + 1} debet`}
                       className="w-full rounded border bg-background px-2 py-1 text-right text-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </td>
@@ -259,6 +282,7 @@ export function ManualEntryForm({
                         updateLineField(index, 'creditKr', e.target.value)
                       }
                       placeholder="0"
+                      aria-label={`Rad ${index + 1} kredit`}
                       className="w-full rounded border bg-background px-2 py-1 text-right text-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </td>
@@ -270,6 +294,7 @@ export function ManualEntryForm({
                         updateLineField(index, 'description', e.target.value)
                       }
                       placeholder="Fritext"
+                      aria-label={`Rad ${index + 1} text`}
                       className="w-full rounded border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </td>
@@ -278,7 +303,7 @@ export function ManualEntryForm({
                       type="button"
                       onClick={() => removeLine(index)}
                       className="rounded p-1 text-muted-foreground hover:text-destructive"
-                      title="Ta bort rad"
+                      aria-label={`Ta bort rad ${index + 1}`}
                     >
                       &times;
                     </button>
@@ -299,7 +324,7 @@ export function ManualEntryForm({
         + L&auml;gg till rad
       </button>
       {form.errors.lines && (
-        <p className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+        <p role="alert" id={errorIdFor('manual-entry-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
       )}
 
       {/* Totals */}
@@ -328,7 +353,7 @@ export function ManualEntryForm({
       <div className="mt-6 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => form.handleSubmit()}
+          onClick={() => handleSubmitWithFocus()}
           disabled={isSaving}
           className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted/50 disabled:opacity-50"
         >
