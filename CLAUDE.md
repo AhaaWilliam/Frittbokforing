@@ -295,6 +295,19 @@ ska definieras i `src/shared/constants.ts`, inte hårdkodas i schema-filerna.
 **Referens:** `MAX_QTY_INVOICE`, `MAX_QTY_EXPENSE`, `ERR_MSG_MAX_QTY_*`
 (Sprint 22a F46).
 
+## 38. A11y-regression-skydd (M133)
+
+**M133.** `axeCheck: false` tillåts inte i testfiler utan dokumenterad
+undantagsmarkering. Verifieras via `npm run check:m133`.
+
+**Scope:** Fångar enbart `axeCheck: false`-återinförsel. Explicit undantag
+för infrastruktur-filer (render-with-providers.tsx som definierar/testar
+flaggan). AST-baserad utökning (error-`<p>` utan `role="alert"`) planerad
+som F49-b men inte implementerad — grep-regex kan inte matcha multi-line
+JSX pålitligt.
+
+**Referens:** Sprint 22c (F49), `scripts/check-m133.mjs`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

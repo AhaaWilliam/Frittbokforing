@@ -276,12 +276,15 @@ M92/regel 15 ("quantity × unit_price_ore = line_total_ore, quantity heltal") g�
 **Fix:** 3 tester: qty=1.333 förkastas (create + update), qty=1.33 accepteras med read-back.
 **Referens:** Commit 22edb75 (S68c), `tests/session-68-ipc-precision.test.ts`.
 
-### F49 — A11y-konsistens i formulärfält 🟡 Research klar (S22b)
-**Filer:** `ExpenseForm.tsx`, `InvoiceForm.tsx`, `ManualEntryForm.tsx`, `FormField.tsx`, `FormSelect.tsx`, `FormTextarea.tsx`, `LoadingSpinner.tsx`, dialoger
-**Problem:** F45-fixen lade till role="alert" + aria-describedby + aria-invalid enbart för datum-fält. Övriga fält (supplier, description, lines) renderar errors som plain `<p>` utan a11y-attribut. Inkonsistent skärmläsar-upplevelse.
-**Research (S22b):** Strategi-dokument klart. Arkitektur D (shared UI + inline). 14 ytor i scope, 8-commit implementationsplan. M133-kandidat (grep-check). Baseline: 2/50 fält har ARIA, 4 testfiler har axeCheck:false. Se `docs/s22b-f49-strategy.md`.
-**Nästa steg:** Implementation i S22c/S23 — börja med FormField/Select/Textarea (commit 1).
-**Prioritet:** Medel — implementations-redo.
+### F49 — A11y-konsistens i formulärfält ✅ STÄNGD (S22c)
+**Fixad i:** Sprint 22c (8 commits, 1481 → 1493 tester).
+**Scope:** FormField/Select/Textarea ARIA, InvoiceForm, ExpenseForm, ManualEntryForm, CompanyWizard, CreateFiscalYearDialog, 5 payment/finalize-dialoger, LoadingSpinner.
+**M-regel:** M133 (axeCheck:false-regression-skydd via `npm run check:m133`).
+**axeCheck:false:** 4 → 0.
+
+### F49-b — AST-baserad M133-utökning 🟢 Backlog
+**Problem:** M133 fångar bara axeCheck:false-återinförsel. En framtida utökning bör verifiera att error-`<p>`-element har `role="alert"` via ts-morph AST-analys (grep-regex kan inte matcha multi-line JSX pålitligt).
+**Prioritet:** Låg.
 
 ---
 
@@ -312,3 +315,4 @@ När en bug hittas under en session:
 - **2026-04-14:** Sprint 21 S68 — F47 stängd (display-lager, S68a+S68b), F48 stängd (IPC-precision-gate, S68c). M131 grep-check tillagd (S68d).
 - **2026-04-14:** Sprint 22a — F46 stängd (max-qty UX-guard, 9 tester). F46b öppnad (DB-CHECK defense-in-depth).
 - **2026-04-14:** Sprint 22b — F49 research klar. Strategi-dokument + baseline-rapport. Arkitektur D, 14 ytor, M133-kandidat.
+- **2026-04-15:** Sprint 22c — F49 stängd (8 commits). axeCheck:false 4→0. M133 etablerad. F49-b öppnad.

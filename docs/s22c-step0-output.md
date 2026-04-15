@@ -218,4 +218,23 @@ Destruktiva åtgärder (radera utkast) använder `window.confirm()`. Ingen dialo
 3. **HEAD +1 commit** — 4cae127 är docs-only, ingen kod-påverkan.
 4. **Partiell ARIA existerar redan** — invoiceDate och expenseDate har redan aria-invalid + aria-describedby + role="alert". Commits 2–3 kompletterar övriga fält.
 
+## 0.12 Avvikelse från reviderad budget
+
+**Reviderad budget (efter Step 0):** +10 (1481 → 1491). Commit 1 sänktes från +3 till +1
+eftersom Step 0.4 inte hittade FormSelect/FormTextarea.
+
+**Faktiskt utfall:** +12 (1481 → 1493). Commit 1 blev +3.
+
+**Orsak:** Step 0.4 sökte med `find -name "Select.*" -o -name "Textarea.*"` som
+inte matchade `FormSelect.tsx` / `FormTextarea.tsx`. Vid commit 1-implementation
+hittades komponenterna via `grep -rn "FormSelect\|FormTextarea"`. De hade
+existerande tester (`FormSelect.test.tsx`, `FormTextarea.test.tsx`) som bekräftade
+att de var i aktivt bruk.
+
+**Lärdomar för framtida Step 0:**
+- Sök med `find -name "*Select*" -o -name "*Textarea*"` (wildcard-prefix)
+  eller `grep -rl "export function Form"` för att fånga alla namnvarianter.
+- Dubbelkolla med `ls tests/renderer/components/ui/` — testfiler avslöjar
+  komponenter som find-mönstret missade.
+
 **Steg 0 klar. Väntar på go.**

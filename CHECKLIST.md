@@ -478,3 +478,41 @@ begränsning; IPC är single entry-point för writes).
 - F49 kvarstår öppen
 
 ### Testbaslinje: 1472 → 1481
+
+## Sprint 22c — F49: A11y-härdning (forms + dialoger + spinner)
+
+WCAG AA a11y-härdning av alla forms, dialoger och spinner-komponent.
+Arkitektur-nivå D (FormField-first + inline ARIA). 8 commits.
+
+### Sammanfattning per commit
+1. FormField/Select/Textarea ARIA (errorIdFor, aria-invalid, aria-describedby, role="alert")
+2. InvoiceForm inline ARIA + focus-management (CustomerPicker ARIA-props)
+3. ExpenseForm inline ARIA + focus-management (SupplierPicker ARIA-props)
+4. ManualEntryForm ARIA + focus-management (per-rad aria-labels)
+5. CompanyWizard + CreateFiscalYearDialog (htmlFor/id + dialog ARIA)
+6. 5 dialog-komponenter (role="dialog" + aria-modal + label associations)
+7. LoadingSpinner role="status" + M133 grep-check
+8. Sprint-avslut
+
+### M-regler
+- M133: axeCheck: false tillåts inte utan dokumenterad undantagsmarkering.
+  Verifieras via `npm run check:m133`.
+
+### axeCheck:false status
+- Före sprint: 4 (InvoiceForm ×2, ExpenseForm ×2)
+- Efter sprint: 0
+
+### Patterns etablerade
+- errorIdFor() / descriptionIdFor() i src/renderer/lib/a11y.ts
+- Focus-management-mönster: submitCountRef + useEffect + DOM-order querySelector
+- Dialog ARIA-mönster: role="dialog" + aria-modal + aria-labelledby
+- Per-rad aria-label på tabell-inputs
+
+### Backlog-ändringar
+- F49: STÄNGD
+- F49-b: ÖPPNAD — AST-baserad M133-utökning (error-<p> utan role="alert")
+
+### VoiceOver-sanity
+Manuell verifiering krävs — se docs/s22c-voiceover-notes.md.
+
+### Testbaslinje: 1481 → 1493
