@@ -57,7 +57,7 @@ describe('F49 — Dialog a11y', () => {
         result={{
           status: 'completed',
           batch_id: 1,
-          succeeded: [{ id: 1, journal_entry_id: 10 }],
+          succeeded: [{ id: 1, payment_id: 1, journal_entry_id: 10 }],
           failed: [],
           bank_fee_journal_entry_id: null,
         }}

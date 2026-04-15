@@ -1,7 +1,7 @@
 import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 import { errorIdFor } from '../../lib/a11y'
 
-interface FormSelectProps<TForm extends Record<string, unknown>> {
+interface FormSelectProps<TForm extends object> {
   form: UseEntityFormReturn<TForm>
   formName: string
   name: keyof TForm & string
@@ -11,7 +11,7 @@ interface FormSelectProps<TForm extends Record<string, unknown>> {
   disabled?: boolean
 }
 
-export function FormSelect<TForm extends Record<string, unknown>>({
+export function FormSelect<TForm extends object>({
   form,
   formName,
   name,

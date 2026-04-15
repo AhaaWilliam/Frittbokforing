@@ -133,7 +133,7 @@ export async function renderWithProviders(
   let axeResults: AxeResults | null = null
   if (axeCheck) {
     axeResults = await axe.run(result.container, AXE_OPTIONS)
-    if (axeResults.violations.length > 0) {
+    if (axeResults && axeResults.violations.length > 0) {
       const msg = axeResults.violations
         .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  targets: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
         .join('\n')

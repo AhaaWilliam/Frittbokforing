@@ -1,7 +1,7 @@
 import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 import { errorIdFor } from '../../lib/a11y'
 
-interface FormFieldProps<TForm extends Record<string, unknown>> {
+interface FormFieldProps<TForm extends object> {
   form: UseEntityFormReturn<TForm>
   formName: string
   name: keyof TForm & string
@@ -18,7 +18,7 @@ function stripLeadingUnderscore(name: string): string {
   return name.startsWith('_') ? name.slice(1) : name
 }
 
-export function FormField<TForm extends Record<string, unknown>>({
+export function FormField<TForm extends object>({
   form,
   formName,
   name,

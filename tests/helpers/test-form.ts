@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react'
 import type { UseEntityFormReturn } from '../../src/renderer/lib/use-entity-form'
 
-export function useTestForm<TForm extends Record<string, unknown>>(
+export function useTestForm<TForm extends object>(
   initialValues: TForm,
   overrides?: Partial<UseEntityFormReturn<TForm>>,
 ): UseEntityFormReturn<TForm> {

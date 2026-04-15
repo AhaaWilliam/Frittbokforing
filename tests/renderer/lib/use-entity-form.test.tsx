@@ -243,7 +243,7 @@ describe('useEntityForm', () => {
   describe('submit errors — M100 IpcError mapping', () => {
     it('IpcError with field maps to per-field error', async () => {
       const onSubmit = vi.fn().mockRejectedValue(
-        new IpcError('E-post finns redan', 'DUPLICATE_ERROR', 'email'),
+        new IpcError('E-post finns redan', 'DUPLICATE_NAME', 'email'),
       )
       const { hook } = setup({ onSubmit })
 

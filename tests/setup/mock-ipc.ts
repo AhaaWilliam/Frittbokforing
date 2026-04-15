@@ -209,7 +209,7 @@ let afterEachRegistered = false
  * Registers afterEach cleanup automatically (once per file).
  */
 export function setupMockIpc(): void {
-  ;(window as Record<string, unknown>).api = createMockApi()
+  ;(window as unknown as Record<string, unknown>).api = createMockApi()
 
   if (!afterEachRegistered) {
     afterEach(() => resetMockIpc())
@@ -244,5 +244,5 @@ export function mockIpcDelayed(
 /** Reset all overrides and recreate mock API. */
 export function resetMockIpc(): void {
   overrides.clear()
-  ;(window as Record<string, unknown>).api = createMockApi()
+  ;(window as unknown as Record<string, unknown>).api = createMockApi()
 }

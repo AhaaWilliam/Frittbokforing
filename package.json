@@ -25,6 +25,7 @@
     "test:e2e:headed": "electron-rebuild -f -w better-sqlite3 && playwright test --headed",
     "test:e2e:ci": "xvfb-run --auto-servernum --server-args='-screen 0 1280x960x24' npx playwright test --config=e2e/playwright.config.ts",
     "test:all": "vitest run && npx playwright test",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' 'tests/**/*.ts' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",

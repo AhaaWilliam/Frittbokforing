@@ -1,7 +1,7 @@
 import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 import { errorIdFor } from '../../lib/a11y'
 
-interface FormTextareaProps<TForm extends Record<string, unknown>> {
+interface FormTextareaProps<TForm extends object> {
   form: UseEntityFormReturn<TForm>
   formName: string
   name: keyof TForm & string
@@ -13,7 +13,7 @@ interface FormTextareaProps<TForm extends Record<string, unknown>> {
   hint?: string
 }
 
-export function FormTextarea<TForm extends Record<string, unknown>>({
+export function FormTextarea<TForm extends object>({
   form,
   formName,
   name,

@@ -3,7 +3,7 @@ import type { z } from 'zod'
 import { IpcError } from './ipc-helpers'
 
 export interface UseEntityFormOptions<
-  TForm extends Record<string, unknown>,
+  TForm extends object,
   TPayload,
   TResult = void,
 > {
@@ -23,7 +23,7 @@ export interface UseEntityFormOptions<
   onSuccess?: (result: TResult) => void
 }
 
-export interface UseEntityFormReturn<TForm extends Record<string, unknown>> {
+export interface UseEntityFormReturn<TForm extends object> {
   /** Get a field's value */
   getField: <K extends keyof TForm>(name: K) => TForm[K]
   /** Set a field's value */
@@ -43,7 +43,7 @@ export interface UseEntityFormReturn<TForm extends Record<string, unknown>> {
 }
 
 export function useEntityForm<
-  TForm extends Record<string, unknown>,
+  TForm extends object,
   TPayload,
   TResult = void,
 >(

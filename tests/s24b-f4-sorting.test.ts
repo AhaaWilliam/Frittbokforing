@@ -117,7 +117,7 @@ describe('F4 sortering — numerisk ordning', () => {
   })
 
   it('listAccounts sorterar numeriskt med befintlig seed-data', () => {
-    const accounts = listAccounts(db, { fiscal_rule: 'K2', class_filter: 3 })
+    const accounts = listAccounts(db, { fiscal_rule: 'K2', class: 3 })
     const numbers = accounts.map((a) => a.account_number)
     const sortedNumerically = [...numbers].sort(
       (a, b) => parseInt(a, 10) - parseInt(b, 10),

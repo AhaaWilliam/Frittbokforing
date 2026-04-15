@@ -67,7 +67,7 @@ function makeWrapper(opts?: {
 type MockFn = ReturnType<typeof vi.fn>
 
 function setSettingCalls(): unknown[][] {
-  return ((window.api as Record<string, MockFn>).setSetting).mock.calls
+  return ((window.api as unknown as Record<string, MockFn>).setSetting).mock.calls
 }
 
 // ── Tests ────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ describe('restoredIdLoaded gating (M102)', () => {
     const settingsPromise = new Promise((resolve) => {
       resolveSettings = resolve
     })
-    const getSetting = (window.api as Record<string, MockFn>).getSetting
+    const getSetting = (window.api as unknown as Record<string, MockFn>).getSetting
     getSetting.mockImplementation(() => settingsPromise)
 
     const qc = new QueryClient({

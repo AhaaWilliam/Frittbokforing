@@ -25,6 +25,7 @@ jobs:
       - run: npm ci
         # postinstall runs electron-rebuild automatically
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm run check:m131
       - run: npm run check:m133
       - run: npm run test -- --reporter=verbose
