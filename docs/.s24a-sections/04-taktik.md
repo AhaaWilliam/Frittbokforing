@@ -100,6 +100,23 @@ behövs inte — CHECK läggs på befintlig kolumn via table-recreate. Dock:
 **skjut table-recreate till S24c**. F4-fixet (CAST + compareAccountNumbers) är
 tillräckligt för S24b. Schema-constraint är defense-in-depth, inte blocker.
 
+**S24c eskalerings-triggers (dokumenteras i STATUS.md under findingen):**
+
+F4-skyddet är application-layer-only (CAST i SQL, compareAccountNumbers i TS).
+S24c eskaleras till S24b-equivalent om någon av dessa inträffar:
+1. **Import-väg läggs till** (SIE-import, CSV-import) — extern data kringgår
+   Zod-schema och kan introducera 5-siffriga konton direkt i DB.
+2. **BAS-uppdatering ger 5-siffriga konton** — BFN utfärdar ny kontoplan med
+   underkonton. Kräver att Zod-schema (max(4)) ändras, men utan schema-
+   constraint blockas inte direkt SQL-insert.
+3. **Backup-restore kringgår validering** — om restore-logiken skriver direkt
+   till DB utan att passera createAccount-endpoint. (Nuläge: ingen
+   backup-restore-funktion existerar utöver pre-update-backup.ts som kopierar
+   DB-filen rakt av, inte selektiv restore.)
+
+Utan dessa triggers förblir S24c latent backlog. Med någon av dem → prioritera
+schema-constraint före eller i samma sprint som triggern.
+
 ### 4.3 Migrations-väg
 
 **Big-bang squash.** Skäl:

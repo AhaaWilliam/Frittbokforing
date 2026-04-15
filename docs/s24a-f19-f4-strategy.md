@@ -88,8 +88,14 @@ med klass 8-poster. IncomeStatementView renderar `data.netResult` (rad 133).
 Substitutionen i BR är safe.
 
 **F19 backlog-status:** Finding var formulerad **före** Sprint 11 (M96). Stale
-backlog-item som överlevde Sprint 11. Process-not: öppna findings bör
-auditeras mot M-regler vid sprint-planning.
+backlog-item som överlevde Sprint 11.
+
+**Process-finding (S24a):** F19 var i backlog som "tre olika definitioner av
+årets resultat". Sprint 11 (M96–M98) etablerade result-service.ts som single
+source of truth utan att stänga findingen. **Ny rutin:** vid sprint-avslut
+auditeras alla refererade findings i sprint-scope mot M-reglerna som
+etablerats — om findingen är löst av en M-regel ska den stängas i samma
+commit, inte överleva som öppen i backlog.
 
 **SIE-import existerar inte:** Enbart export-services. Ingen import-path kan
 introducera 5-siffriga konton.
@@ -403,6 +409,23 @@ behövs inte — CHECK läggs på befintlig kolumn via table-recreate. Dock:
 **skjut table-recreate till S24c**. F4-fixet (CAST + compareAccountNumbers) är
 tillräckligt för S24b. Schema-constraint är defense-in-depth, inte blocker.
 
+**S24c eskalerings-triggers (dokumenteras i STATUS.md under findingen):**
+
+F4-skyddet är application-layer-only (CAST i SQL, compareAccountNumbers i TS).
+S24c eskaleras till S24b-equivalent om någon av dessa inträffar:
+1. **Import-väg läggs till** (SIE-import, CSV-import) — extern data kringgår
+   Zod-schema och kan introducera 5-siffriga konton direkt i DB.
+2. **BAS-uppdatering ger 5-siffriga konton** — BFN utfärdar ny kontoplan med
+   underkonton. Kräver att Zod-schema (max(4)) ändras, men utan schema-
+   constraint blockas inte direkt SQL-insert.
+3. **Backup-restore kringgår validering** — om restore-logiken skriver direkt
+   till DB utan att passera createAccount-endpoint. (Nuläge: ingen
+   backup-restore-funktion existerar utöver pre-update-backup.ts som kopierar
+   DB-filen rakt av, inte selektiv restore.)
+
+Utan dessa triggers förblir S24c latent backlog. Med någon av dem → prioritera
+schema-constraint före eller i samma sprint som triggern.
+
 ### 4.3 Migrations-väg
 
 **Big-bang squash.** Skäl:
@@ -665,26 +688,61 @@ it('BR.calculatedNetResult === RR.netResult', () => {
 
 **Mål:** 2–3 negativa kontrakt-tester.
 
-### 7.5 Alla service-konsumenter ger samma årets-resultat
+### 7.5 Alla service-konsumenter ger identisk årets-resultat
+
+Testet verifierar alla fem konsument-vägar och asserterar att de ger
+identisk siffra. Inkluderar re-export-vägen (opening-balance → fiscal-service)
+eftersom en framtida refaktor som bryter re-exporten kan göra att
+stale-check i tysthet räknar annorlunda.
 
 ```ts
-it('alla konsumenter av result-service ger identisk netResult', () => {
-  // Seed: revenue + financial expense + tax
-  bookEntry(...)
+it('alla 5 konsumenter av result-service ger identisk netResult', () => {
+  // Seed: revenue 200k + financial expense 10k + tax 20k
+  bookEntry('2025-03-01', [
+    { account: '1930', debit: 20_000_000, credit: 0 },
+    { account: '3002', debit: 0, credit: 20_000_000 },
+  ])
+  bookEntry('2025-06-30', [
+    { account: '8410', debit: 1_000_000, credit: 0 },
+    { account: '1930', debit: 0, credit: 1_000_000 },
+  ])
+  bookEntry('2025-12-31', [
+    { account: '8910', debit: 2_000_000, credit: 0 },
+    { account: '2510', debit: 0, credit: 2_000_000 },
+  ])
 
-  const netResult = calculateNetResult(db, fyId)
+  // 1. result-service direkt
+  const summary = calculateResultSummary(db, fyId)
+
+  // 2. re-export-vägen (opening-balance-service → fiscal-service)
+  const viaReExport = calculateNetResult(db, fyId) // same function, re-exported
+
+  // 3. getIncomeStatement (RR bottom-line)
   const rr = getIncomeStatement(db, fyId)
+
+  // 4. getBalanceSheet (BR "årets resultat" — post-fix)
   const br = getBalanceSheet(db, fyId)
 
-  // RR bottom-line (redan testat i session-43 test 8, men nu med BR)
-  expect(rr.netResult).toBe(netResult)
-  // BR "årets resultat" — efter fix ska detta läsa från result-service
-  expect(br.equityAndLiabilities.calculatedNetResult).toBe(netResult)
+  // 5. IPC-handler-vägen (simulate get-net-result call)
+  //    Testas indirekt via calculateNetResult som IPC-handlern anropar
+
+  const consumers = new Map<string, number>([
+    ['result-service.netResultOre', summary.netResultOre],
+    ['opening-balance-reexport.calculateNetResult', viaReExport],
+    ['getIncomeStatement.netResult', rr.netResult],
+    ['getBalanceSheet.calculatedNetResult', br.equityAndLiabilities.calculatedNetResult],
+  ])
+
+  const distinctValues = new Set(consumers.values())
+  expect(distinctValues.size).toBe(1)
+  // Explicit value check as safety net
+  expect(summary.netResultOre).toBe(17_000_000) // 20M - 1M financial - 2M tax
 })
 ```
 
-**Mål:** 1 test. Stänger F19-frågan permanent — om framtida refaktor
-återintroducerar en oberoende beräkning bryter detta test.
+**Mål:** 1 test. Map med 4 namngivna konsumenter, 1 distinkt siffra.
+IPC-handler testar samma funktion (calculateNetResult) och behöver inte
+separat entry. Stänger F19-frågan permanent.
 
 ### 7.6 Sorteringsordning-test för F4-fix
 

@@ -97,26 +97,61 @@ it('BR.calculatedNetResult === RR.netResult', () => {
 
 **Mål:** 2–3 negativa kontrakt-tester.
 
-### 7.5 Alla service-konsumenter ger samma årets-resultat
+### 7.5 Alla service-konsumenter ger identisk årets-resultat
+
+Testet verifierar alla fem konsument-vägar och asserterar att de ger
+identisk siffra. Inkluderar re-export-vägen (opening-balance → fiscal-service)
+eftersom en framtida refaktor som bryter re-exporten kan göra att
+stale-check i tysthet räknar annorlunda.
 
 ```ts
-it('alla konsumenter av result-service ger identisk netResult', () => {
-  // Seed: revenue + financial expense + tax
-  bookEntry(...)
+it('alla 5 konsumenter av result-service ger identisk netResult', () => {
+  // Seed: revenue 200k + financial expense 10k + tax 20k
+  bookEntry('2025-03-01', [
+    { account: '1930', debit: 20_000_000, credit: 0 },
+    { account: '3002', debit: 0, credit: 20_000_000 },
+  ])
+  bookEntry('2025-06-30', [
+    { account: '8410', debit: 1_000_000, credit: 0 },
+    { account: '1930', debit: 0, credit: 1_000_000 },
+  ])
+  bookEntry('2025-12-31', [
+    { account: '8910', debit: 2_000_000, credit: 0 },
+    { account: '2510', debit: 0, credit: 2_000_000 },
+  ])
 
-  const netResult = calculateNetResult(db, fyId)
+  // 1. result-service direkt
+  const summary = calculateResultSummary(db, fyId)
+
+  // 2. re-export-vägen (opening-balance-service → fiscal-service)
+  const viaReExport = calculateNetResult(db, fyId) // same function, re-exported
+
+  // 3. getIncomeStatement (RR bottom-line)
   const rr = getIncomeStatement(db, fyId)
+
+  // 4. getBalanceSheet (BR "årets resultat" — post-fix)
   const br = getBalanceSheet(db, fyId)
 
-  // RR bottom-line (redan testat i session-43 test 8, men nu med BR)
-  expect(rr.netResult).toBe(netResult)
-  // BR "årets resultat" — efter fix ska detta läsa från result-service
-  expect(br.equityAndLiabilities.calculatedNetResult).toBe(netResult)
+  // 5. IPC-handler-vägen (simulate get-net-result call)
+  //    Testas indirekt via calculateNetResult som IPC-handlern anropar
+
+  const consumers = new Map<string, number>([
+    ['result-service.netResultOre', summary.netResultOre],
+    ['opening-balance-reexport.calculateNetResult', viaReExport],
+    ['getIncomeStatement.netResult', rr.netResult],
+    ['getBalanceSheet.calculatedNetResult', br.equityAndLiabilities.calculatedNetResult],
+  ])
+
+  const distinctValues = new Set(consumers.values())
+  expect(distinctValues.size).toBe(1)
+  // Explicit value check as safety net
+  expect(summary.netResultOre).toBe(17_000_000) // 20M - 1M financial - 2M tax
 })
 ```
 
-**Mål:** 1 test. Stänger F19-frågan permanent — om framtida refaktor
-återintroducerar en oberoende beräkning bryter detta test.
+**Mål:** 1 test. Map med 4 namngivna konsumenter, 1 distinkt siffra.
+IPC-handler testar samma funktion (calculateNetResult) och behöver inte
+separat entry. Stänger F19-frågan permanent.
 
 ### 7.6 Sorteringsordning-test för F4-fix
 

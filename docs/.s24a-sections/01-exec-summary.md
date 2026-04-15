@@ -69,8 +69,14 @@ med klass 8-poster. IncomeStatementView renderar `data.netResult` (rad 133).
 Substitutionen i BR är safe.
 
 **F19 backlog-status:** Finding var formulerad **före** Sprint 11 (M96). Stale
-backlog-item som överlevde Sprint 11. Process-not: öppna findings bör
-auditeras mot M-regler vid sprint-planning.
+backlog-item som överlevde Sprint 11.
+
+**Process-finding (S24a):** F19 var i backlog som "tre olika definitioner av
+årets resultat". Sprint 11 (M96–M98) etablerade result-service.ts som single
+source of truth utan att stänga findingen. **Ny rutin:** vid sprint-avslut
+auditeras alla refererade findings i sprint-scope mot M-reglerna som
+etablerats — om findingen är löst av en M-regel ska den stängas i samma
+commit, inte överleva som öppen i backlog.
 
 **SIE-import existerar inte:** Enbart export-services. Ingen import-path kan
 introducera 5-siffriga konton.
