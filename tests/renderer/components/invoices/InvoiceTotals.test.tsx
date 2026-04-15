@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react'
 import { InvoiceTotals } from '../../../../src/renderer/components/invoices/InvoiceTotals'
 import type { InvoiceLineForm } from '../../../../src/renderer/lib/form-schemas/invoice'
 import { byKr } from '../../utils/format-matchers'
+import { VAT_SCENARIOS } from '../../../fixtures/vat-scenarios'
 
 function makeLine(overrides?: Partial<InvoiceLineForm>): InvoiceLineForm {
   return {
@@ -225,4 +226,31 @@ describe('InvoiceTotals — grupperad VAT', () => {
     expect(screen.getByText(byKr(30000))).toBeDefined()
     expect(screen.getByText(byKr(35000))).toBeDefined()
   })
+})
+
+// ── B5: Isolerad VAT-skalning (F40) ─────────────────────────────────
+
+describe('InvoiceTotals — isolerad VAT-skalning (F40)', () => {
+  for (const scenario of VAT_SCENARIOS) {
+    it(`B5: ${scenario.label}`, () => {
+      const lines = [
+        makeLine({
+          quantity: scenario.quantity,
+          unit_price_kr: scenario.unitPriceKr,
+          vat_rate: scenario.vatRate,
+        }),
+      ]
+      render(<InvoiceTotals lines={lines} />)
+
+      const vatEl = screen.getByTestId('total-vat-ore')
+      expect(Number(vatEl.getAttribute('data-value'))).toBe(
+        scenario.expectedVatOre,
+      )
+
+      const netEl = screen.getByTestId('total-net-ore')
+      expect(Number(netEl.getAttribute('data-value'))).toBe(
+        scenario.expectedNettoOre,
+      )
+    })
+  }
 })
