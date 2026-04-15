@@ -134,12 +134,9 @@ export function getBalanceSheet(
   // 5. Build equity + liabilities groups
   const equityGroups = buildGroups(BALANCE_SHEET_EQUITY_CONFIG, bsBalances)
 
-  // 6. Calculate net result from class 3-8 (dynamic)
-  const plMovements = movements.filter(
-    (m) =>
-      !m.account_number.startsWith('1') && !m.account_number.startsWith('2'),
-  )
-  const calculatedNetResult = plMovements.reduce((s, m) => s + m.net, 0)
+  // 6. Calculate net result from class 3-8 (M134: single source of truth)
+  const resultSummary = calculateResultSummary(db, fiscalYearId, dateRange)
+  const calculatedNetResult = resultSummary.netResultOre
 
   const equitySubtotal = equityGroups.reduce((s, g) => s + g.subtotalDisplay, 0)
   const totalEquityAndLiabilities = equitySubtotal + calculatedNetResult
