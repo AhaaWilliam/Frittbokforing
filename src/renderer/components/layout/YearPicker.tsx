@@ -5,10 +5,12 @@ import type { FiscalYear } from '../../../shared/types'
 import { CreateFiscalYearDialog } from './CreateFiscalYearDialog'
 
 function formatFiscalYearLabel(fy: FiscalYear): string {
-  const startYear = new Date(fy.start_date).getFullYear()
-  const endYear = new Date(fy.end_date).getFullYear()
-  if (startYear === endYear) return String(startYear)
-  return `${startYear}/${String(endYear).slice(-2)}`
+  // Extract year from YYYY-MM-DD string directly — no Date object
+  // to avoid timezone bugs (new Date('2026-01-01') → Dec 31 in UTC+1)
+  const startYear = fy.start_date.slice(0, 4)
+  const endYear = fy.end_date.slice(0, 4)
+  if (startYear === endYear) return startYear
+  return `${startYear}/${endYear.slice(-2)}`
 }
 
 export { formatFiscalYearLabel }
