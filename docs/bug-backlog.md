@@ -296,8 +296,18 @@ eftersom webbläsarens number-input aldrig returnerar komma-format till JS.
 **Filer:** InvoiceForm.tsx, ExpenseForm.tsx
 **Fix:** Ny ConfirmDialog-komponent med role="alertdialog", fokus-trap, Escape. 7 tester.
 
-### F51 — Företagsredigering historisk integritet ✅ Sprint 29
-**Status:** Stängd — företagsnamn och org.nr redan read-only i PageSettings UI.
+### F51 — Företagsredigering historisk integritet ✅ Sprint 29 (non-issue)
+**Status:** Stängd som non-issue — företagsnamn (`name`) och org.nr (`org_number`)
+visade sig redan vara read-only i PageSettings UI sedan den ursprungliga
+implementationen (Sprint 10). Fälten visas i en `<dd>`-definition list, inte
+i redigerbara input-fält. Backend (`updateCompany`) tillåter tekniskt
+uppdatering av dessa fält via `ALLOWED_COMPANY_COLUMNS`, men ingen UI-path
+exponerar denna möjlighet.
+
+**Beslut:** Varnings-approach (Alternativ B i Sprint 29-prompten) var onödig
+eftersom fälten inte kan ändras av användaren. Snapshot-pattern (Alternativ A:
+spara företagsinfo på fakturan vid finalize) kvarstår som potentiell v1.1-feature
+om kravet på redigering av företagsnamn/org.nr återuppstår.
 
 ### F52 — Backup-restore ✅ Sprint 29
 **Fil:** backup-service.ts
