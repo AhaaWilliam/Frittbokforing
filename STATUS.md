@@ -1,5 +1,31 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 26 -- B-light: user-facing fixar + CI ✅ KLAR
+
+Session S26. Tre user-facing buggar (F35, F38, F8) fixade + GitHub Actions CI etablerad.
+Ingen ny affärslogik, inga nya M-principer.
+
+**Testbaslinje:** 1529 → 1550 vitest (+21).
+
+### F35 stängd
+ExpenseLineRow HTML `min={0}` → `min={1}`. Backend Zod fångade redan qty=0
+men HTML-input tillät det visuellt. 1 test.
+
+### F38 stängd
+ManualEntryForm diff visade `Math.abs(diff)` utan riktning. Nu visar
+"(debet > kredit)" eller "(kredit > debet)". Beräkningslogik extraherad
+till `manual-entry-calcs.ts` för testbarhet. 7 tester.
+
+### F8 stängd
+Söktermer med `%` eller `_` tolkades som SQL-wildcards. Ny helper
+`escapeLikePattern()` i `src/shared/escape-like.ts` med `ESCAPE '!'`.
+4 services migrerade (invoice, expense, product, counterparty).
+Arkitektur-vakt (`like-escape-audit.test.ts`) förhindrar regression. 13 tester.
+
+### CI etablerad
+`.github/workflows/ci.yml` — ubuntu-only, lint + M131/M133-checks + test + build.
+Node 20 via `.node-version`. Inget tsc (91 pre-existing errors), ingen E2E (kräver xvfb).
+
 ## Sprint 25 -- F40 VAT-testhardering ✅ KLAR
 
 Session S25. F40 (moms-skalning otestad i InvoiceTotals) stängd.
@@ -115,10 +141,10 @@ PRAGMA user_version = 27, 22 tabeller.
 ## Nasta sprint -- Fas 6 cleanup-batch eller S24c (CHECK-constraint account_number)
 
 ## Test-count
-- Vitest (system + unit): 1529 passed, 2 skipped (1531 totalt)
-- Testfiler: 139
+- Vitest (system + unit): 1550 passed, 2 skipped (1552 totalt)
+- Testfiler: 143
 - Playwright E2E: 11 (kors separat)
-- Korning: ~13s
+- Korning: ~14s
 
 ## Known infrastructure contracts
 - **FRITT_DB_PATH**: guardad till test-env (NODE_ENV=test eller FRITT_TEST=1). Ignoreras i production.
@@ -126,6 +152,7 @@ PRAGMA user_version = 27, 22 tabeller.
 - **E2E_DOWNLOAD_DIR**: bypass for dialog.showSaveDialog i E2E.
 - **better-sqlite3 handle-kontrakt**: Electron ager primary rw-handle under test. Test-kod seedar via IPC, inte direkt db-access.
 - **Playwright workers: 1**: Electron singleton per test-fil.
+- **GitHub Actions CI**: ubuntu-only, Node 20, lint + checks + test + build. Konfiguration i `.github/workflows/ci.yml`.
 
 ## Kanda fynd vantande
 
@@ -192,6 +219,7 @@ test-filer undantagna.
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
 
 ## Tidigare sprintar
+- Sprint 26 (S26): B-light — F35, F38, F8 stängda, CI etablerad -- KLAR
 - Sprint 25 (S25): F40 VAT-testhardering -- KLAR
 - Sprint 24b (S24b): BR-result-konsistens + F4 comparator-cleanup -- KLAR
 - Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR
