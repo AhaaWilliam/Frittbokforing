@@ -376,7 +376,8 @@ export function exportSie5(
   const seriesNames: Record<string, string> = {
     A: 'Kundfakturor',
     B: 'Leverantörsfakturor',
-    C: 'Betalningar',
+    C: 'Manuella verifikationer',
+    O: 'Ingående balanser',
   }
 
   for (const [series, seriesEntries] of seriesMap) {
