@@ -137,7 +137,11 @@ export function BalanceSheetView({ data, printMode }: Props) {
                 (preliminärt beräknat)
               </span>
             </span>
-            <span className="tabular-nums">
+            <span
+              className="tabular-nums"
+              data-testid="arets-resultat-br-value"
+              data-raw-ore={String(equityAndLiabilities.calculatedNetResult)}
+            >
               {formatReportAmount(equityAndLiabilities.calculatedNetResult)}
             </span>
           </div>

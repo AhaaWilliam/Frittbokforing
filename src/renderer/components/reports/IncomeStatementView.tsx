@@ -129,7 +129,11 @@ export function IncomeStatementView({ data, printMode }: Props) {
         </div>
         <div className="flex justify-between border-t pt-1 text-sm font-bold">
           <span>Årets resultat</span>
-          <span className="tabular-nums">
+          <span
+            className="tabular-nums"
+            data-testid="arets-resultat-value"
+            data-raw-ore={String(data.netResult)}
+          >
             {formatReportAmount(data.netResult)}
           </span>
         </div>

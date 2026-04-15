@@ -19,6 +19,8 @@ End-to-end tests that exercise the full stack: renderer UI, IPC layer, main proc
 - Bulk action bar: sticky bar with "{n} valda" text, "Bulk-betala" button, "Avmarkera alla" button
 - BulkPaymentDialog: per-row amount inputs, "Bankavgift (kr)" input, submit "Betala {n} poster"
 - BulkPaymentResultDialog: "{x} av {y} genomförda" text, "Misslyckades:" list, "Stäng" button
+- `arets-resultat-value` — Årets resultat i resultaträkningen (RR). `data-raw-ore` innehåller råvärdet i ören som integer-sträng (locale-oberoende).
+- `arets-resultat-br-value` — Årets resultat i balansräkningen (BR), under Eget kapital. `data-raw-ore` innehåller råvärdet i ören. Separat testid från RR eftersom rapporter kan renderas samtidigt vid tabbning.
 - Export page: "Exportera SIE4", "Exportera SIE5", "Exportera Excel" buttons
 - Manual entry form: "Bokför" button — use `getByRole('button', { name: 'Bokför' })` to avoid text collision with nav/headings
 - Payment dialog: "Registrera" submit button
