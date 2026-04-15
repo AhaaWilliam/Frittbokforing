@@ -82,25 +82,25 @@ export function getVatReport(
       )
     }
 
-    // Query 2: VAT data per quarter (VERSION A — account_number TEXT)
+    // Query 2: VAT data per quarter — parameterized (F20)
     const vatDataRows = db
       .prepare(
         `SELECT
         ((ap.period_number - 1) / 3) AS quarter_index,
         COALESCE(SUM(CASE
-          WHEN jel.account_number = '${VAT_OUT_25_ACCOUNT}'
+          WHEN jel.account_number = ?
           THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_25,
         COALESCE(SUM(CASE
-          WHEN jel.account_number = '${VAT_OUT_12_ACCOUNT}'
+          WHEN jel.account_number = ?
           THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_12,
         COALESCE(SUM(CASE
-          WHEN jel.account_number = '${VAT_OUT_6_ACCOUNT}'
+          WHEN jel.account_number = ?
           THEN jel.credit_ore - jel.debit_ore ELSE 0
         END), 0) AS vat_out_6,
         COALESCE(SUM(CASE
-          WHEN jel.account_number = '${VAT_IN_ACCOUNT}'
+          WHEN jel.account_number = ?
           THEN jel.debit_ore - jel.credit_ore ELSE 0
         END), 0) AS vat_in
       FROM journal_entry_lines jel
@@ -111,11 +111,15 @@ export function getVatReport(
         AND je.journal_date <= ap.end_date
       WHERE je.fiscal_year_id = ?
         AND je.status = 'booked'
-        AND jel.account_number IN ('${VAT_OUT_25_ACCOUNT}', '${VAT_OUT_12_ACCOUNT}', '${VAT_OUT_6_ACCOUNT}', '${VAT_IN_ACCOUNT}')
+        AND jel.account_number IN (?, ?, ?, ?)
       GROUP BY ((ap.period_number - 1) / 3)
       ORDER BY quarter_index`,
       )
-      .all(fiscalYearId) as VatDataRow[]
+      .all(
+        VAT_OUT_25_ACCOUNT, VAT_OUT_12_ACCOUNT, VAT_OUT_6_ACCOUNT, VAT_IN_ACCOUNT,
+        fiscalYearId,
+        VAT_OUT_25_ACCOUNT, VAT_OUT_12_ACCOUNT, VAT_OUT_6_ACCOUNT, VAT_IN_ACCOUNT,
+      ) as VatDataRow[]
 
     // Build map for merge
     const vatDataMap = new Map<number, VatDataRow>()
