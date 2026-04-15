@@ -12,7 +12,7 @@ Denna fil innehåller findings från djupanalysen som föregick Sprint 11 (Sessi
 - Fas 5a: F11, F17 → Session 45 ✅
 - Fas 5b: F21, F22, F33 → Session 46 ✅
 - Fas 5c: F23 → Session 47 ✅
-- Fas 6: F7, F8, F10, F13, F14, F20, F25, F28, F35, F38 → pending
+- Fas 6: ✅ KLAR (F7 S27, F20 S27, F25 S27, F28 S27 | F8 S26, F10 S57, F13 S60, F14 stale-closed, F35 S26, F38 S26)
 
 ---
 

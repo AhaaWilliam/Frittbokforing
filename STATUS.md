@@ -1,5 +1,32 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 27 -- TSC strict + Fas 6 cleanup ✅ KLAR
+
+Session S27. TSC strict: 37→0 fel (alla i testfiler). Fas 6: alla 5 kvarvarande
+findings stängda. Ny M-princip: M136. Migration 028.
+
+**Testbaslinje:** 1550 vitest (oförändrat — inga nya tester, bara fixar).
+**Ny M-princip:** M136 (_kr-suffix-konvention för form-types).
+**PRAGMA user_version:** 27 → 28. **Tabeller:** 23 → 22 (verification_sequences droppad).
+
+### TSC strict: 37 → 0
+- Kategori A (24 fel): `extends object` istället för `extends Record<string, unknown>` i useEntityForm + FormField/FormSelect/FormTextarea + useTestForm
+- Kategori B (8 fel): dubbel-cast via `unknown` för ElectronAPI/Window
+- Kategori C-F (5 fel): axeResults null-guard, saknad payment_id, stale class_filter, felaktig ErrorCode
+- `npm run typecheck` tillagt i CI
+
+### Fas 6: alla 5 findings stängda
+| Finding | Fix |
+|---------|-----|
+| F39 | M136: dokumenterad _kr-suffix-konvention i CLAUDE.md |
+| F28 | SIE5 serie C → "Manuella verifikationer", +serie O |
+| F20 | VAT-report SQL bind variables istället för template literals |
+| F7 | Migration 028: DROP verification_sequences + RENAME payment_terms_days → payment_terms |
+| F25 | getUsedAccounts: enbart bokförda konton + IB-täckning (inte alla aktiva) |
+
+### Backlog: 0 öppna findings
+Hela Fas 6-listan stängd. Inga kvarvarande findings.
+
 ## Sprint 26 -- B-light: user-facing fixar + CI ✅ KLAR
 
 Session S26. Tre user-facing buggar (F35, F38, F8) fixade + GitHub Actions CI etablerad.
@@ -144,7 +171,8 @@ PRAGMA user_version = 27, 22 tabeller.
 - Vitest (system + unit): 1550 passed, 2 skipped (1552 totalt)
 - Testfiler: 143
 - Playwright E2E: 11 (kors separat)
-- Korning: ~14s
+- Korning: ~15s
+- TSC: 0 errors (`npm run typecheck`)
 
 ## Known infrastructure contracts
 - **FRITT_DB_PATH**: guardad till test-env (NODE_ENV=test eller FRITT_TEST=1). Ignoreras i production.
@@ -152,9 +180,12 @@ PRAGMA user_version = 27, 22 tabeller.
 - **E2E_DOWNLOAD_DIR**: bypass for dialog.showSaveDialog i E2E.
 - **better-sqlite3 handle-kontrakt**: Electron ager primary rw-handle under test. Test-kod seedar via IPC, inte direkt db-access.
 - **Playwright workers: 1**: Electron singleton per test-fil.
-- **GitHub Actions CI**: ubuntu-only, Node 20, lint + checks + test + build. Konfiguration i `.github/workflows/ci.yml`.
+- **GitHub Actions CI**: ubuntu-only, Node 20, typecheck + lint + checks + test + build.
+- **PRAGMA user_version**: 28 (migration 028: F7 drop verification_sequences + rename payment_terms_days). Konfiguration i `.github/workflows/ci.yml`.
 
 ## Kanda fynd vantande
+
+Backlog: 0 öppna findings (alla Fas 6 stängda i Sprint 27).
 
 ### Schema conventions -- medvetna avvikelser (klass B)
 - **accounts.k2_allowed** -- boolean utan `is_`-prefix. `is_k2_allowed` borderline, ej tydligt battre. 54 referenser over 8 filer.
@@ -219,6 +250,7 @@ test-filer undantagna.
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
 
 ## Tidigare sprintar
+- Sprint 27 (S27): TSC strict + Fas 6 cleanup — 0 tsc-fel, 0 findings -- KLAR
 - Sprint 26 (S26): B-light — F35, F38, F8 stängda, CI etablerad -- KLAR
 - Sprint 25 (S25): F40 VAT-testhardering -- KLAR
 - Sprint 24b (S24b): BR-result-konsistens + F4 comparator-cleanup -- KLAR
