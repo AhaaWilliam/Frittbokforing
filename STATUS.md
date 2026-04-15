@@ -1,5 +1,32 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 25 -- F40 VAT-testhardering ✅ KLAR
+
+Session S25. F40 (moms-skalning otestad i InvoiceTotals) stängd.
+Ingen produktionskod ändrad — enbart testhardering.
+
+**Testbaslinje:** 1511 → 1529 vitest (+18).
+**Ny M-princip:** M135 (dual-implementation paritetstest med delad fixture).
+**Ny shared fixture:** `tests/fixtures/vat-scenarios.ts`.
+
+### F40 stängd
+18 nya tester via shared fixture (6 scenarios × 3 testlager):
+- 6 isolerade VAT-skalning i InvoiceTotals (B5, renderer)
+- 6 backend processLines VAT via saveDraft→getDraft
+- 6 renderer↔backend paritets-tester (divergens-vakt)
+
+S25 research bekräftade: ingen beräkningsdivergensbugg — renderer och backend
+använder identisk M131 Alt B-formel. Sprinten var testhardering, inte bugfix.
+
+### Process-audit-resultat
+S24b/S25 process-audit stängde totalt 6 stale findings (F3, F9, F14, F19, F41, F43)
+plus F4 och F40 via sprint-arbete. Backlog: 18 → 10 öppna (1 🟡 F39, 9 🟢 Fas 6).
+
+### Prompt-mall-validering (S24b-lärdomar)
+1. Return-shape preflight (0.1.D): Fungerade — nästlad shape `InvoiceWithLines.lines[].vat_amount_ore` fångades korrekt.
+2. Export-status preflight (0.1.C): Load-bearing — styrde testdesign till saveDraft→getDraft istället för privat processLines.
+3. Ingen miljö-överraskning (jfr S24b:s 5 issues) — testinfrastruktur mognare för ren test-sprint.
+
 ## Sprint 24b -- BR-result-konsistens + F4 comparator-cleanup ✅ KLAR
 
 Session S24b. F19 (BR oberoende netResult-beräkning) och F4 (latent
@@ -85,11 +112,11 @@ PRAGMA user_version = 27, 22 tabeller.
 | S59 | F9: Timezone-konsolidering | KLAR |
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
-## Nasta sprint -- S24c (CHECK-constraint account_number) eller F46 (max-qty UX)
+## Nasta sprint -- Fas 6 cleanup-batch eller S24c (CHECK-constraint account_number)
 
 ## Test-count
-- Vitest (system + unit): 1511 passed, 2 skipped (1513 totalt)
-- Testfiler: 137
+- Vitest (system + unit): 1529 passed, 2 skipped (1531 totalt)
+- Testfiler: 139
 - Playwright E2E: 11 (kors separat)
 - Korning: ~13s
 
@@ -165,6 +192,7 @@ test-filer undantagna.
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
 
 ## Tidigare sprintar
+- Sprint 25 (S25): F40 VAT-testhardering -- KLAR
 - Sprint 24b (S24b): BR-result-konsistens + F4 comparator-cleanup -- KLAR
 - Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR
 - Sprint 14 (S48-S53): E2E-testinfrastruktur -- KLAR

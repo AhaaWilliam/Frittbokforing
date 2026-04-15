@@ -325,6 +325,26 @@ verifierar att 4 konsument-vägar (result-service direkt, re-export via
 opening-balance, getIncomeStatement, getBalanceSheet) ger identisk siffra
 via `Map`-deduplikation där `distinctValues.size === 1`.
 
+## 40. Dual-implementation paritetstest med delad fixture (M135)
+
+**M135.** När samma beräkning implementeras i både renderer (preview) och
+main process (bokföring) ska en paritets-test verifiera att båda ger
+identisk output för samma input. Testet assertar per-rad-likhet, inte
+bara totaler, för att fånga kompensationsfel.
+
+Testscenarier ska centraliseras i en delad fixture-fil (t.ex.
+`tests/fixtures/vat-scenarios.ts`) som importeras av alla testlager.
+Detta förhindrar att scenariedata driftar — en uppdatering i bara
+ett lager utan det andra är omöjlig när båda läser samma fixture.
+
+Motivering: F19 (BR/RR-divergens, S24b) och F40 (VAT-testet, S25)
+exponerade samma mönster — dual-implementationer som kan glida isär
+utan att något enskilt test fångar det. Paritetstestet är vakten.
+
+Referens: `tests/s24b-br-rr-consistency.test.ts` (all-consumers-identical),
+`tests/s25-vat-parity.test.ts` (renderer↔backend VAT),
+`tests/fixtures/vat-scenarios.ts` (delad fixture-mall).
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

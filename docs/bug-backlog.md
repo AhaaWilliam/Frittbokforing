@@ -192,12 +192,15 @@ fixad i Sprint 11 S43 (M98). Sprint 24b fixade kvarvarande ORDER BY + localeComp
 **Förslag:** Dokumentera som explicit undantag, t.ex. M129: "Formulärtyper (`*Form`-suffix) får använda `_kr`-suffix för prisfält. Konvertering till öre sker i dedikerad transformer (t.ex. `transformInvoiceForm`) vid submit. Ingen `_kr`-data får passera IPC-gränsen." Sista meningen skyddar M119 — utan den kan undantaget läcka till main process.
 **Prioritet:** Dokumentation, ingen kodändring krävs. Kan stängas inom valfri sprint som rör fakturering.
 
-### F40 — F27-testskydd täcker bara netto, moms-skalning otestad i InvoiceTotals 🟠
-**Filer:** `src/renderer/components/invoices/InvoiceTotals.tsx`
-**Problem:** InvoiceLineRow visar netto per rad. Moms beräknas separat i InvoiceTotals: `vatOre = Math.round(nettoOre * line.vat_rate)`. S65b:s F27-regressionstester skyddar netto-skalningen men inte moms-skalningen. En bugg i InvoiceTotals (t.ex. `rate_percent / 100`-fel, eller `vat_rate` redan dividerad dubbelgånger) fångas inte.
-**Varför 🟠:** F27 var 🔴 i produktion — samma klass av bugg (division på fel nivå). Moms är svårare att ögonkolla: 25% "känns rätt" oavsett om totalen är 1 187,50 eller 1,19. Om den finns och inte fångas → SIE-fel hos riktig kund.
-**Förslag:** Isolerade tester för InvoiceTotals — kandidat för nästa regressionstestsprint, inte "någon gång". Tre testfall: standardmoms 25%, blandad moms (25% + 6%), momsfritt.
-**Prioritet:** Hög — samma buggklass som F27, otestad.
+### F40 — F27-testskydd täcker bara netto, moms-skalning otestad i InvoiceTotals ✅ STÄNGD (Sprint 25)
+**Stängd:** Sprint 25. 18 nya tester via shared fixture (`tests/fixtures/vat-scenarios.ts`):
+- 6 isolerade VAT-skalning i InvoiceTotals (B5, renderer)
+- 6 backend processLines VAT via saveDraft→getDraft
+- 6 renderer↔backend paritets-tester (divergens-vakt)
+Alla tre momssatser (25%, 12%, 6%) + avrundnings-edgecases + F44-canary.
+**S25 research-resultat:** Ingen beräkningsdivergensbugg — renderer och backend
+använder identisk M131 Alt B-formel. Sprinten är testhardering, inte bugfix.
+**M-regel:** M135 (dual-implementation paritetstest med delad fixture).
 
 ### F41 — Konto-input på friformsrad saknar validering ✅ Stale-close (S25 pre-skoping)
 **Stängd:** Verifierat genom kodinspektio under S25 pre-skoping research.
@@ -318,3 +321,4 @@ När en bug hittas under en session:
 - **2026-04-15:** Sprint 24b — F19 stängd (M134), F4 stängd (compareAccountNumbers + CAST ORDER BY).
 - **2026-04-15:** S24b backlog-audit mot M1–M134: F3 (M99), F9 (M100), F14 stale-closed. 3 findings var redan fixade men inte markerade. Ny rutin: audit findings mot M-regler vid sprint-avslut.
 - **2026-04-15:** S25 pre-skoping research: F41 stale-closed (FK + validateAccountsActive hanterar), F43 stale-closed (type="number" normaliserar). F39 pinnad som dokumentations-finding. Totalt 6 stale-closes under S24b/S25 process-audit.
+- **2026-04-15:** Sprint 25 — F40 stängd (18 tester: 6 renderer + 6 backend + 6 parity via shared fixture). M135 etablerad.
