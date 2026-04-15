@@ -82,7 +82,7 @@ async function renderForm() {
 
   const result = await renderWithProviders(
     <InvoiceForm onSave={onSave} onCancel={onCancel} />,
-    { axeCheck: false },
+    {},
   )
 
   return { ...result, onSave, onCancel }

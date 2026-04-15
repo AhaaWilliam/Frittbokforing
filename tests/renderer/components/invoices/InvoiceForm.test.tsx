@@ -135,7 +135,7 @@ async function renderForm(draft?: InvoiceWithLines) {
 
   const result = await renderWithProviders(
     <InvoiceForm draft={draft} onSave={onSave} onCancel={onCancel} />,
-    { axeCheck: false },
+    {},
   )
 
   return { ...result, onSave, onCancel }

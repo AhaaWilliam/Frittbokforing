@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react'
+import { useMemo, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import type { InvoiceWithLines } from '../../../shared/types'
 import { toKr, todayLocal, addDaysLocal } from '../../lib/format'
@@ -21,6 +21,7 @@ import {
   type InvoiceSavePayload,
   type InvoiceLineForm,
 } from '../../lib/form-schemas/invoice'
+import { errorIdFor } from '../../lib/a11y'
 import { CustomerPicker } from './CustomerPicker'
 import { InvoiceLineRow } from './InvoiceLineRow'
 import { InvoiceTotals } from './InvoiceTotals'
@@ -141,6 +142,22 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     form.setField('dueDate', addDaysLocal(form.getField('invoiceDate') as string, terms) as InvoiceFormState['dueDate'])
   }
 
+  // F49: Focus-management on submit failure
+  const formRef = useRef<HTMLDivElement>(null)
+  const submitCountRef = useRef(0)
+
+  const handleSubmitWithFocus = useCallback(async () => {
+    submitCountRef.current += 1
+    await form.handleSubmit()
+  }, [form.handleSubmit])
+
+  useEffect(() => {
+    if (submitCountRef.current === 0) return
+    if (Object.keys(form.errors).length === 0) return
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    firstInvalid?.focus()
+  }, [form.errors])
+
   async function handleDelete() {
     if (!draft) return
     const confirmed = window.confirm('Vill du verkligen ta bort detta utkast?')
@@ -154,10 +171,10 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
+    <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
       <div className="space-y-6 px-8 py-6">
         {form.submitError && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {form.submitError}
           </div>
         )}
@@ -168,19 +185,22 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
           <CustomerPicker
             value={form.getField('_customer') as InvoiceFormState['_customer']}
             onChange={handleCustomerChange}
+            aria-invalid={!!form.errors._customer}
+            aria-describedby={form.errors._customer ? errorIdFor('invoice-customer') : undefined}
           />
           {form.errors._customer && (
-            <p className="mt-1 text-xs text-red-600">{form.errors._customer}</p>
+            <p role="alert" id={errorIdFor('invoice-customer')} className="mt-1 text-xs text-red-600">{form.errors._customer}</p>
           )}
         </div>
 
         {/* Invoice details */}
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="invoice-number" className="mb-1 block text-sm font-medium">
               Fakturanummer
             </label>
             <input
+              id="invoice-number"
               type="text"
               readOnly
               value={
@@ -211,10 +231,11 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             )}
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="invoice-payment-terms" className="mb-1 block text-sm font-medium">
               Betalningsvillkor
             </label>
             <select
+              id="invoice-payment-terms"
               value={form.getField('paymentTerms') as number}
               onChange={(e) =>
                 handlePaymentTermsChange(parseInt(e.target.value, 10))
@@ -229,10 +250,11 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="invoice-due-date" className="mb-1 block text-sm font-medium">
               F&ouml;rfallodatum
             </label>
             <input
+              id="invoice-due-date"
               type="date"
               readOnly
               value={form.getField('dueDate') as string}
@@ -243,8 +265,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
 
         {/* Notes */}
         <div>
-          <label className="mb-1 block text-sm font-medium">Anteckningar</label>
+          <label htmlFor="invoice-notes" className="mb-1 block text-sm font-medium">Anteckningar</label>
           <textarea
+            id="invoice-notes"
             value={form.getField('notes') as string}
             onChange={(e) =>
               form.setField('notes', e.target.value as InvoiceFormState['notes'])
@@ -265,10 +288,10 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
                 <th className="px-2 py-2 w-24">Pris (kr)</th>
                 <th className="px-2 py-2 w-28">Moms</th>
                 <th className="px-2 py-2 w-24 text-right">Summa</th>
-                <th className="px-2 py-2 w-10" />
+                <th className="px-2 py-2 w-10"><span className="sr-only">Åtgärd</span></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody aria-live="polite">
               {lines.map((line, i) => (
                 <InvoiceLineRow
                   key={line.temp_id}
@@ -289,7 +312,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             L&auml;gg till rad
           </button>
           {form.errors.lines && (
-            <p className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+            <p role="alert" id={errorIdFor('invoice-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
           )}
         </div>
 
@@ -300,7 +323,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
         <div className="flex items-center gap-3 border-t pt-4">
           <button
             type="button"
-            onClick={() => form.handleSubmit()}
+            onClick={() => handleSubmitWithFocus()}
             disabled={!activeFiscalYear || form.isSubmitting}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >

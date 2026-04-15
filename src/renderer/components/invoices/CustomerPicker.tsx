@@ -8,9 +8,11 @@ interface CustomerPickerProps {
     name: string
     default_payment_terms: number
   }) => void
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
 }
 
-export function CustomerPicker({ value, onChange }: CustomerPickerProps) {
+export function CustomerPicker({ value, onChange, ...ariaProps }: CustomerPickerProps) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [open, setOpen] = useState(false)
@@ -87,6 +89,8 @@ export function CustomerPicker({ value, onChange }: CustomerPickerProps) {
         onFocus={() => setOpen(true)}
         placeholder="S&ouml;k kund..."
         aria-label="Sök kund"
+        aria-invalid={ariaProps['aria-invalid'] || undefined}
+        aria-describedby={ariaProps['aria-describedby']}
         className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {open && customers && customers.length > 0 && (
