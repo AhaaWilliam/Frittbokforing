@@ -308,6 +308,23 @@ JSX pålitligt.
 
 **Referens:** Sprint 22c (F49), `scripts/check-m133.mjs`.
 
+## 39. BR årets resultat via result-service (M134)
+
+**M134.** `getBalanceSheet()` i `report-service.ts` beräknar "årets resultat"
+(den dynamiska posten under Eget kapital) via `calculateResultSummary()` från
+`result-service.ts`, inte via egen filter-reduce. Detta garanterar att BR:s
+"årets resultat" är identisk med RR:s bottom-line.
+
+Historik: Före S24b använde BR `!startsWith('1') && !startsWith('2')` för att
+filtrera movements och summera class 3–8. Denna beräkning var funktionellt
+korrekt med nuvarande BAS-chart men bröt mot M96 (single source of truth)
+och kunde divergera vid icke-standard-konton.
+
+Invariant-test i `tests/s24b-br-rr-consistency.test.ts` (F19 permanent vakt)
+verifierar att 4 konsument-vägar (result-service direkt, re-export via
+opening-balance, getIncomeStatement, getBalanceSheet) ger identisk siffra
+via `Map`-deduplikation där `distinctValues.size === 1`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

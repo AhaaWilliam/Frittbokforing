@@ -1,5 +1,52 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 24b -- BR-result-konsistens + F4 comparator-cleanup ✅ KLAR
+
+Session S24b. F19 (BR oberoende netResult-beräkning) och F4 (latent
+lexikografisk kontonummerjämförelse) stängda.
+
+**Testbaslinje:** 1493 → 1511 vitest (+18) + 1 E2E.
+**Ny M-princip:** M134 (BR årets resultat via result-service).
+**Ny shared helper:** `compareAccountNumbers` (`src/shared/account-number.ts`).
+
+### F19 stängd
+BR:s `calculatedNetResult` läser nu från `calculateResultSummary().netResultOre`.
+Acceptanskriteriet bekräftat via:
+- 3 BR/RR-konsistens-tester (positivt med klass 8, negativt, noll)
+- 1 all-consumers-identical-test (permanent vakt över 4 konsument-vägar)
+- 1 E2E (klass 8 + 89xx-skatt-scenario, locale-oberoende via data-raw-ore)
+
+### F4 stängd
+6 A/B-träffar fixade: 5 SQL `ORDER BY CAST(account_number AS INTEGER)` +
+1 application-layer `localeCompare → compareAccountNumbers`. C-träffar
+(defensiva single-char prefix-checks) lämnade orörda.
+
+### Process-finding (S24a)
+Stale backlog-items ska auditeras mot M-regler vid sprint-avslut. F19 var
+i backlog som "tre olika definitioner av årets resultat" men Sprint 11
+(M96–M98) etablerade `result-service.ts` som single source of truth utan
+att stänga findingen. **Ny rutin:** vid sprint-avslut auditeras alla
+refererade findings i sprint-scope mot M-reglerna som etablerats — om
+findingen är löst av en M-regel ska den stängas i samma commit, inte
+överleva som öppen i backlog.
+
+### S24c-finding: Schema-constraint på account_number
+Lägg till `CHECK(length(account_number) BETWEEN 4 AND 5)` på `accounts`-
+tabellen som permanent F4-vakt. Kräver M122 table-recreate (FK från 6
+tabeller). Inte i scope för S24b eftersom CAST + compareAccountNumbers är
+tillräckligt defense-in-depth givet att SIE-import inte existerar.
+
+**Eskaleringstriggers — flytta till sprint om något inträffar:**
+1. Import-väg läggs till (SIE-import, CSV-import, eller motsvarande)
+2. BAS-uppdatering ger 5-siffriga konton som standard
+3. Backup-restore visar sig kringgå application-layer-validering
+
+### Follow-up: data-testid för Dashboard + Tax
+Dashboard och Tax-vyn renderar också "årets resultat" men fick inte
+`data-testid="arets-resultat-value"` i denna sprint eftersom acceptans-
+kriteriet bara krävde RR + BR. Lägg till samma kontrakt vid nästa
+beröring av dessa vyer för framtida E2E-utvidgning.
+
 ## Sprint 21 -- M131-precision + CI-verifiering ✅ KLAR (2026-04-14)
 
 Session S68: F47 display-lager (InvoiceLineRow + ExpenseLineRow Alt B),
@@ -38,12 +85,12 @@ PRAGMA user_version = 27, 22 tabeller.
 | S59 | F9: Timezone-konsolidering | KLAR |
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
-## Nasta sprint -- F46 (max-qty UX) eller F49 (a11y-konsistens)
+## Nasta sprint -- S24c (CHECK-constraint account_number) eller F46 (max-qty UX)
 
 ## Test-count
-- Vitest (system + unit): 1472 passed, 2 skipped (1474 totalt)
-- Testfiler: 125
-- Playwright E2E: 10 (kors separat)
+- Vitest (system + unit): 1511 passed, 2 skipped (1513 totalt)
+- Testfiler: 137
+- Playwright E2E: 11 (kors separat)
 - Korning: ~13s
 
 ## Known infrastructure contracts
@@ -118,6 +165,7 @@ test-filer undantagna.
 | B7 | src/main/services/excel/excel-export-service.ts | 444 | `new Date()` med `.getFullYear/.getMonth/.getDate/.getHours` | Manuellt formaterad lokal tid via getters. Samma resultat som `todayLocal()`. Korrekt per M28. |
 
 ## Tidigare sprintar
+- Sprint 24b (S24b): BR-result-konsistens + F4 comparator-cleanup -- KLAR
 - Sprint 15 (S41-S47): Kritiska normaliseringar -- KLAR
 - Sprint 14 (S48-S53): E2E-testinfrastruktur -- KLAR
 - Sprint 13 (S55-S56): Bulk-betalningar -- KLAR
