@@ -429,6 +429,10 @@ interface ElectronAPI {
     fiscal_year_id: number
     period_end_date: string
   }) => Promise<IpcResult<import('../shared/types').ExecuteDepreciationPeriodResult>>
+  // Cash Flow (Sprint 53 F65)
+  getCashFlowStatement: (data: { fiscal_year_id: number }) => Promise<
+    IpcResult<import('../../main/services/cash-flow-service').CashFlowReport>
+  >
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

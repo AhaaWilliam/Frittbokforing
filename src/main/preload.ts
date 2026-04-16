@@ -277,6 +277,9 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('depreciation:delete', data),
   executeDepreciationPeriod: (data: { fiscal_year_id: number; period_end_date: string }) =>
     ipcRenderer.invoke('depreciation:execute-period', data),
+  // Cash Flow (Sprint 53 F65)
+  getCashFlowStatement: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('report:cash-flow', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

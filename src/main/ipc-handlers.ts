@@ -137,6 +137,7 @@ import {
   deleteFixedAsset,
   executeDepreciationPeriod,
 } from './services/depreciation-service'
+import { getCashFlowStatement } from './services/cash-flow-service'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -218,6 +219,7 @@ import {
   DepreciationIdSchema,
   DepreciationDisposeSchema,
   DepreciationExecutePeriodSchema,
+  CashFlowInputSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -958,6 +960,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('depreciation:execute-period', wrapIpcHandler(DepreciationExecutePeriodSchema, (data) =>
     executeDepreciationPeriod(db, data.fiscal_year_id, data.period_end_date),
+  ))
+
+  // === Cash Flow (Sprint 53 F65) ===
+  ipcMain.handle('report:cash-flow', wrapIpcHandler(CashFlowInputSchema, (data) =>
+    getCashFlowStatement(db, data.fiscal_year_id),
   ))
 
   // === Settings ===

@@ -886,6 +886,13 @@ export const AgingInputSchema = z
   })
   .strict()
 
+// === Cash Flow (Sprint 53 F65) ===
+export const CashFlowInputSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === Fixed Assets / Depreciation (Sprint 53 F62) ===
 export const DepreciationCreateAssetSchema = z
   .object({
@@ -1083,6 +1090,9 @@ export const channelMap = {
   'budget:save': BudgetSaveSchema,
   'budget:variance': BudgetVarianceSchema,
   'budget:copy-from-previous': BudgetCopySchema,
+
+  // Cash Flow (Sprint 53 F65)
+  'report:cash-flow': CashFlowInputSchema,
 
   // Depreciation (Sprint 53 F62)
   'depreciation:create-asset': DepreciationCreateAssetSchema,
