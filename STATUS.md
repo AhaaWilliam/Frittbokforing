@@ -1,5 +1,73 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 53 -- Avskrivningar + Kassaflöde + polish ✅ KLAR
+
+Session S53. Två genuint saknade features (F62 avskrivningar, F65 kassaflöde)
+plus två mikro-polish-tasks (F63 SIE4 merge-warning, F64 accrual preview).
+Prompt reviderad efter QA-audit — tidigare S53-utkast byggde på 4 faktafel.
+
+**Testbaslinje:** 2274 → 2302 vitest (+28). 223 → 225 testfiler (+2).
+**PRAGMA user_version:** 37 → 38 (migration 038).
+**Nya tabeller:** fixed_assets, depreciation_schedules (+2).
+**Nya M-principer:** M151 (E-serie för avskrivningar).
+**Nya IPC-kanaler:** +7 (6 depreciation + 1 cash-flow).
+**Nya sidor:** PageFixedAssets.
+
+### Leverabler
+
+#### F62 — Avskrivningar (6–8 SP)
+- **Migration 038** i M122-stil — fixed_assets + depreciation_schedules +
+  CHECK (verification_series IN ('A','B','C','E','I','O')) på
+  journal_entries. Pre-flight SELECT DISTINCT förhindrar bygg-stopp.
+  M121 + M141 cross-table-trigger-inventering genomförd.
+- **depreciation-service.ts** med full CRUD + `executeDepreciationPeriod`
+  (M113 partial-success). Linjär + degressiv schedule-generering.
+  Chronology-check per schedule (M142). Integration med result-service (M96)
+  via 78xx-intervall — ingen duplicerad logik.
+- **23 unit-tester** täcker linjär/degressiv avrundning, validering,
+  dispose-semantik, execute-scenarion (completed/partial/cancelled/
+  idempotent/fully_depreciated), result-service-integration.
+- **6 IPC-kanaler** via wrapIpcHandler (M128, M144).
+- **PageFixedAssets** med tabell, createDialog, avyttra/radera-åtgärder.
+  Sidebar-länk med Building2-ikon. DEPRECIATION_DEFAULTS för 8 BAS-
+  mappningar autofyller ack/expense-konton.
+- **M151** dokumenterad i CLAUDE.md.
+
+#### F65 — Kassaflödesanalys (3–4 SP)
+- **cash-flow-service.ts** indirekt metod. WORKING_CAPITAL_RANGES-konstant
+  (K2/K3-standard). Återanvänder calculateResultSummary (M96) och använder
+  numerisk SUBSTR-CAST (M98).
+- Formler: operating = netResult + depreciation - ΔworkingCapital;
+  investing = -Δ(1000-1299) - depreciation; financing = -Δequity -
+  netResult - Δ(2300-2399). Verifierat med 4 scenarion.
+- `report:cash-flow` IPC via wrapIpcHandler. UI-flik i PageReports
+  kvarstår som F65-c i S54-backlog.
+
+#### F63-polish — SIE4 merge-warning
+Bulletlista i ImportPreviewPhase när strategy='merge' förklarar merge-
+semantik. Konflikt-resolution-UI som F63-polish-b i backlog.
+
+#### F64-polish — Accrual dry-run preview
+"Kör alla"-knappen öppnar preview-dialog med periodiseringslista + belopp
++ total innan execute. Återanvänder befintlig periodStatuses-data
+(ingen ny IPC).
+
+### Flyttat till S54-backlog
+Se [docs/s54-backlog.md](docs/s54-backlog.md):
+- F62-b/c/d: Asset detail-vy, disposal-verifikat-generering, E2E-spec.
+- F65-b/c: Year-end booking-hantering, UI-flik i PageReports.
+- F63-polish-b: Full konflikt-resolution-UI.
+- F47 M131 i LineRow display. F49-b AST-baserad M133. A11y-bredd.
+  Pagination. Bankavstämning.
+- M133-städning (~80 pre-existing violations — baseline oförändrad).
+
+### Stängda items
+- **F62 Avskrivningar** (service + migration + IPC + UI + M151): STÄNGD.
+- **F65 Kassaflöde** (service + IPC + tester): STÄNGD (UI → S54).
+- **F63-polish + F64-polish**: STÄNGDA (minimala varianter).
+
+### Backlog: se [docs/s54-backlog.md](docs/s54-backlog.md)
+
 ## Sprint 52 -- Dogfood-fix: OnboardingWizard step 1 UX ✅ KLAR
 
 Session S52. Första dogfood-fyndet: "Nästa"-knappen disablas tyst när orgnr/aktiekapital/registreringsdatum är ogiltigt. Bara namn-fältet hade inline-fel.
