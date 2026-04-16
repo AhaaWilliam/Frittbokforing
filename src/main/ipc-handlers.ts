@@ -107,6 +107,8 @@ import {
   getAgingReceivables,
   getAgingPayables,
 } from './services/aging-service'
+import { parseSie4 } from './services/sie4/sie4-import-parser'
+import { validateSieParseResult } from './services/sie4/sie4-import-validator'
 import {
   validateBatchForExport,
   generatePain001,
@@ -187,6 +189,8 @@ import {
   CanCorrectSchema,
   GlobalSearchSchema,
   AgingInputSchema,
+  Sie4SelectFileSchema,
+  Sie4ValidateSchema,
   PaymentBatchValidateExportSchema,
   PaymentBatchExportPain001Schema,
   AccrualCreateSchema,
@@ -778,6 +782,31 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('aging:payables', wrapIpcHandler(AgingInputSchema, (data) =>
     getAgingPayables(db, data.fiscal_year_id, data.as_of_date),
+  ))
+
+  // === SIE4 Import ===
+  ipcMain.handle('import:sie4-select-file', wrapIpcHandler(
+    Sie4SelectFileSchema,
+    async () => {
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openFile'],
+        filters: [{ name: 'SIE', extensions: ['se', 'si', 'sie'] }],
+      })
+      if (result.canceled || !result.filePaths[0]) return null
+      return { filePath: result.filePaths[0] }
+    },
+  ))
+
+  ipcMain.handle('import:sie4-validate', wrapIpcHandler(
+    Sie4ValidateSchema,
+    (data) => {
+      const buffer = fs.readFileSync(data.filePath)
+      const parseResult = parseSie4(buffer)
+      const validation = validateSieParseResult(parseResult)
+      return validation
+    },
   ))
 
   // === Payment Batch Export ===

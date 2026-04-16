@@ -800,6 +800,15 @@ export const BudgetCopySchema = z
   })
   .strict()
 
+// === SIE4 Import ===
+export const Sie4SelectFileSchema = z.object({}).strict()
+
+export const Sie4ValidateSchema = z
+  .object({
+    filePath: z.string().min(1),
+  })
+  .strict()
+
 // === Payment Batch Export ===
 export const PaymentBatchValidateExportSchema = z
   .object({
@@ -1001,6 +1010,10 @@ export const channelMap = {
   // Aging Report
   'aging:receivables': AgingInputSchema,
   'aging:payables': AgingInputSchema,
+
+  // SIE4 Import
+  'import:sie4-select-file': Sie4SelectFileSchema,
+  'import:sie4-validate': Sie4ValidateSchema,
 
   // Payment batch export
   'payment-batch:validate-export': PaymentBatchValidateExportSchema,

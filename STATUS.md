@@ -1,5 +1,48 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 47 -- Feature 5a: SIE4-import parser + validering + dry-run ✅ KLAR
+
+Session S47. SIE4 parser (CP437, alla record-typer), validator (E1-E5, W1-W5), KSUMMA-verifiering, dry-run IPC.
+
+**Testbaslinje:** 2201 → 2234 vitest (+33). 0 skipped. 218 testfiler.
+**PRAGMA user_version:** 37 (oförändrat — inga nya migrationer).
+**Inga nya M-principer.**
+**Nya filer:** sie4-amount-parser.ts, sie4-import-parser.ts, sie4-import-validator.ts,
+session-47-sie4-import.test.ts, ipc-sie4-import.test.ts.
+
+### Leverabler
+
+#### 1. sie4-amount-parser.ts
+- `sie4AmountToOre` — reverse av oreToSie4Amount, heltalsaritmetik (M131)
+
+#### 2. sie4-import-parser.ts
+- `parseSie4(buffer)` — CP437-dekodning via iconv-lite, radbaserad tokenizer
+- Hanterar: FLAGGA, PROGRAM, FORMAT, GEN, SIETYP, FTYP, ORGNR, FNAMN, RAR,
+  KPTYP, VALUTA, KONTO, KTYP, IB, UB, RES, PSALDO, VER/TRANS, KSUMMA
+- Escape-hantering: `\"` i citerade strängar
+- Multi-line VER/TRANS-block med { }-avgränsning
+- Okända records → warning (defensiv parser)
+- KSUMMA: återanvänder `calculateKsumma` från sie4-checksum.ts
+
+#### 3. sie4-import-validator.ts
+- `validateSieParseResult` → `SieValidationResult`
+- **Blockerande:** E1 (obalanserat), E2 (<2 TRANS), E3 (duplikat-konton), E4 (KSUMMA), E5 (RAR saknas)
+- **Varningar:** W1 (IB+rörelser≠UB), W2 (datum utanför RAR), W3 (SIETYP<4), W5 (kronologi)
+- Summary: antal konton/verifikat/rader, företagsnamn, orgNr
+
+#### 4. IPC (2 kanaler)
+- import:sie4-select-file — OS-filväljare (.se, .si, .sie)
+- import:sie4-validate — dry-run (läs + parse + validera, inga DB-skrivningar)
+
+#### 5. Tester (33 nya)
+- **session-47-sie4-import.test.ts** (30): amount parser (6), parser (10), validator (7), roundtrip (5), KSUMMA (2)
+- **ipc-sie4-import.test.ts** (3): schema-validering
+
+### Stängda items
+- **Feature 5a** SIE4-import parser: STÄNGD
+
+### Backlog: 0 öppna findings
+
 ## Sprint 46 -- Feature 4: Leverantörsbetalfil (ISO 20022 pain.001) ✅ KLAR
 
 Session S46. Betalningsuppgifter på counterparties, pain.001 XML-generering, batch export tracking.

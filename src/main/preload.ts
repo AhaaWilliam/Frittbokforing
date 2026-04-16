@@ -220,6 +220,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('aging:receivables', data),
   getAgingPayables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
     ipcRenderer.invoke('aging:payables', data),
+  // SIE4 Import
+  sie4SelectFile: () =>
+    ipcRenderer.invoke('import:sie4-select-file', {}),
+  sie4Validate: (data: { filePath: string }) =>
+    ipcRenderer.invoke('import:sie4-validate', data),
   // Payment batch export
   validateBatchExport: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:validate-export', data),

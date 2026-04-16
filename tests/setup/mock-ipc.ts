@@ -112,6 +112,9 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   saveInvoicePdf: 'invoice:save-pdf',
   selectDirectory: 'invoice:select-directory',
   savePdfBatch: 'invoice:save-pdf-batch',
+  // SIE4 Import
+  sie4SelectFile: 'import:sie4-select-file',
+  sie4Validate: 'import:sie4-validate',
   // Payment batch export
   validateBatchExport: 'payment-batch:validate-export',
   exportPain001: 'payment-batch:export-pain001',

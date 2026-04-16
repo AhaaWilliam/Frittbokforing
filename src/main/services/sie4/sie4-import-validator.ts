@@ -1,0 +1,188 @@
+/**
+ * SIE4 import validator — validates parsed SIE4 data.
+ * Returns blocking errors and non-blocking warnings.
+ */
+import type { SieParseResult } from './sie4-import-parser'
+
+export interface SieValidationResult {
+  valid: boolean
+  errors: Array<{ code: string; message: string; context?: string }>
+  warnings: Array<{ code: string; message: string; context?: string }>
+  summary: {
+    accounts: number
+    entries: number
+    lines: number
+    fiscalYears: number
+    sieType: number | null
+    programName: string | null
+    companyName: string | null
+    orgNumber: string | null
+  }
+}
+
+export function validateSieParseResult(result: SieParseResult): SieValidationResult {
+  const errors: SieValidationResult['errors'] = []
+  const warnings: SieValidationResult['warnings'] = []
+
+  // E1: Unbalanced vouchers
+  for (const entry of result.entries) {
+    const totalDebit = entry.transactions
+      .filter((t) => t.amountOre > 0)
+      .reduce((s, t) => s + t.amountOre, 0)
+    const totalCredit = entry.transactions
+      .filter((t) => t.amountOre < 0)
+      .reduce((s, t) => s + Math.abs(t.amountOre), 0)
+
+    // SIE4 uses signed amounts: positive = debit, negative = credit
+    // Balance check: sum of all amounts should be 0
+    const sum = entry.transactions.reduce((s, t) => s + t.amountOre, 0)
+    if (Math.abs(sum) > 1) {
+      errors.push({
+        code: 'E1',
+        message: `Verifikat ${entry.series}${entry.number} är obalanserat (diff: ${sum} öre)`,
+        context: `${entry.series}${entry.number} ${entry.date}`,
+      })
+    }
+  }
+
+  // E2: Vouchers with < 2 transactions
+  for (const entry of result.entries) {
+    if (entry.transactions.length < 2) {
+      errors.push({
+        code: 'E2',
+        message: `Verifikat ${entry.series}${entry.number} har färre än 2 transaktionsrader`,
+        context: `${entry.series}${entry.number}`,
+      })
+    }
+  }
+
+  // E3: Duplicate account numbers
+  const accountNumbers = result.accounts.map((a) => a.number)
+  const duplicates = accountNumbers.filter(
+    (n, i) => accountNumbers.indexOf(n) !== i,
+  )
+  if (duplicates.length > 0) {
+    errors.push({
+      code: 'E3',
+      message: `Duplicerade kontonummer: ${[...new Set(duplicates)].join(', ')}`,
+    })
+  }
+
+  // E4: KSUMMA mismatch
+  if (result.checksum.expected !== null && !result.checksum.valid) {
+    errors.push({
+      code: 'E4',
+      message: `KSUMMA-mismatch: förväntat ${result.checksum.expected}, beräknat ${result.checksum.computed}`,
+    })
+  }
+
+  // E5: Missing RAR
+  if (result.header.fiscalYears.length === 0) {
+    errors.push({
+      code: 'E5',
+      message: 'Inget räkenskapsår definierat (#RAR saknas)',
+    })
+  }
+
+  // W1: IB + movements ≠ UB per account (if UB exists)
+  if (result.closingBalances.length > 0 && result.entries.length > 0) {
+    const ibMap = new Map<string, number>()
+    for (const ib of result.openingBalances.filter((b) => b.yearIndex === 0)) {
+      ibMap.set(ib.accountNumber, ib.amountOre)
+    }
+
+    const movementMap = new Map<string, number>()
+    for (const entry of result.entries) {
+      for (const t of entry.transactions) {
+        movementMap.set(
+          t.accountNumber,
+          (movementMap.get(t.accountNumber) ?? 0) + t.amountOre,
+        )
+      }
+    }
+
+    for (const ub of result.closingBalances.filter((b) => b.yearIndex === 0)) {
+      const ib = ibMap.get(ub.accountNumber) ?? 0
+      const movement = movementMap.get(ub.accountNumber) ?? 0
+      const expected = ib + movement
+      if (Math.abs(expected - ub.amountOre) > 1) {
+        warnings.push({
+          code: 'W1',
+          message: `IB + rörelser ≠ UB för konto ${ub.accountNumber} (IB=${ib}, rörelse=${movement}, UB=${ub.amountOre})`,
+          context: ub.accountNumber,
+        })
+      }
+    }
+  }
+
+  // W2: Date outside RAR range
+  const rar0 = result.header.fiscalYears.find((fy) => fy.index === 0)
+  if (rar0) {
+    for (const entry of result.entries) {
+      if (entry.date < rar0.from || entry.date > rar0.to) {
+        warnings.push({
+          code: 'W2',
+          message: `Verifikat ${entry.series}${entry.number} (${entry.date}) utanför RAR-intervall (${rar0.from}–${rar0.to})`,
+          context: `${entry.series}${entry.number}`,
+        })
+      }
+    }
+  }
+
+  // W3: SIETYP < 4 and no VER
+  if (
+    result.header.sieType !== null &&
+    result.header.sieType < 4 &&
+    result.entries.length === 0
+  ) {
+    warnings.push({
+      code: 'W3',
+      message: `SIETYP ${result.header.sieType} — inga verifikat (förväntat för typ < 4)`,
+    })
+  }
+
+  // W5: Non-chronological vouchers per series
+  const seriesMap = new Map<string, SieParseResult['entries']>()
+  for (const entry of result.entries) {
+    if (!seriesMap.has(entry.series)) seriesMap.set(entry.series, [])
+    seriesMap.get(entry.series)!.push(entry)
+  }
+  for (const [series, seriesEntries] of seriesMap) {
+    for (let i = 1; i < seriesEntries.length; i++) {
+      if (seriesEntries[i].date < seriesEntries[i - 1].date) {
+        warnings.push({
+          code: 'W5',
+          message: `Verifikat ${series}${seriesEntries[i].number} (${seriesEntries[i].date}) före ${series}${seriesEntries[i - 1].number} (${seriesEntries[i - 1].date})`,
+          context: series,
+        })
+        break // One warning per series
+      }
+    }
+  }
+
+  // Propagate parser warnings
+  for (const w of result.warnings) {
+    warnings.push({ code: 'W0', message: w })
+  }
+
+  const totalLines = result.entries.reduce(
+    (s, e) => s + e.transactions.length,
+    0,
+  )
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    summary: {
+      accounts: result.accounts.length,
+      entries: result.entries.length,
+      lines: totalLines,
+      fiscalYears: result.header.fiscalYears.length,
+      sieType: result.header.sieType,
+      programName: result.header.program,
+      companyName: result.header.companyName,
+      orgNumber: result.header.orgNumber,
+    },
+  }
+}

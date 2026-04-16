@@ -374,6 +374,11 @@ interface ElectronAPI {
     fiscal_year_id: number
     as_of_date?: string
   }) => Promise<IpcResult<import('../main/services/aging-service').AgingReport>>
+  // SIE4 Import
+  sie4SelectFile: () => Promise<IpcResult<{ filePath: string } | null>>
+  sie4Validate: (data: {
+    filePath: string
+  }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-validator').SieValidationResult>>
   // Payment batch export
   validateBatchExport: (data: {
     batch_id: number

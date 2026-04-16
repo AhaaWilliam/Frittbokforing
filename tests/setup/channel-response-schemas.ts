@@ -96,6 +96,15 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   'invoice:payBulk': BulkPaymentResultSchema,
   'expense:payBulk': BulkPaymentResultSchema,
 
+  // SIE4 Import
+  'import:sie4-select-file': z.object({ filePath: z.string() }).nullable(),
+  'import:sie4-validate': z.object({
+    valid: z.boolean(),
+    errors: z.array(z.object({ code: z.string(), message: z.string() }).passthrough()),
+    warnings: z.array(z.object({ code: z.string(), message: z.string() }).passthrough()),
+    summary: z.object({}).passthrough(),
+  }),
+
   // Payment batch export
   'payment-batch:validate-export': z.object({
     valid: z.boolean(),
