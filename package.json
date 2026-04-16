@@ -22,6 +22,7 @@
     "test:system": "vitest run tests/system/",
     "test:security": "vitest run tests/security/",
     "test:e2e": "electron-rebuild -f -w better-sqlite3 && playwright test",
+    "test:e2e:critical": "electron-rebuild -f -w better-sqlite3 && playwright test --grep @critical",
     "test:e2e:headed": "electron-rebuild -f -w better-sqlite3 && playwright test --headed",
     "test:e2e:ci": "xvfb-run --auto-servernum --server-args='-screen 0 1280x960x24' npx playwright test --config=e2e/playwright.config.ts",
     "test:all": "vitest run && npx playwright test",

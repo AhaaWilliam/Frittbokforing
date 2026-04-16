@@ -2,13 +2,19 @@
 
 End-to-end tests that exercise the full stack: renderer UI, IPC layer, main process services, and SQLite database.
 
-## Architecture (M115, M116)
+## Architecture (M115, M116, M148, M150, M151)
 
 **M115:** E2E tests run against the dev-built Electron app via Playwright. Each test file gets its own temp-db-path via `FRITT_DB_PATH` env. Data is seeded via IPC calls through the renderer. UI interactions are used only for what's being tested, not for setup.
 
 **M116:** E2E tests cover flows that are unrealistic to test in the system layer (multi-step UI, renderer-to-main IPC contracts, full stack). System tests still own business logic testing. One E2E test per critical flow, not per edge case.
 
 **M117:** `data-testid` attributes are allowed on critical bulk/export/dialog actions as a stable E2E contract.
+
+**M148:** Fixtures byggs uteslutande via `window.api` eller `window.__testApi` — aldrig direkt better-sqlite3 i test-processen. Se `tests/e2e/fixtures/compose.ts`.
+
+**M150:** Tid-känsliga tester fryser klockan via `freezeClock(window, iso)` (wrapper runt `__testApi.freezeClock`, satt som `FRITT_NOW`). Alla main-process-services läser tid via `getNow()` (se `src/main/utils/now.ts`).
+
+**M151:** Snapshot-tester av SIE4/SIE5/pain.001 maskar volatila fält (#GEN-datum, Date-attribut, CreDtTm, UUID, KSUMMA) via helpers i `tests/e2e/helpers/snapshot-mask.ts` innan `toMatchSnapshot()`.
 
 ### data-testid whitelist
 
@@ -32,8 +38,11 @@ End-to-end tests that exercise the full stack: renderer UI, IPC layer, main proc
 # Build first (required — E2E runs against compiled app)
 npm run build
 
-# Run all E2E tests
+# Run all E2E tests (full suite, ~15–25 min seriellt)
 npm run test:e2e
+
+# Snabb smoke-suite: endast tester taggade @critical (<3 min)
+npm run test:e2e:critical
 
 # Headed mode (see the app)
 npm run test:e2e:headed
@@ -80,9 +89,85 @@ Available endpoints:
 
 Source: `src/main/ipc/test-handlers.ts`, registered in `src/main/ipc-handlers.ts` with guard.
 
+## Katalogstruktur (Fas 1)
+
+```
+tests/e2e/
+├─ modules/         # Per-modul-tester (01-onboarding, 02a-customers, …)
+├─ flows/           # Multi-modul användarflöden (first-time-setup, invoice-lifecycle)
+├─ fixtures/        # compose*-funktioner som seedar deterministiska test-state
+├─ helpers/         # launch-app, seed, assertions, ipc-testapi, snapshot-mask, pdf-parse
+├─ snapshots/       # Toleranta snapshots (SIE4/SIE5/pain.001 efter maskning)
+└─ *.spec.ts        # Befintliga tester från Sprint 13–50 (behålls där de är)
+```
+
+**Regel:** Nya tester går i `modules/` eller `flows/`. Befintliga 22 tester migreras inte.
+
+## Fixtures
+
+Alla fixtures seedas via IPC (M148). Använd compose-funktioner från
+`fixtures/compose.ts`:
+
+- `composeEmptyK2(window)` — K2-bolag + FY 2026, inga transaktioner
+- `composeEmptyK3(window)` — K3-variant
+- `composeActiveYear(window)` — K2 + 3 kunder + 2 lev + 2 bokförda fakturor
+- `composeOverdueInvoices(window)` — K2 + 1 kund + 1 förfallen faktura
+  (kräver `FRITT_NOW` > due_date satt innan launch)
+
+## Clock-freeze (M150)
+
+Main-process-tid styrs via `FRITT_NOW`-env. E2E-tester använder
+`freezeClock(window, iso)` efter launch, eller sätter env innan:
+
+```ts
+// Alternativ 1: frys vid launch för overdue-tester
+process.env.FRITT_NOW = '2026-05-01T12:00:00Z'
+const ctx = await launchAppWithFreshDb()
+
+// Alternativ 2: frys runtime via __testApi
+await freezeClock(ctx.window, '2025-06-15T12:00:00Z')
+await freezeClock(ctx.window, null) // unfreeze
+```
+
+Påverkar: SIE4 `#GEN`, SIE5 `Date`, pain.001 `<CreDtTm>`, backup-filnamn,
+overdue-beräkning, chronology-guard-default.
+
+## Snapshot-mask (M151)
+
+Volatila fält maskas innan `toMatchSnapshot()`:
+
+```ts
+import { maskSie4, maskPain001 } from './helpers/snapshot-mask'
+expect(maskSie4(sie4Text)).toMatchSnapshot('sie4-empty-k2.txt')
+```
+
+## `@critical`-konvention
+
+Tagga ett test med `@critical` i test-titeln om det blockerar demo-flödet:
+onboarding → skapa kund → skapa faktura → boka → betala → se i dashboard.
+`npm run test:e2e:critical` kör endast dessa (<3 min). Full svit körs på PR-merge.
+
 ## Why workers: 1
 
 Electron apps are singletons. Each test file launches its own Electron instance sequentially. Parallel workers would conflict on the Electron binary.
+
+## Dialog bypass (M63)
+
+Native `dialog.showSaveDialog` / `showOpenDialog` cannot be driven from Playwright. Handlers bypass the dialog when `E2E_TESTING=true`:
+
+- **Save dialogs** — `getE2EFilePath(defaultFilename, 'save')` returns a deterministic path in `E2E_DOWNLOAD_DIR`. Handler writes directly without showing a dialog. Covers: SIE4-export, SIE5-export, Excel-export, invoice PDF save, pain.001 export.
+- **Open-file dialog (fixed filename)** — `getE2EFilePath(defaultFilename, 'open')` returns a mock file from `E2E_DOWNLOAD_DIR` if it exists.
+- **Open-file dialog (arbitrary filename)** — `getE2EMockOpenFile()` reads the path from `E2E_MOCK_OPEN_FILE` env var. Used by SIE4 import (user picks a fixture file).
+- **Open-directory dialog** — `invoice:select-directory` returns `E2E_DOWNLOAD_DIR` directly. Used by PDF batch export.
+
+Test usage:
+```ts
+// Before clicking "Välj fil" in PageImport:
+process.env.E2E_MOCK_OPEN_FILE = path.join(downloadDir, 'fixture.se')
+fs.writeFileSync(process.env.E2E_MOCK_OPEN_FILE, sie4Content)
+```
+
+Helpers live in `src/main/utils/e2e-helpers.ts` and are guarded by `E2E_TESTING=true`.
 
 ## Flakiness debug tips
 
