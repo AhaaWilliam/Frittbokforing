@@ -63,10 +63,10 @@ beforeEach(() => {
   setupMockIpc()
 
   // IPC mocks for real pickers + form hooks
-  mockIpcResponse('counterparty:list', customerFixtures)
-  mockIpcResponse('product:list', []) // No products in picker for simplicity
-  mockIpcResponse('vat-code:list', defaultVatCodes)
-  mockIpcResponse('invoice:next-number', { preview: 1001 })
+  mockIpcResponse('counterparty:list', { success: true, data: customerFixtures })
+  mockIpcResponse('product:list', { success: true, data: [] }) // No products in picker for simplicity
+  mockIpcResponse('vat-code:list', { success: true, data: defaultVatCodes })
+  mockIpcResponse('invoice:next-number', { success: true, data: { preview: 1001 } })
   mockIpcResponse('invoice:save-draft', makeSaveDraftResponse())
 })
 

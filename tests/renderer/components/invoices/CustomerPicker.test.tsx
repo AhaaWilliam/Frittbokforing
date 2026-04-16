@@ -14,7 +14,7 @@ import { customerFixtures } from '../__fixtures__/counterparties'
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('counterparty:list', customerFixtures)
+  mockIpcResponse('counterparty:list', { success: true, data: customerFixtures })
 })
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ describe('CustomerPicker', () => {
 
   describe('Async/empty states', () => {
     it('3.1 empty list from IPC renders no dropdown items', async () => {
-      mockIpcResponse('counterparty:list', [])
+      mockIpcResponse('counterparty:list', { success: true, data: [] })
       await renderWithProviders(
         <CustomerPicker value={null} onChange={vi.fn()} />,
       )

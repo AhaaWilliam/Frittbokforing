@@ -69,7 +69,7 @@ async function waitForAccountSelect() {
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('account:list-all', ACCOUNTS)
+  mockIpcResponse('account:list-all', { success: true, data: ACCOUNTS })
 })
 
 describe('PageAccountStatement', () => {

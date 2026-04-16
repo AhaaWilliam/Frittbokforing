@@ -46,18 +46,9 @@ const NO_SCHEMA_CHANNELS = [
   'backup:restore-dialog',
   'settings:get',
   'settings:set',
-  // Channels that return raw data (not IpcResult-wrapped) — F57 exempt
-  'account:list',
-  'account:list-all',
-  'counterparty:list',
-  'expense:get-draft',
-  'invoice:next-number',
-  'manual-entry:list',
-  'manual-entry:list-drafts',
-  'product:get-price-for-customer',
-  'product:list',
+  // result:net maps to opening-balance:net-result which already returns IpcResult
+  // Kept here as it has no direct handler (mapped channel)
   'result:net',
-  'vat-code:list',
 ] as const
 
 type NoSchemaChannel = (typeof NO_SCHEMA_CHANNELS)[number]

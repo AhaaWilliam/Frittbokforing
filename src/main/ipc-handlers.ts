@@ -371,11 +371,9 @@ export function registerIpcHandlers(): void {
   })
 
   // === Counterparties ===
-  ipcMain.handle('counterparty:list', (_event, input: unknown) => {
-    const parsed = CounterpartyListInputSchema.safeParse(input ?? {})
-    if (!parsed.success) return []
-    return listCounterparties(db, parsed.data)
-  })
+  ipcMain.handle('counterparty:list', wrapIpcHandler(CounterpartyListInputSchema, (data) =>
+    listCounterparties(db, data),
+  ))
 
   ipcMain.handle('counterparty:get', (_event, input: unknown) => {
     const parsed = CounterpartyIdSchema.safeParse(input)
@@ -403,11 +401,9 @@ export function registerIpcHandlers(): void {
   })
 
   // === Products ===
-  ipcMain.handle('product:list', (_event, input: unknown) => {
-    const parsed = ProductListInputSchema.safeParse(input ?? {})
-    if (!parsed.success) return []
-    return listProducts(db, parsed.data)
-  })
+  ipcMain.handle('product:list', wrapIpcHandler(ProductListInputSchema, (data) =>
+    listProducts(db, data),
+  ))
 
   ipcMain.handle('product:get', (_event, input: unknown) => {
     const parsed = ProductIdSchema.safeParse(input)
@@ -457,22 +453,18 @@ export function registerIpcHandlers(): void {
     return removeCustomerPrice(db, parsed.data)
   })
 
-  ipcMain.handle('product:get-price-for-customer', (_event, input: unknown) => {
-    const parsed = GetPriceForCustomerInputSchema.safeParse(input)
-    if (!parsed.success) return { price_ore: 0, source: 'default' }
-    return getPriceForCustomer(db, parsed.data)
-  })
+  ipcMain.handle('product:get-price-for-customer', wrapIpcHandler(GetPriceForCustomerInputSchema, (data) =>
+    getPriceForCustomer(db, data),
+  ))
 
   // === Expenses ===
   ipcMain.handle('expense:save-draft', (_event, input: unknown) =>
     saveExpenseDraft(db, input),
   )
 
-  ipcMain.handle('expense:get-draft', (_event, input: unknown) => {
-    const parsed = ExpenseIdSchema.safeParse(input)
-    if (!parsed.success) return { success: true, data: null }
-    return getExpenseDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('expense:get-draft', wrapIpcHandler(ExpenseIdSchema, (data) =>
+    getExpenseDraft(db, data.id),
+  ))
 
   ipcMain.handle('expense:update-draft', (_event, input: unknown) =>
     updateExpenseDraft(db, input),
@@ -485,11 +477,9 @@ export function registerIpcHandlers(): void {
     return deleteExpenseDraft(db, parsed.data.id)
   })
 
-  ipcMain.handle('expense:list-drafts', (_event, input: unknown) => {
-    const parsed = ListExpenseDraftsSchema.safeParse(input)
-    if (!parsed.success) return { success: true, data: [] }
-    return listExpenseDrafts(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('expense:list-drafts', wrapIpcHandler(ListExpenseDraftsSchema, (data) =>
+    listExpenseDrafts(db, data.fiscal_year_id),
+  ))
 
   ipcMain.handle('expense:finalize', (_event, input: unknown) => {
     const parsed = FinalizeExpenseSchema.safeParse(input)
@@ -544,23 +534,17 @@ export function registerIpcHandlers(): void {
   ))
 
   // === Stödjande ===
-  ipcMain.handle('vat-code:list', (_event, input: unknown) => {
-    const parsed = VatCodeListInputSchema.safeParse(input ?? {})
-    if (!parsed.success) return []
-    return listVatCodes(db, parsed.data.direction)
-  })
+  ipcMain.handle('vat-code:list', wrapIpcHandler(VatCodeListInputSchema, (data) =>
+    listVatCodes(db, data.direction),
+  ))
 
-  ipcMain.handle('account:list', (_event, input: unknown) => {
-    const parsed = AccountListInputSchema.safeParse(input)
-    if (!parsed.success) return []
-    return listAccounts(db, parsed.data)
-  })
+  ipcMain.handle('account:list', wrapIpcHandler(AccountListInputSchema, (data) =>
+    listAccounts(db, data),
+  ))
 
-  ipcMain.handle('account:list-all', (_event, input: unknown) => {
-    const parsed = AccountListAllInputSchema.safeParse(input ?? {})
-    if (!parsed.success) return []
-    return listAllAccounts(db, parsed.data)
-  })
+  ipcMain.handle('account:list-all', wrapIpcHandler(AccountListAllInputSchema, (data) =>
+    listAllAccounts(db, data),
+  ))
 
   ipcMain.handle('account:create', (_event, input: unknown) => {
     const parsed = AccountCreateInputSchema.safeParse(input)
@@ -649,11 +633,9 @@ export function registerIpcHandlers(): void {
     return listDrafts(db, parsed.data.fiscal_year_id)
   })
 
-  ipcMain.handle('invoice:next-number', (_event, input: unknown) => {
-    const parsed = NextNumberInputSchema.safeParse(input)
-    if (!parsed.success) return { preview: 1 }
-    return nextInvoiceNumber(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('invoice:next-number', wrapIpcHandler(NextNumberInputSchema, (data) =>
+    nextInvoiceNumber(db, data.fiscal_year_id),
+  ))
 
   ipcMain.handle('invoice:list', wrapIpcHandler(
     InvoiceListInputSchema,
@@ -807,27 +789,13 @@ export function registerIpcHandlers(): void {
     return deleteManualEntryDraft(db, parsed.data.id)
   })
 
-  ipcMain.handle('manual-entry:list-drafts', (_event, input: unknown) => {
-    const parsed = ManualEntryListSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return listManualEntryDrafts(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('manual-entry:list-drafts', wrapIpcHandler(ManualEntryListSchema, (data) =>
+    listManualEntryDrafts(db, data.fiscal_year_id),
+  ))
 
-  ipcMain.handle('manual-entry:list', (_event, input: unknown) => {
-    const parsed = ManualEntryListSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return listManualEntries(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('manual-entry:list', wrapIpcHandler(ManualEntryListSchema, (data) =>
+    listManualEntries(db, data.fiscal_year_id),
+  ))
 
   ipcMain.handle('manual-entry:finalize', (_event, input: unknown) => {
     const parsed = ManualEntryFinalizeSchema.safeParse(input)

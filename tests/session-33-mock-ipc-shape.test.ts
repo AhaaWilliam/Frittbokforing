@@ -55,7 +55,7 @@ describe('F57: mockIpcResponse shape validation', () => {
       mockIpcResponse('db:health-check', 'ok')
     }).not.toThrow()
     expect(() => {
-      mockIpcResponse('account:list-all', [{ id: 1 }])
+      mockIpcResponse('account:list-all', { success: true, data: [{ id: 1 }] })
     }).not.toThrow()
   })
 })

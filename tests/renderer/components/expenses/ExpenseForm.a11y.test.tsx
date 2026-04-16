@@ -12,9 +12,9 @@ const defaultVatCodes: VatCode[] = [
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('vat-code:list', defaultVatCodes)
-  mockIpcResponse('account:list', [])
-  mockIpcResponse('counterparty:list', [])
+  mockIpcResponse('vat-code:list', { success: true, data: defaultVatCodes })
+  mockIpcResponse('account:list', { success: true, data: [] })
+  mockIpcResponse('counterparty:list', { success: true, data: [] })
   mockIpcResponse('company:get', { id: 1, fiscal_rule: 'K2', name: 'Test AB', org_number: '556000-0000', address: '', postal_code: '', city: '', country: 'SE', bankgiro: null, plusgiro: null, iban: null, bic: null, phone: null, email: null, website: null, contact_person: null })
 })
 

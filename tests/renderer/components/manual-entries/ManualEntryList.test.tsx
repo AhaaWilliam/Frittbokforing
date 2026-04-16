@@ -36,8 +36,8 @@ function renderList(props?: Partial<{ onCreate: () => void; onEdit: (id: number)
   const onCreate = props?.onCreate ?? vi.fn()
   const onEdit = props?.onEdit ?? vi.fn()
   const onView = props?.onView ?? vi.fn()
-  mockIpcResponse('manual-entry:list-drafts', [DRAFT_1, DRAFT_2])
-  mockIpcResponse('manual-entry:list', [ENTRY_BOOKED, ENTRY_CORRECTED, ENTRY_CORRECTION])
+  mockIpcResponse('manual-entry:list-drafts', { success: true, data: [DRAFT_1, DRAFT_2] })
+  mockIpcResponse('manual-entry:list', { success: true, data: [ENTRY_BOOKED, ENTRY_CORRECTED, ENTRY_CORRECTION] })
   return renderWithProviders(<ManualEntryList onCreate={onCreate} onEdit={onEdit} onView={onView} />)
 }
 
@@ -102,8 +102,8 @@ describe('ManualEntryList', () => {
 
   it('empty state when no drafts and no entries', async () => {
     setupMockIpc()
-    mockIpcResponse('manual-entry:list-drafts', [])
-    mockIpcResponse('manual-entry:list', [])
+    mockIpcResponse('manual-entry:list-drafts', { success: true, data: [] })
+    mockIpcResponse('manual-entry:list', { success: true, data: [] })
     renderWithProviders(<ManualEntryList onCreate={vi.fn()} onEdit={vi.fn()} />)
     await waitFor(() => {
       expect(screen.getByText(/inga manuella verifikationer/i)).toBeDefined()

@@ -26,13 +26,13 @@ beforeEach(() => {
   setupMockIpc()
 
   // IPC mocks for real pickers + form hooks
-  mockIpcResponse('counterparty:list', supplierFixtures)
-  mockIpcResponse('product:list', [])
-  mockIpcResponse('vat-code:list', defaultExpenseVatCodes)
-  mockIpcResponse('account:list', [
+  mockIpcResponse('counterparty:list', { success: true, data: supplierFixtures })
+  mockIpcResponse('product:list', { success: true, data: [] })
+  mockIpcResponse('vat-code:list', { success: true, data: defaultExpenseVatCodes })
+  mockIpcResponse('account:list', { success: true, data: [
     { account_number: '5410', name: 'Förbrukningsinventarier', is_active: true },
     { account_number: '6110', name: 'Kontorsmaterial', is_active: true },
-  ])
+  ] })
   mockIpcResponse('expense:save-draft', { success: true, data: { id: 1 } })
 })
 

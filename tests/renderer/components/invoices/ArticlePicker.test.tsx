@@ -31,10 +31,10 @@ async function openDropdown() {
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('product:list', defaultProducts)
+  mockIpcResponse('product:list', { success: true, data: defaultProducts })
   mockIpcResponse('product:get-price-for-customer', {
-    price_ore: 50000,
-    source: 'default',
+    success: true,
+    data: { price_ore: 50000, source: 'default' },
   })
 })
 
@@ -199,8 +199,8 @@ describe('ArticlePicker', () => {
 
     it('4.2 customer price overrides default price', async () => {
       mockIpcResponse('product:get-price-for-customer', {
-        price_ore: 100000,
-        source: 'customer',
+        success: true,
+        data: { price_ore: 100000, source: 'customer' },
       })
       const onSelect = vi.fn()
       await renderWithProviders(
@@ -222,8 +222,8 @@ describe('ArticlePicker', () => {
 
     it('4.3 default-source price result still uses result.price_ore', async () => {
       mockIpcResponse('product:get-price-for-customer', {
-        price_ore: 125000,
-        source: 'default',
+        success: true,
+        data: { price_ore: 125000, source: 'default' },
       })
       const onSelect = vi.fn()
       await renderWithProviders(
@@ -290,8 +290,8 @@ describe('ArticlePicker', () => {
 
     it('5.2 decimal customer price: 12345 öre → 123.45 kr', async () => {
       mockIpcResponse('product:get-price-for-customer', {
-        price_ore: 12345,
-        source: 'customer',
+        success: true,
+        data: { price_ore: 12345, source: 'customer' },
       })
       const onSelect = vi.fn()
       await renderWithProviders(
@@ -330,9 +330,9 @@ describe('ArticlePicker', () => {
     })
 
     it('5.4 edge: 99 öre → 0.99 kr (non-100-divisible)', async () => {
-      mockIpcResponse('product:list', [
+      mockIpcResponse('product:list', { success: true, data: [
         makeProduct({ id: 10, name: 'Billig', default_price_ore: 99 }),
-      ])
+      ] })
       const onSelect = vi.fn()
       await renderWithProviders(
         <ArticlePicker counterpartyId={null} onSelect={onSelect} />,
@@ -358,7 +358,7 @@ describe('ArticlePicker', () => {
 
   describe('Empty', () => {
     it('6.1 empty product list renders no dropdown', async () => {
-      mockIpcResponse('product:list', [])
+      mockIpcResponse('product:list', { success: true, data: [] })
       await renderWithProviders(
         <ArticlePicker counterpartyId={null} onSelect={vi.fn()} />,
       )

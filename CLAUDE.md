@@ -460,6 +460,63 @@ av cross-table-triggern.
 inventerings-queryn som pre-flight och dokumentera resultatet i migrations-
 kommentaren.
 
+## 47. Kronologisk datumordning inom verifikationsserie (M142)
+
+**M142.** Verifikationer inom samma verifikationsserie och räkenskapsår
+MÅSTE ha icke-minskande datum. Samma dag är tillåtet (strict less-than).
+Enforced via `checkChronology()` i `src/main/services/chronology-guard.ts`.
+
+**Callsites:**
+- `finalizeDraft` (A-serie) — invoice finalize
+- `finalizeExpense` (B-serie) — expense finalize
+- `finalizeManualEntry` (C-serie) — manual entry finalize
+- `_payInvoiceTx` (A-serie) — invoice payment (med `skipChronologyCheck` för bulk)
+- `_payExpenseTx` (B-serie) — expense payment (migrerad från inline till delad helper)
+
+**Bulk-säkerhet:** `payInvoicesBulk` och `payExpensesBulk` validerar kronologi
+en gång på batch-nivå före loopen, sedan skickar `skipChronologyCheck = true`
+per rad. Paritet mellan invoice- och expense-bulk.
+
+**Transaction-guard:** `checkChronology` kastar `Error` om `!db.inTransaction`.
+Alla callsites körs redan inom `db.transaction()`.
+
+**ErrorCode:** `VALIDATION_ERROR` (inte nytt `CHRONOLOGY_ERROR`) —
+felmeddelandet är tillräckligt specifikt.
+
+**Korsreferens:** Utvidgar den befintliga kronologi-checken i `_payExpenseTx`
+(B-serie, sedan Sprint 13) till alla serier. M112–M114 (bulk-betalningar)
+beskriver `skipChronologyCheck`-mönstret som M142 nu tillämpar konsekvent.
+
+## 48. FTS5 rebuild try-catch-mönster (M143)
+
+**M143.** Alla `rebuildSearchIndex`-anrop MÅSTE wrappas i `try-catch`.
+Rebuild-failure får INTE krasha bokföringsoperationen — data är redan
+committad, sökning faller tillbaka till LIKE.
+
+Mönster: `try { rebuildSearchIndex(db) } catch { /* log only */ }`
+
+**Korsreferens:** M128 (handler error-patterns) kräver att mutation-success
+inte bryts av sekundära operationer. M143 är specialfallet: rebuild är
+sekundär i förhållande till den bokföringsoperation som just committats.
+Om rebuild failar faller sökningen tillbaka till LIKE (D4 i search-service).
+
+## 49. IpcResult-mandat för affärsdata-kanaler (M144)
+
+**M144.** Alla IPC-kanaler som returnerar affärsdata (listor, entiteter,
+beräkningar) MÅSTE använda `IpcResult<T>` wrapper. `wrapIpcHandler` i
+`src/main/ipc/wrap-ipc-handler.ts` är kanoniskt verktyg.
+
+**Renderer-hooks:** `useIpcQuery<T>` för alla affärsdata-kanaler.
+`useDirectQuery<T>` kvarstår ENBART för infrastruktur-kanaler
+(health-check, settings:get/set, company:get, fiscal-year:list,
+backup, opening-balance:re-transfer).
+
+**Historik:** Sprint 35 (F60) migrerade 11 kanaler. NO_SCHEMA_CHANNELS
+i `tests/setup/mock-ipc.ts` innehåller nu enbart infrastruktur-kanaler.
+
+**Konsekvens:** Nya IPC-kanaler som returnerar data MÅSTE följa M144.
+`useDirectQuery` + raw return i handler är INTE tillåtet för nya kanaler.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

@@ -117,7 +117,7 @@ function expectedTotal(krValue: number): string {
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('vat-code:list', defaultVatCodes)
+  mockIpcResponse('vat-code:list', { success: true, data: defaultVatCodes })
 })
 
 // ── Grupp 1: Produktrad — rendering och kontrakt ────────────────────

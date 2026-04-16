@@ -117,8 +117,8 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-01-01T12:00:00Z'))
   pickerCustomer = customerFixtures[0] // Reset to Acme AB, terms=30
   setupMockIpc()
-  mockIpcResponse('vat-code:list', defaultVatCodes)
-  mockIpcResponse('invoice:next-number', { preview: 1001 })
+  mockIpcResponse('vat-code:list', { success: true, data: defaultVatCodes })
+  mockIpcResponse('invoice:next-number', { success: true, data: { preview: 1001 } })
   mockIpcResponse('invoice:save-draft', { success: true, data: makeDraft() })
   mockIpcResponse('invoice:update-draft', { success: true, data: makeDraft() })
   mockIpcResponse('invoice:delete-draft', { success: true, data: undefined })

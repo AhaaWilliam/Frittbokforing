@@ -41,12 +41,12 @@ const CORRECTION_ENTRY = {
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('manual-entry:list-drafts', [])
+  mockIpcResponse('manual-entry:list-drafts', { success: true, data: [] })
 })
 
 describe('B4: Correction UI', () => {
   it('"Korrigerad" badge shown for corrected entries', async () => {
-    mockIpcResponse('manual-entry:list', [CORRECTED_ENTRY])
+    mockIpcResponse('manual-entry:list', { success: true, data: [CORRECTED_ENTRY] })
 
     await renderWithProviders(<PageManualEntries />, {
       initialRoute: '/manual-entries',
@@ -58,7 +58,7 @@ describe('B4: Correction UI', () => {
   })
 
   it('"Korrigering" badge shown for correction entries', async () => {
-    mockIpcResponse('manual-entry:list', [CORRECTION_ENTRY])
+    mockIpcResponse('manual-entry:list', { success: true, data: [CORRECTION_ENTRY] })
 
     await renderWithProviders(<PageManualEntries />, {
       initialRoute: '/manual-entries',
@@ -70,7 +70,7 @@ describe('B4: Correction UI', () => {
   })
 
   it('"Korrigera" button shown in view for booked entry', async () => {
-    mockIpcResponse('manual-entry:list', [BOOKED_ENTRY])
+    mockIpcResponse('manual-entry:list', { success: true, data: [BOOKED_ENTRY] })
     mockIpcResponse('journal-entry:can-correct', {
       success: true,
       data: { canCorrect: true },
@@ -86,7 +86,7 @@ describe('B4: Correction UI', () => {
   })
 
   it('"Korrigera" button hidden for corrected entries', async () => {
-    mockIpcResponse('manual-entry:list', [CORRECTED_ENTRY])
+    mockIpcResponse('manual-entry:list', { success: true, data: [CORRECTED_ENTRY] })
     mockIpcResponse('journal-entry:can-correct', {
       success: true,
       data: { canCorrect: false, reason: 'Verifikatet är redan korrigerat.' },

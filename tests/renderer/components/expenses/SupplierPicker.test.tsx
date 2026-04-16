@@ -21,7 +21,7 @@ const createdSupplier = makeCounterparty({
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('counterparty:list', supplierFixtures)
+  mockIpcResponse('counterparty:list', { success: true, data: supplierFixtures })
   // Create-channel mock — required for inline-create tests (4.x)
   mockIpcResponse('counterparty:create', {
     success: true,
@@ -167,7 +167,7 @@ describe('SupplierPicker', () => {
 
   describe('Async/empty states', () => {
     it('3.1 empty list from IPC shows no supplier items', async () => {
-      mockIpcResponse('counterparty:list', [])
+      mockIpcResponse('counterparty:list', { success: true, data: [] })
       await renderWithProviders(
         <SupplierPicker value={null} onChange={vi.fn()} />,
       )

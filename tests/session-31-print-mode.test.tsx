@@ -12,7 +12,7 @@ const ACCOUNTS = [
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('account:list-all', ACCOUNTS)
+  mockIpcResponse('account:list-all', { success: true, data: ACCOUNTS })
   mockIpcResponse('search:global', { success: true, data: { results: [], total_count: 0 } })
 })
 

@@ -86,7 +86,9 @@ export function ArticlePicker({
           product_id: product.id,
           counterparty_id: counterpartyId,
         })
-        priceOre = result.price_ore
+        if (result.success) {
+          priceOre = result.data.price_ore
+        }
       } catch {
         // fallback to default_price_ore
       }

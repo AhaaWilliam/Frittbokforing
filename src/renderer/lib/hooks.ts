@@ -136,7 +136,7 @@ export function useCounterparties(params?: {
   type?: string
   active_only?: boolean
 }) {
-  return useDirectQuery<Counterparty[]>(
+  return useIpcQuery<Counterparty[]>(
     queryKeys.counterparties(params as Record<string, unknown>),
     () => window.api.listCounterparties(params ?? {}),
   )
@@ -184,7 +184,7 @@ export function useProducts(params?: {
   type?: string
   active_only?: boolean
 }) {
-  return useDirectQuery<Product[]>(
+  return useIpcQuery<Product[]>(
     queryKeys.products(params as Record<string, unknown>),
     () => window.api.listProducts(params ?? {}),
   )
@@ -246,7 +246,7 @@ export function useRemoveCustomerPrice(productId: number | undefined) {
 // === Stödjande ===
 
 export function useVatCodes(direction?: 'outgoing' | 'incoming') {
-  return useDirectQuery<VatCode[]>(
+  return useIpcQuery<VatCode[]>(
     queryKeys.vatCodes(direction),
     () => window.api.listVatCodes({ direction }),
   )
@@ -257,7 +257,7 @@ export function useAccounts(
   accountClass?: number,
   isActive?: boolean,
 ) {
-  return useDirectQuery<Account[]>(
+  return useIpcQuery<Account[]>(
     queryKeys.accounts(fiscalRule, accountClass, isActive),
     () =>
       window.api.listAccounts({
@@ -269,7 +269,7 @@ export function useAccounts(
 }
 
 export function useAllAccounts(isActive?: boolean) {
-  return useDirectQuery<Account[]>(
+  return useIpcQuery<Account[]>(
     queryKeys.allAccounts(isActive),
     () => window.api.listAllAccounts({ is_active: isActive }),
   )
@@ -507,7 +507,7 @@ export function useUpdateSentInvoice() {
 }
 
 export function useNextInvoiceNumber(fiscalYearId: number | undefined) {
-  return useDirectQuery<{ preview: number }>(
+  return useIpcQuery<{ preview: number }>(
     queryKeys.invoiceNextNumber(fiscalYearId!),
     () => window.api.nextInvoiceNumber({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
@@ -517,7 +517,7 @@ export function useNextInvoiceNumber(fiscalYearId: number | undefined) {
 // === Expenses ===
 
 export function useExpenseDrafts(fiscalYearId: number | undefined) {
-  return useDirectQuery(
+  return useIpcQuery(
     queryKeys.expenseDrafts(fiscalYearId!),
     () => window.api.listExpenseDrafts({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
@@ -525,7 +525,7 @@ export function useExpenseDrafts(fiscalYearId: number | undefined) {
 }
 
 export function useExpenseDraft(id: number | undefined) {
-  return useDirectQuery(
+  return useIpcQuery(
     queryKeys.expenseDraft(id!),
     () => window.api.getExpenseDraft({ id: id! }),
     { enabled: !!id },
@@ -704,7 +704,7 @@ export function useTaxForecast(fiscalYearId: number | undefined) {
 // === Manual Entries ===
 
 export function useManualEntryDrafts(fiscalYearId: number | undefined) {
-  return useDirectQuery(
+  return useIpcQuery(
     queryKeys.manualEntryDrafts(fiscalYearId!),
     () =>
       window.api.listManualEntryDrafts({ fiscal_year_id: fiscalYearId! }),
@@ -713,7 +713,7 @@ export function useManualEntryDrafts(fiscalYearId: number | undefined) {
 }
 
 export function useManualEntries(fiscalYearId: number | undefined) {
-  return useDirectQuery(
+  return useIpcQuery(
     queryKeys.manualEntries(fiscalYearId!),
     () =>
       window.api.listManualEntries({ fiscal_year_id: fiscalYearId! }),

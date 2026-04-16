@@ -14,7 +14,7 @@ beforeEach(() => {
     bankgiro: null, plusgiro: null, iban: null, bic: null,
     phone: null, email: null, website: null, contact_person: null,
   })
-  mockIpcResponse('account:list', [])
+  mockIpcResponse('account:list', { success: true, data: [] })
 })
 
 describe('ManualEntryForm — F49 a11y', () => {

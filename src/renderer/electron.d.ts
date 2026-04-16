@@ -70,7 +70,7 @@ interface ElectronAPI {
     search?: string
     type?: string
     active_only?: boolean
-  }) => Promise<Counterparty[]>
+  }) => Promise<IpcResult<Counterparty[]>>
   getCounterparty: (data: { id: number }) => Promise<Counterparty | null>
   createCounterparty: (
     data: CreateCounterpartyInput,
@@ -85,7 +85,7 @@ interface ElectronAPI {
     search?: string
     type?: string
     active_only?: boolean
-  }) => Promise<Product[]>
+  }) => Promise<IpcResult<Product[]>>
   getProduct: (data: {
     id: number
   }) => Promise<(Product & { customer_prices: CustomerPrice[] }) | null>
@@ -104,14 +104,14 @@ interface ElectronAPI {
   getPriceForCustomer: (data: {
     product_id: number
     counterparty_id: number
-  }) => Promise<PriceResult>
-  listVatCodes: (data: { direction?: string }) => Promise<VatCode[]>
+  }) => Promise<IpcResult<PriceResult>>
+  listVatCodes: (data: { direction?: string }) => Promise<IpcResult<VatCode[]>>
   listAccounts: (data: {
     fiscal_rule: string
     class?: number
     is_active?: boolean
-  }) => Promise<Account[]>
-  listAllAccounts: (data: { is_active?: boolean }) => Promise<Account[]>
+  }) => Promise<IpcResult<Account[]>>
+  listAllAccounts: (data: { is_active?: boolean }) => Promise<IpcResult<Account[]>>
   accountCreate: (data: {
     account_number: string
     name: string
@@ -202,7 +202,7 @@ interface ElectronAPI {
   }) => Promise<(Invoice & { counterparty_name: string })[]>
   nextInvoiceNumber: (data: {
     fiscal_year_id: number
-  }) => Promise<{ preview: number }>
+  }) => Promise<IpcResult<{ preview: number }>>
   createCreditNoteDraft: (data: {
     original_invoice_id: number
     fiscal_year_id: number
@@ -213,14 +213,14 @@ interface ElectronAPI {
   ) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>
   getExpenseDraft: (data: {
     id: number
-  }) => Promise<import('../shared/types').ExpenseWithLines | null>
+  }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines | null>>
   updateExpenseDraft: (
     data: UpdateExpenseDraftInput,
   ) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>
   deleteExpenseDraft: (data: { id: number }) => Promise<IpcResult<undefined>>
   listExpenseDrafts: (data: {
     fiscal_year_id: number
-  }) => Promise<import('../shared/types').ExpenseDraftListItem[]>
+  }) => Promise<IpcResult<import('../shared/types').ExpenseDraftListItem[]>>
   finalizeExpense: (data: {
     id: number
   }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>
@@ -290,10 +290,10 @@ interface ElectronAPI {
   deleteManualEntryDraft: (data: { id: number }) => Promise<IpcResult<void>>
   listManualEntryDrafts: (data: {
     fiscal_year_id: number
-  }) => Promise<import('../shared/types').ManualEntry[]>
+  }) => Promise<IpcResult<import('../shared/types').ManualEntry[]>>
   listManualEntries: (data: {
     fiscal_year_id: number
-  }) => Promise<import('../shared/types').ManualEntryListItem[]>
+  }) => Promise<IpcResult<import('../shared/types').ManualEntryListItem[]>>
   finalizeManualEntry: (data: {
     id: number
     fiscal_year_id: number

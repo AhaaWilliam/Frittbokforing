@@ -1,5 +1,173 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 36 -- Renderer-tester (T3) + Formaterings-utilities ✅ KLAR
+
+Session S36. T3 (renderer-komponenttester: dialogs, products, reports, dashboard),
+E1 (formaterings-utility-tester). Ren test-sprint — inga produktionskodsändringar.
+
+**Testbaslinje:** 1858 → 1905 vitest (+47). 0 skipped. 184 testfiler.
+**PRAGMA user_version:** 33 (oförändrat).
+**Inga nya M-principer.**
+**Nya filer:** ConfirmDialog.test.tsx, ConfirmFinalizeDialog.test.tsx,
+ProductForm.test.tsx, ProductDetail.test.tsx, MetricCard.test.tsx,
+BalanceSheetView.test.tsx, IncomeStatementView.test.tsx.
+
+### Del A: UI-dialogkomponenter (11 tester)
+- **ConfirmDialog** (8): render, open=false unmount, variant=danger red button,
+  onConfirm callback, cancel callback, Escape key, focus-trap entry point, axe a11y
+- **ConfirmFinalizeDialog** (3): render + permanent warning text, isLoading disabled
+  state, axe a11y
+
+### Del B: Produktkomponenter (9 tester)
+- **ProductForm** (6): renders all fields, submit with valid data, empty name
+  validation, edit-mode pre-fill, article type change → unit update, axe a11y
+- **ProductDetail** (3): renders name/price/unit, deactivation confirm step, axe a11y
+
+### Del C: Dashboard-komponent (5 tester)
+- **MetricCard** (5): label + value, variant=positive green text,
+  variant=negative red text, isLoading skeleton, sublabel rendering
+
+### Del D: Rapportvyer (9 tester)
+- **BalanceSheetView** (6): main headings, SUMMA totals, årets resultat row,
+  balance difference warning (show + hide), axe a11y
+- **IncomeStatementView** (3): group labels, result totals
+  (rörelseresultat/finansiella/årets resultat), axe a11y
+
+### Del E: Formaterings-utilities (13 tester)
+- **format.test.ts** utökad: kronorToOre (2), formatReportAmount (7 inkl
+  parameteriserade edge cases, negativa, stora belopp), formatKr (2),
+  unitLabel (2). Totalt 13 nya + 10 befintliga = 23 tester i filen.
+
+### Observationer
+- `product:get` använder `useDirectQuery` (raw return, inte IpcResult-wrapped).
+  Mock-IPC kräver bypass via `window.api.getProduct.mockResolvedValue()`.
+  F60 migrerade inte denna kanal — kvarstår som useDirectQuery.
+- Report-vyernas axe-tester disablar `heading-order` — komponenterna renderar
+  h2→h4 (h3 finns i parent page-context, inte i isolerad rendering).
+- `formatReportAmount` använder U+2212 (minus sign) och Intl.NumberFormat
+  sv-SE med non-breaking space (U+00A0/U+202F). Tester normaliserar whitespace.
+
+### Stängda items
+- **T3** Renderer-komponenttester: STÄNGD (dialogs, products, reports, dashboard)
+- **E1** Formaterings-utility-tester: STÄNGD
+
+### Backlog: 0 öppna findings
+- F59 (per-kanal response-schema) öppen för Sprint 37+
+
+## Sprint 35 -- IpcResult-standardisering + Kreditnota-hardering + Renderer-tester ✅ KLAR
+
+Session S35. F60 (IpcResult-standardisering), C1 (kreditnota-testhardering),
+T2 (renderer-komponenttester InvoiceList/ExpenseList/ProductList).
+
+**Testbaslinje:** 1827 → 1858 vitest (+31). 0 skipped. 177 testfiler.
+**PRAGMA user_version:** 33 (oförändrat).
+**Ny M-princip:** M144 (IpcResult-mandat för affärsdata-kanaler).
+**Nya filer:** session-35-credit-note-defense.test.ts, InvoiceList.test.tsx, ExpenseList.test.tsx, ProductList.test.tsx.
+
+### Del A: F60 — IpcResult-standardisering
+11 IPC-kanaler migrerade från raw data till `IpcResult<T>` wrapper:
+- **7 lågrisk** (list-queries): account:list, account:list-all, counterparty:list,
+  product:list, vat-code:list, manual-entry:list, manual-entry:list-drafts
+- **3 medelrisk** (special returns): invoice:next-number, product:get-price-for-customer,
+  expense:get-draft
+- **1 bonus**: expense:list-drafts (hade inkonsekvent IpcResult)
+
+Per-kanal-migration: handler → wrapIpcHandler, hook → useIpcQuery, electron.d.ts → IpcResult<T>.
+35+ testfixtures uppdaterade med `{ success: true, data: ... }` wrapper.
+NO_SCHEMA_CHANNELS reducerad till 7 infrastruktur-kanaler (health-check, company:get,
+fiscal-year:list, settings, backup, opening-balance:re-transfer, result:net).
+
+### Del B: C1 — Kreditnota-testhardering
+12 nya tester i session-35-credit-note-defense.test.ts:
+- Sign-flip (M137): per-konto D/K-inversion verifierad, inga negativa belopp
+- 4-lager-defense (M138): dubbel-kreditering blockerad, typ-guard, credits_id populerad, has_credit_note-flagga
+- Cross-reference (M139): JE description innehåller originalfakturanummer och motpartsnamn
+- Expense-paritet: samma tester för leverantörs-kreditnotor
+
+### Del C: T2 — Renderer-komponenttester
+19 nya renderer-tester:
+- InvoiceList (7): rendering, filter-tabs, empty state, navigation, credit note badge, axe
+- ExpenseList (7): rendering, supplier invoice number, filter-tabs, empty state, navigation, axe
+- ProductList (5): rendering, click, empty state, price display, axe
+
+### Stängda findings
+- **F60** IpcResult-standardisering: STÄNGD (11 kanaler migrerade, NO_SCHEMA_CHANNELS rensat)
+- **C1** Kreditnota-testhardering: STÄNGD (M137/M138/M139 verifierade)
+- **T2** Renderer-tester: STÄNGD (InvoiceList, ExpenseList, ProductList)
+
+### Backlog: 0 öppna findings
+- F59 (per-kanal response-schema) öppen för Sprint 36+
+
+## Sprint 34 -- Cross-FY + Kronologi + FTS5-utvidgning + Renderer-tester ✅ KLAR
+
+Session S34. B7 (cross-FY betalning), B8 (kronologisk datumordning),
+B9 (FTS5 faktura/kostnad-utvidgning), T1 (renderer-komponenttester).
+
+**Testbaslinje:** 1776 → 1827 vitest (+51). 0 skipped (2→0). 173 testfiler.
+**PRAGMA user_version:** 33 (oförändrat — inga nya migrationer).
+**Nya filer:** chronology-guard.ts, session-34-cross-fy.test.ts, session-34-chronology.test.ts, session-34-fts5-ext.test.ts.
+**Nya M-principer:** M142 (kronologisk datumordning), M143 (FTS5 rebuild try-catch). M141 (cross-table trigger-inventering) redan dokumenterad från S33.
+
+### Del A: B7 — Cross-FY betalning
+- S01-05 unskipped: invoice-betalning i annat räkenskapsår fungerar
+- S01-05b: expense cross-FY betalning med paritetstester
+- Payment JE hamnar i FY baserat på payment_date (inte invoice/expense FY)
+- Verifikationsnummer startar om i nya FY:t
+- O-serie i FY2027 inkluderar korrekt 1510/2440-saldo
+- **5 nya tester** i session-34-cross-fy.test.ts
+
+### Del B: B8 — Kronologisk datumordning
+**chronology-guard.ts** — delad helper:
+- `checkChronology(db, fyId, series, date)` — kastar VALIDATION_ERROR om datum < senaste bokförda i serien
+- Must be called within transaction (db.inTransaction guard)
+- Same-day tillåtet (strict less-than)
+
+**Integrerad i 5 callsites:**
+- `finalizeDraft` (A-serie), `finalizeExpense` (B-serie), `finalizeManualEntry` (C-serie)
+- `_payInvoiceTx` (A-serie, med `skipChronologyCheck` för bulk)
+- `_payExpenseTx` (B-serie, migrerad från inline till delad helper)
+
+**payInvoicesBulk** — batch-level kronologi-check (paritet med payExpensesBulk):
+- Validerar en gång före loop, per-rad skippar check
+
+- S01-06 unskipped: kronologisk ordning enforced i A-serien
+- **12 nya tester** i session-34-chronology.test.ts + befintliga S13/S13b anpassade
+
+### Del C: B9 — FTS5 faktura/kostnad-utvidgning
+**rebuildSearchIndex** — utvidgad med FY-kolumn + invoice/expense:
+- DROP + CREATE med `fiscal_year_id` som ny kolumn
+- Invoices: `invoice_number || ' ' || cp.name`, non-draft only
+- Expenses: `supplier_invoice_number || ' ' || description || ' ' || cp.name`, non-draft only
+- Globala entiteter: `fiscal_year_id = '0'`
+
+**ftsSearch** — FY-filter:
+- `entity_type:invoice AND fiscal_year_id:X AND "query"*`
+- Eliminerar FY-leakage-risken (F6)
+
+**globalSearch** — FTS5-first → LIKE fallback för invoices/expenses:
+- FTS5 matchar cp.name (denormaliserat), LIKE täcker invoice_number/supplier_invoice_number
+- Combined query: FTS5-ids OR invoice_number LIKE
+
+**Nya rebuild-callsites:** finalizeDraft, payInvoice, finalizeExpense, payExpense (try-catch)
+
+- **10 nya tester** i session-34-fts5-ext.test.ts
+
+### Del D: T1 — Renderer-komponenttester
+- ManualEntryList: 10 tester (drafts, finalized, badges, empty state, axe)
+- PaymentDialog: 6 tester (render, close, remaining, loading, validation, axe)
+- BulkPaymentDialog: 6 tester (rows, close, empty, cancel, loading, account default, axe)
+- Axe race condition: M133-exempt `axeCheck: false` med dedicated axe test per file
+
+### Stängda findings
+- **B7** Cross-FY betalning: STÄNGD (redan implementerad, test-coverage saknades)
+- **B8** Kronologisk datumordning: STÄNGD (ny chronology-guard + 5 callsites)
+- **B9** FTS5 invoice/expense: STÄNGD (FY-scopad FTS5, LIKE fallback)
+- **T1** Renderer-tester: STÄNGD (22 nya component-tester)
+
+### Backlog: 0 öppna findings
+- F59 (per-kanal response-schema) öppen för Sprint 35+
+- F60 (raw-data-kanaler) öppen för Sprint 35+
+
 ## Sprint 33 -- FTS5 + Quantity-CHECK + Tech-debt-sweep ✅ KLAR
 
 Session S33. B6 (FTS5 indexed search), F46b (quantity-CHECK defense-in-depth),
@@ -439,10 +607,10 @@ PRAGMA user_version = 27, 22 tabeller.
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
 ## Test-count
-- Vitest (system + unit): 1776 passed, 2 skipped (1778 totalt)
-- Testfiler: 167
-- Playwright E2E: 11 (kors separat)
-- Korning: ~23s
+- Vitest (system + unit): 1905 passed, 0 skipped
+- Testfiler: 184
+- Playwright E2E: 11 (körs separat)
+- Körning: ~25s
 - TSC: 0 errors (`npm run typecheck`)
 
 ## Known infrastructure contracts
@@ -452,13 +620,12 @@ PRAGMA user_version = 27, 22 tabeller.
 - **better-sqlite3 handle-kontrakt**: Electron ager primary rw-handle under test. Test-kod seedar via IPC, inte direkt db-access.
 - **Playwright workers: 1**: Electron singleton per test-fil.
 - **GitHub Actions CI**: ubuntu-only, Node 20, typecheck + lint + checks + test + build.
-- **PRAGMA user_version**: 33 (Sprint 33: migration 032 quantity-CHECK + migration 033 FTS5).
+- **PRAGMA user_version**: 33 (Sprint 33: migration 032 quantity-CHECK + migration 033 FTS5). Oförändrat i Sprint 34.
 
 ## Kanda fynd vantande
 
 Backlog: 0 oppna findings.
-- F59 (per-kanal response-schema) oppen for Sprint 34+.
-- F60 (raw-data-kanaler) — 11+ IPC-kanaler returnerar raw arrays istallet for IpcResult. Migrera till IpcResult-wrapper eller dokumentera via M-princip. Sprint 35+ kandidat.
+- F59 (per-kanal response-schema) oppen for Sprint 37+.
 
 ### Schema conventions -- medvetna avvikelser (klass B)
 - **accounts.k2_allowed** -- boolean utan `is_`-prefix. `is_k2_allowed` borderline, ej tydligt battre. 54 referenser over 8 filer.

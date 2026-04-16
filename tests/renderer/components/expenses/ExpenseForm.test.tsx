@@ -80,8 +80,8 @@ beforeEach(() => {
     default_payment_terms: supplierA.default_payment_terms,
   }
   setupMockIpc()
-  mockIpcResponse('vat-code:list', defaultExpenseVatCodes)
-  mockIpcResponse('account:list', [])
+  mockIpcResponse('vat-code:list', { success: true, data: defaultExpenseVatCodes })
+  mockIpcResponse('account:list', { success: true, data: [] })
   mockIpcResponse('expense:save-draft', { success: true, data: makeExpenseDraft() })
   mockIpcResponse('expense:update-draft', { success: true, data: makeExpenseDraft() })
   mockIpcResponse('expense:delete-draft', { success: true, data: undefined })
@@ -100,7 +100,7 @@ async function renderForm(expenseId?: number, draftOverrides?: Parameters<typeof
     : undefined
 
   if (expenseId && draft) {
-    mockIpcResponse('expense:get-draft', draft)
+    mockIpcResponse('expense:get-draft', { success: true, data: draft })
   }
 
   const onSave = vi.fn()

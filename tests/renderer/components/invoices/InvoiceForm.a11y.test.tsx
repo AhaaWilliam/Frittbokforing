@@ -12,8 +12,8 @@ const defaultVatCodes: VatCode[] = [
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('invoice:next-number', { preview: 1001 })
-  mockIpcResponse('vat-code:list', defaultVatCodes)
+  mockIpcResponse('invoice:next-number', { success: true, data: { preview: 1001 } })
+  mockIpcResponse('vat-code:list', { success: true, data: defaultVatCodes })
 })
 
 describe('InvoiceForm — F49 a11y', () => {
