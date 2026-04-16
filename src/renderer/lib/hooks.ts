@@ -325,6 +325,27 @@ export function useToggleAccountActive() {
   )
 }
 
+// === Account Statement ===
+
+export function useAccountStatement(
+  fiscalYearId: number | undefined,
+  accountNumber: string | undefined,
+  dateFrom?: string,
+  dateTo?: string,
+) {
+  return useIpcQuery(
+    queryKeys.accountStatement(fiscalYearId!, accountNumber!, dateFrom, dateTo),
+    () =>
+      window.api.getAccountStatement({
+        fiscal_year_id: fiscalYearId!,
+        account_number: accountNumber!,
+        date_from: dateFrom,
+        date_to: dateTo,
+      }),
+    { enabled: !!fiscalYearId && !!accountNumber },
+  )
+}
+
 // === Invoice Drafts ===
 
 export function useDraftInvoices(fiscalYearId: number | undefined) {
@@ -788,6 +809,22 @@ export function useFinalizeManualEntry() {
         queryKeys.allDashboard(),
       ],
     },
+  )
+}
+
+// === Global Search ===
+
+export function useGlobalSearch(
+  fiscalYearId: number | undefined,
+  query: string,
+) {
+  return useIpcQuery(
+    queryKeys.globalSearch(fiscalYearId!, query),
+    () => window.api.globalSearch({
+      fiscal_year_id: fiscalYearId!,
+      query,
+    }),
+    { enabled: !!fiscalYearId && query.length >= 2 },
   )
 }
 

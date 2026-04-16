@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { validateAccountsActive } from './account-service'
+import { checkChronology } from './chronology-guard'
 import { rebuildSearchIndex } from './search-service'
 import type {
   ManualEntry,
@@ -319,7 +320,10 @@ export function finalizeManualEntry(
         lines.map((l) => l.account_number),
       )
 
-      // 9. Allocate C-series number
+      // 9. Kronologisk datumordning — C-serie
+      checkChronology(db, fiscalYearId, 'C', entry.entry_date)
+
+      // 10. Allocate C-series number
       const nextVer = db
         .prepare(
           "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'C'",

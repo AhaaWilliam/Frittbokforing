@@ -179,6 +179,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('manual-entry:list', data),
   finalizeManualEntry: (data: { id: number; fiscal_year_id: number }) =>
     ipcRenderer.invoke('manual-entry:finalize', data),
+  // Journal Entry Corrections
+  correctJournalEntry: (data: { journal_entry_id: number; fiscal_year_id: number }) =>
+    ipcRenderer.invoke('journal-entry:correct', data),
+  canCorrectJournalEntry: (data: { journal_entry_id: number }) =>
+    ipcRenderer.invoke('journal-entry:can-correct', data),
   // Excel Export
   exportExcel: (data: {
     fiscal_year_id: number
@@ -203,6 +208,9 @@ contextBridge.exposeInMainWorld('api', {
   // Tax
   getTaxForecast: (data: { fiscalYearId: number }) =>
     ipcRenderer.invoke('tax:forecast', data),
+  // Global Search
+  globalSearch: (data: { query: string; fiscal_year_id: number; limit?: number }) =>
+    ipcRenderer.invoke('search:global', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

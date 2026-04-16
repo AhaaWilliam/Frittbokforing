@@ -1,5 +1,7 @@
 import type Database from 'better-sqlite3'
 import { todayLocal } from '../../shared/date-utils'
+import { checkChronology } from './chronology-guard'
+import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
@@ -552,7 +554,10 @@ export function finalizeDraft(
       if (period && period.is_closed)
         throw { code: 'YEAR_IS_CLOSED', error: 'Perioden är stängd' }
 
-      // 5. Allokera fakturanummer
+      // 5. Kronologisk datumordning — A-serie
+      checkChronology(db, invoice.fiscal_year_id!, 'A', invoice.invoice_date)
+
+      // 6. Allokera fakturanummer
       const nextNumResult = db
         .prepare(
           "SELECT COALESCE(MAX(CAST(invoice_number AS INTEGER)), 0) + 1 as next_num FROM invoices WHERE fiscal_year_id = ? AND invoice_number != ''",
@@ -560,7 +565,7 @@ export function finalizeDraft(
         .get(invoice.fiscal_year_id) as { next_num: number }
       const invoiceNumber = String(nextNumResult.next_num)
 
-      // 6. Allokera verifikationsnummer
+      // 7. Allokera verifikationsnummer
       const nextVerResult = db
         .prepare(
           "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'A'",
@@ -651,6 +656,7 @@ export function finalizeDraft(
       return { invoiceNumber, verificationNumber, journalEntryId }
     })()
 
+    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
     return { success: true, data: getDraftInternal(db, id)! }
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string; message?: string }
@@ -881,6 +887,7 @@ function _payInvoiceTx(
     account_number: string
     bank_fee_ore?: number
   },
+  skipChronologyCheck = false,
 ): PayInvoiceTxResult {
   // 1. Hämta faktura
   const invoice = db
@@ -968,6 +975,11 @@ function _payInvoiceTx(
       code: 'YEAR_IS_CLOSED',
       error: 'Perioden är stängd.',
     }
+  }
+
+  // 6b. Kronologisk datumordning — A-serie (skipped in bulk)
+  if (!skipChronologyCheck) {
+    checkChronology(db, paymentYear.id, 'A', input.payment_date)
   }
 
   // 7. Allokera verifikationsnummer
@@ -1140,6 +1152,7 @@ export function payInvoice(
 
   try {
     const result = db.transaction(() => _payInvoiceTx(db, input))()
+    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
     // Strip journalEntryId from public contract
     return { success: true, data: { invoice: result.invoice, payment: result.payment } }
   } catch (err: unknown) {
@@ -1216,6 +1229,28 @@ export function payInvoicesBulk(
     }
   }
 
+  // Batch-level M6 chronology check — A-serie
+  const batchChronoYear = db
+    .prepare('SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?')
+    .get(input.payment_date, input.payment_date) as { id: number } | undefined
+  if (batchChronoYear) {
+    const lastEntry = db
+      .prepare(
+        `SELECT journal_date FROM journal_entries
+         WHERE fiscal_year_id = ? AND verification_series = 'A'
+         ORDER BY verification_number DESC LIMIT 1`,
+      )
+      .get(batchChronoYear.id) as { journal_date: string } | undefined
+    if (lastEntry && input.payment_date < lastEntry.journal_date) {
+      return {
+        success: false,
+        error: `Datum ${input.payment_date} är före senaste bokförda datum ${lastEntry.journal_date} i A-serien.`,
+        code: 'VALIDATION_ERROR',
+        field: 'payment_date',
+      }
+    }
+  }
+
   try {
     const result = db.transaction(() => {
       const succeeded: Array<{ id: number; payment_id: number; journal_entry_id: number }> = []
@@ -1232,7 +1267,7 @@ export function payInvoicesBulk(
               payment_method: 'bank',
               account_number: input.account_number,
               bank_fee_ore: 0, // Bank fee handled at batch level
-            })
+            }, true) // skipChronologyCheck — validated at batch level
             succeeded.push({
               id: p.invoice_id,
               payment_id: txResult.payment.id,

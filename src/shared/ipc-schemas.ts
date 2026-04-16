@@ -579,6 +579,21 @@ export const ManualEntryListSchema = z
   })
   .strict()
 
+// === Journal Entry Corrections ===
+
+export const CorrectJournalEntrySchema = z
+  .object({
+    journal_entry_id: z.number().int().positive(),
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const CanCorrectSchema = z
+  .object({
+    journal_entry_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === Bulk Payment ===
 export const PayInvoicesBulkPayloadSchema = z
   .object({
@@ -728,6 +743,16 @@ export const NetResultInputSchema = z
 //
 // Schemas NOT in this map (not IPC channels — embedded/helper schemas):
 //   VatNumberSchema, InvoiceDraftLineSchema, BulkPaymentResultSchema
+// === Global Search ===
+
+export const GlobalSearchSchema = z
+  .object({
+    query: z.string().min(2).max(200),
+    fiscal_year_id: z.number().int().positive(),
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .strict()
+
 // ---------------------------------------------------------------------------
 export const channelMap = {
   // Company
@@ -812,6 +837,10 @@ export const channelMap = {
   'manual-entry:list': ManualEntryListSchema,
   'manual-entry:finalize': ManualEntryFinalizeSchema,
 
+  // Journal Entry Corrections
+  'journal-entry:correct': CorrectJournalEntrySchema,
+  'journal-entry:can-correct': CanCorrectSchema,
+
   // Dashboard & Reports
   'dashboard:summary': DashboardSummaryInputSchema,
   'vat:report': VatReportInputSchema,
@@ -824,6 +853,9 @@ export const channelMap = {
   'export:sie4': ExportSie4Schema,
   'export:excel': ExportExcelSchema,
   'export:write-file': ExportWriteFileRequestSchema,
+
+  // Global Search
+  'search:global': GlobalSearchSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

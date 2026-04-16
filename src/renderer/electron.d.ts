@@ -32,6 +32,7 @@ import type {
   SaveManualEntryDraftInput,
   UpdateManualEntryDraftInput,
 } from '../shared/types'
+import type { GlobalSearchResponse } from '../shared/search-types'
 
 interface ElectronAPI {
   healthCheck: () => Promise<HealthCheckResponse>
@@ -144,6 +145,13 @@ interface ElectronAPI {
       credit_ore: number
       running_balance_ore: number
     }>
+    summary: {
+      opening_balance_ore: number
+      total_debit_ore: number
+      total_credit_ore: number
+      closing_balance_ore: number
+      transaction_count: number
+    }
   }>>
   backupCreate: () => Promise<{ filePath: string | null }>
   backupRestore: () => Promise<{ restored: boolean; message?: string }>
@@ -292,6 +300,20 @@ interface ElectronAPI {
   }) => Promise<
     IpcResult<{ journalEntryId: number; verificationNumber: number }>
   >
+  // Journal Entry Corrections
+  correctJournalEntry: (data: {
+    journal_entry_id: number
+    fiscal_year_id: number
+  }) => Promise<
+    IpcResult<{
+      correction_entry_id: number
+      correction_verification_number: number
+      original_entry_id: number
+    }>
+  >
+  canCorrectJournalEntry: (data: {
+    journal_entry_id: number
+  }) => Promise<IpcResult<{ canCorrect: boolean; reason?: string }>>
   // Excel Export
   exportExcel: (input: {
     fiscal_year_id: number
@@ -329,6 +351,12 @@ interface ElectronAPI {
   getTaxForecast: (data: {
     fiscalYearId: number
   }) => Promise<IpcResult<TaxForecast>>
+  // Global Search
+  globalSearch: (data: {
+    query: string
+    fiscal_year_id: number
+    limit?: number
+  }) => Promise<IpcResult<GlobalSearchResponse>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

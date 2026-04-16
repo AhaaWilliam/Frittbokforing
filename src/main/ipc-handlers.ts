@@ -98,6 +98,11 @@ import {
 } from './services/account-service'
 import { createBackup, restoreBackup } from './services/backup-service'
 import { getAccountStatement } from './services/account-statement-service'
+import {
+  createCorrectionEntry,
+  canCorrectEntry,
+} from './services/correction-service'
+import { globalSearch } from './services/search-service'
 import { getE2EFilePath } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -153,6 +158,9 @@ import {
   PayExpensesBulkPayloadSchema,
   CreateCreditNoteDraftSchema,
   CreateExpenseCreditNoteDraftSchema,
+  CorrectJournalEntrySchema,
+  CanCorrectSchema,
+  GlobalSearchSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -834,6 +842,25 @@ export function registerIpcHandlers(): void {
     return finalizeManualEntry(db, parsed.data.id, parsed.data.fiscal_year_id)
   })
 
+  // === Journal Entry Corrections ===
+  ipcMain.handle('journal-entry:correct', (_event, input: unknown) => {
+    const parsed = CorrectJournalEntrySchema.safeParse(input)
+    if (!parsed.success) {
+      log.warn('[journal-entry:correct] Validation error:', parsed.error.issues)
+      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' }
+    }
+    return createCorrectionEntry(db, parsed.data)
+  })
+
+  ipcMain.handle('journal-entry:can-correct', (_event, input: unknown) => {
+    const parsed = CanCorrectSchema.safeParse(input)
+    if (!parsed.success) {
+      log.warn('[journal-entry:can-correct] Validation error:', parsed.error.issues)
+      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' }
+    }
+    return canCorrectEntry(db, parsed.data.journal_entry_id)
+  })
+
   // === Excel Export ===
   ipcMain.handle('export:excel', wrapIpcHandler(
     ExportExcelSchema,
@@ -950,6 +977,15 @@ export function registerIpcHandlers(): void {
       return { success: true, data: { success: true, filePath } }
     },
   ))
+
+  // === Global Search ===
+  ipcMain.handle('search:global', (_event, input: unknown) => {
+    const parsed = GlobalSearchSchema.safeParse(input)
+    if (!parsed.success) {
+      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' as const }
+    }
+    return globalSearch(db, parsed.data)
+  })
 
   // === Settings ===
   ipcMain.handle('settings:get', (_event, key: string) => {

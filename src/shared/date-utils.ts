@@ -98,6 +98,31 @@ export function addMonthsMinusOneDay(dateStr: string, months: number): string {
 }
 
 /**
+ * Subtrahera N månader från ett ISO-datum (YYYY-MM-DD).
+ * Dag clampas till giltig range för målmånaden.
+ * subtractMonths('2026-05-31', 3) → '2026-02-28'
+ */
+export function subtractMonths(dateStr: string, months: number): string {
+  if (months < 0) throw new Error('months must be >= 0')
+  if (months === 0) return dateStr
+
+  const y = parseInt(dateStr.substring(0, 4), 10)
+  const m = parseInt(dateStr.substring(5, 7), 10)
+  const d = parseInt(dateStr.substring(8, 10), 10)
+
+  const totalMonth = y * 12 + (m - 1) - months
+  const newYear = Math.floor(totalMonth / 12)
+  const newMonth = (totalMonth % 12) + 1
+
+  const daysInMonth = [
+    0, 31, isLeapYear(newYear) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+  ]
+  const clampedDay = Math.min(d, daysInMonth[newMonth])
+
+  return `${newYear}-${String(newMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`
+}
+
+/**
  * Lägg till N dagar.
  * addDays('2026-03-30', 2) → '2026-04-01'
  */

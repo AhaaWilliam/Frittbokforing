@@ -10,10 +10,19 @@ export interface AccountStatementLine {
   running_balance_ore: number
 }
 
+export interface AccountStatementSummary {
+  opening_balance_ore: number
+  total_debit_ore: number
+  total_credit_ore: number
+  closing_balance_ore: number
+  transaction_count: number
+}
+
 export interface AccountStatement {
   account_number: string
   account_name: string
   lines: AccountStatementLine[]
+  summary: AccountStatementSummary
 }
 
 /**
@@ -86,9 +95,24 @@ export function getAccountStatement(
     }
   })
 
+  // Calculate summary from accumulated lines
+  let totalDebit = 0
+  let totalCredit = 0
+  for (const line of lines) {
+    totalDebit += line.debit_ore
+    totalCredit += line.credit_ore
+  }
+
   return {
     account_number: input.account_number,
     account_name: accountName,
     lines,
+    summary: {
+      opening_balance_ore: 0, // running_balance starts at 0; IB is a regular row
+      total_debit_ore: totalDebit,
+      total_credit_ore: totalCredit,
+      closing_balance_ore: totalDebit - totalCredit,
+      transaction_count: lines.length,
+    },
   }
 }

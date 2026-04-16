@@ -400,7 +400,10 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     expect(dashboard.revenueOre).toBe(1000000) // 10 000 kr netto
   })
 
-  it.skip('S01-05: betalning i annat räkenskapsår (requires cross-FY payment support)', () => {
+  it('S01-05: betalning i annat räkenskapsår', () => {
+    // Avancera system-tid till dec 2026 så invoice_date inte är "framtid"
+    vi.setSystemTime(new Date('2026-12-20T10:00:00'))
+
     const customer = seedCustomer(ctx, { name: 'Tvåårs-kund' })
     const vatCode = getVatCode25Out(ctx)
 
@@ -442,7 +445,9 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     )
     expect(fy2.fiscalYear.id).toBeGreaterThan(ctx.seed.fiscalYearId)
 
-    // Betala i FY2027
+    // Betala i FY2027 — avancera system-tid så payment_date inte blockeras
+    vi.setSystemTime(new Date('2027-02-01T10:00:00'))
+
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
       .get(draftResult.data.id) as any
@@ -463,7 +468,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     expect(payJe.fiscal_year_id).toBe(fy2.fiscalYear.id)
   })
 
-  it.skip('S01-06: kronologisk datumordning inom serie (not yet enforced in service layer)', () => {
+  it('S01-06: kronologisk datumordning inom serie', () => {
     const customer = seedCustomer(ctx, { name: 'Kronologi-kund' })
     const vatCode = getVatCode25Out(ctx)
 

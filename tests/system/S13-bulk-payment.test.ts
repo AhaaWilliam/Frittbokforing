@@ -265,7 +265,7 @@ describe('payInvoicesBulk — partial', () => {
 
     // Pay i2 first → it becomes non-payable
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
 
@@ -297,11 +297,11 @@ describe('payInvoicesBulk — all fail', () => {
 
     // Pay both → non-payable
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i1.invoiceId, amount_ore: 100_00, payment_date: '2026-03-10',
+      invoice_id: i1.invoiceId, amount_ore: 100_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
 
@@ -381,7 +381,7 @@ describe('payInvoicesBulk — verification contiguity', () => {
     const i2 = seedInvoiceNoVat(ctx, 200_00)
     // Pay i2 to make it fail
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
     const i3 = seedInvoiceNoVat(ctx, 300_00)
@@ -481,17 +481,20 @@ describe('payExpensesBulk — chronology', () => {
   })
 
   it('payment_date < expense_date → per-row fail, batch partial', () => {
-    // Expense dated April 10 (future-ish but still valid in FY)
-    const earlyExp = seedExpenseNoVat(ctx, 100_00, { expenseDate: '2026-04-10' })
-    const normalExp = seedExpenseNoVat(ctx, 200_00) // default March 15
+    // Both expenses at same date (chronology OK), then push one's date forward via DB update
+    const normalExp = seedExpenseNoVat(ctx, 200_00) // March 15
+    const lateExp = seedExpenseNoVat(ctx, 100_00) // March 15
 
-    const t1 = getExpenseTotal(earlyExp.expenseId)
+    // Push lateExp's expense_date to April 10 AFTER finalize (bypass chronology for test setup)
+    ctx.db.prepare('UPDATE expenses SET expense_date = ? WHERE id = ?').run('2026-04-10', lateExp.expenseId)
+
+    const t1 = getExpenseTotal(lateExp.expenseId)
     const t2 = getExpenseTotal(normalExp.expenseId)
 
-    // Bulk-pay at March 15 → earlyExp fails (payment before expense date)
+    // Bulk-pay at March 15 → lateExp fails (payment_date < expense_date)
     const result = payExpensesBulk(ctx.db, {
       payments: [
-        { expense_id: earlyExp.expenseId, amount_ore: t1 },
+        { expense_id: lateExp.expenseId, amount_ore: t1 },
         { expense_id: normalExp.expenseId, amount_ore: t2 },
       ],
       payment_date: '2026-03-15', account_number: '1930',
@@ -501,7 +504,7 @@ describe('payExpensesBulk — chronology', () => {
     if (!result.success) return
     expect(result.data.status).toBe('partial')
     expect(result.data.failed).toHaveLength(1)
-    expect(result.data.failed[0].id).toBe(earlyExp.expenseId)
+    expect(result.data.failed[0].id).toBe(lateExp.expenseId)
     expect(result.data.failed[0].code).toBe('PAYMENT_BEFORE_EXPENSE')
   })
 })
@@ -1305,7 +1308,7 @@ describe('IDEMP2 — partial retry', () => {
 
     // Betala i2 separat → non-payable i bulk
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
 
@@ -1474,7 +1477,7 @@ describe('SIE-PARTIAL1 — SIE4 roundtrip med partial batch', () => {
 
     // Betala i2 separat → non-payable
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
 
@@ -1527,7 +1530,7 @@ describe('SIE-PARTIAL2 — SIE5 roundtrip med partial batch', () => {
     const i3 = seedInvoiceNoVat(ctx, 300_00)
 
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-10',
+      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
       payment_method: 'bankgiro', account_number: '1930',
     })
 

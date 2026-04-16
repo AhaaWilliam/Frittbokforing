@@ -91,7 +91,23 @@ export function useNavigate(): (path: string) => void {
 
 function getHashPath(): string {
   const hash = window.location.hash
-  return hash.startsWith('#') ? hash.slice(1) : '/'
+  const raw = hash.startsWith('#') ? hash.slice(1) : '/'
+  return raw.split('?')[0]
+}
+
+/** Read query params from the current hash URL. */
+export function getHashParams(): URLSearchParams {
+  const hash = window.location.hash
+  const idx = hash.indexOf('?')
+  return idx >= 0 ? new URLSearchParams(hash.slice(idx + 1)) : new URLSearchParams()
+}
+
+/** Update query params without triggering navigation (uses replaceState). */
+export function setHashParams(params: Record<string, string>): void {
+  const path = getHashPath()
+  const search = new URLSearchParams(params).toString()
+  const newHash = search ? `${path}?${search}` : path
+  window.history.replaceState(null, '', `#${newHash}`)
 }
 
 // ── Components ─────────────────────────────────────────────────────

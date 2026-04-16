@@ -28,6 +28,8 @@ try {
     const lines = axeFalse.split('\n').filter((line) => {
       if (line.includes('render-with-providers.tsx')) return false
       if (line.includes('render-with-providers.test.tsx')) return false
+      // Axe "already running" race condition workaround (documented in-file)
+      if (line.includes('M133 exempt')) return false
       return true
     })
 

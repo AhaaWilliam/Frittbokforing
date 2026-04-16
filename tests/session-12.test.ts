@@ -241,9 +241,10 @@ describe('Session 12: listExpenses', () => {
 
   it('sorts by expense_date desc by default', () => {
     const seed = seedAll(db)
+    // Chronological order required by B8 chronology enforcement
     makeFinalized(db, seed, { date: '2025-01-15' })
-    makeFinalized(db, seed, { date: '2025-03-01' })
     makeFinalized(db, seed, { date: '2025-02-10' })
+    makeFinalized(db, seed, { date: '2025-03-01' })
 
     const result = listExpenses(db, { fiscal_year_id: seed.fiscalYearId })
     expect(result.expenses[0].expense_date).toBe('2025-03-01')
@@ -353,8 +354,8 @@ describe('Session 12: Status counts', () => {
       account_number: '1930',
     })
 
-    // Make one overdue
-    const overdueId = makeFinalized(db, seed)
+    // Make one overdue — date must be >= last B-series entry (payment at 2025-04-01)
+    const overdueId = makeFinalized(db, seed, { date: '2025-04-15' })
     db.prepare(
       "UPDATE expenses SET due_date = date('now', '-1 day') WHERE id = ?",
     ).run(overdueId)

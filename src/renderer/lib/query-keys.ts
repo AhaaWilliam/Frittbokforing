@@ -60,6 +60,12 @@ export const queryKeys = {
     ['income-statement', fyId, dateRange ?? 'full-year'] as const,
   balanceSheet: (fyId: number, dateRange?: { from: string; to: string }) =>
     ['balance-sheet', fyId, dateRange ?? 'full-year'] as const,
+  accountStatement: (fyId: number, accountNumber: string, dateFrom?: string, dateTo?: string) =>
+    ['account-statement', fyId, accountNumber, dateFrom, dateTo] as const,
+
+  // === Global Search ===
+  globalSearch: (fyId: number, query: string) =>
+    ['global-search', fyId, query] as const,
 
   // === Prefix-baserade nycklar för bred invalidering ===
   allInvoices: () => ['invoices'] as const,

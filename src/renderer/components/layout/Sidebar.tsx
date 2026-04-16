@@ -11,6 +11,7 @@ import {
   FileText,
   BarChart3,
   BookOpen,
+  ScrollText,
   Truck,
   type LucideIcon,
 } from 'lucide-react'
@@ -18,6 +19,7 @@ import type { Company } from '../../../shared/types'
 import { Link } from '../../lib/router'
 import { YearPicker } from './YearPicker'
 import { MonthIndicator } from './MonthIndicator'
+import { GlobalSearch } from './GlobalSearch'
 
 interface SidebarProps {
   company: Company
@@ -60,6 +62,9 @@ export function Sidebar({ company }: SidebarProps) {
         <MonthIndicator />
       </div>
 
+      {/* Search */}
+      <GlobalSearch />
+
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         <div className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -86,6 +91,7 @@ export function Sidebar({ company }: SidebarProps) {
           Rapporter
         </div>
         <SidebarLink to="/reports" icon={BarChart3} label="Rapporter" testId="nav-reports" />
+        <SidebarLink to="/account-statement" icon={ScrollText} label="Kontoutdrag" testId="nav-account-statement" />
         <SidebarLink to="/vat" icon={Receipt} label="Moms" testId="nav-vat" />
         <SidebarLink to="/tax" icon={Calculator} label="Skatt" testId="nav-tax" />
 

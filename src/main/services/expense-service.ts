@@ -1,5 +1,7 @@
 import type Database from 'better-sqlite3'
 import { todayLocal, addDays } from '../../shared/date-utils'
+import { checkChronology } from './chronology-guard'
+import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
@@ -352,7 +354,7 @@ export function finalizeExpense(
   id: number,
 ): IpcResult<{ id: number; verification_number: number }> {
   try {
-    return db.transaction(() => {
+    const result = db.transaction(() => {
       // 1. Hämta expense
       const expense = db
         .prepare('SELECT * FROM expenses WHERE id = ?')
@@ -406,7 +408,10 @@ export function finalizeExpense(
           error: 'Kostnadsdatum kan inte vara i framtiden',
         }
 
-      // 6. Allokera B-serie verifikationsnummer
+      // 6. Kronologisk datumordning — B-serie
+      checkChronology(db, expense.fiscal_year_id, 'B', expense.expense_date)
+
+      // 7. Allokera B-serie verifikationsnummer
       const maxVer = db
         .prepare(
           "SELECT COALESCE(MAX(verification_number), 0) as max_num FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'B'",
@@ -558,6 +563,8 @@ export function finalizeExpense(
         data: { id, verification_number: nextVer },
       }
     })()
+    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
+    return result
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; message?: string; field?: string }
     if (e.code && e.error) {
@@ -714,21 +721,7 @@ function _payExpenseTx(
 
   // 8. Kronologisk datumordning (M6) — B-serie (skipped in bulk)
   if (!skipChronologyCheck) {
-    const lastEntry = db
-      .prepare(
-        `SELECT journal_date FROM journal_entries
-         WHERE fiscal_year_id = ? AND verification_series = 'B'
-         ORDER BY verification_number DESC LIMIT 1`,
-      )
-      .get(paymentYear.id) as { journal_date: string } | undefined
-
-    if (lastEntry && input.payment_date < lastEntry.journal_date) {
-      throw {
-        code: 'VALIDATION_ERROR',
-        error: 'Datum före senaste verifikation i B-serien.',
-        field: 'payment_date',
-      }
-    }
+    checkChronology(db, paymentYear.id, 'B', input.payment_date)
   }
 
   // 9. Allokera verifikationsnummer B-serie
@@ -865,6 +858,7 @@ export function payExpense(
 
   try {
     const result = db.transaction(() => _payExpenseTx(db, input))()
+    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
     return { success: true, data: { expense: result.expense, payment: result.payment } }
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string }

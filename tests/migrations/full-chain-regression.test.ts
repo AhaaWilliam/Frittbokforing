@@ -194,9 +194,9 @@ describe('Full-chain regression (migrations 1→24)', () => {
     const integrityResult = db.pragma('integrity_check', { simple: true }) as string
     expect(integrityResult).toBe('ok')
 
-    // 3. Trigger count = 12 (backstop — primary owner is trigger-inventory.test.ts)
+    // 3. Trigger count = 16 (backstop — primary owner is trigger-inventory.test.ts)
     const triggerCount = (db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'").get() as { cnt: number }).cnt
-    expect(triggerCount).toBe(12)
+    expect(triggerCount).toBe(16)
 
     // 4. All journal_entries balance (SUM debit = SUM credit per entry)
     const unbalanced = db.prepare(`

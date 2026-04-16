@@ -9,6 +9,7 @@ export const routes: RouteDefinition[] = [
   { pattern: '/reports', page: 'reports' },
   { pattern: '/tax', page: 'tax' },
   { pattern: '/vat', page: 'vat' },
+  { pattern: '/account-statement', page: 'account-statement' },
 
   // Master-detail pages (specific before generic)
   { pattern: '/customers/create', page: 'customers' },

@@ -17,6 +17,7 @@ import os from 'os'
 import path from 'path'
 import { vi } from 'vitest'
 import { migrations } from '../../../src/main/migrations'
+import { registerCustomFunctions } from '../../../src/main/db-functions'
 
 // === Service imports ===
 import {
@@ -280,7 +281,9 @@ export function createTemplateDb(options?: CreateContextOptions): void {
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
 
-  // Run all 13 migrations
+  registerCustomFunctions(db)
+
+  // Run all migrations
   for (let i = 0; i < migrations.length; i++) {
     db.exec('BEGIN EXCLUSIVE')
     try {
@@ -373,6 +376,8 @@ export function createSystemTestContext(): SystemTestContext {
   const db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
+
+  registerCustomFunctions(db)
 
   // Read seeded data
   const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
@@ -670,9 +675,14 @@ export function seedAndFinalizeInvoice(
   const result = finalizeDraft(ctx.db, draft.data.id)
   if (!result.success) throw new Error(`finalizeDraft failed: ${result.error}`)
 
+  // finalizeDraft returns InvoiceWithLines — get verification_number from linked journal_entry
+  const je = ctx.db
+    .prepare('SELECT verification_number FROM journal_entries WHERE id = (SELECT journal_entry_id FROM invoices WHERE id = ?)')
+    .get(draft.data.id) as { verification_number: number }
+
   return {
     invoiceId: draft.data.id,
-    verificationNumber: (result.data as unknown as { verification_number: number }).verification_number,
+    verificationNumber: je.verification_number,
   }
 }
 
