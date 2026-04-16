@@ -120,6 +120,10 @@ export const CreateCounterpartyInputSchema = z
     email: z.string().email().nullable().optional(),
     phone: z.string().max(50).nullable().optional(),
     default_payment_terms: z.number().int().min(1).max(365).default(30),
+    bankgiro: z.string().regex(/^\d{3,4}-?\d{4}$/).nullable().optional(),
+    plusgiro: z.string().regex(/^\d{2,8}$/).nullable().optional(),
+    bank_account: z.string().max(50).nullable().optional(),
+    bank_clearing: z.string().regex(/^\d{4}$/).nullable().optional(),
   })
   .strict()
 
@@ -796,6 +800,19 @@ export const BudgetCopySchema = z
   })
   .strict()
 
+// === Payment Batch Export ===
+export const PaymentBatchValidateExportSchema = z
+  .object({
+    batch_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const PaymentBatchExportPain001Schema = z
+  .object({
+    batch_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === Accruals (Periodiseringar) ===
 export const AccrualCreateSchema = z
   .object({
@@ -984,6 +1001,10 @@ export const channelMap = {
   // Aging Report
   'aging:receivables': AgingInputSchema,
   'aging:payables': AgingInputSchema,
+
+  // Payment batch export
+  'payment-batch:validate-export': PaymentBatchValidateExportSchema,
+  'payment-batch:export-pain001': PaymentBatchExportPain001Schema,
 
   // Accruals
   'accrual:create': AccrualCreateSchema,

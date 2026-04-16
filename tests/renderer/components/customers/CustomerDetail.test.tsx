@@ -24,6 +24,10 @@ const COUNTERPARTY: Counterparty = {
   is_active: 1,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
+    bankgiro: null,
+    plusgiro: null,
+    bank_account: null,
+    bank_clearing: null,
 }
 
 const DEFAULT_PROPS = {
@@ -36,9 +40,7 @@ beforeEach(() => {
 })
 
 function mockCounterpartyGet(data: Counterparty | null = COUNTERPARTY) {
-  // counterparty:get uses useDirectQuery (raw return, not IpcResult-wrapped)
-  const api = window.api as unknown as Record<string, ReturnType<typeof vi.fn>>
-  api.getCounterparty.mockResolvedValue(data)
+  mockIpcResponse('counterparty:get', { success: true, data })
 }
 
 function renderDetail(overrides?: Partial<typeof DEFAULT_PROPS>) {

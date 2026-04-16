@@ -1,5 +1,46 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 46 -- Feature 4: Leverantörsbetalfil (ISO 20022 pain.001) ✅ KLAR
+
+Session S46. Betalningsuppgifter på counterparties, pain.001 XML-generering, batch export tracking.
+
+**Testbaslinje:** 2173 → 2201 vitest (+28). 0 skipped. 216 testfiler.
+**PRAGMA user_version:** 37 (migration 036+037).
+**Inga nya M-principer.**
+**Nya filer:** bankgiro-validation.ts, pain001-export-service.ts, session-46-pain001.test.ts, ipc-pain001.test.ts.
+
+### Leverabler
+
+#### 1. Migration 036+037
+- Counterparty: bankgiro, plusgiro, bank_account, bank_clearing
+- Payment batches: exported_at, export_format, export_filename
+
+#### 2. bankgiro-validation.ts (shared/)
+- `validateBankgiroChecksum` — Luhn modulus 10
+- `normalizeBankgiro` — strip bindestreck
+
+#### 3. pain001-export-service.ts
+- `validateBatchForExport` — pre-flight (batch status, company bankgiro, supplier payment info)
+- `generatePain001` — ISO 20022 pain.001.001.03 XML via xmlbuilder2
+- `markBatchExported` — UPDATE payment_batches
+
+#### 4. Counterparty form + service
+- CustomerForm: "Betalningsuppgifter"-sektion (bankgiro, plusgiro, bankkonto, clearingnr)
+- counterparty-service: INSERT + UPDATE med payment fields
+
+#### 5. BulkPaymentResultDialog
+- "Exportera betalfil"-knapp (expense batches only)
+- Flöde: validate → generate → showSaveDialog → write → mark exported
+
+#### 6. Tester (28 nya)
+- session-46-pain001.test.ts (17): bankgiro validation, XML structure, amounts, migration
+- ipc-pain001.test.ts (11): schema validation
+
+### Stängda items
+- **Feature 4** Leverantörsbetalfil: STÄNGD
+
+### Backlog: 0 öppna findings
+
 ## Sprint 45 -- Feature 3: Periodiseringar (Accruals) ✅ KLAR
 
 Session S45. Periodiseringsscheman med C-serie verifikat, per-period-körning, execute-all.

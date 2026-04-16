@@ -134,9 +134,25 @@ export interface Counterparty {
   email: string | null
   phone: string | null
   default_payment_terms: number
+  bankgiro: string | null
+  plusgiro: string | null
+  bank_account: string | null
+  bank_clearing: string | null
   is_active: number
   created_at: string
   updated_at: string
+}
+
+// === Payment Export ===
+
+export interface PaymentExportValidation {
+  valid: boolean
+  issues: Array<{
+    counterpartyId: number
+    counterpartyName: string
+    issue: 'missing_bankgiro' | 'missing_all_payment_info'
+  }>
+  batchIssue?: 'already_exported' | 'cancelled' | 'company_missing_bankgiro'
 }
 
 // === Create Company Input (renderer → main) ===

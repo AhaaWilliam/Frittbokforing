@@ -374,6 +374,13 @@ interface ElectronAPI {
     fiscal_year_id: number
     as_of_date?: string
   }) => Promise<IpcResult<import('../main/services/aging-service').AgingReport>>
+  // Payment batch export
+  validateBatchExport: (data: {
+    batch_id: number
+  }) => Promise<IpcResult<import('../shared/types').PaymentExportValidation>>
+  exportPain001: (data: {
+    batch_id: number
+  }) => Promise<IpcResult<{ saved: boolean; filePath?: string }>>
   // Accruals
   createAccrualSchedule: (data: import('../shared/types').CreateAccrualScheduleInput) => Promise<IpcResult<{ id: number }>>
   getAccrualSchedules: (data: { fiscal_year_id: number }) => Promise<IpcResult<import('../shared/types').AccrualScheduleWithStatus[]>>

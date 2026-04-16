@@ -1,20 +1,71 @@
+import { useState } from 'react'
+import { FileDown } from 'lucide-react'
+import { toast } from 'sonner'
 import type { BulkPaymentResult } from '../../../shared/types'
 
 interface BulkPaymentResultDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   result: BulkPaymentResult | null
+  batchType?: 'invoice' | 'expense'
 }
 
 export function BulkPaymentResultDialog({
   open,
   onOpenChange,
   result,
+  batchType,
 }: BulkPaymentResultDialogProps) {
+  const [exporting, setExporting] = useState(false)
+
   if (!open || !result) return null
 
   const total = result.succeeded.length + result.failed.length
   const hasFailures = result.failed.length > 0
+  const canExport =
+    batchType === 'expense' &&
+    result.status !== 'cancelled' &&
+    result.batch_id != null
+
+  async function handleExport() {
+    if (!result?.batch_id) return
+    setExporting(true)
+    try {
+      const validateResult = await window.api.validateBatchExport({
+        batch_id: result.batch_id,
+      })
+      if (!validateResult.success) {
+        toast.error(validateResult.error)
+        setExporting(false)
+        return
+      }
+      if (!validateResult.data.valid) {
+        const issue = validateResult.data.batchIssue
+        if (issue === 'already_exported') {
+          toast.error('Batchen har redan exporterats')
+        } else if (issue === 'company_missing_bankgiro') {
+          toast.error('Företaget saknar bankgiro — krävs för betalfil')
+        } else if (validateResult.data.issues.length > 0) {
+          const names = validateResult.data.issues.map((i) => i.counterpartyName).join(', ')
+          toast.error(`Leverantörer saknar betalningsuppgifter: ${names}`)
+        }
+        setExporting(false)
+        return
+      }
+
+      const exportResult = await window.api.exportPain001({
+        batch_id: result.batch_id,
+      })
+      if (exportResult.success && exportResult.data.saved) {
+        toast.success('Betalfil exporterad')
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte exportera betalfil',
+      )
+    }
+    setExporting(false)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -46,7 +97,18 @@ export function BulkPaymentResultDialog({
           </p>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {canExport && (
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-1.5 rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" />
+              {exporting ? 'Exporterar...' : 'Exportera betalfil'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onOpenChange(false)}

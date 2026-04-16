@@ -1294,6 +1294,15 @@ END;`,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX idx_accrual_entries_schedule ON accrual_entries (accrual_schedule_id);` },
+  // Sprint 46: Feature 4 — Counterparty payment fields
+  { sql: `ALTER TABLE counterparties ADD COLUMN bankgiro TEXT DEFAULT NULL;
+  ALTER TABLE counterparties ADD COLUMN plusgiro TEXT DEFAULT NULL;
+  ALTER TABLE counterparties ADD COLUMN bank_account TEXT DEFAULT NULL;
+  ALTER TABLE counterparties ADD COLUMN bank_clearing TEXT DEFAULT NULL;` },
+  // Sprint 46: Feature 4 — Payment batch export tracking
+  { sql: `ALTER TABLE payment_batches ADD COLUMN exported_at TEXT DEFAULT NULL;
+  ALTER TABLE payment_batches ADD COLUMN export_format TEXT DEFAULT NULL;
+  ALTER TABLE payment_batches ADD COLUMN export_filename TEXT DEFAULT NULL;` },
 ]
 
 /**

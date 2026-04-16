@@ -22,6 +22,10 @@ export const CustomerFormStateSchema = z.object({
   ),
   phone: z.string(),
   default_payment_terms: z.number(),
+  bankgiro: z.string(),
+  plusgiro: z.string(),
+  bank_account: z.string(),
+  bank_clearing: z.string(),
 })
 
 export type CustomerFormState = z.infer<typeof CustomerFormStateSchema>
@@ -39,6 +43,10 @@ export const CUSTOMER_DEFAULTS: CustomerFormState = {
   email: '',
   phone: '',
   default_payment_terms: 30,
+  bankgiro: '',
+  plusgiro: '',
+  bank_account: '',
+  bank_clearing: '',
 }
 
 /**
@@ -59,5 +67,9 @@ export function transformCustomerForm(form: CustomerFormState): CustomerPayload 
     email: form.email.trim() || null,
     phone: form.phone.trim() || null,
     default_payment_terms: form.default_payment_terms,
+    bankgiro: form.bankgiro.trim() || null,
+    plusgiro: form.plusgiro.trim() || null,
+    bank_account: form.bank_account.trim() || null,
+    bank_clearing: form.bank_clearing.trim() || null,
   }
 }

@@ -90,6 +90,10 @@ describe('CustomerForm', () => {
       is_active: 1,
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
+    bankgiro: null,
+    plusgiro: null,
+    bank_account: null,
+    bank_clearing: null,
     }
     await renderForm({ counterparty })
 
@@ -117,6 +121,10 @@ describe('CustomerForm', () => {
       is_active: 1,
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
+    bankgiro: null,
+    plusgiro: null,
+    bank_account: null,
+    bank_clearing: null,
     }
     await renderForm({ counterparty })
 

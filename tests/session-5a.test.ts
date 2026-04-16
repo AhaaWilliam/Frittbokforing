@@ -40,7 +40,7 @@ afterEach(() => {
 describe('Migration 005', () => {
   it('1. user_version = 5, nya tabeller och kolumner', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(35) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(37) // S48: Uppdatera vid nya migrationer
 
     // Nya tabeller
     const tables = db

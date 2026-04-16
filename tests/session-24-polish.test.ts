@@ -226,7 +226,7 @@ describe('Session 24 regression', () => {
   it('user_version = 14', () => {
     db = createTestDb()
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(35) // S48: Uppdatera vid nya migrationer
+    expect(version).toBe(37) // S48: Uppdatera vid nya migrationer
   })
 
   it('22 tabeller', () => {

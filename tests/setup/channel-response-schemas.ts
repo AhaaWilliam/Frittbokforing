@@ -96,6 +96,13 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   'invoice:payBulk': BulkPaymentResultSchema,
   'expense:payBulk': BulkPaymentResultSchema,
 
+  // Payment batch export
+  'payment-batch:validate-export': z.object({
+    valid: z.boolean(),
+    issues: z.array(z.object({ counterpartyId: z.number(), counterpartyName: z.string(), issue: z.string() })),
+  }).passthrough(),
+  'payment-batch:export-pain001': z.object({ saved: z.boolean() }).passthrough(),
+
   // Accruals
   'accrual:create': z.object({ id: z.number() }),
   'accrual:list': z.array(z.object({ id: z.number(), description: z.string() }).passthrough()),

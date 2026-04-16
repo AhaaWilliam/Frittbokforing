@@ -108,6 +108,11 @@ import {
   getAgingPayables,
 } from './services/aging-service'
 import {
+  validateBatchForExport,
+  generatePain001,
+  markBatchExported,
+} from './services/payment/pain001-export-service'
+import {
   createAccrualSchedule,
   getAccrualSchedules,
   executeAccrualForPeriod,
@@ -182,6 +187,8 @@ import {
   CanCorrectSchema,
   GlobalSearchSchema,
   AgingInputSchema,
+  PaymentBatchValidateExportSchema,
+  PaymentBatchExportPain001Schema,
   AccrualCreateSchema,
   AccrualListSchema,
   AccrualExecuteSchema,
@@ -771,6 +778,34 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('aging:payables', wrapIpcHandler(AgingInputSchema, (data) =>
     getAgingPayables(db, data.fiscal_year_id, data.as_of_date),
+  ))
+
+  // === Payment Batch Export ===
+  ipcMain.handle('payment-batch:validate-export', wrapIpcHandler(
+    PaymentBatchValidateExportSchema,
+    (data) => validateBatchForExport(db, data.batch_id),
+  ))
+
+  ipcMain.handle('payment-batch:export-pain001', wrapIpcHandler(
+    PaymentBatchExportPain001Schema,
+    async (data) => {
+      const genResult = generatePain001(db, data.batch_id)
+      if (!genResult.success) return genResult
+
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const { canceled, filePath } = await dialog.showSaveDialog(win!, {
+        defaultPath: genResult.data.filename,
+        filters: [{ name: 'XML', extensions: ['xml'] }],
+      })
+      if (canceled || !filePath) {
+        return { saved: false }
+      }
+
+      fs.writeFileSync(filePath, genResult.data.xml, 'utf8')
+      markBatchExported(db, data.batch_id, 'pain001', filePath)
+      return { saved: true, filePath }
+    },
   ))
 
   // === Accruals ===

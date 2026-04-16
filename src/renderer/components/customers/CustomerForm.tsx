@@ -143,6 +143,19 @@ export function CustomerForm({
           options={PAYMENT_TERMS_OPTIONS}
         />
 
+        {/* Betalningsuppgifter */}
+        <div className="mt-2 border-t pt-4">
+          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Betalningsuppgifter</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField form={form} formName="customer" name="bankgiro" label="Bankgiro" placeholder="1234-5678" />
+            <FormField form={form} formName="customer" name="plusgiro" label="Plusgiro" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField form={form} formName="customer" name="bank_account" label="Bankkonto" />
+            <FormField form={form} formName="customer" name="bank_clearing" label="Clearingnummer" placeholder="1234" />
+          </div>
+        </div>
+
         <div className="flex items-center gap-3 pt-4">
           <button
             type="submit"

@@ -112,6 +112,9 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   saveInvoicePdf: 'invoice:save-pdf',
   selectDirectory: 'invoice:select-directory',
   savePdfBatch: 'invoice:save-pdf-batch',
+  // Payment batch export
+  validateBatchExport: 'payment-batch:validate-export',
+  exportPain001: 'payment-batch:export-pain001',
   // Accruals
   createAccrualSchedule: 'accrual:create',
   getAccrualSchedules: 'accrual:list',

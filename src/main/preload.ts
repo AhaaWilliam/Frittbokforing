@@ -220,6 +220,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('aging:receivables', data),
   getAgingPayables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
     ipcRenderer.invoke('aging:payables', data),
+  // Payment batch export
+  validateBatchExport: (data: { batch_id: number }) =>
+    ipcRenderer.invoke('payment-batch:validate-export', data),
+  exportPain001: (data: { batch_id: number }) =>
+    ipcRenderer.invoke('payment-batch:export-pain001', data),
   // Accruals
   createAccrualSchedule: (data: { fiscal_year_id: number; description: string; accrual_type: string; balance_account: string; result_account: string; total_amount_ore: number; period_count: number; start_period: number }) =>
     ipcRenderer.invoke('accrual:create', data),

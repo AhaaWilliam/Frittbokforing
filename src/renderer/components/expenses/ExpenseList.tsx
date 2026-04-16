@@ -469,6 +469,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
         open={!!bulkResult}
         onOpenChange={() => setBulkResult(null)}
         result={bulkResult}
+        batchType="expense"
       />
     </div>
   )

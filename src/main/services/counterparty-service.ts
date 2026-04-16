@@ -80,8 +80,8 @@ export function createCounterparty(
   try {
     const result = db
       .prepare(
-        `INSERT INTO counterparties (name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO counterparties (name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms, bankgiro, plusgiro, bank_account, bank_clearing)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         data.name,
@@ -96,6 +96,10 @@ export function createCounterparty(
         data.email ?? null,
         data.phone ?? null,
         data.default_payment_terms,
+        data.bankgiro ?? null,
+        data.plusgiro ?? null,
+        data.bank_account ?? null,
+        data.bank_clearing ?? null,
       )
     const cp = getCounterparty(db, Number(result.lastInsertRowid))
     if (!cp)
@@ -157,6 +161,10 @@ export function updateCounterparty(
     'country',
     'contact_person',
     'payment_terms',
+    'bankgiro',
+    'plusgiro',
+    'bank_account',
+    'bank_clearing',
   ])
 
   try {
