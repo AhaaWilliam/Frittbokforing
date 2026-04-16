@@ -413,6 +413,22 @@ interface ElectronAPI {
     target_fiscal_year_id: number
     source_fiscal_year_id: number
   }) => Promise<IpcResult<{ count: number }>>
+  // Depreciation (Sprint 53 F62)
+  createFixedAsset: (
+    data: import('../shared/types').CreateFixedAssetInput,
+  ) => Promise<IpcResult<{ id: number; scheduleCount: number }>>
+  listFixedAssets: (data: { fiscal_year_id?: number }) => Promise<
+    IpcResult<import('../shared/types').FixedAssetWithAccumulation[]>
+  >
+  getFixedAsset: (data: { id: number }) => Promise<
+    IpcResult<import('../shared/types').FixedAssetWithSchedule>
+  >
+  disposeFixedAsset: (data: { id: number; disposed_date: string }) => Promise<IpcResult<void>>
+  deleteFixedAsset: (data: { id: number }) => Promise<IpcResult<void>>
+  executeDepreciationPeriod: (data: {
+    fiscal_year_id: number
+    period_end_date: string
+  }) => Promise<IpcResult<import('../shared/types').ExecuteDepreciationPeriodResult>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

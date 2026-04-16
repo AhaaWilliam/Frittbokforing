@@ -129,6 +129,14 @@ import {
   getBudgetVsActual,
   copyBudgetFromPreviousFy,
 } from './services/budget-service'
+import {
+  createFixedAsset,
+  listFixedAssets,
+  getFixedAsset,
+  disposeFixedAsset,
+  deleteFixedAsset,
+  executeDepreciationPeriod,
+} from './services/depreciation-service'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -205,6 +213,11 @@ import {
   BudgetSaveSchema,
   BudgetVarianceSchema,
   BudgetCopySchema,
+  DepreciationCreateAssetSchema,
+  DepreciationListSchema,
+  DepreciationIdSchema,
+  DepreciationDisposeSchema,
+  DepreciationExecutePeriodSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -920,6 +933,31 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('budget:copy-from-previous', wrapIpcHandler(BudgetCopySchema, (data) =>
     copyBudgetFromPreviousFy(db, data.target_fiscal_year_id, data.source_fiscal_year_id),
+  ))
+
+  // === Depreciation (Sprint 53 F62) ===
+  ipcMain.handle('depreciation:create-asset', wrapIpcHandler(DepreciationCreateAssetSchema, (data) =>
+    createFixedAsset(db, data),
+  ))
+
+  ipcMain.handle('depreciation:list', wrapIpcHandler(DepreciationListSchema, (data) =>
+    listFixedAssets(db, data.fiscal_year_id),
+  ))
+
+  ipcMain.handle('depreciation:get', wrapIpcHandler(DepreciationIdSchema, (data) =>
+    getFixedAsset(db, data.id),
+  ))
+
+  ipcMain.handle('depreciation:dispose', wrapIpcHandler(DepreciationDisposeSchema, (data) =>
+    disposeFixedAsset(db, data.id, data.disposed_date),
+  ))
+
+  ipcMain.handle('depreciation:delete', wrapIpcHandler(DepreciationIdSchema, (data) =>
+    deleteFixedAsset(db, data.id),
+  ))
+
+  ipcMain.handle('depreciation:execute-period', wrapIpcHandler(DepreciationExecutePeriodSchema, (data) =>
+    executeDepreciationPeriod(db, data.fiscal_year_id, data.period_end_date),
   ))
 
   // === Settings ===

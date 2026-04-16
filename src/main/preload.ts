@@ -254,6 +254,29 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('budget:variance', data),
   copyBudgetFromPreviousFy: (data: { target_fiscal_year_id: number; source_fiscal_year_id: number }) =>
     ipcRenderer.invoke('budget:copy-from-previous', data),
+  // Depreciation (Sprint 53 F62)
+  createFixedAsset: (data: {
+    name: string
+    acquisition_date: string
+    acquisition_cost_ore: number
+    residual_value_ore: number
+    useful_life_months: number
+    method: 'linear' | 'declining'
+    declining_rate_bp?: number
+    account_asset: string
+    account_accumulated_depreciation: string
+    account_depreciation_expense: string
+  }) => ipcRenderer.invoke('depreciation:create-asset', data),
+  listFixedAssets: (data: { fiscal_year_id?: number }) =>
+    ipcRenderer.invoke('depreciation:list', data),
+  getFixedAsset: (data: { id: number }) =>
+    ipcRenderer.invoke('depreciation:get', data),
+  disposeFixedAsset: (data: { id: number; disposed_date: string }) =>
+    ipcRenderer.invoke('depreciation:dispose', data),
+  deleteFixedAsset: (data: { id: number }) =>
+    ipcRenderer.invoke('depreciation:delete', data),
+  executeDepreciationPeriod: (data: { fiscal_year_id: number; period_end_date: string }) =>
+    ipcRenderer.invoke('depreciation:execute-period', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

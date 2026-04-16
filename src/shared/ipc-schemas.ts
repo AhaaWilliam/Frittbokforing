@@ -886,6 +886,48 @@ export const AgingInputSchema = z
   })
   .strict()
 
+// === Fixed Assets / Depreciation (Sprint 53 F62) ===
+export const DepreciationCreateAssetSchema = z
+  .object({
+    name: z.string().min(1).max(200),
+    acquisition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    acquisition_cost_ore: z.number().int().min(0),
+    residual_value_ore: z.number().int().min(0).default(0),
+    useful_life_months: z.number().int().min(1).max(600),
+    method: z.enum(['linear', 'declining']),
+    declining_rate_bp: z.number().int().min(1).max(10000).optional(),
+    account_asset: z.string().min(4).max(10),
+    account_accumulated_depreciation: z.string().min(4).max(10),
+    account_depreciation_expense: z.string().min(4).max(10),
+  })
+  .strict()
+
+export const DepreciationListSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive().optional(),
+  })
+  .strict()
+
+export const DepreciationIdSchema = z
+  .object({
+    id: z.number().int().positive(),
+  })
+  .strict()
+
+export const DepreciationDisposeSchema = z
+  .object({
+    id: z.number().int().positive(),
+    disposed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .strict()
+
+export const DepreciationExecutePeriodSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    period_end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .strict()
+
 // ---------------------------------------------------------------------------
 // channelMap — explicit mapping of every IPC channel to its Zod input schema.
 // Used by mock-IPC (tests/setup/mock-ipc.ts) for input validation.
@@ -1041,6 +1083,14 @@ export const channelMap = {
   'budget:save': BudgetSaveSchema,
   'budget:variance': BudgetVarianceSchema,
   'budget:copy-from-previous': BudgetCopySchema,
+
+  // Depreciation (Sprint 53 F62)
+  'depreciation:create-asset': DepreciationCreateAssetSchema,
+  'depreciation:list': DepreciationListSchema,
+  'depreciation:get': DepreciationIdSchema,
+  'depreciation:dispose': DepreciationDisposeSchema,
+  'depreciation:delete': DepreciationIdSchema,
+  'depreciation:execute-period': DepreciationExecutePeriodSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap
