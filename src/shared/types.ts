@@ -919,3 +919,81 @@ export interface AccrualScheduleWithStatus extends AccrualSchedule {
   executedCount: number
   remainingOre: number
 }
+
+// === Fixed Assets / Depreciation (Sprint 53 F62) ===
+
+export type DepreciationMethod = 'linear' | 'declining'
+export type FixedAssetStatus = 'active' | 'disposed' | 'fully_depreciated'
+export type DepreciationScheduleStatus = 'pending' | 'executed' | 'skipped'
+
+export interface FixedAsset {
+  id: number
+  company_id: number
+  name: string
+  acquisition_date: string
+  acquisition_cost_ore: number
+  residual_value_ore: number
+  useful_life_months: number
+  method: DepreciationMethod
+  declining_rate_bp: number | null
+  account_asset: string
+  account_accumulated_depreciation: string
+  account_depreciation_expense: string
+  status: FixedAssetStatus
+  disposed_date: string | null
+  disposed_journal_entry_id: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateFixedAssetInput {
+  name: string
+  acquisition_date: string
+  acquisition_cost_ore: number
+  residual_value_ore: number
+  useful_life_months: number
+  method: DepreciationMethod
+  declining_rate_bp?: number
+  account_asset: string
+  account_accumulated_depreciation: string
+  account_depreciation_expense: string
+}
+
+export interface DepreciationSchedule {
+  id: number
+  fixed_asset_id: number
+  period_number: number
+  period_start: string
+  period_end: string
+  amount_ore: number
+  journal_entry_id: number | null
+  status: DepreciationScheduleStatus
+  created_at: string
+}
+
+export interface FixedAssetWithAccumulation extends FixedAsset {
+  accumulated_depreciation_ore: number
+  book_value_ore: number
+  schedules_generated: number
+  schedules_executed: number
+}
+
+export interface FixedAssetWithSchedule extends FixedAssetWithAccumulation {
+  schedule: DepreciationSchedule[]
+}
+
+export interface ExecuteDepreciationPeriodResult {
+  succeeded: Array<{
+    asset_id: number
+    schedule_id: number
+    journal_entry_id: number
+    amount_ore: number
+  }>
+  failed: Array<{
+    asset_id: number
+    schedule_id: number
+    error: string
+    code: ErrorCode
+  }>
+  batch_status: 'completed' | 'partial' | 'cancelled'
+}

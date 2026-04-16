@@ -1,0 +1,470 @@
+import type Database from 'better-sqlite3'
+import { checkChronology } from './chronology-guard'
+import { validateAccountsActive } from './account-service'
+import { rebuildSearchIndex } from './search-service'
+import { todayLocalFromNow } from '../utils/now'
+import type {
+  IpcResult,
+  ErrorCode,
+  CreateFixedAssetInput,
+  FixedAsset,
+  FixedAssetWithAccumulation,
+  FixedAssetWithSchedule,
+  DepreciationSchedule,
+  ExecuteDepreciationPeriodResult,
+} from '../../shared/types'
+
+// ═══ Schedule generation ═══
+
+/**
+ * Linjär avskrivning: lika belopp per period, sista raden justerar avrundning.
+ * Invariant: sum(schedule) === cost - residual (exakt i öre).
+ */
+export function generateLinearSchedule(
+  costOre: number,
+  residualOre: number,
+  months: number,
+): number[] {
+  const totalDepreciableOre = costOre - residualOre
+  if (totalDepreciableOre <= 0) return new Array(months).fill(0)
+  const perMonth = Math.round(totalDepreciableOre / months)
+  const schedule = new Array(months).fill(perMonth)
+  const rounded = perMonth * months
+  const adjustment = totalDepreciableOre - rounded
+  schedule[months - 1] += adjustment
+  return schedule
+}
+
+/**
+ * Degressiv avskrivning: monthly[n] = round(book_value[n] * rate_bp / 10000 / 12).
+ * Klämper till residual floor — om book_value går under residual ska
+ * månadsbeloppet justeras så book_value stannar på residual.
+ */
+export function generateDecliningSchedule(
+  costOre: number,
+  residualOre: number,
+  months: number,
+  rateBp: number,
+): number[] {
+  const schedule: number[] = []
+  let bookValue = costOre
+  for (let i = 0; i < months; i++) {
+    const annualDep = Math.round((bookValue * rateBp) / 10000)
+    let monthlyDep = Math.round(annualDep / 12)
+    if (bookValue - monthlyDep < residualOre) {
+      monthlyDep = bookValue - residualOre
+    }
+    if (monthlyDep < 0) monthlyDep = 0
+    schedule.push(monthlyDep)
+    bookValue -= monthlyDep
+  }
+  return schedule
+}
+
+/**
+ * Lägger `months` månader på `startDate` (YYYY-MM-DD) och returnerar
+ * period_start + period_end för varje månad i schema-ordning.
+ */
+function computePeriods(
+  startDate: string,
+  months: number,
+): Array<{ start: string; end: string }> {
+  const [yStr, mStr, dStr] = startDate.split('-')
+  const startY = parseInt(yStr, 10)
+  const startM = parseInt(mStr, 10)
+  const dayOfMonth = parseInt(dStr, 10)
+  const periods: Array<{ start: string; end: string }> = []
+  for (let i = 0; i < months; i++) {
+    const periodStart = new Date(startY, startM - 1 + i, dayOfMonth)
+    const periodEnd = new Date(startY, startM + i, 0)
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    periods.push({ start: fmt(periodStart), end: fmt(periodEnd) })
+  }
+  return periods
+}
+
+// ═══ CRUD ═══
+
+export function createFixedAsset(
+  db: Database.Database,
+  input: CreateFixedAssetInput,
+): IpcResult<{ id: number; scheduleCount: number }> {
+  if (input.acquisition_cost_ore < 0) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Anskaffningsvärde får inte vara negativt', field: 'acquisition_cost_ore' }
+  }
+  if (input.residual_value_ore < 0) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Restvärde får inte vara negativt', field: 'residual_value_ore' }
+  }
+  if (input.residual_value_ore > input.acquisition_cost_ore) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Restvärde kan inte överstiga anskaffningsvärde', field: 'residual_value_ore' }
+  }
+  if (input.useful_life_months <= 0) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Nyttjandeperiod måste vara minst 1 månad', field: 'useful_life_months' }
+  }
+  if (input.method === 'declining' && (input.declining_rate_bp == null || input.declining_rate_bp <= 0)) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Degressiv metod kräver avskrivningsränta (basis points > 0)', field: 'declining_rate_bp' }
+  }
+
+  const accountFields: Array<{ value: string; field: keyof CreateFixedAssetInput }> = [
+    { value: input.account_asset, field: 'account_asset' },
+    { value: input.account_accumulated_depreciation, field: 'account_accumulated_depreciation' },
+    { value: input.account_depreciation_expense, field: 'account_depreciation_expense' },
+  ]
+  for (const { value, field } of accountFields) {
+    const exists = db.prepare('SELECT 1 FROM accounts WHERE account_number = ?').get(value)
+    if (!exists) {
+      return { success: false, code: 'ACCOUNT_NOT_FOUND', error: `Konto ${value} finns inte`, field }
+    }
+  }
+
+  try {
+    validateAccountsActive(db, [
+      input.account_asset,
+      input.account_accumulated_depreciation,
+      input.account_depreciation_expense,
+    ])
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, code: e.code, error: e.error, field: e.field }
+    }
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Kontot kunde inte valideras' }
+  }
+
+  return db.transaction(() => {
+    const now = todayLocalFromNow()
+    const companyId = (db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number } | undefined)?.id
+    if (!companyId) {
+      return { success: false as const, code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
+    }
+
+    const result = db.prepare(`
+      INSERT INTO fixed_assets (
+        company_id, name, acquisition_date, acquisition_cost_ore,
+        residual_value_ore, useful_life_months, method, declining_rate_bp,
+        account_asset, account_accumulated_depreciation, account_depreciation_expense,
+        status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+    `).run(
+      companyId,
+      input.name,
+      input.acquisition_date,
+      input.acquisition_cost_ore,
+      input.residual_value_ore,
+      input.useful_life_months,
+      input.method,
+      input.declining_rate_bp ?? null,
+      input.account_asset,
+      input.account_accumulated_depreciation,
+      input.account_depreciation_expense,
+      now,
+      now,
+    )
+
+    const assetId = Number(result.lastInsertRowid)
+    const scheduleCount = insertSchedule(db, assetId, input)
+    return { success: true as const, data: { id: assetId, scheduleCount } }
+  })()
+}
+
+/** Internal: genererar schedule-rader och INSERTar dem. Returnerar antal. */
+function insertSchedule(
+  db: Database.Database,
+  assetId: number,
+  input: Pick<CreateFixedAssetInput, 'acquisition_date' | 'acquisition_cost_ore' | 'residual_value_ore' | 'useful_life_months' | 'method' | 'declining_rate_bp'>,
+): number {
+  const amounts =
+    input.method === 'linear'
+      ? generateLinearSchedule(input.acquisition_cost_ore, input.residual_value_ore, input.useful_life_months)
+      : generateDecliningSchedule(
+          input.acquisition_cost_ore,
+          input.residual_value_ore,
+          input.useful_life_months,
+          input.declining_rate_bp!,
+        )
+
+  const periods = computePeriods(input.acquisition_date, input.useful_life_months)
+  const insert = db.prepare(`
+    INSERT INTO depreciation_schedules (
+      fixed_asset_id, period_number, period_start, period_end, amount_ore, status
+    ) VALUES (?, ?, ?, ?, ?, 'pending')
+  `)
+  for (let i = 0; i < amounts.length; i++) {
+    insert.run(assetId, i + 1, periods[i].start, periods[i].end, amounts[i])
+  }
+  return amounts.length
+}
+
+export function listFixedAssets(
+  db: Database.Database,
+  fiscalYearId?: number,
+): IpcResult<FixedAssetWithAccumulation[]> {
+  const fyBounds = fiscalYearId
+    ? (db.prepare('SELECT start_date, end_date FROM fiscal_years WHERE id = ?').get(fiscalYearId) as { start_date: string; end_date: string } | undefined)
+    : undefined
+
+  const rows = db.prepare(`SELECT * FROM fixed_assets ORDER BY acquisition_date, id`).all() as FixedAsset[]
+
+  const accumulate = db.prepare(`
+    SELECT
+      fixed_asset_id,
+      COALESCE(SUM(CASE WHEN status = 'executed' ${fyBounds ? 'AND period_end <= ?' : ''} THEN amount_ore ELSE 0 END), 0) AS acc_ore,
+      SUM(CASE WHEN status = 'executed' THEN 1 ELSE 0 END) AS exec_count,
+      COUNT(*) AS total_count
+    FROM depreciation_schedules
+    WHERE fixed_asset_id = ?
+    GROUP BY fixed_asset_id
+  `)
+
+  const result: FixedAssetWithAccumulation[] = rows.map((asset) => {
+    const stats = fyBounds
+      ? (accumulate.get(fyBounds.end_date, asset.id) as { acc_ore: number; exec_count: number; total_count: number } | undefined)
+      : (accumulate.get(asset.id) as { acc_ore: number; exec_count: number; total_count: number } | undefined)
+    const accOre = stats?.acc_ore ?? 0
+    return {
+      ...asset,
+      accumulated_depreciation_ore: accOre,
+      book_value_ore: asset.acquisition_cost_ore - accOre,
+      schedules_generated: stats?.total_count ?? 0,
+      schedules_executed: stats?.exec_count ?? 0,
+    }
+  })
+
+  return { success: true, data: result }
+}
+
+export function getFixedAsset(
+  db: Database.Database,
+  id: number,
+): IpcResult<FixedAssetWithSchedule> {
+  const asset = db.prepare(`SELECT * FROM fixed_assets WHERE id = ?`).get(id) as FixedAsset | undefined
+  if (!asset) {
+    return { success: false, code: 'NOT_FOUND', error: 'Anläggningstillgång hittades inte' }
+  }
+  const schedule = db
+    .prepare(`SELECT * FROM depreciation_schedules WHERE fixed_asset_id = ? ORDER BY period_number`)
+    .all(id) as DepreciationSchedule[]
+
+  const accOre = schedule.filter((s) => s.status === 'executed').reduce((sum, s) => sum + s.amount_ore, 0)
+  const execCount = schedule.filter((s) => s.status === 'executed').length
+
+  return {
+    success: true,
+    data: {
+      ...asset,
+      schedule,
+      accumulated_depreciation_ore: accOre,
+      book_value_ore: asset.acquisition_cost_ore - accOre,
+      schedules_generated: schedule.length,
+      schedules_executed: execCount,
+    },
+  }
+}
+
+export function disposeFixedAsset(
+  db: Database.Database,
+  id: number,
+  disposedDate: string,
+): IpcResult<void> {
+  return db.transaction(() => {
+    const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
+    if (!asset) return { success: false as const, code: 'NOT_FOUND' as const, error: 'Anläggningstillgång hittades inte' }
+    if (asset.status === 'disposed') {
+      return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Tillgången är redan avyttrad' }
+    }
+
+    db.prepare(`UPDATE fixed_assets SET status = 'disposed', disposed_date = ?, updated_at = ? WHERE id = ?`)
+      .run(disposedDate, todayLocalFromNow(), id)
+
+    db.prepare(`UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND status = 'pending'`)
+      .run(id)
+
+    return { success: true as const, data: undefined }
+  })()
+}
+
+export function deleteFixedAsset(
+  db: Database.Database,
+  id: number,
+): IpcResult<void> {
+  const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
+  if (!asset) return { success: false, code: 'NOT_FOUND', error: 'Anläggningstillgång hittades inte' }
+  if (asset.status !== 'active') {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Endast aktiva tillgångar kan raderas' }
+  }
+  const executed = db.prepare(`SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'executed'`).get(id) as { c: number }
+  if (executed.c > 0) {
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Kan inte radera tillgång med exekverade avskrivningar' }
+  }
+  db.prepare('DELETE FROM fixed_assets WHERE id = ?').run(id)
+  return { success: true, data: undefined }
+}
+
+// ═══ Execute depreciation period (M113 partial-success) ═══
+
+/**
+ * Kör alla pending schedules med period_end <= periodEndDate för
+ * aktiva tillgångar i FY. Nestade savepoints per schedule — fel i en
+ * rullar tillbaka raden men commit övriga (M113).
+ */
+export function executeDepreciationPeriod(
+  db: Database.Database,
+  fiscalYearId: number,
+  periodEndDate: string,
+): IpcResult<ExecuteDepreciationPeriodResult> {
+  const succeeded: ExecuteDepreciationPeriodResult['succeeded'] = []
+  const failed: ExecuteDepreciationPeriodResult['failed'] = []
+
+  const fy = db.prepare('SELECT company_id, start_date, end_date FROM fiscal_years WHERE id = ?').get(fiscalYearId) as { company_id: number; start_date: string; end_date: string } | undefined
+  if (!fy) {
+    return { success: false, code: 'NOT_FOUND', error: 'Räkenskapsår hittades inte' }
+  }
+
+  const pending = db.prepare(`
+    SELECT ds.id AS schedule_id, ds.fixed_asset_id, ds.period_number, ds.period_end,
+           ds.amount_ore, fa.name AS asset_name,
+           fa.account_accumulated_depreciation, fa.account_depreciation_expense
+    FROM depreciation_schedules ds
+    JOIN fixed_assets fa ON fa.id = ds.fixed_asset_id
+    WHERE ds.status = 'pending'
+      AND fa.status = 'active'
+      AND ds.period_end <= ?
+      AND ds.period_end BETWEEN ? AND ?
+    ORDER BY ds.period_end, ds.id
+  `).all(periodEndDate, fy.start_date, fy.end_date) as Array<{
+    schedule_id: number
+    fixed_asset_id: number
+    period_number: number
+    period_end: string
+    amount_ore: number
+    asset_name: string
+    account_accumulated_depreciation: string
+    account_depreciation_expense: string
+  }>
+
+  if (pending.length === 0) {
+    return { success: true, data: { succeeded, failed, batch_status: 'completed' } }
+  }
+
+  const ROLLBACK_SENTINEL = '__CANCEL_ALL_FAILED__'
+
+  try {
+    db.transaction(() => {
+      for (const p of pending) {
+        try {
+          db.transaction(() => {
+            _executeScheduleTx(db, fiscalYearId, fy.company_id, p)
+          })()
+          const je = db
+            .prepare('SELECT journal_entry_id FROM depreciation_schedules WHERE id = ?')
+            .get(p.schedule_id) as { journal_entry_id: number | null }
+          succeeded.push({
+            asset_id: p.fixed_asset_id,
+            schedule_id: p.schedule_id,
+            journal_entry_id: je.journal_entry_id ?? 0,
+            amount_ore: p.amount_ore,
+          })
+        } catch (err: unknown) {
+          const e =
+            err && typeof err === 'object' && 'code' in err && 'error' in err
+              ? (err as { code: ErrorCode; error: string })
+              : { code: 'UNEXPECTED_ERROR' as ErrorCode, error: err instanceof Error ? err.message : 'Oväntat fel' }
+          failed.push({ asset_id: p.fixed_asset_id, schedule_id: p.schedule_id, error: e.error, code: e.code })
+        }
+      }
+
+      if (succeeded.length === 0 && failed.length > 0) {
+        throw new Error(ROLLBACK_SENTINEL)
+      }
+
+      try {
+        rebuildSearchIndex(db)
+      } catch {
+        // non-blocking (M143)
+      }
+    })()
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === ROLLBACK_SENTINEL) {
+      return { success: true, data: { succeeded: [], failed, batch_status: 'cancelled' } }
+    }
+    return {
+      success: false,
+      code: 'UNEXPECTED_ERROR',
+      error: err instanceof Error ? err.message : 'Oväntat fel vid avskrivningsexekvering',
+    }
+  }
+
+  const batch_status: ExecuteDepreciationPeriodResult['batch_status'] =
+    failed.length === 0 ? 'completed' : 'partial'
+  return { success: true, data: { succeeded, failed, batch_status } }
+}
+
+/** Internal: bokför en schedule som E-serie-verifikat. Kastar strukturerat fel. */
+function _executeScheduleTx(
+  db: Database.Database,
+  fiscalYearId: number,
+  companyId: number,
+  p: {
+    schedule_id: number
+    fixed_asset_id: number
+    period_number: number
+    period_end: string
+    amount_ore: number
+    asset_name: string
+    account_accumulated_depreciation: string
+    account_depreciation_expense: string
+  },
+): void {
+  if (p.amount_ore === 0) {
+    // Noll-avskrivning: markera som executed utan verifikat
+    db.prepare(`UPDATE depreciation_schedules SET status = 'executed' WHERE id = ?`).run(p.schedule_id)
+    checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
+    return
+  }
+
+  checkChronology(db, fiscalYearId, 'E', p.period_end)
+
+  const nextVer = db.prepare(`
+    SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
+    FROM journal_entries
+    WHERE fiscal_year_id = ? AND verification_series = 'E'
+  `).get(fiscalYearId) as { next_ver: number }
+
+  const description = `Avskrivning: ${p.asset_name} (period ${p.period_number})`
+  const jeResult = db.prepare(`
+    INSERT INTO journal_entries (
+      company_id, fiscal_year_id, verification_number, verification_series,
+      journal_date, description, status, source_type
+    ) VALUES (?, ?, ?, 'E', ?, ?, 'draft', 'auto_depreciation')
+  `).run(companyId, fiscalYearId, nextVer.next_ver, p.period_end, description)
+
+  const journalEntryId = Number(jeResult.lastInsertRowid)
+
+  const insertLine = db.prepare(`
+    INSERT INTO journal_entry_lines (
+      journal_entry_id, line_number, account_number,
+      debit_ore, credit_ore, description
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  insertLine.run(journalEntryId, 1, p.account_depreciation_expense, p.amount_ore, 0, description)
+  insertLine.run(journalEntryId, 2, p.account_accumulated_depreciation, 0, p.amount_ore, description)
+
+  db.prepare(`UPDATE journal_entries SET status = 'booked' WHERE id = ?`).run(journalEntryId)
+
+  db.prepare(`UPDATE depreciation_schedules SET status = 'executed', journal_entry_id = ? WHERE id = ?`)
+    .run(journalEntryId, p.schedule_id)
+
+  checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
+}
+
+function checkAndMarkFullyDepreciated(db: Database.Database, assetId: number): void {
+  const pending = db.prepare(`SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'pending'`).get(assetId) as { c: number }
+  if (pending.c === 0) {
+    const asset = db.prepare('SELECT status FROM fixed_assets WHERE id = ?').get(assetId) as { status: string }
+    if (asset.status === 'active') {
+      db.prepare(`UPDATE fixed_assets SET status = 'fully_depreciated', updated_at = ? WHERE id = ?`)
+        .run(todayLocalFromNow(), assetId)
+    }
+  }
+}
