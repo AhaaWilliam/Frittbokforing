@@ -22,6 +22,7 @@ import { PageAccountStatement } from './PageAccountStatement'
 import { PageAgingReport } from './PageAgingReport'
 import { PageBudget } from './PageBudget'
 import { PageAccruals } from './PageAccruals'
+import { PageFixedAssets } from './PageFixedAssets'
 import { PageImport } from './PageImport'
 
 interface AppShellProps {
@@ -64,6 +65,8 @@ function PageContent({ page }: { page: string }) {
       return <PageBudget />
     case 'accruals':
       return <PageAccruals />
+    case 'fixed-assets':
+      return <PageFixedAssets />
     case 'import':
       return <PageImport />
     default:

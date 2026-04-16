@@ -77,6 +77,11 @@ export const queryKeys = {
   accrualSchedules: (fyId: number) => ['accrual-schedules', fyId] as const,
   allAccruals: () => ['accrual-schedules'] as const,
 
+  // === Fixed Assets / Depreciation (Sprint 53 F62) ===
+  fixedAssets: (fyId?: number) => ['fixed-assets', fyId] as const,
+  fixedAsset: (id: number) => ['fixed-asset', id] as const,
+  allFixedAssets: () => ['fixed-assets'] as const,
+
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
   budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,

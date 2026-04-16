@@ -896,6 +896,51 @@ export function useDeactivateAccrual() {
   )
 }
 
+// === Fixed Assets / Depreciation (Sprint 53 F62) ===
+
+export function useFixedAssets(fiscalYearId: number | undefined) {
+  return useIpcQuery<import('../../shared/types').FixedAssetWithAccumulation[]>(
+    queryKeys.fixedAssets(fiscalYearId),
+    () => window.api.listFixedAssets({ fiscal_year_id: fiscalYearId }),
+  )
+}
+
+export function useFixedAsset(id: number | undefined) {
+  return useIpcQuery<import('../../shared/types').FixedAssetWithSchedule>(
+    queryKeys.fixedAsset(id!),
+    () => window.api.getFixedAsset({ id: id! }),
+    { enabled: !!id },
+  )
+}
+
+export function useCreateFixedAsset() {
+  return useIpcMutation<
+    import('../../shared/types').CreateFixedAssetInput,
+    { id: number; scheduleCount: number }
+  >((data) => window.api.createFixedAsset(data), { invalidateAll: true })
+}
+
+export function useDisposeFixedAsset() {
+  return useIpcMutation<{ id: number; disposed_date: string }, void>(
+    (data) => window.api.disposeFixedAsset(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useDeleteFixedAsset() {
+  return useIpcMutation<{ id: number }, void>(
+    (data) => window.api.deleteFixedAsset(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useExecuteDepreciationPeriod() {
+  return useIpcMutation<
+    { fiscal_year_id: number; period_end_date: string },
+    import('../../shared/types').ExecuteDepreciationPeriodResult
+  >((data) => window.api.executeDepreciationPeriod(data), { invalidateAll: true })
+}
+
 // === Budget ===
 
 export function useBudgetLines() {

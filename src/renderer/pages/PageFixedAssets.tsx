@@ -1,0 +1,192 @@
+import { useState } from 'react'
+import { Plus, Play, Trash2, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
+import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import {
+  useFixedAssets,
+  useExecuteDepreciationPeriod,
+  useDisposeFixedAsset,
+  useDeleteFixedAsset,
+} from '../lib/hooks'
+import { PageHeader } from '../components/layout/PageHeader'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { CreateFixedAssetDialog } from '../components/fixed-assets/CreateFixedAssetDialog'
+
+const STATUS_LABELS: Record<string, string> = {
+  active: 'Aktiv',
+  disposed: 'Avyttrad',
+  fully_depreciated: 'Fullt avskriven',
+}
+
+function fmtKr(ore: number): string {
+  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(ore / 100)
+}
+
+export function PageFixedAssets() {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const [showCreate, setShowCreate] = useState(false)
+  const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
+  const executeMutation = useExecuteDepreciationPeriod()
+  const disposeMutation = useDisposeFixedAsset()
+  const deleteMutation = useDeleteFixedAsset()
+
+  if (!activeFiscalYear) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+        Inget räkenskapsår valt.
+      </div>
+    )
+  }
+
+  async function handleExecutePeriod() {
+    if (!activeFiscalYear) return
+    const today = new Date().toISOString().slice(0, 10)
+    const periodEnd = today > activeFiscalYear.end_date ? activeFiscalYear.end_date : today
+    if (!confirm(`Kör avskrivningar till och med ${periodEnd}? Skapar E-serie-verifikat per tillgång.`)) return
+    try {
+      const r = await executeMutation.mutateAsync({
+        fiscal_year_id: activeFiscalYear.id,
+        period_end_date: periodEnd,
+      })
+      if (r.batch_status === 'completed') {
+        toast.success(`${r.succeeded.length} avskrivningar bokförda`)
+      } else if (r.batch_status === 'partial') {
+        toast.warning(`${r.succeeded.length} lyckades, ${r.failed.length} misslyckades`)
+      } else {
+        toast.error('Alla avskrivningar misslyckades — batch rullades tillbaka')
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Kunde inte köra avskrivningar')
+    }
+  }
+
+  async function handleDispose(id: number, name: string) {
+    const date = prompt(`Avyttringsdatum för "${name}" (ÅÅÅÅ-MM-DD)?`, new Date().toISOString().slice(0, 10))
+    if (!date) return
+    try {
+      await disposeMutation.mutateAsync({ id, disposed_date: date })
+      toast.success(`${name} markerad som avyttrad`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Kunde inte avyttra')
+    }
+  }
+
+  async function handleDelete(id: number, name: string) {
+    if (!confirm(`Radera "${name}" permanent? Kan bara raderas om inga avskrivningar bokförts.`)) return
+    try {
+      await deleteMutation.mutateAsync({ id })
+      toast.success(`${name} raderad`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Kunde inte radera')
+    }
+  }
+
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <PageHeader
+        title="Anläggningstillgångar"
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExecutePeriod}
+              disabled={executeMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              data-testid="fa-execute-period"
+            >
+              <Play className="h-4 w-4" />
+              Kör avskrivningar
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              data-testid="fa-create"
+            >
+              <Plus className="h-4 w-4" />
+              Ny tillgång
+            </button>
+          </div>
+        }
+      />
+
+      <div className="flex-1 overflow-auto px-6 pb-6">
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : !assets || assets.length === 0 ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">
+            Inga anläggningstillgångar. Skapa en för att komma igång.
+          </div>
+        ) : (
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                <th className="py-2 pr-4">Namn</th>
+                <th className="py-2 pr-4">Anskaffning</th>
+                <th className="py-2 pr-4 text-right">Anskaffningsvärde</th>
+                <th className="py-2 pr-4 text-right">Ack. avskr.</th>
+                <th className="py-2 pr-4 text-right">Bokfört värde</th>
+                <th className="py-2 pr-4 text-right">Schedule</th>
+                <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4 text-right">Åtgärder</th>
+              </tr>
+            </thead>
+            <tbody data-testid="fa-list">
+              {assets.map((a) => (
+                <tr key={a.id} className="border-b" data-testid={`fa-row-${a.id}`}>
+                  <td className="py-2 pr-4 font-medium">{a.name}</td>
+                  <td className="py-2 pr-4 text-muted-foreground">{a.acquisition_date}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.acquisition_cost_ore)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.accumulated_depreciation_ore)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.book_value_ore)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">
+                    {a.schedules_executed}/{a.schedules_generated}
+                  </td>
+                  <td className="py-2 pr-4">
+                    <span
+                      className={
+                        a.status === 'disposed'
+                          ? 'inline-flex rounded-full bg-muted px-2 py-0.5 text-xs'
+                          : a.status === 'fully_depreciated'
+                            ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800'
+                            : 'inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800'
+                      }
+                    >
+                      {STATUS_LABELS[a.status] ?? a.status}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4 text-right">
+                    {a.status === 'active' && (
+                      <button
+                        type="button"
+                        onClick={() => handleDispose(a.id, a.name)}
+                        disabled={disposeMutation.isPending}
+                        className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                        title="Avyttra"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {a.status === 'active' && a.schedules_executed === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(a.id, a.name)}
+                        disabled={deleteMutation.isPending}
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                        title="Radera"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <CreateFixedAssetDialog open={showCreate} onOpenChange={setShowCreate} />
+    </div>
+  )
+}
