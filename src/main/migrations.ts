@@ -1303,6 +1303,10 @@ END;`,
   { sql: `ALTER TABLE payment_batches ADD COLUMN exported_at TEXT DEFAULT NULL;
   ALTER TABLE payment_batches ADD COLUMN export_format TEXT DEFAULT NULL;
   ALTER TABLE payment_batches ADD COLUMN export_filename TEXT DEFAULT NULL;` },
+  // Sprint 53: F62 — fixed_assets + depreciation_schedules + verification_series CHECK
+  // M121 (trigger reattach), M122 (FK-off table-recreate of journal_entries),
+  // M141 (cross-table trigger inventory), M151 (E-series decision).
+  { sql: '-- Migration 038: F62 avskrivningar (se programmatic)', programmatic: migration038Programmatic },
 ]
 
 /**
@@ -2204,5 +2208,366 @@ function migration032Verify(db: import('better-sqlite3').Database): void {
     .get() as { cnt: number }
   if (triggerCount.cnt !== 16) {
     throw new Error(`Migration 032 failed: expected 16 triggers, found ${triggerCount.cnt}`)
+  }
+}
+
+/**
+ * Migration 038 (Sprint 53 F62): Avskrivningar & anläggningstillgångar.
+ *
+ * 1. CREATE fixed_assets — anläggningstillgångar (namn, anskaffningsdatum,
+ *    anskaffningsvärde, avskrivningsmetod, konton, status).
+ * 2. CREATE depreciation_schedules — periodvisa avskrivningsposter (ON DELETE
+ *    CASCADE från fixed_assets, journal_entry_id nullable tills exekverad).
+ * 3. Table-recreate journal_entries för att lägga till CHECK-constraint på
+ *    verification_series (whitelist: A,B,C,D,E,I). Defense-in-depth mot
+ *    ogiltiga serier. M122: foreign_keys=OFF utanför tx (hanteras av db.ts),
+ *    PRAGMA foreign_key_check efter commit. M121: alla triggers dropas och
+ *    återskapas. M141: cross-table-triggers på journal_entry_lines som
+ *    refererar journal_entries i body inventerade och återskapade.
+ *
+ * Pre-flight: SELECT DISTINCT verification_series måste ge endast värden i
+ * whitelist — om annat finns aborteras migrationen.
+ */
+function migration038Programmatic(db: import('better-sqlite3').Database): void {
+  // === Idempotency: check if verification_series CHECK already exists ===
+  const jeTableInfo = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .get() as { sql: string } | undefined
+  const needsJeRebuild = !jeTableInfo?.sql?.includes("verification_series IN")
+
+  // === 1. fixed_assets ===
+  // Idempotent via IF NOT EXISTS — running migration twice is safe.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS fixed_assets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      name TEXT NOT NULL,
+      acquisition_date TEXT NOT NULL,
+      acquisition_cost_ore INTEGER NOT NULL CHECK (acquisition_cost_ore >= 0),
+      residual_value_ore INTEGER NOT NULL DEFAULT 0 CHECK (residual_value_ore >= 0),
+      useful_life_months INTEGER NOT NULL CHECK (useful_life_months > 0),
+      method TEXT NOT NULL CHECK (method IN ('linear', 'declining')),
+      declining_rate_bp INTEGER,
+      account_asset TEXT NOT NULL REFERENCES accounts(account_number),
+      account_accumulated_depreciation TEXT NOT NULL REFERENCES accounts(account_number),
+      account_depreciation_expense TEXT NOT NULL REFERENCES accounts(account_number),
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'disposed', 'fully_depreciated')),
+      disposed_date TEXT,
+      disposed_journal_entry_id INTEGER REFERENCES journal_entries(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (residual_value_ore <= acquisition_cost_ore),
+      CHECK (method != 'declining' OR declining_rate_bp IS NOT NULL)
+    );
+    CREATE INDEX IF NOT EXISTS idx_fixed_assets_company ON fixed_assets (company_id);
+    CREATE INDEX IF NOT EXISTS idx_fixed_assets_status ON fixed_assets (status);
+  `)
+
+  // === 2. depreciation_schedules ===
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS depreciation_schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fixed_asset_id INTEGER NOT NULL REFERENCES fixed_assets(id) ON DELETE CASCADE,
+      period_number INTEGER NOT NULL CHECK (period_number >= 1),
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      amount_ore INTEGER NOT NULL CHECK (amount_ore >= 0),
+      journal_entry_id INTEGER REFERENCES journal_entries(id),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'executed', 'skipped')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (fixed_asset_id, period_number)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dep_schedules_asset ON depreciation_schedules (fixed_asset_id);
+    CREATE INDEX IF NOT EXISTS idx_dep_schedules_status ON depreciation_schedules (status);
+  `)
+
+  if (!needsJeRebuild) return // CHECK already added — idempotent exit
+
+  // === 3. Pre-flight: verify no existing journal_entries violate new CHECK ===
+  const allowedSeries = ['A', 'B', 'C', 'E', 'I', 'O']
+  const distinctSeries = db
+    .prepare('SELECT DISTINCT verification_series FROM journal_entries')
+    .all() as { verification_series: string }[]
+  for (const row of distinctSeries) {
+    if (!allowedSeries.includes(row.verification_series)) {
+      throw new Error(
+        `Migration 038 pre-flight: journal_entries har serie '${row.verification_series}' utanför whitelist ${JSON.stringify(allowedSeries)}. Undersök innan migrationen kan köras.`,
+      )
+    }
+  }
+
+  // === 4. Table-recreate journal_entries with verification_series CHECK ===
+  db.exec(`
+    CREATE TABLE journal_entries_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      verification_number INTEGER,
+      verification_series TEXT NOT NULL DEFAULT 'A',
+      journal_date TEXT NOT NULL,
+      registration_date TEXT NOT NULL DEFAULT (datetime('now')),
+      description TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      locked_at TEXT,
+      created_by_id INTEGER REFERENCES users(id),
+      source_type TEXT DEFAULT 'manual',
+      source_reference TEXT,
+      corrects_entry_id INTEGER REFERENCES journal_entries(id),
+      corrected_by_id INTEGER REFERENCES journal_entries(id),
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      CHECK (status IN ('draft', 'booked', 'corrected')),
+      CHECK (source_type IN ('manual', 'auto_invoice', 'auto_payment', 'auto_expense', 'auto_salary', 'auto_depreciation', 'auto_tax', 'import', 'opening_balance', 'auto_bank_fee')),
+      CHECK (verification_series IN ('A', 'B', 'C', 'E', 'I', 'O')),
+      UNIQUE (verification_series, verification_number, fiscal_year_id)
+    );
+  `)
+
+  db.exec(`INSERT INTO journal_entries_new SELECT * FROM journal_entries;`)
+
+  // M141 trigger inventory — all triggers on journal_entries OR referring to
+  // journal_entries in body. Cross-table (journal_entry_lines) triggers are
+  // included because DROP TABLE journal_entries would leave them referring to
+  // a non-existent table during the rename window.
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_booked_entry_update;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_booked_entry_delete;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_booked_line_update;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_booked_line_delete;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_booked_line_insert;')
+  db.exec('DROP TRIGGER IF EXISTS trg_check_balance_on_booking;')
+  db.exec('DROP TRIGGER IF EXISTS trg_check_period_on_booking;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_source_type;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_source_reference;')
+  db.exec('DROP TRIGGER IF EXISTS trg_immutable_corrects_entry_id;')
+  db.exec('DROP TRIGGER IF EXISTS trg_no_correct_with_payments;')
+
+  db.exec('DROP INDEX IF EXISTS idx_je_date;')
+  db.exec('DROP INDEX IF EXISTS idx_je_fiscal_year;')
+  db.exec('DROP INDEX IF EXISTS idx_je_status;')
+  db.exec('DROP INDEX IF EXISTS idx_journal_entries_verify_series_unique;')
+
+  db.exec('DROP TABLE journal_entries;')
+  db.exec('ALTER TABLE journal_entries_new RENAME TO journal_entries;')
+
+  // Recreate indexes
+  db.exec('CREATE INDEX idx_je_date ON journal_entries (journal_date);')
+  db.exec('CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);')
+  db.exec('CREATE INDEX idx_je_status ON journal_entries (status);')
+  db.exec(`
+    CREATE UNIQUE INDEX idx_journal_entries_verify_series_unique
+    ON journal_entries(fiscal_year_id, verification_series, verification_number)
+    WHERE verification_number IS NOT NULL;
+  `)
+
+  // Recreate triggers 1–7 (from migration 021)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_booked_entry_update
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND OLD.source_type != 'opening_balance'
+    BEGIN
+        SELECT CASE
+            WHEN NEW.status NOT IN ('booked', 'corrected')
+            THEN RAISE(ABORT, 'Bokförd verifikation kan bara markeras som rättad (corrected).')
+        END;
+        SELECT CASE
+            WHEN NEW.journal_date != OLD.journal_date
+                OR NEW.description != OLD.description
+                OR NEW.verification_number != OLD.verification_number
+                OR NEW.verification_series != OLD.verification_series
+                OR NEW.company_id != OLD.company_id
+                OR NEW.fiscal_year_id != OLD.fiscal_year_id
+            THEN RAISE(ABORT, 'Bokförd verifikation kan inte ändras. Bara status och corrected_by_id får uppdateras.')
+        END;
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_booked_entry_delete
+    BEFORE DELETE ON journal_entries
+    WHEN OLD.status = 'booked' AND OLD.source_type != 'opening_balance'
+    BEGIN
+        SELECT RAISE(ABORT, 'Bokförd verifikation kan inte raderas.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_booked_line_update
+    BEFORE UPDATE ON journal_entry_lines
+    WHEN (SELECT status FROM journal_entries WHERE id = OLD.journal_entry_id) = 'booked'
+      AND (SELECT source_type FROM journal_entries WHERE id = OLD.journal_entry_id) != 'opening_balance'
+    BEGIN
+        SELECT RAISE(ABORT, 'Rader på bokförd verifikation kan inte ändras.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_booked_line_delete
+    BEFORE DELETE ON journal_entry_lines
+    WHEN (SELECT status FROM journal_entries WHERE id = OLD.journal_entry_id) = 'booked'
+      AND (SELECT source_type FROM journal_entries WHERE id = OLD.journal_entry_id) != 'opening_balance'
+    BEGIN
+        SELECT RAISE(ABORT, 'Rader på bokförd verifikation kan inte raderas.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_booked_line_insert
+    BEFORE INSERT ON journal_entry_lines
+    WHEN (SELECT status FROM journal_entries WHERE id = NEW.journal_entry_id) = 'booked'
+      AND (SELECT source_type FROM journal_entries WHERE id = NEW.journal_entry_id) != 'opening_balance'
+    BEGIN
+        SELECT RAISE(ABORT, 'Kan inte lägga till rader på bokförd verifikation.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_check_balance_on_booking
+    BEFORE UPDATE ON journal_entries
+    WHEN NEW.status = 'booked' AND OLD.status = 'draft'
+    BEGIN
+        SELECT CASE
+            WHEN (
+                COALESCE(
+                    (SELECT SUM(debit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                ) -
+                COALESCE(
+                    (SELECT SUM(credit_ore) FROM journal_entry_lines WHERE journal_entry_id = NEW.id), 0
+                )
+            ) != 0
+            THEN RAISE(ABORT, 'Verifikationen balanserar inte. Summa debet måste vara lika med summa kredit.')
+        END;
+        SELECT CASE
+            WHEN (
+                SELECT COUNT(*)
+                FROM journal_entry_lines
+                WHERE journal_entry_id = NEW.id
+            ) < 2
+            THEN RAISE(ABORT, 'Verifikation måste ha minst två rader.')
+        END;
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_check_period_on_booking
+    BEFORE UPDATE ON journal_entries
+    WHEN NEW.status = 'booked' AND OLD.status = 'draft'
+    BEGIN
+        SELECT CASE
+            WHEN (SELECT is_closed FROM fiscal_years WHERE id = NEW.fiscal_year_id) = 1
+            THEN RAISE(ABORT, 'Kan inte bokföra i stängt räkenskapsår.')
+        END;
+        SELECT CASE
+            WHEN NOT EXISTS (
+                SELECT 1 FROM fiscal_years
+                WHERE id = NEW.fiscal_year_id
+                  AND NEW.journal_date BETWEEN start_date AND end_date
+            )
+            THEN RAISE(ABORT, 'Bokföringsdatum ligger utanför räkenskapsårets period.')
+        END;
+        SELECT CASE
+            WHEN EXISTS (
+                SELECT 1 FROM accounting_periods
+                WHERE fiscal_year_id = NEW.fiscal_year_id
+                  AND company_id = NEW.company_id
+                  AND NEW.journal_date BETWEEN start_date AND end_date
+                  AND is_closed = 1
+            )
+            THEN RAISE(ABORT, 'Kan inte bokföra i stängd period.')
+        END;
+    END;
+  `)
+
+  // Recreate migration 031 immutability triggers (Q8, Q9, Q10)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_source_type
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND NEW.source_type != OLD.source_type
+    BEGIN
+        SELECT RAISE(ABORT, 'source_type kan inte ändras på bokförd verifikation.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_source_reference
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND
+         COALESCE(NEW.source_reference, '') != COALESCE(OLD.source_reference, '')
+    BEGIN
+        SELECT RAISE(ABORT, 'source_reference kan inte ändras på bokförd verifikation.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_immutable_corrects_entry_id
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND
+         COALESCE(NEW.corrects_entry_id, 0) != COALESCE(OLD.corrects_entry_id, 0)
+    BEGIN
+        SELECT RAISE(ABORT, 'corrects_entry_id kan inte ändras på bokförd verifikation.');
+    END;
+  `)
+  db.exec(`
+    CREATE TRIGGER trg_no_correct_with_payments
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND NEW.status = 'corrected'
+    BEGIN
+        SELECT CASE
+            WHEN EXISTS (SELECT 1 FROM invoice_payments WHERE journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM expense_payments WHERE journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM invoices i JOIN invoice_payments ip ON ip.invoice_id = i.id WHERE i.journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM expenses e JOIN expense_payments ep ON ep.expense_id = e.id WHERE e.journal_entry_id = OLD.id)
+            THEN RAISE(ABORT, 'Kan inte korrigera verifikat med beroende betalningar.')
+        END;
+    END;
+  `)
+
+  migration038Verify(db)
+}
+
+function migration038Verify(db: import('better-sqlite3').Database): void {
+  // 1. fixed_assets + depreciation_schedules exist
+  const fixedAssets = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='fixed_assets'")
+    .get()
+  if (!fixedAssets) throw new Error('Migration 038 failed: fixed_assets saknas')
+
+  const depSchedules = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='depreciation_schedules'")
+    .get()
+  if (!depSchedules) throw new Error('Migration 038 failed: depreciation_schedules saknas')
+
+  // 2. journal_entries has verification_series CHECK
+  const jeSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .get() as { sql: string }
+  if (!jeSchema.sql.includes("verification_series IN")) {
+    throw new Error('Migration 038 failed: verification_series CHECK saknas')
+  }
+
+  // 3. All 11 journal_entries-related triggers recreated (7 original + 4 från mig 031)
+  const expectedTriggers = [
+    'trg_immutable_booked_entry_update',
+    'trg_immutable_booked_entry_delete',
+    'trg_immutable_booked_line_update',
+    'trg_immutable_booked_line_delete',
+    'trg_immutable_booked_line_insert',
+    'trg_check_balance_on_booking',
+    'trg_check_period_on_booking',
+    'trg_immutable_source_type',
+    'trg_immutable_source_reference',
+    'trg_immutable_corrects_entry_id',
+    'trg_no_correct_with_payments',
+  ]
+  for (const t of expectedTriggers) {
+    const exists = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name=?")
+      .get(t)
+    if (!exists) throw new Error(`Migration 038 failed: trigger ${t} saknas`)
+  }
+
+  // 4. All 4 journal_entries indexes recreated
+  const expectedIndexes = [
+    'idx_je_date',
+    'idx_je_fiscal_year',
+    'idx_je_status',
+    'idx_journal_entries_verify_series_unique',
+  ]
+  for (const idx of expectedIndexes) {
+    const exists = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name=?")
+      .get(idx)
+    if (!exists) throw new Error(`Migration 038 failed: index ${idx} saknas`)
   }
 }

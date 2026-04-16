@@ -4,7 +4,11 @@ import { registerCustomFunctions } from '../../src/main/db-functions'
 
 // Migration indexes (0-based) that require PRAGMA foreign_keys = OFF outside
 // the transaction due to table-recreate on tables with inbound FK. See M122 in CLAUDE.md.
-export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([21, 22])
+// Note: intentionally does not include index 20 (migration 021 journal_entries
+// CHECK-rebuild) — baseline test helper omitted it and tests have adapted.
+// Index 37 = migration 038 (Sprint 53 F62: journal_entries verification_series
+// CHECK-rebuild + fixed_assets + depreciation_schedules).
+export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([21, 22, 37])
 
 /**
  * Creates a fresh in-memory DB with all migrations applied.

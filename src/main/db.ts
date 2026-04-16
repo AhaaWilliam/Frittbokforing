@@ -51,7 +51,8 @@ function runMigrations(database: Database.Database): void {
     // Migration 021 (index 20): journal_entries CHECK-rebuild (auto_bank_fee) + payment_batches.
     // Migration 022 (index 21): invoices + payment tables öre-suffix rename.
     // Migration 023 (index 22): payment_batches FK on account_number.
-    const needsFkOff = i === 20 || i === 21 || i === 22
+    // Migration 038 (index 37): journal_entries CHECK-rebuild (verification_series) + fixed_assets + depreciation_schedules.
+    const needsFkOff = i === 20 || i === 21 || i === 22 || i === 37
     if (needsFkOff) database.pragma('foreign_keys = OFF')
 
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch

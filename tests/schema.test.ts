@@ -92,10 +92,12 @@ describe('Struktur', () => {
       'budget_targets',
       'companies',
       'counterparties',
+      'depreciation_schedules',
       'expense_lines',
       'expense_payments',
       'expenses',
       'fiscal_years',
+      'fixed_assets',
       'invoice_lines',
       'invoice_payments',
       'invoices',
@@ -118,7 +120,7 @@ describe('Struktur', () => {
       'vat_codes',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(31)
+    expect(tables.length).toBe(33)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -137,7 +139,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(37) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(38) // S53: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

@@ -112,13 +112,13 @@ describe('assertContiguousVerNumbers — meta-test', () => {
           company_id, fiscal_year_id, verification_number, verification_series,
           journal_date, description, status, source_type
         ) VALUES (
-          (SELECT id FROM companies LIMIT 1), ?, ?, 'Z',
+          (SELECT id FROM companies LIMIT 1), ?, ?, 'E',
           '2026-06-15', 'Kontiguös test', 'draft', 'manual'
         )`,
       ).run(fyId, i)
     }
 
-    const nums = assertContiguousVerNumbers(ctx.db, fyId, 'Z')
+    const nums = assertContiguousVerNumbers(ctx.db, fyId, 'E')
     expect(nums).toEqual([1, 2, 3])
   })
 
@@ -131,7 +131,7 @@ describe('assertContiguousVerNumbers — meta-test', () => {
         company_id, fiscal_year_id, verification_number, verification_series,
         journal_date, description, status, source_type
       ) VALUES (
-        (SELECT id FROM companies LIMIT 1), ?, 1, 'Y',
+        (SELECT id FROM companies LIMIT 1), ?, 1, 'I',
         '2026-06-15', 'Gap test', 'draft', 'manual'
       )`,
     ).run(fyId)
@@ -140,12 +140,12 @@ describe('assertContiguousVerNumbers — meta-test', () => {
         company_id, fiscal_year_id, verification_number, verification_series,
         journal_date, description, status, source_type
       ) VALUES (
-        (SELECT id FROM companies LIMIT 1), ?, 3, 'Y',
+        (SELECT id FROM companies LIMIT 1), ?, 3, 'I',
         '2026-06-15', 'Gap test', 'draft', 'manual'
       )`,
     ).run(fyId)
 
-    expect(() => assertContiguousVerNumbers(ctx.db, fyId, 'Y')).toThrow()
+    expect(() => assertContiguousVerNumbers(ctx.db, fyId, 'I')).toThrow()
   })
 
   it('returnerar tom array för serie utan verifikationer', () => {
