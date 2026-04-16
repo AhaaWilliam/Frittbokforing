@@ -16,6 +16,7 @@ import {
   Clock,
   PiggyBank,
   CalendarClock,
+  Upload,
   type LucideIcon,
 } from 'lucide-react'
 import type { Company } from '../../../shared/types'
@@ -105,6 +106,7 @@ export function Sidebar({ company }: SidebarProps) {
           Övrigt
         </div>
         <SidebarLink to="/export" icon={Download} label="Exportera" testId="nav-export" />
+        <SidebarLink to="/import" icon={Upload} label="Importera SIE4" testId="nav-import" />
       </nav>
 
       {/* Footer */}

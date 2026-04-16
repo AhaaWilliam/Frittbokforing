@@ -225,6 +225,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('import:sie4-select-file', {}),
   sie4Validate: (data: { filePath: string }) =>
     ipcRenderer.invoke('import:sie4-validate', data),
+  sie4Import: (data: { filePath: string; strategy: 'new' | 'merge'; fiscal_year_id?: number }) =>
+    ipcRenderer.invoke('import:sie4-execute', data),
   // Payment batch export
   validateBatchExport: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:validate-export', data),

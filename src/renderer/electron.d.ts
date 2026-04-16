@@ -379,6 +379,11 @@ interface ElectronAPI {
   sie4Validate: (data: {
     filePath: string
   }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-validator').SieValidationResult>>
+  sie4Import: (data: {
+    filePath: string
+    strategy: 'new' | 'merge'
+    fiscal_year_id?: number
+  }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>>
   // Payment batch export
   validateBatchExport: (data: {
     batch_id: number

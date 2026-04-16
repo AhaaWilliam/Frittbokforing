@@ -1,5 +1,51 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 48 -- Feature 5b: SIE4-import databas (Fas 2) ✅ KLAR
+
+Session S48. Import-service skriver parsed SIE4-data till databasen. Strategier new/merge,
+full roundtrip-test (export → parse → import → verifierad).
+
+**Testbaslinje:** 2234 → 2247 vitest (+13). 0 skipped. 219 testfiler.
+**PRAGMA user_version:** 37 (oförändrat).
+**Inga nya M-principer.**
+**Nya filer:** sie4-import-service.ts, PageImport.tsx, session-48-sie4-import-db.test.ts.
+
+### Leverabler
+
+#### 1. sie4-import-service.ts
+- `importSie4(db, parsed, options)` — atomär via db.transaction()
+- Strategier:
+  - `new` — skapar company via createCompany (FY + periods auto-genererade)
+  - `merge` — matchar orgNr, lägger till saknade konton, uppdaterar namn
+- Verifikationsserie: `I` (Import) — undviker kollision med A/B/C
+- Sign handling: positive → debit_ore, negative → credit_ore
+- Obalanserade verifikat hoppas över med varning
+- Okända konton → VALIDATION_ERROR (rollback hela importen)
+- FTS5 rebuild try-catch (M143)
+
+#### 2. IPC: import:sie4-execute
+- Pre-validate (validateSieParseResult) — blockerar om errors.length > 0
+- Sedan importSie4
+
+#### 3. PageImport.tsx (import-wizard)
+- Phases: select → validating → preview → importing → done
+- Preview: summary-grid (företag, orgNr, konton, verifikationer), errors/warnings
+- Strategy radio: new/merge med förklaringar
+- Done: resultat-grid (konton tillagda, verifikationer importerade, varningar)
+- Sidebar: Upload-ikon "Importera SIE4"
+
+#### 4. Tester (13 nya)
+- **session-48-sie4-import-db.test.ts** (13):
+  - N1-N4 new strategy (create company, reject if exists, missing RAR, auto-periods)
+  - M1-M3 merge strategy (add accounts, orgNr mismatch, update name)
+  - V1-V4 VER/TRANS (I-series, sign handling, skip unbalanced, reject unknown account, continue numbering)
+  - R1-R2 full roundtrip (same entry count, totals match)
+
+### Stängda items
+- **Feature 5b** SIE4-import databas: STÄNGD
+
+### Backlog: 0 öppna findings
+
 ## Sprint 47 -- Feature 5a: SIE4-import parser + validering + dry-run ✅ KLAR
 
 Session S47. SIE4 parser (CP437, alla record-typer), validator (E1-E5, W1-W5), KSUMMA-verifiering, dry-run IPC.

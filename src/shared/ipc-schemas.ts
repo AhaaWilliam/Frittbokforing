@@ -809,6 +809,14 @@ export const Sie4ValidateSchema = z
   })
   .strict()
 
+export const Sie4ImportSchema = z
+  .object({
+    filePath: z.string().min(1),
+    strategy: z.enum(['new', 'merge']),
+    fiscal_year_id: z.number().int().positive().optional(),
+  })
+  .strict()
+
 // === Payment Batch Export ===
 export const PaymentBatchValidateExportSchema = z
   .object({
@@ -1014,6 +1022,7 @@ export const channelMap = {
   // SIE4 Import
   'import:sie4-select-file': Sie4SelectFileSchema,
   'import:sie4-validate': Sie4ValidateSchema,
+  'import:sie4-execute': Sie4ImportSchema,
 
   // Payment batch export
   'payment-batch:validate-export': PaymentBatchValidateExportSchema,

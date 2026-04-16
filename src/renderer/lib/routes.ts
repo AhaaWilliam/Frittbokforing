@@ -6,6 +6,7 @@ export const routes: RouteDefinition[] = [
   { pattern: '/accounts', page: 'accounts' },
   { pattern: '/settings', page: 'settings' },
   { pattern: '/export', page: 'export' },
+  { pattern: '/import', page: 'import' },
   { pattern: '/reports', page: 'reports' },
   { pattern: '/tax', page: 'tax' },
   { pattern: '/vat', page: 'vat' },

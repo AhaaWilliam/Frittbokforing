@@ -109,6 +109,7 @@ import {
 } from './services/aging-service'
 import { parseSie4 } from './services/sie4/sie4-import-parser'
 import { validateSieParseResult } from './services/sie4/sie4-import-validator'
+import { importSie4 } from './services/sie4/sie4-import-service'
 import {
   validateBatchForExport,
   generatePain001,
@@ -191,6 +192,7 @@ import {
   AgingInputSchema,
   Sie4SelectFileSchema,
   Sie4ValidateSchema,
+  Sie4ImportSchema,
   PaymentBatchValidateExportSchema,
   PaymentBatchExportPain001Schema,
   AccrualCreateSchema,
@@ -806,6 +808,26 @@ export function registerIpcHandlers(): void {
       const parseResult = parseSie4(buffer)
       const validation = validateSieParseResult(parseResult)
       return validation
+    },
+  ))
+
+  ipcMain.handle('import:sie4-execute', wrapIpcHandler(
+    Sie4ImportSchema,
+    (data) => {
+      const buffer = fs.readFileSync(data.filePath)
+      const parseResult = parseSie4(buffer)
+      const validation = validateSieParseResult(parseResult)
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: `SIE4-filen har ${validation.errors.length} fel: ${validation.errors[0]?.message ?? ''}`,
+          code: 'VALIDATION_ERROR',
+        } as const
+      }
+      return importSie4(db, parseResult, {
+        strategy: data.strategy,
+        fiscalYearId: data.fiscal_year_id,
+      })
     },
   ))
 

@@ -115,6 +115,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   // SIE4 Import
   sie4SelectFile: 'import:sie4-select-file',
   sie4Validate: 'import:sie4-validate',
+  sie4Import: 'import:sie4-execute',
   // Payment batch export
   validateBatchExport: 'payment-batch:validate-export',
   exportPain001: 'payment-batch:export-pain001',

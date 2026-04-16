@@ -104,6 +104,15 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
     warnings: z.array(z.object({ code: z.string(), message: z.string() }).passthrough()),
     summary: z.object({}).passthrough(),
   }),
+  'import:sie4-execute': z.object({
+    companyId: z.number(),
+    fiscalYearId: z.number(),
+    accountsAdded: z.number(),
+    accountsUpdated: z.number(),
+    entriesImported: z.number(),
+    linesImported: z.number(),
+    warnings: z.array(z.string()),
+  }),
 
   // Payment batch export
   'payment-batch:validate-export': z.object({
