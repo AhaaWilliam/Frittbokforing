@@ -1,5 +1,69 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 37 -- Renderer-tester (T4): Wizard + Dialogs + Customer ✅ KLAR
+
+Session S37. T4 (renderer-komponenttester: wizard-steg, dialogs, customer-komponenter).
+Ren test-sprint — inga produktionskodsändringar. Nya findings F61, F62 dokumenterade.
+
+**Testbaslinje:** 1905 → 1952 vitest (+47). 0 skipped. 191 testfiler.
+**PRAGMA user_version:** 33 (oförändrat).
+**Inga nya M-principer.**
+**Nya filer:** StepCompany.test.tsx, StepFiscalYear.test.tsx, StepConfirm.test.tsx,
+BulkPaymentResultDialog.test.tsx, PayExpenseDialog.test.tsx,
+CustomerForm.test.tsx, CustomerDetail.test.tsx.
+
+### Del A: Wizard-komponenter (25 tester)
+- **StepCompany** (8): render all fields, org.nr onChange callback, K2 default,
+  next-disabled empty data, next-enabled valid data, share_capital < 25000 rejected,
+  future registration_date rejected (vi.setSystemTime), axe a11y
+- **StepFiscalYear** (11): 6 computeFiscalYear enhetstester (standard, brutet FY
+  start_month=7/5/1, skottår 2024→2025-02-28, skottår 2023→2024-02-29) +
+  5 renderingstester (preview, checkbox toggle, month picker, <12mån-varning, axe)
+- **StepConfirm** (6): summary render, fiscal year formatted dates,
+  isPending disabled submit+back, error message, axe a11y.
+  Inkl formatSwedishDate enhetstester.
+
+### Del B: Dialog-komponenter (10 tester)
+- **BulkPaymentResultDialog** (7): succeeded count, failed list, all-success
+  (failed gömd), cancelled status, bank_fee journal entry, open=false, axe a11y
+- **PayExpenseDialog** (3): expense info + remaining, pre-filled amount, axe a11y
+
+### Del C: Customer-komponenter (12 tester — 2 nya testfiler)
+- **CustomerForm** (6): render all fields, submit calls onSaved,
+  empty name validation, edit-mode pre-fill, VAT suggestion
+  (SE+orgNr+01 for Sverige), axe a11y
+- **CustomerDetail** (4): render name/type/org.nr, dash for null fields (4+ "—"),
+  deactivate confirm → mutation.mutate({ id }) anropas, axe a11y.
+  Mockas via window.api double-cast (useDirectQuery raw return).
+
+### Del D: Nya findings
+- **F61** BFL 3 kap 1§: StepFiscalYear accepterar alla 12 startmånader för
+  brutet räkenskapsår. BFL begränsar till 1 maj, 1 jul, 1 sep, 1 nov, 1 jan.
+  Ingen validering i vare sig renderer eller backend (CreateCompanyInputSchema).
+  Låg impact — brutet FY ovanligt för målgruppen (småföretag).
+- **F62** 19 IPC-handlers konstruerar IpcResult manuellt istället för
+  wrapIpcHandler. Risk: format-divergens vid framtida IpcResult-ändringar.
+  Sprint 38+ kandidat tillsammans med F60b.
+
+### Observationer
+- vi.setSystemTime krävs i StepCompany/StepFiscalYear för deterministisk
+  todayLocal()-validering (registration_date <= today, monthsSinceReg < 12)
+- Controlled components (StepCompany org.nr) kräver per-keystroke-test
+  snarare än full-string-test — controlled input uppdateras inte utan re-render
+- counterparty:get använder useDirectQuery (raw return) — same pattern
+  som product:get i Sprint 36, mockas via double-cast
+- Renderer-komponenttestcoverage: 42/52 (81%, upp från 67%)
+- 10 kvarvarande otestade: GlobalSearch, EntityListPage, Sidebar, YearPicker,
+  PeriodList, MonthIndicator, ContactList, EmptyState, DraftList, ExpenseDraftList
+
+### Stängda items
+- **T4** Renderer-komponenttester: STÄNGD (wizard, dialogs, customer)
+
+### Backlog: 2 öppna findings
+- **F59** (per-kanal response-schema) öppen för Sprint 39+
+- **F61** BFL-startmånad-validering saknas i brutet räkenskapsår
+- **F62** 19 manuella IpcResult-konstruktioner i handlers
+
 ## Sprint 36 -- Renderer-tester (T3) + Formaterings-utilities ✅ KLAR
 
 Session S36. T3 (renderer-komponenttester: dialogs, products, reports, dashboard),
@@ -607,8 +671,8 @@ PRAGMA user_version = 27, 22 tabeller.
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
 ## Test-count
-- Vitest (system + unit): 1905 passed, 0 skipped
-- Testfiler: 184
+- Vitest (system + unit): 1952 passed, 0 skipped
+- Testfiler: 191
 - Playwright E2E: 11 (körs separat)
 - Körning: ~25s
 - TSC: 0 errors (`npm run typecheck`)
@@ -624,8 +688,10 @@ PRAGMA user_version = 27, 22 tabeller.
 
 ## Kanda fynd vantande
 
-Backlog: 0 oppna findings.
-- F59 (per-kanal response-schema) oppen for Sprint 37+.
+Backlog: 2 oppna findings.
+- F59 (per-kanal response-schema) oppen for Sprint 39+.
+- F61 BFL-startmanad-validering saknas i brutet rakenskapsar.
+- F62 19 manuella IpcResult-konstruktioner i handlers (Sprint 38+ med F60b).
 
 ### Schema conventions -- medvetna avvikelser (klass B)
 - **accounts.k2_allowed** -- boolean utan `is_`-prefix. `is_k2_allowed` borderline, ej tydligt battre. 54 referenser over 8 filer.
