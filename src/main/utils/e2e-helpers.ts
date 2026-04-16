@@ -26,3 +26,15 @@ export function getE2EFilePath(
   const mockPath = path.join(dir, defaultFilename)
   return fs.existsSync(mockPath) ? mockPath : null
 }
+
+/**
+ * Returns path set via E2E_MOCK_OPEN_FILE env var for open-dialog bypass
+ * where the caller has no default filename (e.g. SIE4 import file picker).
+ * Returns null in production or when not set.
+ */
+export function getE2EMockOpenFile(): string | null {
+  if (process.env.E2E_TESTING !== 'true') return null
+  const mockPath = process.env.E2E_MOCK_OPEN_FILE
+  if (!mockPath) return null
+  return fs.existsSync(mockPath) ? mockPath : null
+}

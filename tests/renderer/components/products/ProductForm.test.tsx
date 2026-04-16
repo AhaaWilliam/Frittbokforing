@@ -45,7 +45,7 @@ const DEFAULT_PROPS = {
 function setupMocks() {
   mockIpcResponse('vat-code:list', { success: true, data: VAT_CODES })
   mockIpcResponse('account:list', { success: true, data: ACCOUNTS })
-  mockIpcResponse('company:get', COMPANY)
+  mockIpcResponse('company:get', { success: true, data: COMPANY })
 }
 
 beforeEach(() => {

@@ -60,7 +60,7 @@ const AXE_OPTIONS: axe.RunOptions = {
 
 interface RenderWithProvidersOptions {
   /** Fiscal year state: object for loaded, 'loading' for pending, 'none' for empty list. */
-  fiscalYear?: { id: number; label: string } | 'loading' | 'none'
+  fiscalYear?: { id: number; label: string; is_closed?: 0 | 1 } | 'loading' | 'none'
   /** Initial hash route (e.g. '/overview'). */
   initialRoute?: string
   /** Custom QueryClient if test needs cache control. */
@@ -92,15 +92,16 @@ export async function renderWithProviders(
     mockIpcPending('fiscal-year:list')
     mockIpcPending('settings:get')
   } else if (fiscalYear === 'none') {
-    mockIpcResponse('fiscal-year:list', [])
+    mockIpcResponse('fiscal-year:list', { success: true, data: [] })
     mockIpcResponse('settings:get', null)
     mockIpcResponse('settings:set', undefined)
   } else {
     const fy = makeFiscalYear({
       id: fiscalYear.id,
       year_label: fiscalYear.label,
+      ...(fiscalYear.is_closed != null ? { is_closed: fiscalYear.is_closed } : {}),
     })
-    mockIpcResponse('fiscal-year:list', [fy])
+    mockIpcResponse('fiscal-year:list', { success: true, data: [fy] })
     mockIpcResponse('settings:get', fiscalYear.id)
     mockIpcResponse('settings:set', undefined)
   }

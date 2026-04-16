@@ -129,7 +129,7 @@ import {
   getBudgetVsActual,
   copyBudgetFromPreviousFy,
 } from './services/budget-service'
-import { getE2EFilePath } from './utils/e2e-helpers'
+import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
   PeriodActionInputSchema,
@@ -739,6 +739,15 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('invoice:select-directory', wrapIpcHandler(
     SelectDirectorySchema,
     async () => {
+      // E2E dialog bypass (M63) — use E2E_DOWNLOAD_DIR as chosen directory
+      if (process.env.E2E_TESTING === 'true') {
+        const dir = process.env.E2E_DOWNLOAD_DIR
+        if (dir) {
+          fs.mkdirSync(dir, { recursive: true })
+          return { directory: dir }
+        }
+      }
+
       const win =
         BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
       const result = await dialog.showOpenDialog(win!, {
@@ -790,6 +799,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('import:sie4-select-file', wrapIpcHandler(
     Sie4SelectFileSchema,
     async () => {
+      // E2E dialog bypass (M63) — E2E_MOCK_OPEN_FILE env points to fixture
+      const e2eMockPath = getE2EMockOpenFile()
+      if (e2eMockPath) return { filePath: e2eMockPath }
+
       const win =
         BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
       const result = await dialog.showOpenDialog(win!, {
@@ -842,6 +855,14 @@ export function registerIpcHandlers(): void {
     async (data) => {
       const genResult = generatePain001(db, data.batch_id)
       if (!genResult.success) return genResult
+
+      // E2E dialog bypass (M63)
+      const e2ePainPath = getE2EFilePath(genResult.data.filename, 'save')
+      if (e2ePainPath) {
+        fs.writeFileSync(e2ePainPath, genResult.data.xml, 'utf8')
+        markBatchExported(db, data.batch_id, 'pain001', e2ePainPath)
+        return { saved: true, filePath: e2ePainPath }
+      }
 
       const win =
         BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]

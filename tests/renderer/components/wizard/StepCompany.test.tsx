@@ -97,6 +97,27 @@ describe('StepCompany', () => {
     expect(btn).toBeDisabled()
   })
 
+  it('shows inline error for invalid org_number (first digit 1)', () => {
+    renderStep({ ...validProps(), org_number: '165560-2699' })
+    expect(screen.getByRole('alert')).toHaveTextContent(/5.*9/)
+  })
+
+  it('shows inline error for share_capital < 25000', () => {
+    renderStep({ ...validProps(), share_capital: '10000' })
+    expect(screen.getByRole('alert')).toHaveTextContent(/25 000 kr/)
+  })
+
+  it('shows inline error for future registration_date', () => {
+    // System time is 2026-06-15
+    renderStep({ ...validProps(), registration_date: '2027-01-01' })
+    expect(screen.getByRole('alert')).toHaveTextContent(/framtiden/)
+  })
+
+  it('does not show error when org_number is empty (pristine state)', () => {
+    renderStep({ name: 'Test AB', org_number: '', share_capital: '25000', registration_date: '' })
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('axe-check passes', async () => {
     const { container } = render(<StepCompany {...DEFAULT_PROPS} {...validProps()} />)
     const axe = await import('axe-core')

@@ -21,3 +21,9 @@ export const ERR_MSG_MAX_QTY_INVOICE =
 
 export const ERR_MSG_MAX_QTY_EXPENSE =
   `Antal kan vara högst ${formatSwedishNumber(MAX_QTY_EXPENSE)}`
+
+/** BFL 3 kap 1§: Tillåtna startmånader för brutet räkenskapsår */
+export const BFL_ALLOWED_START_MONTHS = [1, 5, 7, 9, 11] as const
+
+export const ERR_MSG_INVALID_FY_START_MONTH =
+  'Brutet räkenskapsår kan bara starta 1 jan, 1 maj, 1 jul, 1 sep eller 1 nov (BFL 3 kap 1§)'

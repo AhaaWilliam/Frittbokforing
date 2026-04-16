@@ -33,10 +33,7 @@ beforeEach(() => {
 })
 
 function mockProductGet() {
-  // product:get uses useDirectQuery (raw return, not IpcResult-wrapped)
-  // Bypass mockIpcResponse which validates IpcResult shape
-  const api = window.api as unknown as Record<string, ReturnType<typeof vi.fn>>
-  api.getProduct.mockResolvedValue(PRODUCT)
+  mockIpcResponse('product:get', { success: true, data: PRODUCT })
 }
 
 function renderDetail(overrides?: Partial<typeof DEFAULT_PROPS>) {

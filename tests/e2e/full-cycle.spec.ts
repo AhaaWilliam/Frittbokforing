@@ -49,10 +49,10 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     const customerId = await seedCustomer(window, 'Testkund Fullcykel')
 
     // Get FY id
-    const fyList = await window.evaluate(async () => {
+    const fyResult = await window.evaluate(async () => {
       return await (window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }).api.listFiscalYears()
-    }) as Array<{ id: number }>
-    const fyId = fyList[0].id
+    }) as { success: boolean; data: Array<{ id: number }> }
+    const fyId = fyResult.data[0].id
 
     // Seed and finalize invoice (1 line, 125 kr, 25% VAT)
     const { invoiceId } = await seedAndFinalizeInvoice(window, {

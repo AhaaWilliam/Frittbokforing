@@ -95,12 +95,14 @@ export async function seedCompanyViaIPC(
   const cr = companyResult as { success: boolean; data: { id: number }; error?: string }
   if (!cr.success) throw new Error(`seedCompanyViaIPC createCompany failed: ${cr.error}`)
 
-  // Step 2: Get fiscal years via IPC (returns FiscalYear[] directly, not IpcResult)
+  // Step 2: Get fiscal years via IPC (M144: wrapped IpcResult since Sprint 38)
   const fyResult = await window.evaluate(async () => {
     return await (window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }).api.listFiscalYears()
   })
 
-  const fys = fyResult as Array<{ id: number }>
+  const fyr = fyResult as { success: boolean; data: Array<{ id: number }>; error?: string }
+  if (!fyr.success) throw new Error(`seedCompanyViaIPC listFiscalYears failed: ${fyr.error}`)
+  const fys = fyr.data
   if (!fys || fys.length === 0) throw new Error('seedCompanyViaIPC: no fiscal years found')
 
   return {

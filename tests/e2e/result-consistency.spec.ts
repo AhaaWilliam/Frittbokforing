@@ -101,14 +101,14 @@ test('årets resultat identisk i RR och BR med klass 8 + skatt', async () => {
     })
 
     // 2. Get fiscal year id
-    const fyList = (await window.evaluate(async () => {
+    const fyResult = (await window.evaluate(async () => {
       return await (
         window as unknown as {
           api: { listFiscalYears: () => Promise<unknown> }
         }
       ).api.listFiscalYears()
-    })) as Array<{ id: number }>
-    const fyId = fyList[0].id
+    })) as { success: boolean; data: Array<{ id: number }> }
+    const fyId = fyResult.data[0].id
 
     // 3. Seed journal entries: Revenue 200k, financial expense 10k, tax 20k
     //    Expected net result: 200k - 10k - 20k = 170k = 17_000_000 ören

@@ -1,5 +1,140 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 52 -- Dogfood-fix: OnboardingWizard step 1 UX ✅ KLAR
+
+Session S52. Första dogfood-fyndet: "Nästa"-knappen disablas tyst när orgnr/aktiekapital/registreringsdatum är ogiltigt. Bara namn-fältet hade inline-fel.
+
+**Testbaslinje:** 2255 → 2259 vitest (+4). 220 testfiler. E2E: 17/17.
+**Inga migrationer, inga nya M-principer.**
+
+### Leverabler
+- `StepCompany.tsx`: inline-fel för org_number ("Måste ha 10 siffror och börja med 5–9"), share_capital ("Minst 25 000 kr"), registration_date ("Kan inte vara i framtiden"). Felen visas bara när fältet är ifyllt med ogiltigt värde (pristine state → muted helper-text).
+- `StepCompany.test.tsx` +4 tester: verifierar att alerts visas för respektive fel + att pristine state inte triggar alerts.
+
+### Stängda items
+- **Dogfood-fynd 1** OnboardingWizard step 1 silent-disable: STÄNGD
+
+### Backlog: 0 öppna findings.
+
+## Sprint 51 -- Städning: flake-fix + M145-M147 + git-author ✅ KLAR
+
+Session S51. Liten städsprint: tidigare pre-existing bulk-payment-flake utredd och åtgärdad (testet var utdaterat, inte appen), 3 nya M-principer formaliserade för mönster som stabiliserats i S47–S50, git-author korrigerad.
+
+**Testbaslinje:** 2255 vitest (oförändrat). E2E: 17/17 ✅ (tidigare 16/17 — flaken fixad). 220 testfiler.
+**PRAGMA user_version:** 37.
+**Nya M-principer:** M145 (SIE4 import-strategier + I-serie), M146 (polymorfa payment-batch-ops), M147 (E2E dialog-bypass-varianter).
+
+### Leverabler
+
+#### 1. Bulk-payment #2-flake — fixad
+Testet hette "Drafts/paid är icke-selectable" och förväntade "1 valda". Undersökning visade att `InvoiceList.isSelectable` är `status !== 'draft'` by design — paid-rader är selectable för PDF-batch-export (se P4-test i `InvoicePdf.test.tsx`). Bulk-betala-knappen döljs separat när paid ingår.
+
+Åtgärd: testet omdöpt till "Drafts icke-selectable, paid selectable (för PDF-export)", assertion ändrad till "2 valda" + assert att bulk-betala-knappen döljs.
+
+#### 2. Git author-config
+`user.email=william.gebriel@gmail.com`, `user.name=William Gebriel` satt lokalt för repot. Framtida commits får korrekt författare. Historiska commits rewrites kräver separat beslut (destruktivt — påverkar delad historik).
+
+#### 3. CLAUDE.md — tre nya M-principer
+- **M145** SIE4-import-strategier (new/merge) och I-serie. Formaliserar mönstret från S47/S48.
+- **M146** Polymorfa payment-batch-operationer via `batch.batch_type`. Formaliserar symmetri-fixet från S50 (pain.001 invoice-sidan).
+- **M147** E2E dialog-bypass-varianter (fyra varianter: save, open-file-known-name, open-file-env, open-directory). Formaliserar utvidgningen av M63 från S49.
+
+### Stängda items
+- **Pre-existing E2E-flake** (S49 + S50 backlog): STÄNGD.
+- **Git author config**: STÄNGD (lokalt). Historisk rewrite ej gjord — separat beslut.
+
+### Backlog: 0 öppna findings.
+
+## Sprint 50 -- F6 Pain.001 för invoice-batchar ✅ KLAR
+
+Session S50. Symmetri-sprint: expense-sidans pain.001-export öppnas för invoice-batchar.
+Backend-infrastrukturen (polymorf `getPaymentsForBatch` via `batch.batch_type`) fanns redan — sprinten släppte UI-låset, fixade remittance-referensen (invoice_number istället för supplier_invoice_number), och lade till vakter.
+
+**Testbaslinje:** 2247 → 2255 vitest (+8). E2E: 16 → 17 (+1). 220 testfiler.
+**PRAGMA user_version:** 37 (oförändrat — ingen migration behövs).
+**Inga nya M-principer.**
+
+### Leverabler
+
+#### Backend — `src/main/services/payment/pain001-export-service.ts`
+- `PaymentRow` omdöpt: `expense_id` → `source_id`, `supplier_invoice_number` → `remittance_ref`.
+- `getPaymentsForBatch` invoice-branch populerar nu `invoices.invoice_number` som remittance.
+- `generatePain001` använder `remittance_ref` (namn-agnostisk — fungerar för både sidor).
+- `validateBatchForExport` är redan polymorf (läser `batch.batch_type`) — ingen ändring.
+
+#### Frontend
+- `BulkPaymentResultDialog.tsx` canExport-gate: `batchType === 'expense'` → `'expense' || 'invoice'`.
+- `InvoiceList.tsx` passerar `batchType="invoice"` till result-dialogen.
+
+#### Tester
+- **session-50-pain001-invoice.test.ts** (8):
+  - I1: validateBatchForExport lyckas för giltig invoice-batch
+  - I2: flaggar kund utan payment info
+  - I3: genererar giltigt XML
+  - I4: creditor = kundnamn
+  - I5: remittance = invoice_number
+  - I6: belopp öre→kronor
+  - I7: filnamn-format
+  - I8: PmtInfId refererar batch-id
+- **tests/e2e/pain001-invoice-export.spec.ts** (1): full stack — bulk-pay invoice → exportPain001 → XML på disk med rätt remittance.
+
+### Stängda items
+- **Feature 6** Pain.001 invoice-symmetri: STÄNGD
+
+### Backlog: 1 pre-existing issue (ej i scope)
+- `bulk-payment.spec.ts:78` "Drafts/paid är icke-selectable" failar fortfarande (från S49 — paid-fakturor är nu selectable i InvoiceList select-all).
+
+## Sprint 49 -- Refaktor + E2E-vakter för F1–F5 ✅ KLAR
+
+Session S49. Stabilisering: 3 stora sidor uppdelade, 5 nya E2E-tester, dialog-bypass för open-file/directory.
+
+**Testbaslinje:** 2247 vitest (oförändrat — rent refaktor). E2E: 11 → 16 (+5).
+**PRAGMA user_version:** 37 (oförändrat).
+**Inga nya M-principer.**
+
+### Leverabler
+
+#### Fas A — Komponent-extraktion (0 beteendeändring)
+- **PageBudget.tsx** 488 → 91 LOC
+  - `components/budget/BudgetInputGrid.tsx` (grid + row)
+  - `components/budget/VarianceGrid.tsx` (sub-headers + cells)
+  - `components/budget/budget-grid-utils.ts` (GridState, toOre/toKr, labels)
+- **PageImport.tsx** 359 → 89 LOC
+  - `components/import/ImportSelectPhase.tsx` / `ImportPreviewPhase.tsx` / `ImportDonePhase.tsx`
+  - `components/import/import-types.ts`
+- **PageAccruals.tsx** 461 → 124 LOC
+  - `components/accruals/CreateAccrualDialog.tsx`
+  - `components/accruals/ScheduleCard.tsx`
+  - `components/accruals/accrual-constants.ts`
+- Redundant `data-testid="page-*"` borttagen från de tre pages (AppShellInner wrapper sätter redan testid).
+
+#### Fas B — E2E dialog-bypass (utvidgning av M63)
+- `getE2EMockOpenFile()` helper läser `E2E_MOCK_OPEN_FILE` env för open-file-dialog utan default filnamn (SIE4 import).
+- `import:sie4-select-file` — bypass via E2E_MOCK_OPEN_FILE
+- `payment-batch:export-pain001` — bypass via getE2EFilePath (skriver direkt till E2E_DOWNLOAD_DIR)
+- `invoice:select-directory` — returnerar E2E_DOWNLOAD_DIR när E2E_TESTING=true
+- Dokumenterat i `tests/e2e/README.md` under ny rubrik "Dialog bypass (M63)"
+
+#### Fas C — 5 nya E2E-specs
+- `budget-save.spec.ts` (F2) — grid fill → save → reload → värden kvar
+- `accrual-execute.spec.ts` (F3) — create schedule → kör P1 → verify C-verifikat
+- `sie4-import.spec.ts` (F5) — fixture SIE4 → merge strategy → verify I-series
+- `pain001-export.spec.ts` (F4) — company+supplier med bankgiro → bulk-pay → exportPain001 → verify XML
+- `pdf-batch-export.spec.ts` (F1) — 2 finalized invoices → select all → Exportera PDF:er → verify 2 filer
+
+#### E2E-helper fixes (M144 regression)
+- `seedCompanyViaIPC` — unwrap `fiscal-year:list` som nu returnerar IpcResult (Sprint 38 F60b)
+- `seedAndFinalizeInvoice` — unwrap `listVatCodes` IpcResult
+- `full-cycle.spec.ts`, `result-consistency.spec.ts`, `bulk-payment.spec.ts` — samma fixes
+
+### Stängda items
+- Refaktor: 3 pages splittade
+- E2E: F1–F5 nu vaktade
+
+### Backlog: 1 pre-existing issue (ej i scope)
+- `bulk-payment.spec.ts:78` — "Drafts/paid är icke-selectable" felar (paid-fakturor är nu selectable i bulk UI).
+  Inte orsakat av Sprint 49. App-beteendet för select-all i InvoiceList behöver utredas separat.
+
 ## Sprint 48 -- Feature 5b: SIE4-import databas (Fas 2) ✅ KLAR
 
 Session S48. Import-service skriver parsed SIE4-data till databasen. Strategier new/merge,

@@ -44,7 +44,7 @@ function makeWrapper(opts?: {
     settingsGetPending = false,
   } = opts ?? {}
 
-  mockIpcResponse('fiscal-year:list', fiscalYears)
+  mockIpcResponse('fiscal-year:list', { success: true, data: fiscalYears })
   if (settingsGetPending) {
     mockIpcPending('settings:get')
   } else {
@@ -169,7 +169,7 @@ describe('restoredIdLoaded gating (M102)', () => {
   })
 
   it('explicit selectedYear wins over pending restore — exactly one settings:set', async () => {
-    mockIpcResponse('fiscal-year:list', [fy1, fy2, fy3])
+    mockIpcResponse('fiscal-year:list', { success: true, data: [fy1, fy2, fy3] })
     mockIpcResponse('settings:set', undefined)
 
     // Manually control settings:get resolution

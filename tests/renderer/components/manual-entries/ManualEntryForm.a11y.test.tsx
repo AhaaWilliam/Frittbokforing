@@ -8,12 +8,12 @@ import { ManualEntryForm } from '../../../../src/renderer/components/manual-entr
 
 beforeEach(() => {
   setupMockIpc()
-  mockIpcResponse('company:get', {
+  mockIpcResponse('company:get', { success: true, data: {
     id: 1, fiscal_rule: 'K2', name: 'Test AB', org_number: '556000-0000',
     address: '', postal_code: '', city: '', country: 'SE',
     bankgiro: null, plusgiro: null, iban: null, bic: null,
     phone: null, email: null, website: null, contact_person: null,
-  })
+  } })
   mockIpcResponse('account:list', { success: true, data: [] })
 })
 

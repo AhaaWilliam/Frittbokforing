@@ -51,10 +51,12 @@ export async function seedAndFinalizeInvoice(
     quantity?: number
   },
 ): Promise<{ invoiceId: number; invoiceNumber: string }> {
-  // Get VAT code for 25% outgoing
+  // Get VAT code for 25% outgoing (M144: wrapped IpcResult)
   const vatCode = await window.evaluate(async () => {
-    const codes = await (window as unknown as { api: { listVatCodes: (d: { direction?: string }) => Promise<unknown> } }).api.listVatCodes({ direction: 'outgoing' })
-    return (codes as Array<{ id: number; code: string }>).find(c => c.code === 'MP1')
+    const result = await (window as unknown as { api: { listVatCodes: (d: { direction?: string }) => Promise<unknown> } }).api.listVatCodes({ direction: 'outgoing' })
+    const r = result as { success: boolean; data: Array<{ id: number; code: string }>; error?: string }
+    if (!r.success) throw new Error(`listVatCodes failed: ${r.error}`)
+    return r.data.find(c => c.code === 'MP1')
   })
   if (!vatCode) throw new Error('VAT code MP1 not found')
 

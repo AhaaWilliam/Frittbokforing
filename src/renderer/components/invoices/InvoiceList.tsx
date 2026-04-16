@@ -556,6 +556,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         open={!!bulkResult}
         onOpenChange={() => setBulkResult(null)}
         result={bulkResult}
+        batchType="invoice"
       />
 
       <BatchPdfExportDialog

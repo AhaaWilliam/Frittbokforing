@@ -1,3 +1,5 @@
+import { BFL_ALLOWED_START_MONTHS } from '../../../shared/constants'
+
 interface StepFiscalYearProps {
   registration_date: string
   use_broken_fiscal_year: boolean
@@ -115,8 +117,11 @@ export function StepFiscalYear({
             }
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           >
-            {MONTHS.map((name, i) => (
-              <option key={i + 1} value={i + 1}>
+            {(use_broken_fiscal_year
+              ? BFL_ALLOWED_START_MONTHS.map((m) => ({ month: m, name: MONTHS[m - 1] }))
+              : MONTHS.map((name, i) => ({ month: i + 1, name }))
+            ).map(({ month, name }) => (
+              <option key={month} value={month}>
                 {name}
               </option>
             ))}

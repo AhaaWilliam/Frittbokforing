@@ -75,7 +75,7 @@ test.describe('Bulk-betalning E2E', () => {
     }
   })
 
-  test('2. Drafts/paid är icke-selectable', async () => {
+  test('2. Drafts icke-selectable, paid selectable (för PDF-export)', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
       const { companyId, fiscalYearId } = await seedCompanyViaIPC(ctx.window)
@@ -112,8 +112,9 @@ test.describe('Bulk-betalning E2E', () => {
           quantity: 1,
           unit_price_ore: 10000,
           vat_code_id: await ctx.window.evaluate(async () => {
-            const codes = await (window as unknown as { api: { listVatCodes: (d: unknown) => Promise<unknown> } }).api.listVatCodes({ direction: 'outgoing' })
-            return (codes as Array<{ id: number; code: string }>).find(c => c.code === 'MP1')!.id
+            const result = await (window as unknown as { api: { listVatCodes: (d: unknown) => Promise<unknown> } }).api.listVatCodes({ direction: 'outgoing' })
+            const r = result as { success: boolean; data: Array<{ id: number; code: string }> }
+            return r.data.find(c => c.code === 'MP1')!.id
           }),
           sort_order: 0,
           account_number: '3002',
@@ -130,8 +131,13 @@ test.describe('Bulk-betalning E2E', () => {
       // Click header checkbox (select all)
       await clickHeaderCheckbox(ctx.window)
 
-      // Only 1 should be selected (the unpaid one)
-      await expect(ctx.window.getByText('1 valda')).toBeVisible()
+      // 2 non-draft rader ska bli selectade (unpaid + paid).
+      // Draft är icke-selectable. Paid är selectable (för PDF-batch-export),
+      // men Bulk-betala-knappen döljs när paid ingår i urvalet.
+      await expect(ctx.window.getByText('2 valda')).toBeVisible()
+      await expect(
+        ctx.window.getByRole('button', { name: /bulk-betala/i }),
+      ).toHaveCount(0)
     } finally {
       await ctx.cleanup()
     }

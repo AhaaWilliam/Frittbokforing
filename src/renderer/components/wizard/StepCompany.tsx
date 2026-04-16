@@ -33,12 +33,17 @@ export function StepCompany({
     onChange('org_number', formatOrgNumber(e.target.value))
   }
 
+  const orgNumberValid = /^[5-9]\d{5}-\d{4}$/.test(org_number)
+  const shareCapitalNum = parseFloat(share_capital)
+  const shareCapitalValid = !isNaN(shareCapitalNum) && shareCapitalNum >= 25000
+  const registrationDateValid =
+    registration_date !== '' && registration_date <= todayLocal()
+
   const isValid =
     name.length >= 2 &&
-    /^[5-9]\d{5}-\d{4}$/.test(org_number) &&
-    parseFloat(share_capital) >= 25000 &&
-    registration_date !== '' &&
-    registration_date <= todayLocal()
+    orgNumberValid &&
+    shareCapitalValid &&
+    registrationDateValid
 
   return (
     <div className="space-y-5">
@@ -71,9 +76,15 @@ export function StepCompany({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           placeholder="NNNNNN-NNNN"
         />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Hittar du på Bolagsverket eller i registreringsbeviset
-        </p>
+        {org_number.length > 0 && !orgNumberValid ? (
+          <p className="mt-1 text-xs text-red-500" role="alert">
+            Måste ha 10 siffror och börja med 5–9 (aktiebolag, enskild firma, HB m.fl.)
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Hittar du på Bolagsverket eller i registreringsbeviset
+          </p>
+        )}
       </div>
 
       <div>
@@ -139,9 +150,15 @@ export function StepCompany({
             kr
           </span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Beloppet du satte in när bolaget startades. Minst 25 000 kr.
-        </p>
+        {share_capital.length > 0 && !shareCapitalValid ? (
+          <p className="mt-1 text-xs text-red-500" role="alert">
+            Minst 25 000 kr krävs för aktiebolag
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Beloppet du satte in när bolaget startades. Minst 25 000 kr.
+          </p>
+        )}
       </div>
 
       <div>
@@ -156,9 +173,15 @@ export function StepCompany({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           max={todayLocal()}
         />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Står i registreringsbeviset
-        </p>
+        {registration_date !== '' && registration_date > todayLocal() ? (
+          <p className="mt-1 text-xs text-red-500" role="alert">
+            Registreringsdatum kan inte vara i framtiden
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Står i registreringsbeviset
+          </p>
+        )}
       </div>
 
       <button

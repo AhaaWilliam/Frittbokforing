@@ -23,7 +23,7 @@ export function BulkPaymentResultDialog({
   const total = result.succeeded.length + result.failed.length
   const hasFailures = result.failed.length > 0
   const canExport =
-    batchType === 'expense' &&
+    (batchType === 'expense' || batchType === 'invoice') &&
     result.status !== 'cancelled' &&
     result.batch_id != null
 

@@ -8,7 +8,10 @@ import { CreateFiscalYearDialog } from '../../../../src/renderer/components/layo
 beforeEach(() => {
   setupMockIpc()
   // Mock net-result endpoint for the dialog's loading step
-  mockIpcResponse('result:net', { netResultOre: 50000, isAlreadyBooked: false })
+  mockIpcResponse('opening-balance:net-result', {
+    success: true,
+    data: { netResultOre: 50000, isAlreadyBooked: false },
+  })
 })
 
 describe('CreateFiscalYearDialog — F49 a11y', () => {
