@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import ExcelJS from 'exceljs'
+import { getNow } from '../../utils/now'
 import {
   getCompanyInfo,
   getFiscalYear,
@@ -441,7 +442,7 @@ export async function exportExcel(
     startDate && endDate ? `${startDate} — ${endDate}` : 'Hela året'
   const verCount = entries.length
   const acctCount = accounts.length
-  const now = new Date()
+  const now = getNow()
   const exportDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
   sheetInfo.addRow({ field: 'Företagsnamn', value: company.name })

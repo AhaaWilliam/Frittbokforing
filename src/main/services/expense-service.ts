@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
-import { todayLocal, addDays } from '../../shared/date-utils'
+import { addDays } from '../../shared/date-utils'
+import { todayLocalFromNow } from '../utils/now'
 import { checkChronology } from './chronology-guard'
 import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
@@ -401,7 +402,7 @@ export function finalizeExpense(
         throw { code: 'YEAR_IS_CLOSED', error: 'Perioden är stängd' }
 
       // 5. Block future dates
-      const today = todayLocal()
+      const today = todayLocalFromNow()
       if (expense.expense_date > today)
         throw {
           code: 'VALIDATION_ERROR',
@@ -846,7 +847,7 @@ export function payExpense(
   },
 ): IpcResult<{ expense: Expense; payment: ExpensePayment }> {
   // Pre-flight: block future dates
-  const today = todayLocal()
+  const today = todayLocalFromNow()
   if (input.payment_date > today) {
     return {
       success: false,
@@ -898,7 +899,7 @@ export function payExpensesBulk(
     return { success: false, error: 'Dubbletter av kostnad-id.', code: 'VALIDATION_ERROR' }
   }
 
-  const today = todayLocal()
+  const today = todayLocalFromNow()
   if (input.payment_date > today) {
     return { success: false, error: 'Betalningsdatum kan inte vara i framtiden.', code: 'VALIDATION_ERROR', field: 'payment_date' }
   }
@@ -1296,8 +1297,8 @@ export function createExpenseCreditNoteDraft(
       expense_type: 'credit_note' as const,
       credits_expense_id: original.id,
       supplier_invoice_number: null,
-      expense_date: todayLocal(),
-      due_date: todayLocal(),
+      expense_date: todayLocalFromNow(),
+      due_date: todayLocalFromNow(),
       payment_terms: original.payment_terms,
       description: `Krediterar: ${ref}`,
       notes: '',

@@ -3,6 +3,7 @@ import fs from 'fs'
 import { app } from 'electron'
 import log from 'electron-log'
 import { getDb } from './db'
+import { getNow } from './utils/now'
 
 /** Skapar VACUUM-backup av databasen innan auto-update installeras.
  *  Kastar exception vid fel — anroparen ansvarar för att avbryta uppdateringen. */
@@ -16,7 +17,7 @@ export function createPreUpdateBackup(): string {
   fs.mkdirSync(docsDir, { recursive: true })
   const backupPath = path.join(
     docsDir,
-    `pre-update-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.db`,
+    `pre-update-${getNow().toISOString().slice(0, 19).replace(/:/g, '-')}.db`,
   )
   db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`)
   log.info('Pre-update backup skapad:', backupPath)

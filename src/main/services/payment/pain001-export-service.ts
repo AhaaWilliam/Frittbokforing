@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { create } from 'xmlbuilder2'
 import type { IpcResult, PaymentExportValidation } from '../../../shared/types'
 import { normalizeBankgiro } from '../../../shared/bankgiro-validation'
+import { getNow } from '../../utils/now'
 
 // ═══ Types ═══
 
@@ -17,7 +18,7 @@ interface BatchRow {
 
 interface PaymentRow {
   id: number
-  expense_id: number
+  source_id: number
   amount_ore: number
   counterparty_id: number
   counterparty_name: string
@@ -25,7 +26,7 @@ interface PaymentRow {
   plusgiro: string | null
   bank_account: string | null
   bank_clearing: string | null
-  supplier_invoice_number: string | null
+  remittance_ref: string | null
 }
 
 interface CompanyRow {
@@ -43,7 +44,7 @@ function oreToDecimal(ore: number): string {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 19)
+  return getNow().toISOString().slice(0, 19)
 }
 
 // ═══ Public API ═══
@@ -192,9 +193,9 @@ export function generatePain001(
     }
 
     // Remittance Information
-    if (p.supplier_invoice_number) {
+    if (p.remittance_ref) {
       const rmtInf = txInf.ele('RmtInf')
-      rmtInf.ele('Ustrd').txt(p.supplier_invoice_number)
+      rmtInf.ele('Ustrd').txt(p.remittance_ref)
     }
   }
 
@@ -225,10 +226,10 @@ function getPaymentsForBatch(
   if (batchType === 'expense') {
     return db
       .prepare(
-        `SELECT ep.id, ep.expense_id, ep.amount_ore,
+        `SELECT ep.id, ep.expense_id AS source_id, ep.amount_ore,
                 e.counterparty_id, c.name AS counterparty_name,
                 c.bankgiro, c.plusgiro, c.bank_account, c.bank_clearing,
-                e.supplier_invoice_number
+                e.supplier_invoice_number AS remittance_ref
          FROM expense_payments ep
          JOIN expenses e ON ep.expense_id = e.id
          JOIN counterparties c ON e.counterparty_id = c.id
@@ -236,13 +237,13 @@ function getPaymentsForBatch(
       )
       .all(batchId) as PaymentRow[]
   }
-  // Invoice batch (future)
+  // Invoice batch — invoice_number as remittance ref
   return db
     .prepare(
-      `SELECT ip.id, ip.invoice_id AS expense_id, ip.amount_ore,
+      `SELECT ip.id, ip.invoice_id AS source_id, ip.amount_ore,
               i.counterparty_id, c.name AS counterparty_name,
               c.bankgiro, c.plusgiro, c.bank_account, c.bank_clearing,
-              NULL AS supplier_invoice_number
+              i.invoice_number AS remittance_ref
        FROM invoice_payments ip
        JOIN invoices i ON ip.invoice_id = i.id
        JOIN counterparties c ON i.counterparty_id = c.id

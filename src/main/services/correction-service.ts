@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
-import { todayLocal } from '../../shared/date-utils'
+import { todayLocalFromNow } from '../utils/now'
 import type { ErrorCode, IpcResult, JournalEntry } from '../../shared/types'
 import { rebuildSearchIndex } from './search-service'
 
@@ -120,7 +120,7 @@ function checkGuards(
     }
 
     // 6. Period for today's date must be open in correction FY
-    const today = todayLocal()
+    const today = todayLocalFromNow()
     const closedPeriod = db
       .prepare(
         `SELECT 1 FROM accounting_periods
@@ -243,7 +243,7 @@ export function createCorrectionEntry(
       const description = `Korrigering av ver. ${originalRef} — ${entry.description}`
 
       // 6. Create correction journal entry (as draft first)
-      const today = todayLocal()
+      const today = todayLocalFromNow()
       const jeResult = db
         .prepare(
           `INSERT INTO journal_entries (

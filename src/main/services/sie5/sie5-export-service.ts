@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { create } from 'xmlbuilder2'
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
+import { getNow } from '../../utils/now'
 import { mapAccountType } from './account-type-mapper'
 import { oreToSie5Amount, debitCreditToSie5Amount } from './amount-conversion'
 import {
@@ -179,7 +180,7 @@ export function exportSie5(
 
   // ═══ Build XML ═══
 
-  const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z')
+  const now = getNow().toISOString().replace(/\.\d+Z$/, 'Z')
 
   const doc = create({ version: '1.0', encoding: 'UTF-8' })
   const sie = doc

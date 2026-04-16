@@ -519,6 +519,147 @@ invoice:get-draft). NO_SCHEMA_CHANNELS reducerad till 7 infrastruktur-kanaler.
 **Konsekvens:** Nya IPC-kanaler som returnerar data MÅSTE följa M144.
 `useDirectQuery` + raw return i handler är INTE tillåtet för nya kanaler.
 
+## 50. SIE4-import-strategier och I-serie (M145)
+
+**M145.** SIE4-import (`importSie4` i `src/main/services/sie4/sie4-import-service.ts`)
+har två strategier med distinkta semantik:
+
+- **`'new'`** — skapar företag via `createCompany` (FY + periods auto-genererade).
+  Kräver att databasen saknar företag. Används för första import till en tom
+  installation.
+- **`'merge'`** — matchar befintligt företag via `org_number`, lägger till
+  saknade konton, uppdaterar namn. Kräver exakt orgNr-match. Används för
+  att importera kompletterande data till existerande bokföring.
+
+**Importerade verifikationer lagras i `I`-serien** (Import). Separata från A
+(invoice), B (expense), C (manual), D (opening balance), för att:
+- Bevara spårbarhet mellan importerad och nativ data
+- Undvika kollision med löpande verifikationsnumrering
+- Möjliggöra senare filtrering/export av enbart importerad data
+
+Obalanserade verifikationer i källfilen hoppas över med varning istället för
+att rulla tillbaka hela importen (partial success). Okända konton
+(som inte finns i BAS-kontoplanen och inte är markerade importable) kastar
+`VALIDATION_ERROR` som rullar tillbaka HELA transaktionen.
+
+**Sign handling:** positiva belopp → `debit_ore`, negativa → `credit_ore`.
+Denna konvention speglar exporten (`sie4-export-service.ts`) och säkerställer
+roundtrip-konsistens (export → parse → import ger samma bokföringsposter).
+
+**Historik:** Sprint 47 (F5a) parser + validator + dry-run; Sprint 48 (F5b)
+databas-integration + wizard.
+
+## 51. Polymorfa payment-batch-operationer (M146)
+
+**M146.** Operationer som hanterar `payment_batches` (pain.001-export,
+validering, aging) ska vara **polymorfa via `batch.batch_type`** — inte
+duplicera kod per typ.
+
+Mönster:
+- Publik funktion tar `batchId`, läser `batch_type` från raden, dispatchar
+  till rätt interna query
+- Delade queries returnerar domän-agnostiska fältnamn (`source_id`,
+  `remittance_ref`) snarare än typ-specifika (`expense_id`,
+  `supplier_invoice_number`)
+- XML/filgeneration är identisk för båda sidor — bara datakällan skiljer
+
+Referens: `pain001-export-service.ts` `getPaymentsForBatch(db, batchId, batchType)`.
+Expense-branch läser `expense_payments JOIN expenses` med
+`supplier_invoice_number AS remittance_ref`. Invoice-branch läser
+`invoice_payments JOIN invoices` med `invoice_number AS remittance_ref`.
+`generatePain001` är helt typ-agnostisk.
+
+**Varför:** M112–M114 etablerade att `payment_batches` är en delad tabell
+för båda sidor. Duplicering av exporter, validerare eller rapporter per
+typ skapar drift-risk där expense-sidan utvecklas men invoice-sidan
+halkar efter (exakt vad som hände mellan S46 och S50 — invoice-branch
+fanns i `getPaymentsForBatch` men hade `NULL AS supplier_invoice_number`
+som aldrig nådde UI:n).
+
+**Konsekvens:** Framtida batch-operationer (t.ex. BGC-returfil-import,
+batch-rapport, eller nya exportformat som SEPA DD) ska implementeras
+polymorft från start. Typ-specifik validering är OK, men koden ska
+dispatchas från en enda entry-point.
+
+Historik: Sprint 46 (F4) implementerade pain.001 för expense-sidan;
+Sprint 50 (F6) öppnade symmetrin för invoice-sidan.
+
+## 52. E2E dialog-bypass-varianter (M147)
+
+**M147.** Native Electron-dialoger (`dialog.showOpenDialog`,
+`showSaveDialog`) kan inte drivas från Playwright. Handlers bypassar dem
+när `E2E_TESTING=true` via fyra varianter i `src/main/utils/e2e-helpers.ts`:
+
+| Dialog-typ | Helper | Env-variabel |
+|---|---|---|
+| Save med känt default-filnamn | `getE2EFilePath(name, 'save')` | `E2E_DOWNLOAD_DIR` |
+| Open-file med känt default-filnamn | `getE2EFilePath(name, 'open')` | `E2E_DOWNLOAD_DIR` + fil måste finnas |
+| Open-file utan default (user väljer) | `getE2EMockOpenFile()` | `E2E_MOCK_OPEN_FILE` |
+| Open-directory | Inline check i handler | `E2E_DOWNLOAD_DIR` |
+
+Alla varianter är guardade av `E2E_TESTING=true`-check och returnerar
+null/no-op i produktion. Testinfrastruktur ansvarar för att sätta env,
+skapa mock-filer, och rensa efter test.
+
+**Regel:** Nya IPC-handlers som öppnar native dialoger MÅSTE inkludera
+bypass med rätt variant. Saknas bypass kan handlern inte testas i E2E
+(Playwright kan inte klicka på OS-nativa dialoger) — motsvarar en
+icke-testbar kontrakt-yta.
+
+Dokumentation: `tests/e2e/README.md` "Dialog bypass (M63)"-sektionen
+listar alla befintliga bypass-callsites och ger test-exempel.
+
+**Historik:** M63 introducerade save-dialog-bypass i tidigt skede.
+Sprint 49 (S49) utvidgade till open-file-utan-default (`E2E_MOCK_OPEN_FILE`
+för SIE4-import) och open-directory (för PDF batch-export).
+
+## 53. E2E-fixtures seedas uteslutande via IPC (M148)
+
+**M148.** All E2E-testdata skapas via `window.api` eller `window.__testApi`
+(IPC-anrop in till main-process), aldrig genom att öppna databasen direkt
+med better-sqlite3 i test-processen. Förankrar M115: Playwright kör mot
+dev-byggd Electron där `better-sqlite3` är kompilerad för Electron-ABI,
+medan test-processen är Node — direkt DB-öppning korrumperar handles eller
+failar ABI-check.
+
+**Konsekvens:** Nya fixtures komponeras som sekvenser av IPC-anrop. Tabell-
+eller tillstånd-poke som inte har ett service-API kräver ny `__test:*`-endpoint
+i `src/main/ipc/test-handlers.ts` (guardad av `FRITT_TEST=1`) — inte direkt SQL
+i test-koden.
+
+**Korsreferens:** M115 (E2E-körmodell), M117 (data-testid-kontrakt).
+
+## 54. Deterministisk tid via getNow() (M150)
+
+**M150.** Main-process affärslogik som läser nuvarande tid MÅSTE använda
+`getNow()` (eller `todayLocalFromNow()`) från `src/main/utils/now.ts`, inte
+`new Date()` direkt. Helperna respekterar `FRITT_NOW` env-variabel när
+`NODE_ENV=test` eller `FRITT_TEST=1` och är annars indistinkt från `new Date()`.
+
+**Callsites som är migrerade (S52-baseline):**
+- `backup-service.ts` — backup-filnamn + pre-restore-timestamp
+- `pre-update-backup.ts` — backup-filnamn
+- `sie4-export-service.ts` — `#GEN`-datum
+- `sie5-export-service.ts` — `Date`-attribut på rotelementet
+- `excel-export-service.ts` — export-metadata-timestamp
+- `pain001-export-service.ts` — XML-timestamp
+- `aging-service.ts` — default `asOfDate` för overdue-beräkning
+- `invoice-service.ts`, `expense-service.ts`, `correction-service.ts` — default
+  fakturadatum och kreditnotedatum
+
+**Undantag (får fortsatt använda `new Date()`):**
+- SQL-nivå `datetime('now','localtime')` — DB-klockan, inte main-process
+- Loggningstimestamps (electron-log)
+- Argumentparsning: `new Date(someString)` konverterar input, inte aktuell tid
+- Renderer-kod: tid i UI läses inte för bokföring
+
+**Konsekvens:** Framtida tidssensitiv kod i main-process ska injicera via
+`getNow()`. Review-regel: PR som introducerar `new Date()` utan argument i
+`src/main/services/` ska avvisas om det inte är explicit undantag ovan.
+
+**Test-API:** `window.__testApi.freezeClock(isoString | null)` sätter/rensar
+`FRITT_NOW` runtime för E2E-tester. Guardad av `FRITT_TEST=1`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

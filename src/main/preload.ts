@@ -270,5 +270,7 @@ if (process.env.FRITT_TEST === '1') {
     getExpenses: (fyId?: number) => ipcRenderer.invoke('__test:getExpenses', fyId),
     setInvoiceStatus: (invoiceId: number, status: string) => ipcRenderer.invoke('__test:setInvoiceStatus', invoiceId, status),
     createFiscalYear: (opts: { companyId: number; startDate: string; endDate: string; yearLabel: string }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
+    freezeClock: (iso: string | null) => ipcRenderer.invoke('__test:freezeClock', iso),
+    forcePeriodState: (periodId: number, closed: boolean) => ipcRenderer.invoke('__test:forcePeriodState', periodId, closed),
   })
 }

@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3'
 import * as iconv from 'iconv-lite'
-import { todayLocal } from '../../../shared/date-utils'
+import { todayLocalFromNow } from '../../utils/now'
 import { mapSie4AccountType } from './sie4-account-type-mapper'
 import { oreToSie4Amount } from './sie4-amount'
 import { calculateKsumma } from './sie4-checksum'
@@ -102,7 +102,7 @@ export function exportSie4(
   // For simplicity, #IB -1 = 0 (we'd need year-2 data). We'll use ibMap for #IB 0.
   // #UB -1 = closing balance of previous year = IB of current year = ibMap
 
-  const genDate = dateToSie4(todayLocal())
+  const genDate = dateToSie4(todayLocalFromNow())
 
   const lines: string[] = []
 

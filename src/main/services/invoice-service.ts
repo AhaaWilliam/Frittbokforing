@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3'
-import { todayLocal } from '../../shared/date-utils'
+import { todayLocalFromNow } from '../utils/now'
 import { checkChronology } from './chronology-guard'
 import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
@@ -1140,7 +1140,7 @@ export function payInvoice(
   },
 ): IpcResult<{ invoice: Invoice; payment: InvoicePayment }> {
   // Pre-flight: block future dates
-  const today = todayLocal()
+  const today = todayLocalFromNow()
   if (input.payment_date > today) {
     return {
       success: false,
@@ -1208,7 +1208,7 @@ export function payInvoicesBulk(
   }
 
   // Block future dates
-  const today = todayLocal()
+  const today = todayLocalFromNow()
   if (input.payment_date > today) {
     return { success: false, error: 'Betalningsdatum kan inte vara i framtiden.', code: 'VALIDATION_ERROR', field: 'payment_date' }
   }
@@ -1499,8 +1499,8 @@ export function createCreditNoteDraft(
       fiscal_year_id: input.fiscal_year_id,
       invoice_type: 'credit_note' as const,
       credits_invoice_id: original.id,
-      invoice_date: todayLocal(),
-      due_date: todayLocal(), // Kreditfakturor har normalt inget förfallodatum — sätts till idag
+      invoice_date: todayLocalFromNow(),
+      due_date: todayLocalFromNow(), // Kreditfakturor har normalt inget förfallodatum — sätts till idag
       payment_terms: original.payment_terms,
       notes: `Krediterar faktura #${original.invoice_number}`,
       currency: 'SEK' as const,

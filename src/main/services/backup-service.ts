@@ -4,7 +4,7 @@ import type Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
 import { getE2EFilePath } from '../utils/e2e-helpers'
-import { todayLocal } from '../../shared/date-utils'
+import { getNow, todayLocalFromNow } from '../utils/now'
 import { migrations } from '../migrations'
 import { closeDb, getDbPath } from '../db'
 import log from 'electron-log/main'
@@ -12,7 +12,7 @@ import log from 'electron-log/main'
 export async function createBackup(
   db: Database.Database,
 ): Promise<{ filePath: string | null }> {
-  const defaultFilename = `fritt-bokforing-backup-${todayLocal()}.db`
+  const defaultFilename = `fritt-bokforing-backup-${todayLocalFromNow()}.db`
 
   // E2E dialog bypass (M63)
   const e2ePath = getE2EFilePath(defaultFilename, 'save')
@@ -178,7 +178,7 @@ export async function restoreBackup(
 
   const dbPath = getDbPath()
   const restoringPath = `${dbPath}.restoring`
-  const timestamp = new Date()
+  const timestamp = getNow()
     .toISOString()
     .slice(0, 19)
     .replace(/[:.]/g, '-')

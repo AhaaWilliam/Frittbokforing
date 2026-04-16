@@ -107,4 +107,38 @@ export function registerTestHandlers(db: Database.Database): void {
 
     return { id: fyId }
   })
+
+  // Freeze/unfreeze the main-process clock by setting FRITT_NOW.
+  // Pass null to unfreeze. Guarded by FRITT_TEST=1 via registration.
+  // See src/main/utils/now.ts (M150).
+  ipcMain.handle('__test:freezeClock', (_event, iso: string | null) => {
+    if (iso === null) {
+      delete process.env.FRITT_NOW
+      return { ok: true }
+    }
+    const parsed = new Date(iso)
+    if (Number.isNaN(parsed.getTime())) {
+      return { ok: false, error: `invalid ISO: ${iso}` }
+    }
+    process.env.FRITT_NOW = iso
+    return { ok: true }
+  })
+
+  // Force an accounting period into closed/open state without going through
+  // the sequential-close flow. Used by read-only-banner E2E tests.
+  ipcMain.handle(
+    '__test:forcePeriodState',
+    (_event, periodId: number, closed: boolean) => {
+      if (closed) {
+        db.prepare(
+          "UPDATE accounting_periods SET is_closed = 1, closed_at = datetime('now','localtime') WHERE id = ?",
+        ).run(periodId)
+      } else {
+        db.prepare(
+          'UPDATE accounting_periods SET is_closed = 0, closed_at = NULL WHERE id = ?',
+        ).run(periodId)
+      }
+      return { ok: true }
+    },
+  )
 }
