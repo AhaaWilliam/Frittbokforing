@@ -210,6 +210,52 @@ describe('B2: Account Statement Service', () => {
     expect(result.account_name).toContain('konto')
   })
 
+  it('summary has correct totals for multiple transactions', () => {
+    const seed = seedBase(db)
+
+    bookInvoice(db, seed, '2026-03-01')
+    bookInvoice(db, seed, '2026-03-15')
+
+    const result = getAccountStatement(db, {
+      fiscal_year_id: seed.fiscalYearId,
+      account_number: '1510',
+    })
+
+    expect(result.summary.transaction_count).toBe(result.lines.length)
+    expect(result.summary.total_debit_ore).toBe(
+      result.lines.reduce((sum, l) => sum + l.debit_ore, 0),
+    )
+    expect(result.summary.total_credit_ore).toBe(
+      result.lines.reduce((sum, l) => sum + l.credit_ore, 0),
+    )
+    expect(result.summary.closing_balance_ore).toBe(
+      result.summary.total_debit_ore - result.summary.total_credit_ore,
+    )
+    // closing_balance should match last line's running_balance
+    if (result.lines.length > 0) {
+      expect(result.summary.closing_balance_ore).toBe(
+        result.lines[result.lines.length - 1].running_balance_ore,
+      )
+    }
+  })
+
+  it('summary is all zeros for empty account', () => {
+    const seed = seedBase(db)
+
+    const result = getAccountStatement(db, {
+      fiscal_year_id: seed.fiscalYearId,
+      account_number: '1930',
+    })
+
+    expect(result.summary).toEqual({
+      opening_balance_ore: 0,
+      total_debit_ore: 0,
+      total_credit_ore: 0,
+      closing_balance_ore: 0,
+      transaction_count: 0,
+    })
+  })
+
   it('FY boundary date is included in filter (string comparison)', () => {
     const seed = seedBase(db)
 

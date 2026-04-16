@@ -1203,6 +1203,59 @@ CREATE INDEX idx_inv_credits ON invoices(credits_invoice_id);`,
 ALTER TABLE expenses ADD COLUMN credits_expense_id INTEGER REFERENCES expenses(id);
 CREATE INDEX idx_exp_credits ON expenses(credits_expense_id);`,
     programmatic: migration030Verify },
+  // Sprint 30: B4 — Immutability-hardening triggers (Q8, Q9, Q10)
+  { sql: `
+-- Q9: source_type kan inte ändras på bokfört verifikat
+CREATE TRIGGER trg_immutable_source_type
+BEFORE UPDATE ON journal_entries
+WHEN OLD.status = 'booked' AND NEW.source_type != OLD.source_type
+BEGIN
+    SELECT RAISE(ABORT, 'source_type kan inte ändras på bokförd verifikation.');
+END;
+
+-- Q10: source_reference kan inte ändras på bokfört verifikat
+CREATE TRIGGER trg_immutable_source_reference
+BEFORE UPDATE ON journal_entries
+WHEN OLD.status = 'booked' AND
+     COALESCE(NEW.source_reference, '') != COALESCE(OLD.source_reference, '')
+BEGIN
+    SELECT RAISE(ABORT, 'source_reference kan inte ändras på bokförd verifikation.');
+END;
+
+-- Q10: corrects_entry_id kan inte ändras efter bokning
+CREATE TRIGGER trg_immutable_corrects_entry_id
+BEFORE UPDATE ON journal_entries
+WHEN OLD.status = 'booked' AND
+     COALESCE(NEW.corrects_entry_id, 0) != COALESCE(OLD.corrects_entry_id, 0)
+BEGIN
+    SELECT RAISE(ABORT, 'corrects_entry_id kan inte ändras på bokförd verifikation.');
+END;
+
+-- Q8: förbjud status → 'corrected' om beroende betalningar finns
+-- Checks both paths: (1) payment verifikat directly, (2) invoice/expense verifikat
+-- via their linked payments table
+CREATE TRIGGER trg_no_correct_with_payments
+BEFORE UPDATE ON journal_entries
+WHEN OLD.status = 'booked' AND NEW.status = 'corrected'
+BEGIN
+    SELECT CASE
+        WHEN EXISTS (SELECT 1 FROM invoice_payments WHERE journal_entry_id = OLD.id)
+          OR EXISTS (SELECT 1 FROM expense_payments WHERE journal_entry_id = OLD.id)
+          OR EXISTS (SELECT 1 FROM invoices i JOIN invoice_payments ip ON ip.invoice_id = i.id WHERE i.journal_entry_id = OLD.id)
+          OR EXISTS (SELECT 1 FROM expenses e JOIN expense_payments ep ON ep.expense_id = e.id WHERE e.journal_entry_id = OLD.id)
+        THEN RAISE(ABORT, 'Kan inte korrigera verifikat med beroende betalningar.')
+    END;
+END;`,
+    programmatic: migration031Verify },
+  // Sprint 33: F46b — quantity-CHECK defense-in-depth (table-recreate, M121)
+  { sql: '-- Migration 032: quantity-CHECK (se programmatic)', programmatic: migration032Programmatic },
+  // Sprint 33: B6 — FTS5 virtual table for global search
+  { sql: `CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
+    entity_type,
+    entity_id,
+    search_text,
+    tokenize='unicode61 remove_diacritics 2'
+  );` },
 ]
 
 /**
@@ -1870,6 +1923,22 @@ function migration028Verify(db: import('better-sqlite3').Database): void {
   if (cols.has('payment_terms_days')) throw new Error('Migration 028 failed: counterparties.payment_terms_days finns kvar')
 }
 
+function migration031Verify(db: import('better-sqlite3').Database): void {
+  const triggers = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='journal_entries'")
+    .all() as { name: string }[]
+  const triggerNames = new Set(triggers.map((t) => t.name))
+  const expected = [
+    'trg_immutable_source_type',
+    'trg_immutable_source_reference',
+    'trg_immutable_corrects_entry_id',
+    'trg_no_correct_with_payments',
+  ]
+  for (const name of expected) {
+    if (!triggerNames.has(name)) throw new Error(`Migration 031 failed: trigger ${name} saknas`)
+  }
+}
+
 function migration030Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'expenses')
   if (!cols.has('expense_type')) throw new Error('Migration 030 failed: expenses.expense_type saknas')
@@ -1939,4 +2008,154 @@ function migration021Verify(db: import('better-sqlite3').Database): void {
   if (!ipCols.has('payment_batch_id')) throw new Error('Migration 021 failed: invoice_payments.payment_batch_id missing')
   const epCols = getTableColumns(db, 'expense_payments')
   if (!epCols.has('payment_batch_id')) throw new Error('Migration 021 failed: expense_payments.payment_batch_id missing')
+}
+
+/**
+ * Migration 032: Sprint 33 F46b — quantity-CHECK defense-in-depth.
+ *
+ * Table-recreate for invoice_lines (CHECK quantity > 0 AND quantity <= 9999.99)
+ * and expense_lines (CHECK quantity >= 1 AND quantity <= 9999).
+ *
+ * Both are leaf tables (no inbound FK) — M121 only, no PRAGMA foreign_keys OFF.
+ * invoice_lines has 1 index (idx_invoice_lines_invoice). No triggers on invoice_lines itself.
+ * expense_lines has 0 indexes, 0 triggers.
+ */
+function migration032Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: check if invoice_lines already has upper-bound CHECK
+  const ilSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'")
+    .get() as { sql: string } | undefined
+  if (ilSchema && ilSchema.sql.includes('9999.99')) return
+
+  // Pre-flight validation — fail early if existing rows violate new CHECK
+  const ilViolations = db
+    .prepare('SELECT COUNT(*) as cnt FROM invoice_lines WHERE quantity <= 0 OR quantity > 9999.99')
+    .get() as { cnt: number }
+  if (ilViolations.cnt > 0) {
+    throw new Error(`F46b pre-flight: ${ilViolations.cnt} invoice_lines rows violate new CHECK (quantity <= 0 OR > 9999.99)`)
+  }
+
+  const elViolations = db
+    .prepare('SELECT COUNT(*) as cnt FROM expense_lines WHERE quantity < 1 OR quantity > 9999')
+    .get() as { cnt: number }
+  if (elViolations.cnt > 0) {
+    throw new Error(`F46b pre-flight: ${elViolations.cnt} expense_lines rows violate new CHECK (quantity < 1 OR > 9999)`)
+  }
+
+  // === invoice_lines table-recreate ===
+  // trg_invoice_lines_account_number_on_finalize is on `invoices` but references
+  // `invoice_lines` in its body — must be dropped before DROP TABLE and recreated after.
+  db.exec('DROP TRIGGER IF EXISTS trg_invoice_lines_account_number_on_finalize;')
+
+  db.exec(`
+    CREATE TABLE invoice_lines_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      product_id INTEGER REFERENCES products(id),
+      description TEXT NOT NULL DEFAULT '',
+      quantity REAL NOT NULL DEFAULT 1 CHECK (quantity > 0 AND quantity <= 9999.99),
+      unit_price_ore INTEGER NOT NULL DEFAULT 0,
+      vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
+      line_total_ore INTEGER NOT NULL DEFAULT 0,
+      vat_amount_ore INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      account_number TEXT REFERENCES accounts(account_number),
+      CHECK (unit_price_ore >= 0),
+      CHECK (line_total_ore >= 0)
+    );
+    INSERT INTO invoice_lines_new (id, invoice_id, product_id, description,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at, account_number)
+    SELECT id, invoice_id, product_id, description,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at, account_number
+    FROM invoice_lines;
+    DROP TABLE invoice_lines;
+    ALTER TABLE invoice_lines_new RENAME TO invoice_lines;
+  `)
+
+  // Recreate index (M121)
+  db.exec('CREATE INDEX idx_invoice_lines_invoice ON invoice_lines(invoice_id);')
+
+  // Recreate trigger (cross-table reference from invoices → invoice_lines)
+  db.exec(`
+    CREATE TRIGGER trg_invoice_lines_account_number_on_finalize
+    BEFORE UPDATE OF status ON invoices
+    WHEN OLD.status = 'draft' AND NEW.status = 'unpaid'
+    BEGIN
+      SELECT CASE
+        WHEN EXISTS (
+          SELECT 1 FROM invoice_lines
+          WHERE invoice_id = NEW.id
+            AND product_id IS NULL
+            AND account_number IS NULL
+        )
+        THEN RAISE(ABORT, 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.')
+      END;
+    END;
+  `)
+
+  // === expense_lines table-recreate ===
+  db.exec(`
+    CREATE TABLE expense_lines_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+      description TEXT NOT NULL DEFAULT '',
+      account_number TEXT NOT NULL REFERENCES accounts(account_number),
+      quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 1 AND quantity <= 9999),
+      unit_price_ore INTEGER NOT NULL DEFAULT 0,
+      vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
+      line_total_ore INTEGER NOT NULL DEFAULT 0,
+      vat_amount_ore INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO expense_lines_new (id, expense_id, description, account_number,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at)
+    SELECT id, expense_id, description, account_number,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at
+    FROM expense_lines;
+    DROP TABLE expense_lines;
+    ALTER TABLE expense_lines_new RENAME TO expense_lines;
+  `)
+
+  // expense_lines has no indexes or triggers to recreate
+
+  // Verify
+  migration032Verify(db)
+}
+
+function migration032Verify(db: import('better-sqlite3').Database): void {
+  // 1. invoice_lines has upper-bound CHECK
+  const ilSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'")
+    .get() as { sql: string }
+  if (!ilSchema.sql.includes('9999.99')) {
+    throw new Error('Migration 032 failed: invoice_lines missing quantity upper-bound CHECK')
+  }
+
+  // 2. expense_lines has CHECK with integer bounds
+  const elSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='expense_lines'")
+    .get() as { sql: string }
+  if (!elSchema.sql.includes('9999')) {
+    throw new Error('Migration 032 failed: expense_lines missing quantity upper-bound CHECK')
+  }
+
+  // 3. Index recreated
+  const idx = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_invoice_lines_invoice'")
+    .get()
+  if (!idx) throw new Error('Migration 032 failed: idx_invoice_lines_invoice saknas')
+
+  // 4. Total trigger count unchanged (16 triggers in current schema)
+  const triggerCount = db
+    .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+    .get() as { cnt: number }
+  if (triggerCount.cnt !== 16) {
+    throw new Error(`Migration 032 failed: expected 16 triggers, found ${triggerCount.cnt}`)
+  }
 }

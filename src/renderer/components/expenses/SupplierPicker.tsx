@@ -9,6 +9,7 @@ interface SupplierPickerProps {
     default_payment_terms: number
   }) => void
   disabled?: boolean
+  testId?: string
   'aria-invalid'?: boolean
   'aria-describedby'?: string
 }
@@ -17,6 +18,7 @@ export function SupplierPicker({
   value,
   onChange,
   disabled,
+  testId,
   ...ariaProps
 }: SupplierPickerProps) {
   const [search, setSearch] = useState('')
@@ -123,6 +125,7 @@ export function SupplierPicker({
         onFocus={() => setOpen(true)}
         placeholder="Sök leverantör..."
         disabled={disabled}
+        data-testid={testId}
         aria-label="Sök leverantör"
         aria-invalid={ariaProps['aria-invalid'] || undefined}
         aria-describedby={ariaProps['aria-describedby']}

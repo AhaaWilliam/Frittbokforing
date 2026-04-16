@@ -411,6 +411,55 @@ för revisorn som arbetar i ett annat system.
 **Konsekvens:** Framtida korsrefererade transaktioner (korrigeringsverifikat,
 makuleringar) inkluderar referens i description-fältet.
 
+## 45. Korrigeringsverifikat — en-gångs-lås (M140)
+
+**M140.** Korrigeringsverifikat (`corrects_entry_id IS NOT NULL`) kan inte
+själva korrigeras (Q12-guard). Originalet kan inte korrigeras en andra gång
+(`corrected_by_id IS NOT NULL` → guard). Detta ger ett **permanent lås efter
+en korrigering**.
+
+**Medvetet val.** Kedjor av korrigeringar (korrigera korrigeringen, sedan
+korrigera den korrigeringen) skapar spårbarhetskaos utan bokföringsmässig
+nytta. BFL 5 kap 5§ kräver tydlig referens vid rättelse — kedjekorrigeringar
+gör referenserna otydliga.
+
+**Workflow vid fel i korrigeringen:** Skapa en ny manuell bokföringsorder
+(C-serie) som justerar de berörda kontona. Ingen automatisk korsreferens —
+revisorn dokumenterar i description manuellt. Detta är avsiktligt: systemet
+ska inte uppmuntra korrigeringskedjor.
+
+**Varför inte allow-chain?** Varje länk i kedjan kräver att alla
+föregående verifikat är konsekventa. Ett kedjekorrigeringssystem måste
+spåra transitiv net-effekt, hantera partiella korrigeringar och
+presentera kedjan begripligt i kontoutdrag och SIE-export. Komplexiteten
+är oproportionerlig mot nyttan — manuell C-serie-rättelse täcker alla
+edge-cases med minimal systemkomplexitet.
+
+## 46. Cross-table trigger-inventering vid table-recreate (M141)
+
+**M141.** Vid table-recreate av tabell T ska **alla triggers på ANDRA tabeller
+som refererar T i sin body** inventeras och hanteras. M121 täcker triggers
+attached till T — M141 täcker triggers attached till X som refererar T.
+
+**Inventerings-query:**
+```sql
+SELECT name, tbl_name, sql FROM sqlite_master
+WHERE type='trigger' AND sql LIKE '%T%' AND tbl_name != 'T';
+```
+
+**Hanteringsmönster:** DROP trigger före DROP TABLE T, återskapa trigger
+efter ALTER TABLE T_new RENAME TO T.
+
+**Historik:** Sprint 33 migration 032 (F46b) upptäckte att
+`trg_invoice_lines_account_number_on_finalize` (attached till `invoices`)
+refererar `invoice_lines` i sin body. DROP TABLE `invoice_lines` orsakade
+"no such table" vid trigger-evaluering. Fixat genom explicit DROP + recreate
+av cross-table-triggern.
+
+**Konsekvens:** Framtida table-recreate (oavsett M121 eller M122) ska köra
+inventerings-queryn som pre-flight och dokumentera resultatet i migrations-
+kommentaren.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

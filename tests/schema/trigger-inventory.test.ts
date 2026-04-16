@@ -15,13 +15,17 @@ const EXPECTED_TRIGGERS = [
   { name: 'trg_check_period_on_booking', tbl_name: 'journal_entries' },
   { name: 'trg_immutable_booked_entry_delete', tbl_name: 'journal_entries' },
   { name: 'trg_immutable_booked_entry_update', tbl_name: 'journal_entries' },
+  { name: 'trg_immutable_corrects_entry_id', tbl_name: 'journal_entries' },
+  { name: 'trg_immutable_source_reference', tbl_name: 'journal_entries' },
+  { name: 'trg_immutable_source_type', tbl_name: 'journal_entries' },
+  { name: 'trg_no_correct_with_payments', tbl_name: 'journal_entries' },
   { name: 'trg_immutable_booked_line_delete', tbl_name: 'journal_entry_lines' },
   { name: 'trg_immutable_booked_line_insert', tbl_name: 'journal_entry_lines' },
   { name: 'trg_immutable_booked_line_update', tbl_name: 'journal_entry_lines' },
 ] as const
 
 describe('Trigger inventory', () => {
-  test('matches expected list (12 triggers)', () => {
+  test('matches expected list (16 triggers)', () => {
     const db = createTestDb()
     const actual = db.prepare(
       "SELECT name, tbl_name FROM sqlite_master WHERE type='trigger' ORDER BY tbl_name, name"

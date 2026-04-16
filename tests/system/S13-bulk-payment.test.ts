@@ -190,7 +190,8 @@ describe('Migration 021: payment_batches + auto_bank_fee', () => {
 
   it('idempotent: second run does not throw', async () => {
     const mod = await import('../../src/main/migrations')
-    const m021 = mod.migrations[mod.migrations.length - 1]
+    // Migration 021 is at 0-based index 20
+    const m021 = mod.migrations[20]
     expect(() => m021.programmatic!(ctx.db)).not.toThrow()
   })
 })

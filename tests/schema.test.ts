@@ -105,11 +105,17 @@ describe('Struktur', () => {
       'price_list_items',
       'price_lists',
       'products',
+      'search_index',
+      'search_index_config',
+      'search_index_content',
+      'search_index_data',
+      'search_index_docsize',
+      'search_index_idx',
       'users',
       'vat_codes',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(22)
+    expect(tables.length).toBe(28)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -128,7 +134,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(30) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(33) // S48: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

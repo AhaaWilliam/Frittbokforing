@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import { migrations } from '../../src/main/migrations'
+import { registerCustomFunctions } from '../../src/main/db-functions'
 
 // Migration indexes (0-based) that require PRAGMA foreign_keys = OFF outside
 // the transaction due to table-recreate on tables with inbound FK. See M122 in CLAUDE.md.
@@ -13,6 +14,7 @@ export function createTestDb(): Database.Database {
   const testDb = new Database(':memory:')
   testDb.pragma('journal_mode = WAL')
   testDb.pragma('foreign_keys = ON')
+  registerCustomFunctions(testDb)
   for (let i = 0; i < migrations.length; i++) {
     const migration = migrations[i]
 

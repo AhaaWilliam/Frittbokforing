@@ -42,7 +42,7 @@ afterEach(() => {
 describe('Migration 011', () => {
   it('sätter user_version till 11', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(30) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(33) // S48: Uppdatera vid nya migrationer
   })
 
   it('manual_entries-tabell skapas', () => {
@@ -74,7 +74,7 @@ describe('Migration 011', () => {
         )
         .get() as { c: number }
     ).c
-    expect(count).toBe(22)
+    expect(count).toBe(28)
   })
 })
 
@@ -576,7 +576,7 @@ describe('List finalized', () => {
     expect(list.length).toBe(1)
     expect(list[0].verification_series).toBe('C')
     expect(list[0].verification_number).toBe(1)
-    expect(list[0].total_amount).toBe(100_000)
+    expect(list[0].total_amount_ore).toBe(100_000)
   })
 })
 

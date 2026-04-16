@@ -3,6 +3,8 @@ import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
 import { migrations } from './migrations'
+import { registerCustomFunctions } from './db-functions'
+import { rebuildSearchIndex } from './services/search-service'
 
 import { resolveDbPath } from './db-path'
 
@@ -23,7 +25,15 @@ export function getDb(): Database.Database {
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
 
+    registerCustomFunctions(db)
     runMigrations(db)
+
+    // FTS5 rebuild — best-effort, search falls back to LIKE if this fails (D2)
+    try {
+      rebuildSearchIndex(db)
+    } catch (err) {
+      console.error('FTS5 rebuild failed, falling back to LIKE search:', err) // like-exempt: log message, not SQL
+    }
   }
   return db
 }

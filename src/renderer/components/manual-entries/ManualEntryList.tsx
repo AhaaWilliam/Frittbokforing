@@ -13,9 +13,10 @@ import {
 interface ManualEntryListProps {
   onCreate: () => void
   onEdit: (id: number) => void
+  onView?: (id: number) => void
 }
 
-export function ManualEntryList({ onCreate, onEdit }: ManualEntryListProps) {
+export function ManualEntryList({ onCreate, onEdit, onView }: ManualEntryListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
   const fiscalYearId = activeFiscalYear?.id
 
@@ -93,6 +94,7 @@ export function ManualEntryList({ onCreate, onEdit }: ManualEntryListProps) {
                   <th className="pb-2 pr-4 font-medium">Verifikation</th>
                   <th className="pb-2 pr-4 font-medium">Datum</th>
                   <th className="pb-2 pr-4 font-medium">Beskrivning</th>
+                  <th className="pb-2 pr-4 font-medium">Status</th>
                   <th className="pb-2 text-right font-medium">Belopp</th>
                 </tr>
               </thead>
@@ -100,7 +102,8 @@ export function ManualEntryList({ onCreate, onEdit }: ManualEntryListProps) {
                 {entries.map((entry) => (
                     <tr
                       key={entry.id}
-                      className="border-b last:border-0 hover:bg-muted/30"
+                      className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
+                      onClick={() => onView?.(entry.id)}
                     >
                       <td className="py-2 pr-4 font-mono text-xs">
                         {entry.verification_series}{entry.verification_number}
@@ -109,8 +112,20 @@ export function ManualEntryList({ onCreate, onEdit }: ManualEntryListProps) {
                       <td className="py-2 pr-4">
                         {entry.description || '-'}
                       </td>
+                      <td className="py-2 pr-4">
+                        {entry.je_status === 'corrected' && (
+                          <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                            Korrigerad
+                          </span>
+                        )}
+                        {entry.corrects_entry_id != null && (
+                          <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            Korrigering
+                          </span>
+                        )}
+                      </td>
                       <td className="py-2 text-right">
-                        {formatKr(entry.total_amount)}
+                        {formatKr(entry.total_amount_ore)}
                       </td>
                     </tr>
                   ),

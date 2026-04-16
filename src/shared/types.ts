@@ -44,6 +44,12 @@ export type ErrorCode =
   | 'STALE_DATA'
   | 'DUPLICATE_FISCAL_YEAR'
   | 'CREDIT_NOTE_ORIGINAL_NOT_FOUND'
+  | 'ENTRY_NOT_FOUND'
+  | 'ENTRY_NOT_BOOKED'
+  | 'ENTRY_ALREADY_CORRECTED'
+  | 'ENTRY_IS_CORRECTION'
+  | 'HAS_DEPENDENT_PAYMENTS'
+  | 'PERIOD_CLOSED'
   | 'UNEXPECTED_ERROR'
 
 // === Page navigation ===
@@ -61,6 +67,7 @@ export type PageId =
   | 'manual-entries'
   | 'accounts'
   | 'suppliers'
+  | 'account-statement'
 
 // === Company ===
 export interface Company {
@@ -354,6 +361,8 @@ export interface JournalEntry {
   description: string
   status: string
   source_type: string
+  corrects_entry_id: number | null
+  corrected_by_id: number | null
   created_at: string
 }
 
@@ -603,7 +612,11 @@ export interface ManualEntryListItem {
   description: string | null
   verification_number: number
   verification_series: string
-  total_amount: number
+  total_amount_ore: number
+  journal_entry_id: number
+  je_status: string
+  corrects_entry_id: number | null
+  corrected_by_id: number | null
 }
 
 // === Report types ===

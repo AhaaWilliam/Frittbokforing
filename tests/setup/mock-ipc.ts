@@ -14,7 +14,27 @@
  * används bara när FRITT_TEST=1.
  */
 import { vi, afterEach } from 'vitest'
+import { z } from 'zod'
 import { channelMap, type ChannelName } from '../../src/shared/ipc-schemas'
+
+// ── IpcResult shape validation (F57) ─────────────────────────────────
+
+const IpcSuccessSchema = z.object({
+  success: z.literal(true),
+  data: z.unknown(),
+}).strict()
+
+const IpcErrorSchema = z.object({
+  success: z.literal(false),
+  error: z.string(),
+  code: z.string(),
+  field: z.string().optional(),
+}).strict()
+
+const IpcResultSchema = z.discriminatedUnion('success', [
+  IpcSuccessSchema,
+  IpcErrorSchema,
+])
 
 // ── No-schema channels ────────────────────────────────────────────────
 const NO_SCHEMA_CHANNELS = [
@@ -26,6 +46,18 @@ const NO_SCHEMA_CHANNELS = [
   'backup:restore-dialog',
   'settings:get',
   'settings:set',
+  // Channels that return raw data (not IpcResult-wrapped) — F57 exempt
+  'account:list',
+  'account:list-all',
+  'counterparty:list',
+  'expense:get-draft',
+  'invoice:next-number',
+  'manual-entry:list',
+  'manual-entry:list-drafts',
+  'product:get-price-for-customer',
+  'product:list',
+  'result:net',
+  'vat-code:list',
 ] as const
 
 type NoSchemaChannel = (typeof NO_SCHEMA_CHANNELS)[number]
@@ -112,6 +144,9 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   listManualEntryDrafts: 'manual-entry:list-drafts',
   listManualEntries: 'manual-entry:list',
   finalizeManualEntry: 'manual-entry:finalize',
+  // Journal Entry Corrections
+  correctJournalEntry: 'journal-entry:correct',
+  canCorrectJournalEntry: 'journal-entry:can-correct',
   // Dashboard & Reports
   getDashboardSummary: 'dashboard:summary',
   getVatReport: 'vat:report',
@@ -123,6 +158,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   exportSie4: 'export:sie4',
   exportExcel: 'export:excel',
   exportWriteFile: 'export:write-file',
+  // Global Search
+  globalSearch: 'search:global',
   // Settings
   getSetting: 'settings:get',
   setSetting: 'settings:set',
@@ -220,8 +257,18 @@ export function setupMockIpc(): void {
   }
 }
 
-/** Override response for a specific channel. */
+/** Override response for a specific channel. Validates IpcResult shape (F57). */
 export function mockIpcResponse(channel: string, response: unknown): void {
+  if (!noSchemaSet.has(channel)) {
+    const parsed = IpcResultSchema.safeParse(response)
+    if (!parsed.success) {
+      throw new Error(
+        `mockIpcResponse('${channel}'): response does not match IpcResult shape. ` +
+        `Got: ${JSON.stringify(response).slice(0, 200)}. ` +
+        `Error: ${parsed.error.issues[0]?.message ?? 'unknown'}`
+      )
+    }
+  }
   overrides.set(channel, { type: 'response', value: response })
 }
 

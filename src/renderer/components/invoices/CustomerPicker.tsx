@@ -8,11 +8,12 @@ interface CustomerPickerProps {
     name: string
     default_payment_terms: number
   }) => void
+  testId?: string
   'aria-invalid'?: boolean
   'aria-describedby'?: string
 }
 
-export function CustomerPicker({ value, onChange, ...ariaProps }: CustomerPickerProps) {
+export function CustomerPicker({ value, onChange, testId, ...ariaProps }: CustomerPickerProps) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [open, setOpen] = useState(false)
@@ -88,6 +89,7 @@ export function CustomerPicker({ value, onChange, ...ariaProps }: CustomerPicker
         }}
         onFocus={() => setOpen(true)}
         placeholder="S&ouml;k kund..."
+        data-testid={testId}
         aria-label="Sök kund"
         aria-invalid={ariaProps['aria-invalid'] || undefined}
         aria-describedby={ariaProps['aria-describedby']}

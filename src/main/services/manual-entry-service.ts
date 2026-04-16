@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { validateAccountsActive } from './account-service'
+import { rebuildSearchIndex } from './search-service'
 import type {
   ManualEntry,
   ManualEntryWithLines,
@@ -223,7 +224,11 @@ export function listManualEntries(
       me.description,
       je.verification_number,
       je.verification_series,
-      COALESCE((SELECT SUM(jel.debit_ore) FROM journal_entry_lines jel WHERE jel.journal_entry_id = je.id), 0) as total_amount
+      COALESCE((SELECT SUM(jel.debit_ore) FROM journal_entry_lines jel WHERE jel.journal_entry_id = je.id), 0) as total_amount_ore,
+      me.journal_entry_id,
+      je.status as je_status,
+      je.corrects_entry_id,
+      je.corrected_by_id
     FROM manual_entries me
     JOIN journal_entries je ON me.journal_entry_id = je.id
     WHERE me.fiscal_year_id = ? AND me.status = 'finalized'
@@ -373,6 +378,7 @@ export function finalizeManualEntry(
       return { journalEntryId, verificationNumber }
     })()
 
+    try { rebuildSearchIndex(db) } catch { /* log only */ }
     return { success: true, data: result }
   } catch (err: unknown) {
     // M100: Strukturerade fel från validation helpers och interna throw-sites
