@@ -30,6 +30,8 @@ import type {
   UpdateManualEntryDraftInput,
   BulkPaymentResult,
   IpcResult,
+  AccrualScheduleWithStatus,
+  CreateAccrualScheduleInput,
   BudgetLineMeta,
   BudgetTarget,
   BudgetVarianceReport,
@@ -847,6 +849,50 @@ export function useGlobalSearch(
       query,
     }),
     { enabled: !!fiscalYearId && query.length >= 2 },
+  )
+}
+
+// === Accruals ===
+
+export function useAccrualSchedules(fiscalYearId: number | undefined) {
+  return useIpcQuery<AccrualScheduleWithStatus[]>(
+    queryKeys.accrualSchedules(fiscalYearId!),
+    () => window.api.getAccrualSchedules({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId },
+  )
+}
+
+export function useCreateAccrual() {
+  return useIpcMutation<CreateAccrualScheduleInput, { id: number }>(
+    (data) => window.api.createAccrualSchedule(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useExecuteAccrual() {
+  return useIpcMutation<
+    { schedule_id: number; period_number: number },
+    { journalEntryId: number }
+  >(
+    (data) => window.api.executeAccrual(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useExecuteAllAccruals() {
+  return useIpcMutation<
+    { fiscal_year_id: number; period_number: number },
+    { executed: number; failed: Array<{ scheduleId: number; error: string }> }
+  >(
+    (data) => window.api.executeAllAccruals(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useDeactivateAccrual() {
+  return useIpcMutation<{ schedule_id: number }, void>(
+    (data) => window.api.deactivateAccrual(data),
+    { invalidateAll: true },
   )
 }
 

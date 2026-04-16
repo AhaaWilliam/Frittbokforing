@@ -796,6 +796,54 @@ export const BudgetCopySchema = z
   })
   .strict()
 
+// === Accruals (Periodiseringar) ===
+export const AccrualCreateSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    description: z.string().min(1),
+    accrual_type: z.enum([
+      'prepaid_expense',
+      'accrued_expense',
+      'prepaid_income',
+      'accrued_income',
+    ]),
+    balance_account: z.string().min(1),
+    result_account: z.string().min(1),
+    total_amount_ore: z.number().int().positive(),
+    period_count: z.number().int().min(2).max(12),
+    start_period: z.number().int().min(1).max(12),
+  })
+  .strict()
+  .refine((d) => d.start_period + d.period_count - 1 <= 12, {
+    message: 'Periodiseringen får inte sträcka sig utanför räkenskapsåret',
+  })
+
+export const AccrualListSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const AccrualExecuteSchema = z
+  .object({
+    schedule_id: z.number().int().positive(),
+    period_number: z.number().int().min(1).max(12),
+  })
+  .strict()
+
+export const AccrualExecuteAllSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    period_number: z.number().int().min(1).max(12),
+  })
+  .strict()
+
+export const AccrualDeactivateSchema = z
+  .object({
+    schedule_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === Aging Report ===
 export const AgingInputSchema = z
   .object({
@@ -936,6 +984,13 @@ export const channelMap = {
   // Aging Report
   'aging:receivables': AgingInputSchema,
   'aging:payables': AgingInputSchema,
+
+  // Accruals
+  'accrual:create': AccrualCreateSchema,
+  'accrual:list': AccrualListSchema,
+  'accrual:execute': AccrualExecuteSchema,
+  'accrual:execute-all': AccrualExecuteAllSchema,
+  'accrual:deactivate': AccrualDeactivateSchema,
 
   // Budget
   'budget:lines': BudgetLinesSchema,

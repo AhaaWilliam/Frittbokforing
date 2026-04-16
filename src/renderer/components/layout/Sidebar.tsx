@@ -15,6 +15,7 @@ import {
   Truck,
   Clock,
   PiggyBank,
+  CalendarClock,
   type LucideIcon,
 } from 'lucide-react'
 import type { Company } from '../../../shared/types'
@@ -76,6 +77,7 @@ export function Sidebar({ company }: SidebarProps) {
         <SidebarLink to="/income" icon={ArrowDownCircle} label="Pengar in" testId="nav-income" />
         <SidebarLink to="/expenses" icon={ArrowUpCircle} label="Pengar ut" testId="nav-expenses" />
         <SidebarLink to="/manual-entries" icon={FileText} label="Bokföringsorder" testId="nav-manual-entries" />
+        <SidebarLink to="/accruals" icon={CalendarClock} label="Periodiseringar" testId="nav-accruals" />
 
         <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Register

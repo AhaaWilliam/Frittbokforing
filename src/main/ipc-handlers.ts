@@ -108,6 +108,13 @@ import {
   getAgingPayables,
 } from './services/aging-service'
 import {
+  createAccrualSchedule,
+  getAccrualSchedules,
+  executeAccrualForPeriod,
+  executeAllForPeriod,
+  deactivateSchedule,
+} from './services/accrual-service'
+import {
   getBudgetLines,
   getBudgetTargets,
   saveBudgetTargets,
@@ -175,6 +182,11 @@ import {
   CanCorrectSchema,
   GlobalSearchSchema,
   AgingInputSchema,
+  AccrualCreateSchema,
+  AccrualListSchema,
+  AccrualExecuteSchema,
+  AccrualExecuteAllSchema,
+  AccrualDeactivateSchema,
   BudgetLinesSchema,
   BudgetGetSchema,
   BudgetSaveSchema,
@@ -759,6 +771,27 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('aging:payables', wrapIpcHandler(AgingInputSchema, (data) =>
     getAgingPayables(db, data.fiscal_year_id, data.as_of_date),
+  ))
+
+  // === Accruals ===
+  ipcMain.handle('accrual:create', wrapIpcHandler(AccrualCreateSchema, (data) =>
+    createAccrualSchedule(db, data),
+  ))
+
+  ipcMain.handle('accrual:list', wrapIpcHandler(AccrualListSchema, (data) =>
+    getAccrualSchedules(db, data.fiscal_year_id),
+  ))
+
+  ipcMain.handle('accrual:execute', wrapIpcHandler(AccrualExecuteSchema, (data) =>
+    executeAccrualForPeriod(db, data.schedule_id, data.period_number),
+  ))
+
+  ipcMain.handle('accrual:execute-all', wrapIpcHandler(AccrualExecuteAllSchema, (data) =>
+    executeAllForPeriod(db, data.fiscal_year_id, data.period_number),
+  ))
+
+  ipcMain.handle('accrual:deactivate', wrapIpcHandler(AccrualDeactivateSchema, (data) =>
+    deactivateSchedule(db, data.schedule_id),
   ))
 
   // === Budget ===

@@ -1268,6 +1268,32 @@ END;`,
     UNIQUE(fiscal_year_id, line_id, period_number)
   );
   CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);` },
+  // Sprint 45: Feature 3 — Periodiseringar (accruals)
+  { sql: `CREATE TABLE accrual_schedules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+    description TEXT NOT NULL,
+    accrual_type TEXT NOT NULL CHECK (accrual_type IN (
+      'prepaid_expense', 'accrued_expense', 'prepaid_income', 'accrued_income'
+    )),
+    balance_account TEXT NOT NULL REFERENCES accounts(account_number),
+    result_account TEXT NOT NULL REFERENCES accounts(account_number),
+    total_amount_ore INTEGER NOT NULL CHECK (total_amount_ore > 0),
+    period_count INTEGER NOT NULL CHECK (period_count >= 2 AND period_count <= 12),
+    start_period INTEGER NOT NULL CHECK (start_period >= 1 AND start_period <= 12),
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE accrual_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    accrual_schedule_id INTEGER NOT NULL REFERENCES accrual_schedules(id),
+    journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
+    period_number INTEGER NOT NULL,
+    amount_ore INTEGER NOT NULL CHECK (amount_ore > 0),
+    entry_type TEXT NOT NULL CHECK (entry_type IN ('accrual', 'reversal')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX idx_accrual_entries_schedule ON accrual_entries (accrual_schedule_id);` },
 ]
 
 /**

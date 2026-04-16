@@ -73,6 +73,10 @@ export const queryKeys = {
   globalSearch: (fyId: number, query: string) =>
     ['global-search', fyId, query] as const,
 
+  // === Accruals ===
+  accrualSchedules: (fyId: number) => ['accrual-schedules', fyId] as const,
+  allAccruals: () => ['accrual-schedules'] as const,
+
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
   budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,

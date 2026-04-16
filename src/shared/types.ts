@@ -857,3 +857,49 @@ export interface BudgetVarianceLine extends BudgetLineMeta {
 export interface BudgetVarianceReport {
   lines: BudgetVarianceLine[]
 }
+
+// === Accruals (Periodiseringar) ===
+
+export type AccrualType =
+  | 'prepaid_expense'
+  | 'accrued_expense'
+  | 'prepaid_income'
+  | 'accrued_income'
+
+export interface AccrualSchedule {
+  id: number
+  fiscal_year_id: number
+  description: string
+  accrual_type: AccrualType
+  balance_account: string
+  result_account: string
+  total_amount_ore: number
+  period_count: number
+  start_period: number
+  is_active: number
+  created_at: string
+}
+
+export interface CreateAccrualScheduleInput {
+  fiscal_year_id: number
+  description: string
+  accrual_type: AccrualType
+  balance_account: string
+  result_account: string
+  total_amount_ore: number
+  period_count: number
+  start_period: number
+}
+
+export interface AccrualPeriodStatus {
+  periodNumber: number
+  executed: boolean
+  journalEntryId?: number
+  amountOre: number
+}
+
+export interface AccrualScheduleWithStatus extends AccrualSchedule {
+  periodStatuses: AccrualPeriodStatus[]
+  executedCount: number
+  remainingOre: number
+}

@@ -1,5 +1,50 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 45 -- Feature 3: Periodiseringar (Accruals) ✅ KLAR
+
+Session S45. Periodiseringsscheman med C-serie verifikat, per-period-körning, execute-all.
+
+**Testbaslinje:** 2134 → 2173 vitest (+39). 0 skipped. 214 testfiler.
+**PRAGMA user_version:** 35 (migration 035 — accrual_schedules + accrual_entries).
+**Inga nya M-principer.**
+**Nya filer:** accrual-service.ts, PageAccruals.tsx, session-45-accruals.test.ts,
+PageAccruals.test.tsx, ipc-accrual.test.ts.
+
+### Leverabler
+
+#### 1. Migration 035 — accrual_schedules + accrual_entries
+- `accrual_schedules`: accrual_type (4 typer), balance/result-konto, period-intervall
+- `accrual_entries`: trackar körda perioder med journal_entry_id
+- CHECK-constraints: accrual_type IN(...), period_count 2–12, amount_ore > 0
+
+#### 2. accrual-service.ts (5 funktioner)
+- `createAccrualSchedule` — validerar kontoklass (1–2 balans, 3–8 resultat), period-overflow
+- `getAccrualSchedules` — med periodStatuses, executedCount, remainingOre
+- `executeAccrualForPeriod` — C-serie verifikat, D/K per accrual_type, chronology (M142), period-check (M93)
+- `executeAllForPeriod` — best-effort, samlar failures
+- `deactivateSchedule` — soft-delete
+
+#### 3. D/K-logik per accrual_type
+- prepaid_expense: D balans / K resultat
+- accrued_expense: D resultat / K balans
+- prepaid_income: D resultat / K balans
+- accrued_income: D balans / K resultat
+
+#### 4. IPC (5 kanaler) + UI
+- accrual:create/list/execute/execute-all/deactivate
+- PageAccruals.tsx: schedule-kort med progress-bar, per-period-badges, create-dialog
+- Sidebar: CalendarClock, "Periodiseringar" under Hantera
+
+#### 5. Tester (39 nya)
+- **session-45-accruals.test.ts** (16): create, validate, execute, D/K, uneven division, execute-all, deactivate, migration
+- **PageAccruals.test.tsx** (10): render, badges, progress, execute, create dialog, empty state, a11y
+- **ipc-accrual.test.ts** (13): schema-validering (5 kanaler, period overflow, types)
+
+### Stängda items
+- **Feature 3** Periodiseringar: STÄNGD
+
+### Backlog: 0 öppna findings
+
 ## Sprint 44 -- Feature 2: Budget — budget vs utfall ✅ KLAR
 
 Session S44. Budget-funktion med inmatning + avvikelserapport per resultaträkningsrad × 12 perioder.

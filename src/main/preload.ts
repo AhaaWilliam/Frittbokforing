@@ -220,6 +220,17 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('aging:receivables', data),
   getAgingPayables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
     ipcRenderer.invoke('aging:payables', data),
+  // Accruals
+  createAccrualSchedule: (data: { fiscal_year_id: number; description: string; accrual_type: string; balance_account: string; result_account: string; total_amount_ore: number; period_count: number; start_period: number }) =>
+    ipcRenderer.invoke('accrual:create', data),
+  getAccrualSchedules: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('accrual:list', data),
+  executeAccrual: (data: { schedule_id: number; period_number: number }) =>
+    ipcRenderer.invoke('accrual:execute', data),
+  executeAllAccruals: (data: { fiscal_year_id: number; period_number: number }) =>
+    ipcRenderer.invoke('accrual:execute-all', data),
+  deactivateAccrual: (data: { schedule_id: number }) =>
+    ipcRenderer.invoke('accrual:deactivate', data),
   // Budget
   getBudgetLines: () =>
     ipcRenderer.invoke('budget:lines', {}),

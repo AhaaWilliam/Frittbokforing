@@ -96,6 +96,16 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   'invoice:payBulk': BulkPaymentResultSchema,
   'expense:payBulk': BulkPaymentResultSchema,
 
+  // Accruals
+  'accrual:create': z.object({ id: z.number() }),
+  'accrual:list': z.array(z.object({ id: z.number(), description: z.string() }).passthrough()),
+  'accrual:execute': z.object({ journalEntryId: z.number() }),
+  'accrual:execute-all': z.object({
+    executed: z.number(),
+    failed: z.array(z.object({ scheduleId: z.number(), error: z.string() })),
+  }),
+  'accrual:deactivate': z.undefined(),
+
   // Budget
   'budget:lines': z.array(z.object({
     lineId: z.string(),

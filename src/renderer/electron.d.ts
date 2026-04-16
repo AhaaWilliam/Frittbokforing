@@ -374,6 +374,12 @@ interface ElectronAPI {
     fiscal_year_id: number
     as_of_date?: string
   }) => Promise<IpcResult<import('../main/services/aging-service').AgingReport>>
+  // Accruals
+  createAccrualSchedule: (data: import('../shared/types').CreateAccrualScheduleInput) => Promise<IpcResult<{ id: number }>>
+  getAccrualSchedules: (data: { fiscal_year_id: number }) => Promise<IpcResult<import('../shared/types').AccrualScheduleWithStatus[]>>
+  executeAccrual: (data: { schedule_id: number; period_number: number }) => Promise<IpcResult<{ journalEntryId: number }>>
+  executeAllAccruals: (data: { fiscal_year_id: number; period_number: number }) => Promise<IpcResult<{ executed: number; failed: Array<{ scheduleId: number; error: string }> }>>
+  deactivateAccrual: (data: { schedule_id: number }) => Promise<IpcResult<void>>
   // Budget
   getBudgetLines: (data: Record<string, never>) => Promise<IpcResult<import('../shared/types').BudgetLineMeta[]>>
   getBudgetTargets: (data: {
