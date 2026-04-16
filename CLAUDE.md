@@ -629,7 +629,35 @@ i test-koden.
 
 **Korsreferens:** M115 (E2E-körmodell), M117 (data-testid-kontrakt).
 
-## 54. Deterministisk tid via getNow() (M150)
+## 54. E-serie för avskrivningar (M151)
+
+**M151.** Avskrivningsverifikat bokförs i **E-serien** (Depreciation) —
+separerat från A (invoice), B (expense), C (manual/accrual/correction),
+I (SIE4-import) och O (opening_balance). `source_type='auto_depreciation'`
+(migration 001 CHECK-enum) identifierar dem. Nummertilldelning följer
+standardmönstret:
+
+```sql
+SELECT COALESCE(MAX(verification_number), 0) + 1
+FROM journal_entries
+WHERE verification_series = 'E' AND fiscal_year_id = ?
+```
+
+**Defense-in-depth:** Migration 038 (Sprint 53) införde
+`CHECK (verification_series IN ('A','B','C','E','I','O'))` på `journal_entries`
+via M122 table-recreate. Pre-flight-query verifierar att ingen befintlig
+verifikation har serie utanför whitelist innan CHECK läggs till.
+
+**D-serien är ledig** (används inte idag). Reserverad för framtida behov —
+lägg inte till ad-hoc utan att först utvidga whitelist-CHECK.
+
+**Callsites:** `depreciation-service._executeScheduleTx` är enda stället som
+skriver E-serien. Chronology-check (M142) körs per schedule.
+
+**Korsreferens:** M142 (chronology per serie), M145 (I-serie för import som
+etablerade samma separations-mönster).
+
+## 55. Deterministisk tid via getNow() (M150)
 
 **M150.** Main-process affärslogik som läser nuvarande tid MÅSTE använda
 `getNow()` (eller `todayLocalFromNow()`) från `src/main/utils/now.ts`, inte
