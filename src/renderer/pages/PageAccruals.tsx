@@ -16,6 +16,7 @@ import { ScheduleCard } from '../components/accruals/ScheduleCard'
 export function PageAccruals() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [showCreate, setShowCreate] = useState(false)
+  const [showExecuteAllPreview, setShowExecuteAllPreview] = useState<number | null>(null)
   const { data: schedules, isLoading } = useAccrualSchedules(activeFiscalYear?.id)
   const executeMutation = useExecuteAccrual()
   const executeAllMutation = useExecuteAllAccruals()
@@ -38,8 +39,23 @@ export function PageAccruals() {
     }
   }
 
-  async function handleExecuteAll(periodNumber: number) {
+  // Beräkna preview för givet period-nummer — vilka scheman skulle köras + belopp.
+  function getExecuteAllPreview(periodNumber: number) {
+    if (!schedules) return []
+    return schedules
+      .filter((s) => s.is_active === 1)
+      .map((s) => {
+        const ps = s.periodStatuses.find((p) => p.periodNumber === periodNumber)
+        return ps && !ps.executed
+          ? { scheduleId: s.id, description: s.description, amountOre: ps.amountOre }
+          : null
+      })
+      .filter((x): x is { scheduleId: number; description: string; amountOre: number } => x !== null)
+  }
+
+  async function handleExecuteAllConfirmed(periodNumber: number) {
     if (!activeFiscalYear) return
+    setShowExecuteAllPreview(null)
     try {
       const result = await executeAllMutation.mutateAsync({
         fiscal_year_id: activeFiscalYear.id,
@@ -79,9 +95,10 @@ export function PageAccruals() {
             {nextGlobalPeriod && (
               <button
                 type="button"
-                onClick={() => handleExecuteAll(nextGlobalPeriod)}
+                onClick={() => setShowExecuteAllPreview(nextGlobalPeriod)}
                 disabled={executeAllMutation.isPending}
                 className="rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                data-testid="accrual-execute-all"
               >
                 Kör alla (P{nextGlobalPeriod})
               </button>
@@ -126,6 +143,74 @@ export function PageAccruals() {
         fiscalYearId={activeFiscalYear.id}
         fiscalRule="K2"
       />
+
+      {showExecuteAllPreview !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="exec-all-preview-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+          onClick={() => setShowExecuteAllPreview(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+            data-testid="accrual-preview-dialog"
+          >
+            <h3 id="exec-all-preview-title" className="mb-3 text-lg font-semibold">
+              Kör alla periodiseringar — Period {showExecuteAllPreview}
+            </h3>
+            {(() => {
+              const preview = getExecuteAllPreview(showExecuteAllPreview)
+              if (preview.length === 0) {
+                return <p className="text-sm text-muted-foreground">Inga periodiseringar att köra.</p>
+              }
+              const total = preview.reduce((s, p) => s + p.amountOre, 0)
+              return (
+                <>
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    Följande {preview.length} periodiseringar kommer bokföras som separata C-serie-verifikat:
+                  </p>
+                  <ul className="mb-4 max-h-60 overflow-auto rounded border text-sm">
+                    {preview.map((p) => (
+                      <li key={p.scheduleId} className="flex items-center justify-between border-b px-3 py-2 last:border-b-0">
+                        <span className="truncate">{p.description}</span>
+                        <span className="tabular-nums text-muted-foreground">
+                          {new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(p.amountOre / 100)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mb-4 flex justify-between border-t pt-2 text-sm font-medium">
+                    <span>Total</span>
+                    <span className="tabular-nums">
+                      {new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(total / 100)}
+                    </span>
+                  </div>
+                </>
+              )
+            })()}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowExecuteAllPreview(null)}
+                className="rounded-md border px-4 py-2 text-sm"
+              >
+                Avbryt
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExecuteAllConfirmed(showExecuteAllPreview)}
+                disabled={executeAllMutation.isPending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                data-testid="accrual-preview-confirm"
+              >
+                {executeAllMutation.isPending ? 'Kör…' : 'Bekräfta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -123,6 +123,22 @@ export function ImportPreviewPhase({
               </div>
             </label>
           </div>
+
+          {strategy === 'merge' && (
+            <div
+              role="alert"
+              className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+              data-testid="sie4-merge-warning"
+            >
+              <div className="mb-1 font-medium">Merge-läge — bekräfta innan import:</div>
+              <ul className="ml-4 list-disc space-y-0.5">
+                <li>Befintligt företag uppdateras till filens namn om de skiljer sig.</li>
+                <li>Saknade konton i DB läggs till från filen.</li>
+                <li>Konton som existerar i båda behåller DB:s namn och inställningar.</li>
+                <li>Verifikationer bokförs i <span className="font-mono">I</span>-serien — kollision med befintliga I-nummer är inte möjlig (nästa lediga nummer används).</li>
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
