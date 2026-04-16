@@ -508,11 +508,13 @@ beräkningar) MÅSTE använda `IpcResult<T>` wrapper. `wrapIpcHandler` i
 
 **Renderer-hooks:** `useIpcQuery<T>` för alla affärsdata-kanaler.
 `useDirectQuery<T>` kvarstår ENBART för infrastruktur-kanaler
-(health-check, settings:get/set, company:get, fiscal-year:list,
-backup, opening-balance:re-transfer).
+(health-check, settings:get/set, backup, opening-balance:re-transfer).
+Alla useDirectQuery-kanaler för affärsdata är migrerade (Sprint 38 F60b).
 
-**Historik:** Sprint 35 (F60) migrerade 11 kanaler. NO_SCHEMA_CHANNELS
-i `tests/setup/mock-ipc.ts` innehåller nu enbart infrastruktur-kanaler.
+**Historik:** Sprint 35 (F60) migrerade 11 kanaler. Sprint 38 (F60b)
+migrerade de sista 7 useDirectQuery-kanalerna (company:get, fiscal-year:list,
+fiscal-period:list, counterparty:get, product:get, invoice:list-drafts,
+invoice:get-draft). NO_SCHEMA_CHANNELS reducerad till 7 infrastruktur-kanaler.
 
 **Konsekvens:** Nya IPC-kanaler som returnerar data MÅSTE följa M144.
 `useDirectQuery` + raw return i handler är INTE tillåtet för nya kanaler.

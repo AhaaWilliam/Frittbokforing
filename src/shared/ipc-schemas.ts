@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   MAX_QTY_INVOICE, MAX_QTY_EXPENSE,
   ERR_MSG_MAX_QTY_INVOICE, ERR_MSG_MAX_QTY_EXPENSE,
+  BFL_ALLOWED_START_MONTHS, ERR_MSG_INVALID_FY_START_MONTH,
 } from './constants'
 
 /**
@@ -76,6 +77,16 @@ export const CreateCompanyInputSchema = z
     {
       message: 'Räkenskapsårets slut måste vara efter start',
       path: ['fiscal_year_end'],
+    },
+  )
+  .refine(
+    (data) => {
+      const startMonth = parseInt(data.fiscal_year_start.substring(5, 7), 10)
+      return BFL_ALLOWED_START_MONTHS.includes(startMonth as typeof BFL_ALLOWED_START_MONTHS[number])
+    },
+    {
+      message: ERR_MSG_INVALID_FY_START_MONTH,
+      path: ['fiscal_year_start'],
     },
   )
 
@@ -712,6 +723,22 @@ export const SaveInvoicePdfSchema = z
   })
   .strict()
 
+export const SelectDirectorySchema = z.object({}).strict()
+
+export const SavePdfBatchSchema = z
+  .object({
+    directory: z.string().min(1),
+    invoices: z
+      .array(
+        z.object({
+          invoiceId: z.number().int().positive(),
+          fileName: z.string().min(1),
+        }),
+      )
+      .min(1),
+  })
+  .strict()
+
 // === Fiscal Year Create / Switch / Net Result ===
 export const FiscalYearCreateNewInputSchema = z
   .object({
@@ -729,6 +756,51 @@ export const FiscalYearSwitchInputSchema = z
 export const NetResultInputSchema = z
   .object({
     fiscalYearId: z.number().int().positive(),
+  })
+  .strict()
+
+// === Budget ===
+export const BudgetLinesSchema = z.object({}).strict()
+
+export const BudgetGetSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const BudgetSaveSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    targets: z
+      .array(
+        z.object({
+          line_id: z.string().min(1),
+          period_number: z.number().int().min(1).max(12),
+          amount_ore: z.number().int(),
+        }),
+      )
+      .min(1),
+  })
+  .strict()
+
+export const BudgetVarianceSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const BudgetCopySchema = z
+  .object({
+    target_fiscal_year_id: z.number().int().positive(),
+    source_fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+// === Aging Report ===
+export const AgingInputSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   })
   .strict()
 
@@ -757,9 +829,11 @@ export const GlobalSearchSchema = z
 export const channelMap = {
   // Company
   'company:create': CreateCompanyInputSchema,
+  'company:get': z.void(),
   'company:update': UpdateCompanyInputSchema,
 
   // Fiscal Years
+  'fiscal-year:list': z.void(),
   'fiscal-year:create-new': FiscalYearCreateNewInputSchema,
   'fiscal-year:switch': FiscalYearSwitchInputSchema,
 
@@ -812,6 +886,8 @@ export const channelMap = {
   'invoice:payments': GetPaymentsInputSchema,
   'invoice:generate-pdf': GenerateInvoicePdfSchema,
   'invoice:save-pdf': SaveInvoicePdfSchema,
+  'invoice:select-directory': SelectDirectorySchema,
+  'invoice:save-pdf-batch': SavePdfBatchSchema,
   'invoice:create-credit-note-draft': CreateCreditNoteDraftSchema,
 
   // Expenses
@@ -856,6 +932,17 @@ export const channelMap = {
 
   // Global Search
   'search:global': GlobalSearchSchema,
+
+  // Aging Report
+  'aging:receivables': AgingInputSchema,
+  'aging:payables': AgingInputSchema,
+
+  // Budget
+  'budget:lines': BudgetLinesSchema,
+  'budget:get': BudgetGetSchema,
+  'budget:save': BudgetSaveSchema,
+  'budget:variance': BudgetVarianceSchema,
+  'budget:copy-from-previous': BudgetCopySchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

@@ -1256,6 +1256,18 @@ END;`,
     search_text,
     tokenize='unicode61 remove_diacritics 2'
   );` },
+  // Sprint 43: Feature 2 — Budget targets
+  { sql: `CREATE TABLE budget_targets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+    line_id TEXT NOT NULL,
+    period_number INTEGER NOT NULL CHECK (period_number >= 1 AND period_number <= 12),
+    amount_ore INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(fiscal_year_id, line_id, period_number)
+  );
+  CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);` },
 ]
 
 /**

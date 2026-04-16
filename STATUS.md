@@ -1,5 +1,230 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 44 -- Feature 2: Budget — budget vs utfall ✅ KLAR
+
+Session S44. Budget-funktion med inmatning + avvikelserapport per resultaträkningsrad × 12 perioder.
+
+**Testbaslinje:** 2091 → 2129 vitest (+38). 0 skipped. 211 testfiler.
+**PRAGMA user_version:** 34 (ny migration 034 — budget_targets).
+**Inga nya M-principer.**
+**Nya filer:** budget-service.ts, PageBudget.tsx, session-44-budget.test.ts,
+PageBudget.test.tsx, ipc-budget.test.ts.
+
+### Leverabler
+
+#### 1. Migration 034 — budget_targets
+- `budget_targets` tabell: fiscal_year_id × line_id × period_number, amount_ore (tillåter negativa, M137-undantag)
+- UNIQUE-constraint, CHECK period_number 1–12
+
+#### 2. budget-service.ts
+- `getBudgetLines()` — returnerar 11 BudgetLineMeta från INCOME_STATEMENT_CONFIG
+- `getBudgetTargets(db, fyId)` — alla targets för FY
+- `saveBudgetTargets(db, fyId, targets[])` — INSERT OR REPLACE i transaktion, validerar line_id
+- `getBudgetVsActual(db, fyId)` — **en SQL-query** med period-gruppering + matchesRanges → BudgetVarianceReport
+- `copyBudgetFromPreviousFy(db, targetFyId, sourceFyId)` — INSERT OR REPLACE ... SELECT
+
+#### 3. IPC (5 kanaler)
+- budget:lines, budget:get, budget:save, budget:variance, budget:copy-from-previous
+- Alla med wrapIpcHandler, Zod-scheman, IpcResult
+
+#### 4. PageBudget.tsx
+- Tabs: "Budget" (inmatning) + "Avvikelse" (rapport)
+- Budget-tab: 11 rader × 12 perioder grid, grupprubriker, helårs-summering
+- Knappar: Spara, Kopiera från förra året, Fördela jämnt
+- Avvikelse-tab: Budget/Utfall/Avvikelse per period, grön/röd färgkodning
+- Print-knapp i avvikelse-tab, horizontal scroll
+
+#### 5. Sidebar + Route
+- PiggyBank-ikon, `/budget`, efter Åldersanalys i Rapporter-sektionen
+
+#### 6. Tester (38 nya)
+- **session-44-budget.test.ts** (14): service-tester (CRUD, variance, copy, migration)
+- **PageBudget.test.tsx** (11): renderer (tabs, grid, inputs, save, copy, print, a11y)
+- **ipc-budget.test.ts** (13): schema-validering (5 kanaler, negativa, gränsvärden)
+
+### Stängda items
+- **Feature 2** Budget vs utfall: STÄNGD
+
+### Backlog: 0 öppna findings
+
+## Sprint 43 -- Feature 1: PDF-faktura renderer-integration + batch-export ✅ KLAR
+
+Session S43. PDF-knapp i faktura-vy, batch-PDF-export, utökade checkboxes, 28 nya tester.
+
+**Testbaslinje:** 2063 → 2091 vitest (+28). 0 skipped. 208 testfiler.
+**PRAGMA user_version:** 33 (oförändrat — inga nya migrationer).
+**Inga nya M-principer.**
+**Nya filer:** BatchPdfExportDialog.tsx, invoice-pdf-content.test.ts,
+InvoicePdf.test.tsx, ipc-pdf-batch.test.ts.
+
+### Leverabler
+
+#### 1. PDF-knapp i faktura-vy (PageIncome view subview)
+- Nytt `ViewInvoiceWrapper`-komponent i PageIncome.tsx
+- "Ladda ner PDF"-knapp med FileDown-ikon, loading-state under generering
+- Filnamn: `Faktura_{nummer}_{kundnamn}.pdf`
+- Enbart synlig för finaliserade fakturor (status !== 'draft')
+
+#### 2. Batch-PDF-export
+- **Ny IPC-kanal:** `invoice:select-directory` — OS directory picker
+- **Ny IPC-kanal:** `invoice:save-pdf-batch` — loop generate+write per faktura,
+  returnerar `IpcResult<{ succeeded, failed[] }>`
+- **Zod-schemas:** SelectDirectorySchema, SavePdfBatchSchema (ipc-schemas.ts)
+- **Preload + electron.d.ts:** selectDirectory, savePdfBatch
+- **BatchPdfExportDialog.tsx:** progress-spinner under export, resultat-vy med
+  fellistning vid partiell success
+
+#### 3. Utökade checkboxes i InvoiceList
+- `isSelectable` ändrad: `item.status !== 'draft'` (var: unpaid/partial/overdue)
+- Alla finaliserade fakturor (inkl paid) nu valbara
+- "Bulk-betala" visas enbart när alla valda är betalningsbara
+- "Exportera PDF:er" visas alltid vid ≥1 vald faktura
+- Flöde: selectDirectory → savePdfBatch → resultat-dialog + toast
+
+#### 4. Tester (28 nya)
+- **invoice-pdf-content.test.ts** (11): PDF-text-extraktion via zlib inflate av
+  FlateDecode-streams + TJ hex-parsing. Verifierar fakturanummer, kundnamn,
+  radbeskrivigar, företagsinfo, orgNr, postnummer, FAKTURA-rubrik, multi-line,
+  format, momssatser, draft-blockering.
+- **InvoicePdf.test.tsx** (8): PDF-ikon synlig/dold, klick triggar generate→save,
+  stopPropagation, checkbox för paid, "Exportera PDF:er" vid selektion,
+  Bulk-betala villkorlig, axe a11y.
+- **ipc-pdf-batch.test.ts** (9): SelectDirectorySchema + SavePdfBatchSchema
+  valid/invalid cases.
+
+### Stängda items
+- **Feature 1** PDF-faktura renderer-integration + batch-export: STÄNGD
+
+### Backlog: 0 öppna findings
+
+## Sprint 42 -- Åldersanalys + S39–S41 (wrapIpcHandler + renderer-tester) ✅ KLAR
+
+Session S39–S42. F62 (wrapIpcHandler-migration), T6 (YearPicker/PeriodList/Sidebar), F59
+(per-kanal response-schema), T7 (GlobalSearch/EntityListPage), Åldersanalys (aging report).
+
+**Testbaslinje:** 1981 → 2063 vitest (+82). 0 skipped. 205 testfiler.
+**PRAGMA user_version:** 33 (oförändrat — inga nya migrationer).
+**Inga nya M-principer.**
+**Nya filer:** aging-service.ts, PageAgingReport.tsx, channel-response-schemas.ts,
+YearPicker.test.tsx, PeriodList.test.tsx, Sidebar.test.tsx, GlobalSearch.test.tsx,
+EntityListPage.test.tsx, PageAgingReport.test.tsx, session-42-aging.test.ts,
+channel-response-schemas.test.ts.
+
+### Del A: S39 — F62 wrapIpcHandler-migration (31 handlers)
+Migrerade 31 handlers från manuell safeParse + IpcResult-konstruktion till wrapIpcHandler:
+- **Grupp A** (27): fiscal-period:close/reopen, counterparty:deactivate,
+  product:deactivate/set-customer-price/remove-customer-price,
+  expense:delete-draft/finalize/pay/payBulk/get,
+  account:create/update/toggle-active/get-statement,
+  invoice:delete-draft/finalize/pay/payBulk/update-sent,
+  manual-entry:save-draft/get/update-draft/delete-draft/finalize,
+  journal-entry:correct/can-correct, search:global
+- **Grupp B** (1): account:get-statement (raw return → auto-wrap)
+- **Grupp C** (3): opening-balance:net-result, fiscal-year:switch,
+  fiscal-year:create-new (multi-service/settings I/O → throw structured)
+- **result:net** borttagen ur NO_SCHEMA_CHANNELS (dead mapped channel)
+- wrapIpcHandler count: 35 → 67
+
+### Del B: S40 — T6 renderer-tester + F59 (28 tester)
+- **YearPicker** (10): formatFiscalYearLabel (standard + brutet FY), options rendering,
+  amber styling (closed FY), lock text, open FY no amber, stängt suffix, null/tom,
+  create option, axe a11y
+- **PeriodList** (11): 12 månader, Klar/Öppen badges, close-knapp firstOpenIndex,
+  reopen-knapp lastClosedIndex, confirm dialog open/cancel, all-closed banner,
+  tom lista, isReadOnly döljer knappar, axe a11y
+- **Sidebar** (7): företagsnamn+K2/K3, nav-sektioner, 14 nav-links testIds,
+  YearPicker child, GlobalSearch child, axe a11y
+- **F59** channel-response-schemas (7): correct data passes, incorrect data throws,
+  no-schema fallback, NO_SCHEMA_CHANNELS exempt, skipDataValidation opt-out,
+  error response bypass, opening-balance:net-result validation
+- renderWithProviders utökad med `is_closed` option
+
+### Del C: S41 — T7 renderer-tester (20 tester)
+- **GlobalSearch** (10): placeholder, <2 chars no dropdown, debounce + results,
+  grouped headers, Escape closes, empty results, ArrowDown navigation,
+  ARIA combobox/searchbox roles, axe a11y
+- **EntityListPage** (10): sub-view list/create/edit/view, isReadOnly hides create,
+  master-detail list+empty/detail/create, axe a11y (båda varianter)
+- Renderer-komponenttestcoverage: 52/52 (100%)
+
+### Del D: S42 — Åldersanalys (27 tester)
+- **aging-service.ts**: `getAgingReceivables` + `getAgingPayables`
+  - Bucketisering: Ej förfallet, 1–30, 31–60, 61–90, 90+ dagar
+  - Kreditfakturor exkluderade (invoice_type != 'credit_note')
+  - Expenses utan due_date → separat itemsWithoutDueDate-grupp
+  - paid_amount_ore läst direkt (M19/M101), ej via JOIN
+  - as_of_date parameter för historisk vy (default: todayLocal())
+- **IPC**: aging:receivables, aging:payables med AgingInputSchema
+  - wrapIpcHandler, channelMap-registrerade
+- **PageAgingReport.tsx**: tabs (Kundfordringar/Leverantörsskulder),
+  bucket-tabeller, totalsummering, print-knapp, as_of_date-disclaimer
+- **Sidebar**: Åldersanalys-länk under Rapporter (Clock-ikon)
+- **Service-tester** (15): bucketisering (4 tidszoner), partiell betalning,
+  betalda exkluderade, kreditnotor exkluderade, as_of_date, summering,
+  gränsvärden 30/31, expense-paritet, null due_date
+- **IPC-kontrakttester** (5): channelMap, schema validering
+- **Renderer-tester** (7): titel, buckets, total, tab-byte, tom, disclaimer, axe
+
+### Stängda items
+- **F62** wrapIpcHandler-migration: STÄNGD (31 handlers, 67 totalt)
+- **F59** per-kanal response-schema: STÄNGD (channel-response-schemas.ts)
+- **T6** YearPicker/PeriodList/Sidebar: STÄNGD (28 tester)
+- **T7** GlobalSearch/EntityListPage: STÄNGD (20 tester, 100% coverage)
+- **Åldersanalys** feature: STÄNGD
+
+### Backlog: 0 öppna findings
+Ingen ny finding. Åldersanalysens as_of_date-begränsning (retroaktivt betalda
+exkluderas) dokumenterad i UI-disclaimer.
+
+## Sprint 38 -- F60b useDirectQuery-migration + F61 BFL-validering + T5 renderer-tester ✅ KLAR
+
+Session S38. F60b (7 useDirectQuery-kanaler → IpcResult), F61 (BFL-startmånad-validering),
+T5 (5 renderer-komponenttester).
+
+**Testbaslinje:** 1952 → 1981 vitest (+29). 0 skipped. 197 testfiler.
+**PRAGMA user_version:** 33 (oförändrat — inga nya migrationer).
+**Inga nya M-principer.** M144 uppdaterad (alla useDirectQuery-kanaler migrerade).
+
+### Del A: F60b — useDirectQuery → IpcResult (7 kanaler)
+Migrerade 7 kanaler från useDirectQuery (raw return) till IpcResult via wrapIpcHandler:
+- **counterparty:get** — handler + electron.d.ts + hook + CustomerDetail test fixture
+- **product:get** — handler + electron.d.ts + hook + ProductDetail test fixture
+- **fiscal-period:list** — handler + electron.d.ts + hook
+- **invoice:list-drafts** — handler + electron.d.ts + hook
+- **invoice:get-draft** — handler + electron.d.ts + hook
+- **company:get** — handler (wrapIpcHandler(null)) + electron.d.ts + hook + 3 test fixtures
+- **fiscal-year:list** — handler (wrapIpcHandler(null)) + electron.d.ts + hook + renderWithProviders + FiscalYearContext test
+
+channelMap utökad med `company:get: z.void()` och `fiscal-year:list: z.void()`.
+NO_SCHEMA_CHANNELS reducerad från 9 → 7 (kvarvarande: db:health-check,
+opening-balance:re-transfer, backup:create, backup:restore-dialog, settings:get,
+settings:set, result:net).
+`useDirectQuery` borttagen från hooks.ts import (ej längre använd).
+
+### Del B: F61 — BFL-startmånad-validering
+- **Shared konstant** (`BFL_ALLOWED_START_MONTHS`, `ERR_MSG_INVALID_FY_START_MONTH`) i constants.ts
+- **IPC-schema**: `.refine()` på CreateCompanyInputSchema — rejectar otillåtna startmånader
+- **UI-filtrering**: StepFiscalYear dropdown filtrerad till BFL-tillåtna månader vid brutet FY
+- **7 tester** i session-38-bfl-start-month.test.ts (reject mars/juni, accept jul/jan/sep,
+  full coverage alla 7 förbjudna månader, BFL_ALLOWED_START_MONTHS invariant)
+
+### Del C: T5 — Renderer-tester (5 komponenter, 22 tester)
+- **EmptyState** (4): titel+description, action-knapp render, action-knapp dold utan prop, axe a11y
+- **ContactList** (6): namn-rendering, typ-badges (Kund/Leverantör/Båda), klick→onSelect,
+  tom lista kunder, tom lista leverantörer, axe a11y
+- **DraftList** (4): datum/kund/belopp/status-badge, klick→onSelect, tom lista, axe a11y
+- **ExpenseDraftList** (4): datum/leverantör/beskrivning/belopp, klick→onSelect, tom lista, axe a11y
+- **MonthIndicator** (4): 12 element renderas, stängd period grön styling, legend-text, axe a11y
+
+### Stängda items
+- **F60b** del 1: STÄNGD (7 kanaler migrerade, alla useDirectQuery borta)
+- **F61** BFL-startmånad: STÄNGD (IPC-schema + UI-filtrering)
+- **T5** Renderer-tester: STÄNGD (EmptyState, ContactList, DraftList, ExpenseDraftList, MonthIndicator)
+
+### Backlog: 2 öppna findings
+- **F59** (per-kanal response-schema) öppen för Sprint 39+
+- **F62** 12 manuella IpcResult-konstruktioner kvar i handlers (Sprint 39 med F62 del 2)
+
 ## Sprint 37 -- Renderer-tester (T4): Wizard + Dialogs + Customer ✅ KLAR
 
 Session S37. T4 (renderer-komponenttester: wizard-steg, dialogs, customer-komponenter).
@@ -671,10 +896,10 @@ PRAGMA user_version = 27, 22 tabeller.
 | S60 | F13: Handler error-patterns + sprint-stangning | KLAR |
 
 ## Test-count
-- Vitest (system + unit): 1952 passed, 0 skipped
-- Testfiler: 191
+- Vitest (system + unit): 2063 passed, 0 skipped
+- Testfiler: 205
 - Playwright E2E: 11 (körs separat)
-- Körning: ~25s
+- Körning: ~27s
 - TSC: 0 errors (`npm run typecheck`)
 
 ## Known infrastructure contracts
@@ -688,10 +913,7 @@ PRAGMA user_version = 27, 22 tabeller.
 
 ## Kanda fynd vantande
 
-Backlog: 2 oppna findings.
-- F59 (per-kanal response-schema) oppen for Sprint 39+.
-- F61 BFL-startmanad-validering saknas i brutet rakenskapsar.
-- F62 19 manuella IpcResult-konstruktioner i handlers (Sprint 38+ med F60b).
+Backlog: 0 oppna findings.
 
 ### Schema conventions -- medvetna avvikelser (klass B)
 - **accounts.k2_allowed** -- boolean utan `is_`-prefix. `is_k2_allowed` borderline, ej tydligt battre. 54 referenser over 8 filer.

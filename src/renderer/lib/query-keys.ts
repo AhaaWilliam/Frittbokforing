@@ -63,9 +63,21 @@ export const queryKeys = {
   accountStatement: (fyId: number, accountNumber: string, dateFrom?: string, dateTo?: string) =>
     ['account-statement', fyId, accountNumber, dateFrom, dateTo] as const,
 
+  // === Aging Report ===
+  agingReceivables: (fyId: number, asOfDate?: string) =>
+    ['aging-receivables', fyId, asOfDate] as const,
+  agingPayables: (fyId: number, asOfDate?: string) =>
+    ['aging-payables', fyId, asOfDate] as const,
+
   // === Global Search ===
   globalSearch: (fyId: number, query: string) =>
     ['global-search', fyId, query] as const,
+
+  // === Budget ===
+  budgetLines: () => ['budget-lines'] as const,
+  budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,
+  budgetVariance: (fyId: number) => ['budget-variance', fyId] as const,
+  allBudget: () => ['budget'] as const,
 
   // === Prefix-baserade nycklar för bred invalidering ===
   allInvoices: () => ['invoices'] as const,

@@ -3,10 +3,9 @@
  *
  * Kanaler utan schema-validering (anropas direkt utan channelMap-uppslag):
  *   - db:health-check          (inga args)
- *   - company:get              (inga args)
- *   - fiscal-year:list         (inga args)
  *   - opening-balance:re-transfer  (inga args)
  *   - backup:create            (inga args)
+ *   - backup:restore-dialog    (inga args)
  *   - settings:get             (raw string key)
  *   - settings:set             (raw key + value)
  *
@@ -16,6 +15,7 @@
 import { vi, afterEach } from 'vitest'
 import { z } from 'zod'
 import { channelMap, type ChannelName } from '../../src/shared/ipc-schemas'
+import { CHANNEL_RESPONSE_SCHEMAS } from './channel-response-schemas'
 
 // ── IpcResult shape validation (F57) ─────────────────────────────────
 
@@ -39,16 +39,11 @@ const IpcResultSchema = z.discriminatedUnion('success', [
 // ── No-schema channels ────────────────────────────────────────────────
 const NO_SCHEMA_CHANNELS = [
   'db:health-check',
-  'company:get',
-  'fiscal-year:list',
   'opening-balance:re-transfer',
   'backup:create',
   'backup:restore-dialog',
   'settings:get',
   'settings:set',
-  // result:net maps to opening-balance:net-result which already returns IpcResult
-  // Kept here as it has no direct handler (mapped channel)
-  'result:net',
 ] as const
 
 type NoSchemaChannel = (typeof NO_SCHEMA_CHANNELS)[number]
@@ -115,6 +110,14 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   getPayments: 'invoice:payments',
   generateInvoicePdf: 'invoice:generate-pdf',
   saveInvoicePdf: 'invoice:save-pdf',
+  selectDirectory: 'invoice:select-directory',
+  savePdfBatch: 'invoice:save-pdf-batch',
+  // Budget
+  getBudgetLines: 'budget:lines',
+  getBudgetTargets: 'budget:get',
+  saveBudgetTargets: 'budget:save',
+  getBudgetVsActual: 'budget:variance',
+  copyBudgetFromPreviousFy: 'budget:copy-from-previous',
   // Expenses
   saveExpenseDraft: 'expense:save-draft',
   getExpenseDraft: 'expense:get-draft',
@@ -151,6 +154,9 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   exportWriteFile: 'export:write-file',
   // Global Search
   globalSearch: 'search:global',
+  // Aging Report
+  getAgingReceivables: 'aging:receivables',
+  getAgingPayables: 'aging:payables',
   // Settings
   getSetting: 'settings:get',
   setSetting: 'settings:set',
@@ -248,8 +254,18 @@ export function setupMockIpc(): void {
   }
 }
 
-/** Override response for a specific channel. Validates IpcResult shape (F57). */
-export function mockIpcResponse(channel: string, response: unknown): void {
+/**
+ * Override response for a specific channel.
+ * Validates IpcResult shape (F57) + per-channel data schema (F59).
+ *
+ * Options:
+ * - skipDataValidation: skip F59 data-schema check (for negative testing)
+ */
+export function mockIpcResponse(
+  channel: string,
+  response: unknown,
+  options?: { skipDataValidation?: boolean },
+): void {
   if (!noSchemaSet.has(channel)) {
     const parsed = IpcResultSchema.safeParse(response)
     if (!parsed.success) {
@@ -258,6 +274,21 @@ export function mockIpcResponse(channel: string, response: unknown): void {
         `Got: ${JSON.stringify(response).slice(0, 200)}. ` +
         `Error: ${parsed.error.issues[0]?.message ?? 'unknown'}`
       )
+    }
+
+    // F59: per-channel data-schema validation
+    if (!options?.skipDataValidation) {
+      const dataSchema = CHANNEL_RESPONSE_SCHEMAS[channel]
+      if (dataSchema && parsed.data.success) {
+        const dataResult = dataSchema.safeParse(parsed.data.data)
+        if (!dataResult.success) {
+          throw new Error(
+            `mockIpcResponse('${channel}'): data does not match response schema. ` +
+            `Got: ${JSON.stringify(parsed.data.data).slice(0, 200)}. ` +
+            `Error: ${dataResult.error.issues[0]?.message ?? 'unknown'}`
+          )
+        }
+      }
     }
   }
   overrides.set(channel, { type: 'response', value: response })

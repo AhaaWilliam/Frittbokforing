@@ -87,6 +87,7 @@ describe('Struktur', () => {
     const expected = [
       'accounting_periods',
       'accounts',
+      'budget_targets',
       'companies',
       'counterparties',
       'expense_lines',
@@ -115,7 +116,7 @@ describe('Struktur', () => {
       'vat_codes',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(28)
+    expect(tables.length).toBe(29)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -134,7 +135,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(33) // S48: Uppdatera vid nya migrationer
+    expect(v).toBe(34) // S48: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

@@ -37,9 +37,9 @@ import type { GlobalSearchResponse } from '../shared/search-types'
 interface ElectronAPI {
   healthCheck: () => Promise<HealthCheckResponse>
   createCompany: (data: CreateCompanyInput) => Promise<IpcResult<Company>>
-  getCompany: () => Promise<Company | null>
+  getCompany: () => Promise<IpcResult<Company | null>>
   updateCompany: (data: UpdateCompanyInput) => Promise<IpcResult<Company>>
-  listFiscalYears: () => Promise<FiscalYear[]>
+  listFiscalYears: () => Promise<IpcResult<FiscalYear[]>>
   createNewFiscalYear: (data: {
     confirmBookResult: boolean
     netResultOre?: number
@@ -61,7 +61,7 @@ interface ElectronAPI {
   >
   listFiscalPeriods: (data: {
     fiscal_year_id: number
-  }) => Promise<FiscalPeriod[]>
+  }) => Promise<IpcResult<FiscalPeriod[]>>
   closePeriod: (data: { period_id: number }) => Promise<IpcResult<FiscalPeriod>>
   reopenPeriod: (data: {
     period_id: number
@@ -71,7 +71,7 @@ interface ElectronAPI {
     type?: string
     active_only?: boolean
   }) => Promise<IpcResult<Counterparty[]>>
-  getCounterparty: (data: { id: number }) => Promise<Counterparty | null>
+  getCounterparty: (data: { id: number }) => Promise<IpcResult<Counterparty | null>>
   createCounterparty: (
     data: CreateCounterpartyInput,
   ) => Promise<IpcResult<Counterparty>>
@@ -88,7 +88,7 @@ interface ElectronAPI {
   }) => Promise<IpcResult<Product[]>>
   getProduct: (data: {
     id: number
-  }) => Promise<(Product & { customer_prices: CustomerPrice[] }) | null>
+  }) => Promise<IpcResult<(Product & { customer_prices: CustomerPrice[] }) | null>>
   createProduct: (data: CreateProductInput) => Promise<IpcResult<Product>>
   updateProduct: (data: UpdateProductInput) => Promise<IpcResult<Product>>
   deactivateProduct: (data: { id: number }) => Promise<IpcResult<Product>>
@@ -194,12 +194,12 @@ interface ElectronAPI {
     due_date?: string
   }) => Promise<IpcResult<Invoice>>
   saveDraft: (data: SaveDraftInput) => Promise<IpcResult<InvoiceWithLines>>
-  getDraft: (data: { id: number }) => Promise<InvoiceWithLines | null>
+  getDraft: (data: { id: number }) => Promise<IpcResult<InvoiceWithLines | null>>
   updateDraft: (data: UpdateDraftInput) => Promise<IpcResult<InvoiceWithLines>>
   deleteDraft: (data: { id: number }) => Promise<IpcResult<undefined>>
   listDrafts: (data: {
     fiscal_year_id: number
-  }) => Promise<(Invoice & { counterparty_name: string })[]>
+  }) => Promise<IpcResult<(Invoice & { counterparty_name: string })[]>>
   nextInvoiceNumber: (data: {
     fiscal_year_id: number
   }) => Promise<IpcResult<{ preview: number }>>
@@ -267,6 +267,14 @@ interface ElectronAPI {
     data: string
     defaultFileName: string
   }) => Promise<IpcResult<{ success: boolean; filePath?: string }>>
+  selectDirectory: () => Promise<IpcResult<{ directory: string } | null>>
+  savePdfBatch: (data: {
+    directory: string
+    invoices: Array<{ invoiceId: number; fileName: string }>
+  }) => Promise<IpcResult<{
+    succeeded: number
+    failed: Array<{ invoiceId: number; error: string }>
+  }>>
   // Dashboard
   getDashboardSummary: (data: {
     fiscalYearId: number
@@ -357,6 +365,31 @@ interface ElectronAPI {
     fiscal_year_id: number
     limit?: number
   }) => Promise<IpcResult<GlobalSearchResponse>>
+  // Aging Report
+  getAgingReceivables: (data: {
+    fiscal_year_id: number
+    as_of_date?: string
+  }) => Promise<IpcResult<import('../main/services/aging-service').AgingReport>>
+  getAgingPayables: (data: {
+    fiscal_year_id: number
+    as_of_date?: string
+  }) => Promise<IpcResult<import('../main/services/aging-service').AgingReport>>
+  // Budget
+  getBudgetLines: (data: Record<string, never>) => Promise<IpcResult<import('../shared/types').BudgetLineMeta[]>>
+  getBudgetTargets: (data: {
+    fiscal_year_id: number
+  }) => Promise<IpcResult<import('../shared/types').BudgetTarget[]>>
+  saveBudgetTargets: (data: {
+    fiscal_year_id: number
+    targets: Array<{ line_id: string; period_number: number; amount_ore: number }>
+  }) => Promise<IpcResult<{ count: number }>>
+  getBudgetVsActual: (data: {
+    fiscal_year_id: number
+  }) => Promise<IpcResult<import('../shared/types').BudgetVarianceReport>>
+  copyBudgetFromPreviousFy: (data: {
+    target_fiscal_year_id: number
+    source_fiscal_year_id: number
+  }) => Promise<IpcResult<{ count: number }>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

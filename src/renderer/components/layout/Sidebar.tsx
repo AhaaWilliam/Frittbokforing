@@ -13,6 +13,8 @@ import {
   BookOpen,
   ScrollText,
   Truck,
+  Clock,
+  PiggyBank,
   type LucideIcon,
 } from 'lucide-react'
 import type { Company } from '../../../shared/types'
@@ -92,6 +94,8 @@ export function Sidebar({ company }: SidebarProps) {
         </div>
         <SidebarLink to="/reports" icon={BarChart3} label="Rapporter" testId="nav-reports" />
         <SidebarLink to="/account-statement" icon={ScrollText} label="Kontoutdrag" testId="nav-account-statement" />
+        <SidebarLink to="/aging" icon={Clock} label="Åldersanalys" testId="nav-aging" />
+        <SidebarLink to="/budget" icon={PiggyBank} label="Budget" testId="nav-budget" />
         <SidebarLink to="/vat" icon={Receipt} label="Moms" testId="nav-vat" />
         <SidebarLink to="/tax" icon={Calculator} label="Skatt" testId="nav-tax" />
 

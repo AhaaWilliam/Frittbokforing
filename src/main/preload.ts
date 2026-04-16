@@ -152,6 +152,10 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('invoice:generate-pdf', data),
   saveInvoicePdf: (data: { data: string; defaultFileName: string }) =>
     ipcRenderer.invoke('invoice:save-pdf', data),
+  selectDirectory: () =>
+    ipcRenderer.invoke('invoice:select-directory', {}),
+  savePdfBatch: (data: { directory: string; invoices: Array<{ invoiceId: number; fileName: string }> }) =>
+    ipcRenderer.invoke('invoice:save-pdf-batch', data),
   // Dashboard
   getDashboardSummary: (data: { fiscalYearId: number }) =>
     ipcRenderer.invoke('dashboard:summary', data),
@@ -211,6 +215,22 @@ contextBridge.exposeInMainWorld('api', {
   // Global Search
   globalSearch: (data: { query: string; fiscal_year_id: number; limit?: number }) =>
     ipcRenderer.invoke('search:global', data),
+  // Aging Report
+  getAgingReceivables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
+    ipcRenderer.invoke('aging:receivables', data),
+  getAgingPayables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
+    ipcRenderer.invoke('aging:payables', data),
+  // Budget
+  getBudgetLines: () =>
+    ipcRenderer.invoke('budget:lines', {}),
+  getBudgetTargets: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('budget:get', data),
+  saveBudgetTargets: (data: { fiscal_year_id: number; targets: Array<{ line_id: string; period_number: number; amount_ore: number }> }) =>
+    ipcRenderer.invoke('budget:save', data),
+  getBudgetVsActual: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('budget:variance', data),
+  copyBudgetFromPreviousFy: (data: { target_fiscal_year_id: number; source_fiscal_year_id: number }) =>
+    ipcRenderer.invoke('budget:copy-from-previous', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

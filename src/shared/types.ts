@@ -811,3 +811,49 @@ export interface ExpenseDraftListItem {
   total_amount_ore: number
   created_at: string
 }
+
+// === Budget ===
+
+export interface BudgetTarget {
+  id: number
+  fiscal_year_id: number
+  line_id: string
+  period_number: number
+  amount_ore: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SaveBudgetTargetItem {
+  line_id: string
+  period_number: number
+  amount_ore: number
+}
+
+export interface BudgetLineMeta {
+  lineId: string
+  label: string
+  groupId: string
+  groupLabel: string
+  signMultiplier: 1 | -1
+}
+
+export interface BudgetVariancePeriod {
+  periodNumber: number
+  budgetOre: number
+  actualOre: number
+  varianceOre: number
+  variancePercent: number | null
+}
+
+export interface BudgetVarianceLine extends BudgetLineMeta {
+  periods: BudgetVariancePeriod[]
+  totalBudgetOre: number
+  totalActualOre: number
+  totalVarianceOre: number
+  totalVariancePercent: number | null
+}
+
+export interface BudgetVarianceReport {
+  lines: BudgetVarianceLine[]
+}

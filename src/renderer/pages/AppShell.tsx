@@ -19,6 +19,8 @@ import { PageReports } from './PageReports'
 import { PageAccounts } from './PageAccounts'
 import { PageSuppliers } from './PageSuppliers'
 import { PageAccountStatement } from './PageAccountStatement'
+import { PageAgingReport } from './PageAgingReport'
+import { PageBudget } from './PageBudget'
 
 interface AppShellProps {
   company: Company
@@ -54,6 +56,10 @@ function PageContent({ page }: { page: string }) {
       return <PageSuppliers />
     case 'account-statement':
       return <PageAccountStatement />
+    case 'aging':
+      return <PageAgingReport />
+    case 'budget':
+      return <PageBudget />
     default:
       return <PageOverview />
   }

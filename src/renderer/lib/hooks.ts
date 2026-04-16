@@ -30,15 +30,19 @@ import type {
   UpdateManualEntryDraftInput,
   BulkPaymentResult,
   IpcResult,
+  BudgetLineMeta,
+  BudgetTarget,
+  BudgetVarianceReport,
+  SaveBudgetTargetItem,
 } from '../../shared/types'
-import { useIpcQuery, useDirectQuery } from './use-ipc-query'
+import { useIpcQuery } from './use-ipc-query'
 import { useIpcMutation } from './use-ipc-mutation'
 import { queryKeys } from './query-keys'
 
 // === Company ===
 
 export function useCompany() {
-  return useDirectQuery<Company | null>(
+  return useIpcQuery<Company | null>(
     queryKeys.company(),
     () => window.api.getCompany(),
   )
@@ -61,7 +65,7 @@ export function useUpdateCompany() {
 // === Fiscal Years ===
 
 export function useFiscalYears() {
-  return useDirectQuery<FiscalYear[]>(
+  return useIpcQuery<FiscalYear[]>(
     queryKeys.fiscalYears(),
     () => window.api.listFiscalYears(),
   )
@@ -100,7 +104,7 @@ export function useReTransferOpeningBalance() {
 // === Fiscal Periods ===
 
 export function useFiscalPeriods(fiscalYearId: number | undefined) {
-  return useDirectQuery<FiscalPeriod[]>(
+  return useIpcQuery<FiscalPeriod[]>(
     queryKeys.fiscalPeriods(fiscalYearId!),
     () => window.api.listFiscalPeriods({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
@@ -143,7 +147,7 @@ export function useCounterparties(params?: {
 }
 
 export function useCounterparty(id: number | undefined) {
-  return useDirectQuery<Counterparty | null>(
+  return useIpcQuery<Counterparty | null>(
     queryKeys.counterparty(id!),
     () => window.api.getCounterparty({ id: id! }),
     { enabled: !!id },
@@ -191,7 +195,7 @@ export function useProducts(params?: {
 }
 
 export function useProduct(id: number | undefined) {
-  return useDirectQuery<(Product & { customer_prices: CustomerPrice[] }) | null>(
+  return useIpcQuery<(Product & { customer_prices: CustomerPrice[] }) | null>(
     queryKeys.product(id!),
     () => window.api.getProduct({ id: id! }),
     { enabled: !!id },
@@ -349,7 +353,7 @@ export function useAccountStatement(
 // === Invoice Drafts ===
 
 export function useDraftInvoices(fiscalYearId: number | undefined) {
-  return useDirectQuery<(Invoice & { counterparty_name: string })[]>(
+  return useIpcQuery<(Invoice & { counterparty_name: string })[]>(
     queryKeys.invoiceDrafts(fiscalYearId!),
     () => window.api.listDrafts({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
@@ -357,7 +361,7 @@ export function useDraftInvoices(fiscalYearId: number | undefined) {
 }
 
 export function useDraftInvoice(id: number | undefined) {
-  return useDirectQuery<InvoiceWithLines | null>(
+  return useIpcQuery<InvoiceWithLines | null>(
     queryKeys.invoice(id!),
     () => window.api.getDraft({ id: id! }),
     { enabled: !!id },
@@ -812,6 +816,24 @@ export function useFinalizeManualEntry() {
   )
 }
 
+// === Aging Report ===
+
+export function useAgingReceivables(fyId: number | undefined, asOfDate?: string) {
+  return useIpcQuery(
+    queryKeys.agingReceivables(fyId!, asOfDate),
+    () => window.api.getAgingReceivables({ fiscal_year_id: fyId!, as_of_date: asOfDate }),
+    { enabled: !!fyId },
+  )
+}
+
+export function useAgingPayables(fyId: number | undefined, asOfDate?: string) {
+  return useIpcQuery(
+    queryKeys.agingPayables(fyId!, asOfDate),
+    () => window.api.getAgingPayables({ fiscal_year_id: fyId!, as_of_date: asOfDate }),
+    { enabled: !!fyId },
+  )
+}
+
 // === Global Search ===
 
 export function useGlobalSearch(
@@ -825,6 +847,51 @@ export function useGlobalSearch(
       query,
     }),
     { enabled: !!fiscalYearId && query.length >= 2 },
+  )
+}
+
+// === Budget ===
+
+export function useBudgetLines() {
+  return useIpcQuery<BudgetLineMeta[]>(
+    queryKeys.budgetLines(),
+    () => window.api.getBudgetLines({}),
+  )
+}
+
+export function useBudgetTargets(fiscalYearId: number | undefined) {
+  return useIpcQuery<BudgetTarget[]>(
+    queryKeys.budgetTargets(fiscalYearId!),
+    () => window.api.getBudgetTargets({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId },
+  )
+}
+
+export function useBudgetVariance(fiscalYearId: number | undefined) {
+  return useIpcQuery<BudgetVarianceReport>(
+    queryKeys.budgetVariance(fiscalYearId!),
+    () => window.api.getBudgetVsActual({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId, staleTime: 30_000 },
+  )
+}
+
+export function useSaveBudgetTargets() {
+  return useIpcMutation<
+    { fiscal_year_id: number; targets: SaveBudgetTargetItem[] },
+    { count: number }
+  >(
+    (data) => window.api.saveBudgetTargets(data),
+    { invalidateAll: true },
+  )
+}
+
+export function useCopyBudgetFromPreviousFy() {
+  return useIpcMutation<
+    { target_fiscal_year_id: number; source_fiscal_year_id: number },
+    { count: number }
+  >(
+    (data) => window.api.copyBudgetFromPreviousFy(data),
+    { invalidateAll: true },
   )
 }
 

@@ -17,6 +17,7 @@ import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
 import { PaymentDialog } from '../ui/PaymentDialog'
 import { BulkPaymentDialog, type BulkPaymentRow } from '../ui/BulkPaymentDialog'
 import { BulkPaymentResultDialog } from '../ui/BulkPaymentResultDialog'
+import { BatchPdfExportDialog } from '../ui/BatchPdfExportDialog'
 
 interface InvoiceListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
@@ -62,6 +63,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
+  const [batchPdfExporting, setBatchPdfExporting] = useState(false)
+  const [batchPdfResult, setBatchPdfResult] = useState<{ succeeded: number; failed: Array<{ invoiceId: number; error: string }> } | null>(null)
 
   const finalizeMutation = useFinalizeInvoice(activeFiscalYear?.id)
   const payMutation = usePayInvoice()
@@ -136,7 +139,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   }
 
   const isSelectable = useCallback((item: InvoiceListItem) =>
-    ['unpaid', 'partial', 'overdue'].includes(item.status), [])
+    item.status !== 'draft', [])
 
   const selectableItems = items.filter(isSelectable)
 
@@ -177,6 +180,42 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     } catch (err) {
       console.error('Bulk pay failed:', err)
       toast.error(err instanceof Error ? err.message : 'Bulk-betalning misslyckades')
+    }
+  }
+
+  async function handleBatchPdfExport() {
+    try {
+      const dirResponse = await window.api.selectDirectory()
+      if (!dirResponse.success || !dirResponse.data) return
+      const directory = dirResponse.data.directory
+
+      const selectedItems = items.filter(i => selectedIds.has(i.id))
+      const invoices = selectedItems.map(i => ({
+        invoiceId: i.id,
+        fileName: `Faktura_${i.invoice_number}_${i.counterparty_name.replace(/[^a-zA-ZåäöÅÄÖ0-9]/g, '_')}.pdf`,
+      }))
+
+      setBatchPdfExporting(true)
+      const response = await window.api.savePdfBatch({ directory, invoices })
+      setBatchPdfExporting(false)
+
+      if (!response.success) {
+        toast.error(response.error)
+        return
+      }
+
+      const result = response.data
+      setBatchPdfResult(result)
+      setSelectedIds(new Set())
+
+      if (result.failed.length === 0) {
+        toast.success(`${result.succeeded} PDF:er exporterade`)
+      } else {
+        toast.warning(`${result.succeeded} av ${result.succeeded + result.failed.length} exporterade`)
+      }
+    } catch (error) {
+      setBatchPdfExporting(false)
+      toast.error(error instanceof Error ? error.message : 'PDF-export misslyckades')
     }
   }
 
@@ -261,13 +300,26 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
           <span className="text-sm font-medium">{selectedIds.size} valda</span>
+          {items
+            .filter(i => selectedIds.has(i.id))
+            .every(i => ['unpaid', 'partial', 'overdue'].includes(i.status)) && (
+            <button
+              type="button"
+              onClick={() => setShowBulkDialog(true)}
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <CreditCard className="h-3 w-3" />
+              Bulk-betala
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setShowBulkDialog(true)}
-            className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            onClick={handleBatchPdfExport}
+            disabled={batchPdfExporting}
+            className="inline-flex items-center gap-1 rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
           >
-            <CreditCard className="h-3 w-3" />
-            Bulk-betala
+            <FileDown className="h-3 w-3" />
+            {batchPdfExporting ? 'Exporterar...' : 'Exportera PDF:er'}
           </button>
           <button
             type="button"
@@ -504,6 +556,18 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         open={!!bulkResult}
         onOpenChange={() => setBulkResult(null)}
         result={bulkResult}
+      />
+
+      <BatchPdfExportDialog
+        open={batchPdfExporting || !!batchPdfResult}
+        onOpenChange={(open) => {
+          if (!open) {
+            setBatchPdfExporting(false)
+            setBatchPdfResult(null)
+          }
+        }}
+        isExporting={batchPdfExporting}
+        result={batchPdfResult}
       />
     </div>
   )

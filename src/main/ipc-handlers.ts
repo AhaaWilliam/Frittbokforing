@@ -103,6 +103,17 @@ import {
   canCorrectEntry,
 } from './services/correction-service'
 import { globalSearch } from './services/search-service'
+import {
+  getAgingReceivables,
+  getAgingPayables,
+} from './services/aging-service'
+import {
+  getBudgetLines,
+  getBudgetTargets,
+  saveBudgetTargets,
+  getBudgetVsActual,
+  copyBudgetFromPreviousFy,
+} from './services/budget-service'
 import { getE2EFilePath } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -154,6 +165,8 @@ import {
   NetResultInputSchema,
   GenerateInvoicePdfSchema,
   SaveInvoicePdfSchema,
+  SelectDirectorySchema,
+  SavePdfBatchSchema,
   PayInvoicesBulkPayloadSchema,
   PayExpensesBulkPayloadSchema,
   CreateCreditNoteDraftSchema,
@@ -161,6 +174,12 @@ import {
   CorrectJournalEntrySchema,
   CanCorrectSchema,
   GlobalSearchSchema,
+  AgingInputSchema,
+  BudgetLinesSchema,
+  BudgetGetSchema,
+  BudgetSaveSchema,
+  BudgetVarianceSchema,
+  BudgetCopySchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -206,126 +225,70 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('company:create', (_event, input: unknown) =>
     createCompany(db, input),
   )
-  ipcMain.handle('company:get', () => getCompany(db))
+  ipcMain.handle('company:get', wrapIpcHandler(null, () => getCompany(db)))
   ipcMain.handle('company:update', (_event, input: unknown) =>
     updateCompany(db, input),
   )
 
   // === Fiscal Years ===
-  ipcMain.handle('fiscal-year:list', () => listFiscalYears(db))
+  ipcMain.handle('fiscal-year:list', wrapIpcHandler(null, () => listFiscalYears(db)))
 
   // === Fiscal Periods ===
-  ipcMain.handle('fiscal-period:list', (_event, input: unknown) => {
-    const parsed = FiscalPeriodListInputSchema.safeParse(input)
-    if (!parsed.success) return []
-    return listFiscalPeriods(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('fiscal-period:list', wrapIpcHandler(FiscalPeriodListInputSchema, (data) =>
+    listFiscalPeriods(db, data.fiscal_year_id),
+  ))
 
-  ipcMain.handle('fiscal-period:close', (_event, input: unknown) => {
-    const parsed = PeriodActionInputSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[fiscal-period:close] Validation error:', parsed.error.issues)
-      return {
-        success: false,
-        error: 'Ogiltigt period-id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    }
-    return closePeriod(db, parsed.data.period_id)
-  })
+  ipcMain.handle('fiscal-period:close', wrapIpcHandler(PeriodActionInputSchema, (data) =>
+    closePeriod(db, data.period_id),
+  ))
 
-  ipcMain.handle('fiscal-period:reopen', (_event, input: unknown) => {
-    const parsed = PeriodActionInputSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[fiscal-period:reopen] Validation error:', parsed.error.issues)
-      return {
-        success: false,
-        error: 'Ogiltigt period-id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    }
-    return reopenPeriod(db, parsed.data.period_id)
-  })
+  ipcMain.handle('fiscal-period:reopen', wrapIpcHandler(PeriodActionInputSchema, (data) =>
+    reopenPeriod(db, data.period_id),
+  ))
 
   // === Fiscal Year Create / Switch / Net Result ===
-  ipcMain.handle('fiscal-year:create-new', (_event, input: unknown) => {
-    const parsed = FiscalYearCreateNewInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltiga parametrar.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    try {
-      const settings = loadSettings()
-      const activeFyId = settings.last_fiscal_year_id as number | undefined
-      if (!activeFyId)
-        return {
-          success: false,
-          error: 'Inget aktivt räkenskapsår.',
-          code: 'VALIDATION_ERROR' as const,
-        }
-
-      const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as
-        | { id: number }
-        | undefined
-      if (!company)
-        return {
-          success: false,
-          error: 'Inget företag hittat.',
-          code: 'VALIDATION_ERROR' as const,
-        }
-
-      const result = createNewFiscalYear(db, company.id, activeFyId, {
-        confirmBookResult: parsed.data.confirmBookResult ?? false,
-        netResultOre: parsed.data.netResultOre ?? 0,
-      })
-
-      // F2-fix: closeFiscalYear sker nu atomärt INI createNewFiscalYear-transaktionen.
-
-      // Update settings to new FY
-      settings.last_fiscal_year_id = result.fiscalYear.id
-      saveSettings(settings)
-
-      return { success: true, data: result }
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'code' in err) {
-        const e = err as { code: string; error: string; field?: string }
-        return { success: false, error: e.error, code: e.code, field: e.field }
-      }
-      return {
-        success: false,
-        error:
-          err instanceof Error ? err.message : 'Kunde inte skapa räkenskapsår.',
-        code: 'UNEXPECTED_ERROR' as const,
-      }
+  ipcMain.handle('fiscal-year:create-new', wrapIpcHandler(FiscalYearCreateNewInputSchema, (data) => {
+    const settings = loadSettings()
+    const activeFyId = settings.last_fiscal_year_id as number | undefined
+    if (!activeFyId) {
+      throw { code: 'VALIDATION_ERROR', error: 'Inget aktivt räkenskapsår.' }
     }
-  })
 
-  ipcMain.handle('fiscal-year:switch', (_event, input: unknown) => {
-    const parsed = FiscalYearSwitchInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt FY-id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
+    const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as
+      | { id: number }
+      | undefined
+    if (!company) {
+      throw { code: 'VALIDATION_ERROR', error: 'Inget företag hittat.' }
+    }
+
+    const result = createNewFiscalYear(db, company.id, activeFyId, {
+      confirmBookResult: data.confirmBookResult ?? false,
+      netResultOre: data.netResultOre ?? 0,
+    })
+
+    // F2-fix: closeFiscalYear sker nu atomärt INI createNewFiscalYear-transaktionen.
+
+    // Update settings to new FY
+    settings.last_fiscal_year_id = result.fiscalYear.id
+    saveSettings(settings)
+
+    return result
+  }))
+
+  ipcMain.handle('fiscal-year:switch', wrapIpcHandler(FiscalYearSwitchInputSchema, (data) => {
     const fy = db
       .prepare('SELECT * FROM fiscal_years WHERE id = ?')
-      .get(parsed.data.fiscalYearId) as
+      .get(data.fiscalYearId) as
       | import('../shared/types').FiscalYear
       | undefined
-    if (!fy)
-      return {
-        success: false,
-        error: 'Räkenskapsår hittades inte.',
-        code: 'NOT_FOUND' as const,
-      }
+    if (!fy) {
+      throw { code: 'NOT_FOUND', error: 'Räkenskapsår hittades inte.' }
+    }
     const settings = loadSettings()
     settings.last_fiscal_year_id = fy.id
     saveSettings(settings)
-    return { success: true, data: fy }
-  })
+    return fy
+  }))
 
   ipcMain.handle('opening-balance:re-transfer', () => {
     try {
@@ -352,34 +315,19 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  ipcMain.handle('opening-balance:net-result', (_event, input: unknown) => {
-    const parsed = NetResultInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt FY-id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    const netResultOre = calculateNetResult(db, parsed.data.fiscalYearId)
-    return {
-      success: true,
-      data: {
-        netResultOre,
-        isAlreadyBooked: netResultOre === 0,
-      },
-    }
-  })
+  ipcMain.handle('opening-balance:net-result', wrapIpcHandler(NetResultInputSchema, (data) => {
+    const netResultOre = calculateNetResult(db, data.fiscalYearId)
+    return { netResultOre, isAlreadyBooked: netResultOre === 0 }
+  }))
 
   // === Counterparties ===
   ipcMain.handle('counterparty:list', wrapIpcHandler(CounterpartyListInputSchema, (data) =>
     listCounterparties(db, data),
   ))
 
-  ipcMain.handle('counterparty:get', (_event, input: unknown) => {
-    const parsed = CounterpartyIdSchema.safeParse(input)
-    if (!parsed.success) return null
-    return getCounterparty(db, parsed.data.id)
-  })
+  ipcMain.handle('counterparty:get', wrapIpcHandler(CounterpartyIdSchema, (data) =>
+    getCounterparty(db, data.id),
+  ))
 
   ipcMain.handle('counterparty:create', (_event, input: unknown) =>
     createCounterparty(db, input),
@@ -389,27 +337,18 @@ export function registerIpcHandlers(): void {
     updateCounterparty(db, input),
   )
 
-  ipcMain.handle('counterparty:deactivate', (_event, input: unknown) => {
-    const parsed = CounterpartyIdSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return deactivateCounterparty(db, parsed.data.id)
-  })
+  ipcMain.handle('counterparty:deactivate', wrapIpcHandler(CounterpartyIdSchema, (data) =>
+    deactivateCounterparty(db, data.id),
+  ))
 
   // === Products ===
   ipcMain.handle('product:list', wrapIpcHandler(ProductListInputSchema, (data) =>
     listProducts(db, data),
   ))
 
-  ipcMain.handle('product:get', (_event, input: unknown) => {
-    const parsed = ProductIdSchema.safeParse(input)
-    if (!parsed.success) return null
-    return getProduct(db, parsed.data.id)
-  })
+  ipcMain.handle('product:get', wrapIpcHandler(ProductIdSchema, (data) =>
+    getProduct(db, data.id),
+  ))
 
   ipcMain.handle('product:create', (_event, input: unknown) =>
     createProduct(db, input),
@@ -419,39 +358,18 @@ export function registerIpcHandlers(): void {
     updateProduct(db, input),
   )
 
-  ipcMain.handle('product:deactivate', (_event, input: unknown) => {
-    const parsed = ProductIdSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return deactivateProduct(db, parsed.data.id)
-  })
+  ipcMain.handle('product:deactivate', wrapIpcHandler(ProductIdSchema, (data) =>
+    deactivateProduct(db, data.id),
+  ))
 
   // === Product pricing ===
-  ipcMain.handle('product:set-customer-price', (_event, input: unknown) => {
-    const parsed = SetCustomerPriceInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return setCustomerPrice(db, parsed.data)
-  })
+  ipcMain.handle('product:set-customer-price', wrapIpcHandler(SetCustomerPriceInputSchema, (data) =>
+    setCustomerPrice(db, data),
+  ))
 
-  ipcMain.handle('product:remove-customer-price', (_event, input: unknown) => {
-    const parsed = RemoveCustomerPriceInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return removeCustomerPrice(db, parsed.data)
-  })
+  ipcMain.handle('product:remove-customer-price', wrapIpcHandler(RemoveCustomerPriceInputSchema, (data) =>
+    removeCustomerPrice(db, data),
+  ))
 
   ipcMain.handle('product:get-price-for-customer', wrapIpcHandler(GetPriceForCustomerInputSchema, (data) =>
     getPriceForCustomer(db, data),
@@ -470,58 +388,34 @@ export function registerIpcHandlers(): void {
     updateExpenseDraft(db, input),
   )
 
-  ipcMain.handle('expense:delete-draft', (_event, input: unknown) => {
-    const parsed = ExpenseIdSchema.safeParse(input)
-    if (!parsed.success)
-      return { success: false, error: 'Ogiltigt id.', code: 'VALIDATION_ERROR' }
-    return deleteExpenseDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('expense:delete-draft', wrapIpcHandler(ExpenseIdSchema, (data) =>
+    deleteExpenseDraft(db, data.id),
+  ))
 
   ipcMain.handle('expense:list-drafts', wrapIpcHandler(ListExpenseDraftsSchema, (data) =>
     listExpenseDrafts(db, data.fiscal_year_id),
   ))
 
-  ipcMain.handle('expense:finalize', (_event, input: unknown) => {
-    const parsed = FinalizeExpenseSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[expense:finalize] Validation error:', parsed.error.issues)
-      return { success: false, error: 'Ogiltigt id.', code: 'VALIDATION_ERROR' }
-    }
-    return finalizeExpense(db, parsed.data.id)
-  })
+  ipcMain.handle('expense:finalize', wrapIpcHandler(FinalizeExpenseSchema, (data) =>
+    finalizeExpense(db, data.id),
+  ))
 
-  ipcMain.handle('expense:pay', (_event, input: unknown) => {
-    const parsed = PayExpenseInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return payExpense(db, parsed.data)
-  })
+  ipcMain.handle('expense:pay', wrapIpcHandler(PayExpenseInputSchema, (data) =>
+    payExpense(db, data),
+  ))
 
-  ipcMain.handle('expense:payBulk', (_event, input: unknown) => {
-    const parsed = PayExpensesBulkPayloadSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: parsed.error.issues.map((i) => i.message).join('; '),
-        code: 'VALIDATION_ERROR',
-      }
-    return payExpensesBulk(db, parsed.data)
-  })
+  ipcMain.handle('expense:payBulk', wrapIpcHandler(PayExpensesBulkPayloadSchema, (data) =>
+    payExpensesBulk(db, data),
+  ))
 
   ipcMain.handle('expense:payments', wrapIpcHandler(
     GetExpensePaymentsSchema,
     (parsed) => getExpensePayments(db, parsed.expense_id),
   ))
 
-  ipcMain.handle('expense:get', (_event, input: unknown) => {
-    const parsed = GetExpenseSchema.safeParse(input)
-    if (!parsed.success) return { success: true, data: null }
-    return getExpense(db, parsed.data.id)
-  })
+  ipcMain.handle('expense:get', wrapIpcHandler(GetExpenseSchema, (data) =>
+    getExpense(db, data.id),
+  ))
 
   ipcMain.handle('expense:list', wrapIpcHandler(
     ListExpensesSchema,
@@ -546,52 +440,21 @@ export function registerIpcHandlers(): void {
     listAllAccounts(db, data),
   ))
 
-  ipcMain.handle('account:create', (_event, input: unknown) => {
-    const parsed = AccountCreateInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: parsed.error.issues[0]?.message ?? 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return createAccount(db, parsed.data)
-  })
+  ipcMain.handle('account:create', wrapIpcHandler(AccountCreateInputSchema, (data) =>
+    createAccount(db, data),
+  ))
 
-  ipcMain.handle('account:update', (_event, input: unknown) => {
-    const parsed = AccountUpdateInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return updateAccount(db, parsed.data)
-  })
+  ipcMain.handle('account:update', wrapIpcHandler(AccountUpdateInputSchema, (data) =>
+    updateAccount(db, data),
+  ))
 
-  ipcMain.handle('account:toggle-active', (_event, input: unknown) => {
-    const parsed = AccountToggleActiveInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return toggleAccountActive(db, parsed.data)
-  })
+  ipcMain.handle('account:toggle-active', wrapIpcHandler(AccountToggleActiveInputSchema, (data) =>
+    toggleAccountActive(db, data),
+  ))
 
-  ipcMain.handle('account:get-statement', (_event, input: unknown) => {
-    const parsed = AccountStatementInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return {
-      success: true,
-      data: getAccountStatement(db, parsed.data),
-    }
-  })
+  ipcMain.handle('account:get-statement', wrapIpcHandler(AccountStatementInputSchema, (data) =>
+    getAccountStatement(db, data),
+  ))
 
   ipcMain.handle('backup:create', async () => {
     return createBackup(db)
@@ -606,32 +469,21 @@ export function registerIpcHandlers(): void {
     saveDraft(db, input),
   )
 
-  ipcMain.handle('invoice:get-draft', (_event, input: unknown) => {
-    const parsed = InvoiceIdSchema.safeParse(input)
-    if (!parsed.success) return null
-    return getDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('invoice:get-draft', wrapIpcHandler(InvoiceIdSchema, (data) =>
+    getDraft(db, data.id),
+  ))
 
   ipcMain.handle('invoice:update-draft', (_event, input: unknown) =>
     updateDraft(db, input),
   )
 
-  ipcMain.handle('invoice:delete-draft', (_event, input: unknown) => {
-    const parsed = InvoiceIdSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return deleteDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('invoice:delete-draft', wrapIpcHandler(InvoiceIdSchema, (data) =>
+    deleteDraft(db, data.id),
+  ))
 
-  ipcMain.handle('invoice:list-drafts', (_event, input: unknown) => {
-    const parsed = DraftListInputSchema.safeParse(input)
-    if (!parsed.success) return []
-    return listDrafts(db, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('invoice:list-drafts', wrapIpcHandler(DraftListInputSchema, (data) =>
+    listDrafts(db, data.fiscal_year_id),
+  ))
 
   ipcMain.handle('invoice:next-number', wrapIpcHandler(NextNumberInputSchema, (data) =>
     nextInvoiceNumber(db, data.fiscal_year_id),
@@ -642,56 +494,26 @@ export function registerIpcHandlers(): void {
     (parsed) => listInvoices(db, parsed),
   ))
 
-  ipcMain.handle('invoice:finalize', (_event, input: unknown) => {
-    const parsed = FinalizeInvoiceInputSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[invoice:finalize] Validation error:', parsed.error.issues)
-      return {
-        success: false,
-        error: 'Ogiltigt id.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    }
-    return finalizeDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('invoice:finalize', wrapIpcHandler(FinalizeInvoiceInputSchema, (data) =>
+    finalizeDraft(db, data.id),
+  ))
 
-  ipcMain.handle('invoice:pay', (_event, input: unknown) => {
-    const parsed = PayInvoiceInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return payInvoice(db, parsed.data)
-  })
+  ipcMain.handle('invoice:pay', wrapIpcHandler(PayInvoiceInputSchema, (data) =>
+    payInvoice(db, data),
+  ))
 
-  ipcMain.handle('invoice:payBulk', (_event, input: unknown) => {
-    const parsed = PayInvoicesBulkPayloadSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: parsed.error.issues.map((i) => i.message).join('; '),
-        code: 'VALIDATION_ERROR',
-      }
-    return payInvoicesBulk(db, parsed.data)
-  })
+  ipcMain.handle('invoice:payBulk', wrapIpcHandler(PayInvoicesBulkPayloadSchema, (data) =>
+    payInvoicesBulk(db, data),
+  ))
 
   ipcMain.handle('invoice:payments', wrapIpcHandler(
     GetPaymentsInputSchema,
     (parsed) => getPayments(db, parsed.invoice_id),
   ))
 
-  ipcMain.handle('invoice:update-sent', (_event, input: unknown) => {
-    const parsed = UpdateSentInvoiceInputSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR' as const,
-      }
-    return updateSentInvoice(db, parsed.data)
-  })
+  ipcMain.handle('invoice:update-sent', wrapIpcHandler(UpdateSentInvoiceInputSchema, (data) =>
+    updateSentInvoice(db, data),
+  ))
 
   ipcMain.handle('invoice:create-credit-note-draft', wrapIpcHandler(
     CreateCreditNoteDraftSchema,
@@ -735,59 +557,21 @@ export function registerIpcHandlers(): void {
   ))
 
   // === Manual Entries ===
-  ipcMain.handle('manual-entry:save-draft', (_event, input: unknown) => {
-    const parsed = SaveManualEntryDraftSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn(
-        '[manual-entry:save-draft] Validation error:',
-        parsed.error.issues,
-      )
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    }
-    return saveManualEntryDraft(db, parsed.data)
-  })
+  ipcMain.handle('manual-entry:save-draft', wrapIpcHandler(SaveManualEntryDraftSchema, (data) =>
+    saveManualEntryDraft(db, data),
+  ))
 
-  ipcMain.handle('manual-entry:get', (_event, input: unknown) => {
-    const parsed = ManualEntryIdSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return getManualEntry(db, parsed.data.id)
-  })
+  ipcMain.handle('manual-entry:get', wrapIpcHandler(ManualEntryIdSchema, (data) =>
+    getManualEntry(db, data.id),
+  ))
 
-  ipcMain.handle('manual-entry:update-draft', (_event, input: unknown) => {
-    const parsed = UpdateManualEntryDraftSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn(
-        '[manual-entry:update-draft] Validation error:',
-        parsed.error.issues,
-      )
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    }
-    return updateManualEntryDraft(db, parsed.data)
-  })
+  ipcMain.handle('manual-entry:update-draft', wrapIpcHandler(UpdateManualEntryDraftSchema, (data) =>
+    updateManualEntryDraft(db, data),
+  ))
 
-  ipcMain.handle('manual-entry:delete-draft', (_event, input: unknown) => {
-    const parsed = ManualEntryIdSchema.safeParse(input)
-    if (!parsed.success)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    return deleteManualEntryDraft(db, parsed.data.id)
-  })
+  ipcMain.handle('manual-entry:delete-draft', wrapIpcHandler(ManualEntryIdSchema, (data) =>
+    deleteManualEntryDraft(db, data.id),
+  ))
 
   ipcMain.handle('manual-entry:list-drafts', wrapIpcHandler(ManualEntryListSchema, (data) =>
     listManualEntryDrafts(db, data.fiscal_year_id),
@@ -797,37 +581,18 @@ export function registerIpcHandlers(): void {
     listManualEntries(db, data.fiscal_year_id),
   ))
 
-  ipcMain.handle('manual-entry:finalize', (_event, input: unknown) => {
-    const parsed = ManualEntryFinalizeSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[manual-entry:finalize] Validation error:', parsed.error.issues)
-      return {
-        success: false,
-        error: 'Ogiltigt input.',
-        code: 'VALIDATION_ERROR',
-      }
-    }
-    return finalizeManualEntry(db, parsed.data.id, parsed.data.fiscal_year_id)
-  })
+  ipcMain.handle('manual-entry:finalize', wrapIpcHandler(ManualEntryFinalizeSchema, (data) =>
+    finalizeManualEntry(db, data.id, data.fiscal_year_id),
+  ))
 
   // === Journal Entry Corrections ===
-  ipcMain.handle('journal-entry:correct', (_event, input: unknown) => {
-    const parsed = CorrectJournalEntrySchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[journal-entry:correct] Validation error:', parsed.error.issues)
-      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' }
-    }
-    return createCorrectionEntry(db, parsed.data)
-  })
+  ipcMain.handle('journal-entry:correct', wrapIpcHandler(CorrectJournalEntrySchema, (data) =>
+    createCorrectionEntry(db, data),
+  ))
 
-  ipcMain.handle('journal-entry:can-correct', (_event, input: unknown) => {
-    const parsed = CanCorrectSchema.safeParse(input)
-    if (!parsed.success) {
-      log.warn('[journal-entry:can-correct] Validation error:', parsed.error.issues)
-      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' }
-    }
-    return canCorrectEntry(db, parsed.data.journal_entry_id)
-  })
+  ipcMain.handle('journal-entry:can-correct', wrapIpcHandler(CanCorrectSchema, (data) =>
+    canCorrectEntry(db, data.journal_entry_id),
+  ))
 
   // === Excel Export ===
   ipcMain.handle('export:excel', wrapIpcHandler(
@@ -946,14 +711,76 @@ export function registerIpcHandlers(): void {
     },
   ))
 
+  ipcMain.handle('invoice:select-directory', wrapIpcHandler(
+    SelectDirectorySchema,
+    async () => {
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openDirectory'],
+      })
+      if (result.canceled || !result.filePaths[0]) return null
+      return { directory: result.filePaths[0] }
+    },
+  ))
+
+  ipcMain.handle('invoice:save-pdf-batch', wrapIpcHandler(
+    SavePdfBatchSchema,
+    async (parsed) => {
+      const succeeded: number[] = []
+      const failed: Array<{ invoiceId: number; error: string }> = []
+
+      for (const inv of parsed.invoices) {
+        try {
+          const buffer = await generateInvoicePdf(db, inv.invoiceId)
+          fs.writeFileSync(path.join(parsed.directory, inv.fileName), buffer)
+          succeeded.push(inv.invoiceId)
+        } catch (err) {
+          failed.push({
+            invoiceId: inv.invoiceId,
+            error: err instanceof Error ? err.message : 'Okänt fel',
+          })
+        }
+      }
+
+      return { succeeded: succeeded.length, failed }
+    },
+  ))
+
   // === Global Search ===
-  ipcMain.handle('search:global', (_event, input: unknown) => {
-    const parsed = GlobalSearchSchema.safeParse(input)
-    if (!parsed.success) {
-      return { success: false, error: 'Ogiltigt input.', code: 'VALIDATION_ERROR' as const }
-    }
-    return globalSearch(db, parsed.data)
-  })
+  ipcMain.handle('search:global', wrapIpcHandler(GlobalSearchSchema, (data) =>
+    globalSearch(db, data),
+  ))
+
+  // === Aging Report ===
+  ipcMain.handle('aging:receivables', wrapIpcHandler(AgingInputSchema, (data) =>
+    getAgingReceivables(db, data.fiscal_year_id, data.as_of_date),
+  ))
+
+  ipcMain.handle('aging:payables', wrapIpcHandler(AgingInputSchema, (data) =>
+    getAgingPayables(db, data.fiscal_year_id, data.as_of_date),
+  ))
+
+  // === Budget ===
+  ipcMain.handle('budget:lines', wrapIpcHandler(BudgetLinesSchema, () =>
+    getBudgetLines(),
+  ))
+
+  ipcMain.handle('budget:get', wrapIpcHandler(BudgetGetSchema, (data) =>
+    getBudgetTargets(db, data.fiscal_year_id),
+  ))
+
+  ipcMain.handle('budget:save', wrapIpcHandler(BudgetSaveSchema, (data) =>
+    saveBudgetTargets(db, data.fiscal_year_id, data.targets),
+  ))
+
+  ipcMain.handle('budget:variance', wrapIpcHandler(BudgetVarianceSchema, (data) =>
+    getBudgetVsActual(db, data.fiscal_year_id),
+  ))
+
+  ipcMain.handle('budget:copy-from-previous', wrapIpcHandler(BudgetCopySchema, (data) =>
+    copyBudgetFromPreviousFy(db, data.target_fiscal_year_id, data.source_fiscal_year_id),
+  ))
 
   // === Settings ===
   ipcMain.handle('settings:get', (_event, key: string) => {
