@@ -688,6 +688,30 @@ etablerade samma separations-mönster).
 **Test-API:** `window.__testApi.freezeClock(isoString | null)` sätter/rensar
 `FRITT_NOW` runtime för E2E-tester. Guardad av `FRITT_TEST=1`.
 
+## 56. Signed amount i bank-extern rådata (M152)
+
+**M152.** `bank_transactions.amount_ore` är signerad (positiv=inkommande,
+negativ=utgående). Detta avviker från **M137** (belopp alltid positiva i DB,
+sign-flip i journal-byggaren) men är korrekt eftersom:
+
+- `bank_transactions` är **extern rådata** från bankens kontoutdrag, inte en
+  domänenhet. Signen kommer direkt från ISO 20022 `CdtDbtInd`-elementet.
+- Direction-guard i match-service säkerställer korrekt fakturasida innan
+  bokföring (M137 gäller fortfarande för invoices/expenses/credits).
+- En alternativ unsigned-modell skulle kräva en separat sidokolumn för sign
+  och införa översättningskomplexitet utan semantisk vinst.
+
+Framtida externa rådata-tabeller (camt.054, MT940, BGC-returfil) får också
+använda signed amounts utan M137-konflikt. Interna domänenheter (invoices,
+expenses, credit notes) följer fortsatt M137.
+
+**M122-inventory tillägg (Sprint 55):** inkommande FK-referenser från
+bank-tabellerna:
+- `invoice_payments` ← bank_reconciliation_matches
+- `expense_payments` ← bank_reconciliation_matches
+- `bank_statements` ← bank_transactions
+- `bank_transactions` ← bank_reconciliation_matches
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.

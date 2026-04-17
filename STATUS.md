@@ -1,5 +1,18 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 55 -- Bankavstämning MVP + F62-c-extension ✅ KLAR
+
+Session S55 (2026-04-17). Bankavstämning camt.053 (import + manuell match) +
+F62-c-extension sale-price (vinst/förlust mot 3970/7970). 8 commits enligt plan.
+
+**Testbaslinje:** 2314 → 2343 vitest (+29). 226 → 229 testfiler (+3).
+**Playwright:** 47/47 → 50/50 (+3 bank-statement-specs).
+**PRAGMA user_version:** 38 → 39. **Tabeller:** 33 → 36 (+3 bank-tabeller).
+**IPC-kanaler:** +4 (bank-statement:import/list/get/match-transaction).
+**Nya M-principer:** M152 (signed amount i bank-extern rådata).
+
+Se `docs/s55-summary.md` för detaljer.
+
 ## Sprint 54 -- S53 follow-through ✅ KLAR
 
 Session S54. Fokuserad uppföljning av S53-leverabler: F65-c (cash flow UI +
