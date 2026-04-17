@@ -1368,6 +1368,11 @@ END;`,
     CREATE INDEX idx_bank_tx_booking_date ON bank_transactions(booking_date);
     CREATE INDEX idx_bank_match_entity ON bank_reconciliation_matches(matched_entity_type, matched_entity_id);
   `, programmatic: migration039Verify },
+  // Sprint 56: F66-b — match_method-enum-utökning för auto-matchning.
+  // Utöka CHECK från ('manual') till ('manual','auto_amount_exact','auto_amount_date',
+  // 'auto_amount_ref','auto_iban'). Pre-flight whitelist (K2), explicit kolumnlista (K1),
+  // M141 cross-table-trigger-inventering (K3). Inga inkommande FK → ingen FK-OFF behövs.
+  { sql: '-- Migration 040: F66-b match_method-enum (se programmatic)', programmatic: migration040Programmatic },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -1391,6 +1396,98 @@ function migration039Verify(db: import('better-sqlite3').Database): void {
       .get(idx)
     if (!exists) throw new Error(`Migration 039 failed: index ${idx} saknas`)
   }
+}
+
+/**
+ * Migration 040: Sprint 56 F66-b — match_method-enum-utökning.
+ *
+ * Pre-flight (K2): SELECT DISTINCT match_method måste vara delmängd av ['manual'].
+ * K1: explicit kolumnlista i INSERT (ej SELECT *).
+ * K3: M141 cross-table trigger-inventering — verifiera 0 träffar.
+ *
+ * bank_reconciliation_matches har inga inkommande FK → table-recreate kan
+ * köras inuti transaktionen (PRAGMA foreign_keys OFF behövs inte).
+ */
+function migration040Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency
+  const tableInfo = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+    .get() as { sql: string } | undefined
+  if (tableInfo?.sql?.includes("'auto_iban'")) return
+
+  // K2: pre-flight whitelist
+  const distinct = db
+    .prepare('SELECT DISTINCT match_method FROM bank_reconciliation_matches')
+    .all() as { match_method: string }[]
+  const allowed = ['manual']
+  for (const row of distinct) {
+    if (!allowed.includes(row.match_method)) {
+      throw new Error(
+        `Migration 040 pre-flight: bank_reconciliation_matches har match_method '${row.match_method}' utanför whitelist ${JSON.stringify(allowed)}. Undersök innan migrationen kan köras.`,
+      )
+    }
+  }
+
+  // K3: M141 cross-table trigger-inventering
+  const crossTriggers = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND sql LIKE '%bank_reconciliation_matches%' AND tbl_name != 'bank_reconciliation_matches'",
+    )
+    .all() as { name: string }[]
+  if (crossTriggers.length > 0) {
+    throw new Error(
+      `Migration 040 M141 pre-flight: oväntad cross-table trigger refererar bank_reconciliation_matches: ${crossTriggers.map((t) => t.name).join(', ')}`,
+    )
+  }
+
+  db.exec(`
+    CREATE TABLE bank_reconciliation_matches_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bank_transaction_id INTEGER NOT NULL UNIQUE REFERENCES bank_transactions(id) ON DELETE CASCADE,
+      matched_entity_type TEXT NOT NULL,
+      matched_entity_id INTEGER NOT NULL,
+      invoice_payment_id INTEGER REFERENCES invoice_payments(id) ON DELETE RESTRICT,
+      expense_payment_id INTEGER REFERENCES expense_payments(id) ON DELETE RESTRICT,
+      match_method TEXT NOT NULL DEFAULT 'manual',
+      matched_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (matched_entity_type IN ('invoice','expense')),
+      CHECK (match_method IN ('manual','auto_amount_exact','auto_amount_date','auto_amount_ref','auto_iban')),
+      CHECK (
+        (matched_entity_type = 'invoice' AND invoice_payment_id IS NOT NULL AND expense_payment_id IS NULL)
+        OR
+        (matched_entity_type = 'expense' AND expense_payment_id IS NOT NULL AND invoice_payment_id IS NULL)
+      )
+    );
+
+    INSERT INTO bank_reconciliation_matches_new (
+      id, bank_transaction_id, matched_entity_type, matched_entity_id,
+      invoice_payment_id, expense_payment_id, match_method, matched_at
+    )
+    SELECT
+      id, bank_transaction_id, matched_entity_type, matched_entity_id,
+      invoice_payment_id, expense_payment_id, match_method, matched_at
+    FROM bank_reconciliation_matches;
+
+    DROP TABLE bank_reconciliation_matches;
+    ALTER TABLE bank_reconciliation_matches_new RENAME TO bank_reconciliation_matches;
+
+    CREATE INDEX idx_bank_match_entity
+      ON bank_reconciliation_matches(matched_entity_type, matched_entity_id);
+  `)
+
+  // Verify
+  const sql = (
+    db
+      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+      .get() as { sql: string }
+  ).sql
+  if (!sql.includes("'auto_iban'")) {
+    throw new Error('Migration 040 failed: auto_iban saknas i CHECK')
+  }
+  const idx = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bank_match_entity'")
+    .get()
+  if (!idx) throw new Error('Migration 040 failed: idx_bank_match_entity saknas')
 }
 
 /**
