@@ -73,6 +73,49 @@ export function registerTestHandlers(db: Database.Database): void {
     return db.prepare('SELECT * FROM counterparties WHERE id = ?').get(id) ?? null
   })
 
+  // S58 D2: F66-e E2E helper — read bank_reconciliation_matches for assertions
+  ipcMain.handle('__test:getReconciliationMatches', (_event, stmtId?: number) => {
+    if (stmtId) {
+      return db
+        .prepare(
+          `SELECT brm.* FROM bank_reconciliation_matches brm
+           JOIN bank_transactions bt ON bt.id = brm.bank_transaction_id
+           WHERE bt.bank_statement_id = ?`,
+        )
+        .all(stmtId)
+    }
+    return db.prepare('SELECT * FROM bank_reconciliation_matches ORDER BY id').all()
+  })
+
+  // S58 D2: F66-e E2E helper — link payment to bank-TX (synthetic setup för batch-blocked-test)
+  ipcMain.handle(
+    '__test:linkPaymentToBankTx',
+    (_event, paymentId: number, txId: number, entityType: 'invoice' | 'expense') => {
+      const entityIdCol = entityType === 'invoice' ? 'invoice_id' : 'expense_id'
+      const paymentTable = entityType === 'invoice' ? 'invoice_payments' : 'expense_payments'
+      const entityId = db
+        .prepare(`SELECT ${entityIdCol} AS eid FROM ${paymentTable} WHERE id = ?`)
+        .get(paymentId) as { eid: number } | undefined
+      if (!entityId) throw new Error(`payment ${paymentId} saknas`)
+      db.prepare(
+        `INSERT INTO bank_reconciliation_matches (
+           bank_transaction_id, matched_entity_type, matched_entity_id,
+           invoice_payment_id, expense_payment_id, match_method
+         ) VALUES (?, ?, ?, ?, ?, 'manual')`,
+      ).run(
+        txId,
+        entityType,
+        entityId.eid,
+        entityType === 'invoice' ? paymentId : null,
+        entityType === 'expense' ? paymentId : null,
+      )
+      db.prepare(
+        `UPDATE bank_transactions SET reconciliation_status = 'matched' WHERE id = ?`,
+      ).run(txId)
+      return { ok: true }
+    },
+  )
+
   ipcMain.handle('__test:createFiscalYear', (_event, opts: {
     companyId: number
     startDate: string

@@ -332,5 +332,9 @@ if (process.env.FRITT_TEST === '1') {
     createFiscalYear: (opts: { companyId: number; startDate: string; endDate: string; yearLabel: string }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
     freezeClock: (iso: string | null) => ipcRenderer.invoke('__test:freezeClock', iso),
     forcePeriodState: (periodId: number, closed: boolean) => ipcRenderer.invoke('__test:forcePeriodState', periodId, closed),
+    getReconciliationMatches: (stmtId?: number) =>
+      ipcRenderer.invoke('__test:getReconciliationMatches', stmtId),
+    linkPaymentToBankTx: (paymentId: number, txId: number, entityType: 'invoice' | 'expense') =>
+      ipcRenderer.invoke('__test:linkPaymentToBankTx', paymentId, txId, entityType),
   })
 }
