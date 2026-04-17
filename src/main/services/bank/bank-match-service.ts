@@ -16,6 +16,7 @@ import log from 'electron-log'
 import type { IpcResult } from '../../../shared/types'
 import { _payInvoiceTx } from '../invoice-service'
 import { _payExpenseTx } from '../expense-service'
+import { normalizeIban } from './bank-match-suggester'
 
 // ═══ Types ═══
 
@@ -36,6 +37,7 @@ interface BankTxRow {
   amount_ore: number
   value_date: string
   reconciliation_status: 'unmatched' | 'matched' | 'excluded'
+  counterparty_iban: string | null
 }
 
 // ═══ Public API ═══
@@ -49,7 +51,7 @@ export function matchBankTransaction(
       // 1. Hämta + validera bank-transaktion
       const tx = db
         .prepare(
-          'SELECT id, amount_ore, value_date, reconciliation_status FROM bank_transactions WHERE id = ?',
+          'SELECT id, amount_ore, value_date, reconciliation_status, counterparty_iban FROM bank_transactions WHERE id = ?',
         )
         .get(input.bank_transaction_id) as BankTxRow | undefined
       if (!tx) {
@@ -134,6 +136,55 @@ export function matchBankTransaction(
         input.matched_entity_type === 'invoice' ? payment_id : null,
         input.matched_entity_type === 'expense' ? payment_id : null,
       )
+
+      // 4b. F66-c (Sprint 57 D1): opportunistisk auto-uppdatering av
+      // counterparties.bank_account när TX har IBAN och counterparty saknar det.
+      // Wrappas i lokal try-catch — får ALDRIG blockera själva matchen.
+      if (tx.counterparty_iban) {
+        try {
+          const ibanNorm = normalizeIban(tx.counterparty_iban)
+          const cpRow =
+            input.matched_entity_type === 'invoice'
+              ? (db
+                  .prepare(
+                    `SELECT c.id, c.bank_account
+                     FROM counterparties c
+                     JOIN invoices i ON i.counterparty_id = c.id
+                     WHERE i.id = ?`,
+                  )
+                  .get(input.matched_entity_id) as
+                  | { id: number; bank_account: string | null }
+                  | undefined)
+              : (db
+                  .prepare(
+                    `SELECT c.id, c.bank_account
+                     FROM counterparties c
+                     JOIN expenses e ON e.counterparty_id = c.id
+                     WHERE e.id = ?`,
+                  )
+                  .get(input.matched_entity_id) as
+                  | { id: number; bank_account: string | null }
+                  | undefined)
+
+          if (cpRow && !cpRow.bank_account) {
+            db.prepare(
+              'UPDATE counterparties SET bank_account = ? WHERE id = ?',
+            ).run(ibanNorm, cpRow.id)
+          } else if (
+            cpRow &&
+            cpRow.bank_account &&
+            normalizeIban(cpRow.bank_account) !== ibanNorm
+          ) {
+            log.warn(
+              `F66-c: IBAN-konflikt för counterparty ${cpRow.id}: ${cpRow.bank_account} vs ${tx.counterparty_iban} — skriver inte över`,
+            )
+          }
+        } catch (err) {
+          log.warn(
+            `F66-c: auto-update misslyckades för TX ${tx.id}: ${err instanceof Error ? err.message : String(err)}`,
+          )
+        }
+      }
 
       // 5. Flippa status
       db.prepare(
