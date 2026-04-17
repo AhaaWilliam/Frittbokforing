@@ -23,6 +23,7 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import type { IpcResult } from '../../../shared/types'
+import { classifyBankFeeTx, type FeeMethod, type FeeType } from './bank-fee-classifier'
 
 // ═══ Types ═══
 
@@ -31,10 +32,12 @@ export type MatchMethod =
   | 'auto_amount_ref'
   | 'auto_amount_date'
   | 'auto_amount_exact'
+  | FeeMethod
 
 export type MatchConfidence = 'HIGH' | 'MEDIUM'
 
-export interface MatchCandidate {
+/** Invoice/expense-candidat — befintlig form. */
+export interface EntityMatchCandidate {
   entity_type: 'invoice' | 'expense'
   entity_id: number
   entity_number: string | null
@@ -50,6 +53,20 @@ export interface MatchCandidate {
   reasons: string[]
 }
 
+/** S58 F66-d: fee-candidat för auto-klassificerade bank-avgifter/ränta. */
+export interface FeeMatchCandidate {
+  entity_type: FeeType // 'bank_fee' | 'interest_income' | 'interest_expense'
+  account: '6570' | '8310' | '8410'
+  series: 'A' | 'B'
+  amount_ore: number
+  score: number
+  confidence: MatchConfidence
+  method: FeeMethod
+  reasons: string[]
+}
+
+export type MatchCandidate = EntityMatchCandidate | FeeMatchCandidate
+
 export interface TxSuggestion {
   bank_transaction_id: number
   /** Max 5 candidates, sorterade på score DESC + tie-break. Kan vara tom. */
@@ -62,6 +79,8 @@ interface BankTxRow {
   value_date: string
   remittance_info: string | null
   counterparty_iban: string | null
+  counterparty_name: string | null
+  bank_tx_subfamily: string | null
 }
 
 interface InvoiceCandidateRow {
@@ -187,39 +206,50 @@ export function computeScore(s: ScoringInput): { score: number; reasons: string[
  * om flera candidates har samma top-score → alla blir MEDIUM.
  * Returnerar max 5, sorterade på score DESC + tie-break, med confidence-fält.
  */
-export function classifyCandidates(
-  candidates: Omit<MatchCandidate, 'confidence'>[],
-): MatchCandidate[] {
-  if (candidates.length === 0) return []
+type EntityCandidateNoConfidence = Omit<EntityMatchCandidate, 'confidence'>
 
-  const sorted = [...candidates].sort((a, b) => {
+function tieBreakKey(c: MatchCandidate | EntityCandidateNoConfidence): string {
+  if (c.entity_type === 'invoice' || c.entity_type === 'expense') {
+    const dateA = c.entity_type === 'invoice' ? (c.due_date ?? '') : c.entity_date
+    return `${dateA}:${c.entity_id}`
+  }
+  const fee = c as FeeMatchCandidate
+  return `fee:${fee.entity_type}:${fee.account}:${fee.amount_ore}`
+}
+
+/**
+ * Klassa entity-candidates (invoice/expense) + lägg till färdig-klassade
+ * fee-candidates. Entity-confidence beräknas här (K5-logik), fee-confidence
+ * är förbestämd av classifier.
+ */
+export function classifyCandidates(
+  entityCandidates: EntityCandidateNoConfidence[],
+  feeCandidates: FeeMatchCandidate[] = [],
+): MatchCandidate[] {
+  const hasEntities = entityCandidates.length > 0
+  const entityTop = hasEntities
+    ? Math.max(...entityCandidates.map((c) => c.score))
+    : 0
+  const entityTopTieCount = entityCandidates.filter((c) => c.score === entityTop).length
+  const entityUniqueTop = entityTopTieCount === 1
+
+  const classed: MatchCandidate[] = []
+  for (const c of entityCandidates) {
+    let confidence: MatchConfidence | null
+    if (c.score >= 130 && entityUniqueTop && c.score === entityTop) confidence = 'HIGH'
+    else if (c.score >= 80) confidence = 'MEDIUM'
+    else confidence = null
+    if (confidence !== null) classed.push({ ...c, confidence })
+  }
+  for (const f of feeCandidates) classed.push(f)
+
+  // Gemensam ranking (fee + entity) på score DESC + deterministisk tie-break
+  classed.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
-    const dateA = a.entity_type === 'invoice' ? (a.due_date ?? '') : a.entity_date
-    const dateB = b.entity_type === 'invoice' ? (b.due_date ?? '') : b.entity_date
-    if (dateA !== dateB) return dateA.localeCompare(dateB)
-    return a.entity_id - b.entity_id
+    return tieBreakKey(a).localeCompare(tieBreakKey(b))
   })
 
-  const topScore = sorted[0].score
-  const topTieCount = sorted.filter((c) => c.score === topScore).length
-  const isUniqueTop = topTieCount === 1
-
-  const result: MatchCandidate[] = []
-  for (const c of sorted) {
-    let confidence: MatchConfidence | null
-    if (c.score >= 130 && isUniqueTop && c.score === topScore) {
-      confidence = 'HIGH'
-    } else if (c.score >= 80) {
-      confidence = 'MEDIUM'
-    } else {
-      confidence = null
-    }
-    if (confidence !== null) {
-      result.push({ ...c, confidence })
-      if (result.length >= 5) break
-    }
-  }
-  return result
+  return classed.slice(0, 5)
 }
 
 // ═══ Public API ═══
@@ -245,7 +275,8 @@ export function suggestMatchesForStatement(
 
     const txs = db
       .prepare(
-        `SELECT id, amount_ore, value_date, remittance_info, counterparty_iban
+        `SELECT id, amount_ore, value_date, remittance_info, counterparty_iban,
+                counterparty_name, bank_tx_subfamily
          FROM bank_transactions
          WHERE bank_statement_id = ? AND reconciliation_status = 'unmatched'`,
       )
@@ -283,7 +314,29 @@ export function suggestMatchesForStatement(
       .all(stmt.fiscal_year_id) as ExpenseCandidateRow[]
 
     const suggestions: TxSuggestion[] = txs.map((tx) => {
-      const candidates: Omit<MatchCandidate, 'confidence'>[] = []
+      const entityCandidates: EntityCandidateNoConfidence[] = []
+
+      // S58 F66-d: fee-klassificering FÖRE invoice/expense-loop
+      const feeClass = classifyBankFeeTx({
+        amount_ore: tx.amount_ore,
+        counterparty_name: tx.counterparty_name,
+        remittance_info: tx.remittance_info,
+        bank_tx_subfamily: tx.bank_tx_subfamily,
+      })
+      const feeCandidates: FeeMatchCandidate[] = feeClass
+        ? [
+            {
+              entity_type: feeClass.type,
+              account: feeClass.account,
+              series: feeClass.series,
+              amount_ore: Math.abs(tx.amount_ore),
+              score: feeClass.score,
+              confidence: feeClass.confidence,
+              method: feeClass.method,
+              reasons: feeClass.reasons,
+            },
+          ]
+        : []
 
       if (tx.amount_ore > 0) {
         // Invoice direction
@@ -302,7 +355,7 @@ export function suggestMatchesForStatement(
             candOcrNumber: inv.ocr_number,
           })
           if (score >= 80) {
-            candidates.push({
+            entityCandidates.push({
               entity_type: 'invoice',
               entity_id: inv.id,
               entity_number: inv.invoice_number,
@@ -333,7 +386,7 @@ export function suggestMatchesForStatement(
             candOcrNumber: null,
           })
           if (score >= 80) {
-            candidates.push({
+            entityCandidates.push({
               entity_type: 'expense',
               entity_id: exp.id,
               entity_number: exp.supplier_invoice_number,
@@ -352,7 +405,7 @@ export function suggestMatchesForStatement(
 
       return {
         bank_transaction_id: tx.id,
-        candidates: classifyCandidates(candidates),
+        candidates: classifyCandidates(entityCandidates, feeCandidates),
       }
     })
 

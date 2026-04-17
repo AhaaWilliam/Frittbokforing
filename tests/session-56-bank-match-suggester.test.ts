@@ -380,8 +380,11 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     expect(c[0].confidence).toBe('MEDIUM')
     expect(c[1].confidence).toBe('MEDIUM')
     // Äldst due_date först → invB (2026-04-15) före invA (2026-04-30)
-    expect(c[0].entity_id).toBe(invB.id)
-    expect(c[1].entity_id).toBe(invA.id)
+    const c0 = c[0]
+    const c1 = c[1]
+    if (c0.entity_type !== 'invoice' || c1.entity_type !== 'invoice') throw new Error('förväntade invoice-candidates')
+    expect(c0.entity_id).toBe(invB.id)
+    expect(c1.entity_id).toBe(invA.id)
   })
 })
 
@@ -420,7 +423,7 @@ describe('S56 A2 — pure helpers (M153)', () => {
   })
 
   it('classifyCandidates: max 5 returneras', () => {
-    const cands: Omit<MatchCandidate, 'confidence'>[] = []
+    const cands: Array<Parameters<typeof classifyCandidates>[0][number]> = []
     for (let i = 0; i < 8; i++) {
       cands.push({
         entity_type: 'invoice',
