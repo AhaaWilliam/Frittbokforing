@@ -146,6 +146,16 @@ correction-service (F66-e).
   batch-payments. När användare efterfrågar batch-unmatch krävs separat
   prompt (reverserar hela batchen + skapar C-serie-verifikat per payment).
 
+## Infrastruktur-fix (efter S58)
+
+- **Axe-serialisering i `renderWithProviders`.** axe-core har globalt state —
+  parallella `renderWithProviders`-anrop inom samma vitest-worker kraschade
+  periodiskt med "Axe is already running". Pre-existing flaky på
+  `ManualEntryList`-testet. Fix: module-level `axeChain`-promise i
+  `tests/helpers/render-with-providers.tsx` som kedjar `axe.run`-anrop
+  seriellt per worker, med `.catch()` så ett fallande test inte blockerar
+  kön. Efter fix: 2437/2437 rent utan unhandled rejection.
+
 ## Commits
 
 1. `feat(S58 A1): migration 041 — match_method + fee_journal_entry_id + BkTxCd-kolumner`
@@ -157,4 +167,5 @@ correction-service (F66-e).
 7. `feat(S58 B1+B2): SuggestedMatchesPanel fee-candidates + bulk-chronology (+2 RTL)`
 8. `feat(S58 D1): "Ångra match"-knapp disabled-on-batch + ConfirmDialog`
 9. `test(S58 B3+D2): E2E fee-auto-match + unmatch happy + batch-blocked (+3 Playwright)`
-10. `docs(S58): CLAUDE.md M154 + sprintA-summary + STATUS` (denna commit)
+10. `docs(S58): CLAUDE.md M154 + sprintA-summary + STATUS`
+11. `fix(tests): serialize axe.run via per-worker promise chain`

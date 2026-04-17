@@ -39,6 +39,10 @@ unmatch via correction-service (F66-e).
 
 Se `docs/sprintA-summary.md` för detaljer.
 
+**Infrastruktur-fix:** Axe-core-serialisering i `renderWithProviders` —
+pre-existing flaky "Axe is already running" åtgärdad via module-level
+`axeChain`-promise. 2437/2437 kör nu rent utan unhandled rejection.
+
 ## Sprint 57 -- UI + E2E follow-through från S56 + F66-c quick win ✅ KLAR
 
 Session S57 (2026-04-17). Stänger UI/E2E-skulden från S56-PARTIAL och
