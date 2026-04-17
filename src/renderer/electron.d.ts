@@ -383,6 +383,7 @@ interface ElectronAPI {
     filePath: string
     strategy: 'new' | 'merge'
     fiscal_year_id?: number
+    conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
   }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>>
   // Payment batch export
   validateBatchExport: (data: {

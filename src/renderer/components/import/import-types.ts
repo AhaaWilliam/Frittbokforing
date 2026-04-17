@@ -11,12 +11,23 @@ export interface ValidationSummary {
   orgNumber: string | null
 }
 
+export interface AccountConflict {
+  account_number: string
+  existing_name: string
+  new_name: string
+  referenced_by_entries: number
+}
+
 export interface ValidationResult {
   valid: boolean
   errors: Array<{ code: string; message: string }>
   warnings: Array<{ code: string; message: string }>
   summary: ValidationSummary
+  /** Sprint 57 B3a — konto-namnkonflikter vid merge. Tom array vid 'new'. */
+  conflicts: AccountConflict[]
 }
+
+export type ConflictResolution = 'keep' | 'overwrite' | 'skip'
 
 export interface ImportResult {
   companyId: number

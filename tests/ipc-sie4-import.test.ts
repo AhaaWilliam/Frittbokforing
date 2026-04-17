@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest'
 import {
   Sie4SelectFileSchema,
   Sie4ValidateSchema,
+  Sie4ImportSchema,
 } from '../src/shared/ipc-schemas'
 
 describe('Sie4SelectFileSchema', () => {
@@ -28,5 +29,34 @@ describe('Sie4ValidateSchema', () => {
 
   it('rejects missing filePath', () => {
     expect(Sie4ValidateSchema.safeParse({}).success).toBe(false)
+  })
+})
+
+// Sprint 57 B3a: Sie4ImportSchema.conflict_resolutions
+describe('Sie4ImportSchema conflict_resolutions (S57 B3a)', () => {
+  it('accepts valid conflict_resolutions map', () => {
+    const res = Sie4ImportSchema.safeParse({
+      filePath: '/tmp/test.se',
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'overwrite', '1240': 'keep', '2081': 'skip' },
+    })
+    expect(res.success).toBe(true)
+  })
+
+  it('rejects invalid resolution-enum value', () => {
+    const res = Sie4ImportSchema.safeParse({
+      filePath: '/tmp/test.se',
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'replace' },
+    })
+    expect(res.success).toBe(false)
+  })
+
+  it('omitting conflict_resolutions is allowed (backward-compat)', () => {
+    const res = Sie4ImportSchema.safeParse({
+      filePath: '/tmp/test.se',
+      strategy: 'merge',
+    })
+    expect(res.success).toBe(true)
   })
 })

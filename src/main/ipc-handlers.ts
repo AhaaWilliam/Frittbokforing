@@ -108,7 +108,7 @@ import {
   getAgingPayables,
 } from './services/aging-service'
 import { parseSie4 } from './services/sie4/sie4-import-parser'
-import { validateSieParseResult } from './services/sie4/sie4-import-validator'
+import { validateSieParseResult, detectAccountConflicts } from './services/sie4/sie4-import-validator'
 import { importSie4 } from './services/sie4/sie4-import-service'
 import {
   validateBatchForExport,
@@ -847,6 +847,8 @@ export function registerIpcHandlers(): void {
       const buffer = fs.readFileSync(data.filePath)
       const parseResult = parseSie4(buffer)
       const validation = validateSieParseResult(parseResult)
+      // Sprint 57 B3a: berika med konto-namnkonflikter mot DB (merge-flöde)
+      validation.conflicts = detectAccountConflicts(db, parseResult)
       return validation
     },
   ))
@@ -864,9 +866,24 @@ export function registerIpcHandlers(): void {
           code: 'VALIDATION_ERROR',
         } as const
       }
+      // Sprint 57 B3a: filtrera bort stale/främmande conflict_resolutions-nycklar.
+      let filteredResolutions: Record<string, 'keep' | 'overwrite' | 'skip'> | undefined
+      if (data.conflict_resolutions) {
+        const conflicts = detectAccountConflicts(db, parseResult)
+        const validKeys = new Set(conflicts.map((c) => c.account_number))
+        filteredResolutions = {}
+        for (const [key, val] of Object.entries(data.conflict_resolutions)) {
+          if (validKeys.has(key)) {
+            filteredResolutions[key] = val
+          } else {
+            log.warn(`sie4-execute: ignorerar conflict_resolutions[${key}] — ingen konflikt för detta konto`)
+          }
+        }
+      }
       return importSie4(db, parseResult, {
         strategy: data.strategy,
         fiscalYearId: data.fiscal_year_id,
+        conflict_resolutions: filteredResolutions,
       })
     },
   ))

@@ -820,6 +820,14 @@ export const Sie4ImportSchema = z
     filePath: z.string().min(1),
     strategy: z.enum(['new', 'merge']),
     fiscal_year_id: z.number().int().positive().optional(),
+    /**
+     * Sprint 57 B3a: per-konto-resolution vid namnkonflikt (merge-strategi).
+     * Nycklar som inte matchar konflikter i validate-svaret filtreras bort
+     * server-side. Saknad nyckel → defaultar 'keep' i service.
+     */
+    conflict_resolutions: z
+      .record(z.string(), z.enum(['keep', 'overwrite', 'skip']))
+      .optional(),
   })
   .strict()
 

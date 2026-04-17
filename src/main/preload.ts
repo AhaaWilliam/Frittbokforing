@@ -225,8 +225,12 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('import:sie4-select-file', {}),
   sie4Validate: (data: { filePath: string }) =>
     ipcRenderer.invoke('import:sie4-validate', data),
-  sie4Import: (data: { filePath: string; strategy: 'new' | 'merge'; fiscal_year_id?: number }) =>
-    ipcRenderer.invoke('import:sie4-execute', data),
+  sie4Import: (data: {
+    filePath: string
+    strategy: 'new' | 'merge'
+    fiscal_year_id?: number
+    conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
+  }) => ipcRenderer.invoke('import:sie4-execute', data),
   // Payment batch export
   validateBatchExport: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:validate-export', data),
@@ -315,6 +319,7 @@ if (process.env.FRITT_TEST === '1') {
     getInvoices: (fyId?: number) => ipcRenderer.invoke('__test:getInvoices', fyId),
     getExpenses: (fyId?: number) => ipcRenderer.invoke('__test:getExpenses', fyId),
     setInvoiceStatus: (invoiceId: number, status: string) => ipcRenderer.invoke('__test:setInvoiceStatus', invoiceId, status),
+    getCounterpartyById: (id: number) => ipcRenderer.invoke('__test:getCounterpartyById', id),
     createFiscalYear: (opts: { companyId: number; startDate: string; endDate: string; yearLabel: string }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
     freezeClock: (iso: string | null) => ipcRenderer.invoke('__test:freezeClock', iso),
     forcePeriodState: (periodId: number, closed: boolean) => ipcRenderer.invoke('__test:forcePeriodState', periodId, closed),
