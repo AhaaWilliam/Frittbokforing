@@ -6,6 +6,7 @@ import { ImportSelectPhase } from '../components/import/ImportSelectPhase'
 import { ImportPreviewPhase } from '../components/import/ImportPreviewPhase'
 import { ImportDonePhase } from '../components/import/ImportDonePhase'
 import type {
+  ConflictResolution,
   ImportResult,
   ImportStrategy,
   Phase,
@@ -18,6 +19,9 @@ export function PageImport() {
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [strategy, setStrategy] = useState<ImportStrategy>('new')
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [conflictResolutions, setConflictResolutions] = useState<
+    Record<string, ConflictResolution>
+  >({})
 
   async function handleSelectFile() {
     try {
@@ -34,6 +38,7 @@ export function PageImport() {
         return
       }
       setValidation(valResult.data)
+      setConflictResolutions({}) // reset vid ny validation
       setPhase('preview')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Kunde inte läsa filen')
@@ -45,7 +50,13 @@ export function PageImport() {
     if (!filePath) return
     setPhase('importing')
     try {
-      const result = await window.api.sie4Import({ filePath, strategy })
+      const result = await window.api.sie4Import({
+        filePath,
+        strategy,
+        ...(Object.keys(conflictResolutions).length > 0
+          ? { conflict_resolutions: conflictResolutions }
+          : {}),
+      })
       if (!result.success) {
         toast.error(result.error)
         setPhase('preview')
@@ -65,6 +76,7 @@ export function PageImport() {
     setFilePath(null)
     setValidation(null)
     setImportResult(null)
+    setConflictResolutions({})
   }
 
   return (
@@ -87,6 +99,10 @@ export function PageImport() {
             onStrategyChange={setStrategy}
             onImport={handleImport}
             onCancel={handleReset}
+            conflictResolutions={conflictResolutions}
+            onConflictResolutionChange={(accNum, r) =>
+              setConflictResolutions((prev) => ({ ...prev, [accNum]: r }))
+            }
           />
         )}
         {phase === 'importing' && (

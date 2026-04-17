@@ -1,5 +1,9 @@
 import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
-import type { ImportStrategy, ValidationResult } from './import-types'
+import type {
+  ImportStrategy,
+  ValidationResult,
+  ConflictResolution,
+} from './import-types'
 
 export function ImportPreviewPhase({
   validation,
@@ -7,14 +11,31 @@ export function ImportPreviewPhase({
   onStrategyChange,
   onImport,
   onCancel,
+  conflictResolutions = {},
+  onConflictResolutionChange,
 }: {
   validation: ValidationResult
   strategy: ImportStrategy
   onStrategyChange: (s: ImportStrategy) => void
   onImport: () => void
   onCancel: () => void
+  /** Sprint 57 B3b — per-konto resolution. Default {} ⇒ alla 'keep'. */
+  conflictResolutions?: Record<string, ConflictResolution>
+  onConflictResolutionChange?: (
+    accountNumber: string,
+    resolution: ConflictResolution,
+  ) => void
 }) {
-  const { summary, errors, warnings, valid } = validation
+  const { summary, errors, warnings, valid, conflicts } = validation
+  const showConflicts =
+    strategy === 'merge' && conflicts && conflicts.length > 0
+
+  // V6 invariant-blockad: skip på konto som refereras av verifikat blockerar import
+  const hasInvalidSkip = !!conflicts?.some(
+    (c) =>
+      conflictResolutions[c.account_number] === 'skip' &&
+      c.referenced_by_entries > 0,
+  )
 
   return (
     <div className="mx-auto max-w-3xl py-8">
@@ -142,6 +163,72 @@ export function ImportPreviewPhase({
         </div>
       )}
 
+      {showConflicts && (
+        <div
+          className="mb-6 rounded-lg border p-4"
+          data-testid="sie4-conflicts-section"
+        >
+          <h3 className="mb-3 text-sm font-medium">
+            Konto-konflikter ({conflicts.length})
+          </h3>
+          <div className="space-y-4">
+            {conflicts.map((c) => {
+              const resolution: ConflictResolution =
+                conflictResolutions[c.account_number] ?? 'keep'
+              const invalidSkip =
+                resolution === 'skip' && c.referenced_by_entries > 0
+              return (
+                <div
+                  key={c.account_number}
+                  className="rounded border p-3"
+                  data-testid={`conflict-${c.account_number}`}
+                >
+                  <div className="mb-2 text-sm font-medium">
+                    {c.account_number} — "{c.existing_name}" (existerande) vs "
+                    {c.new_name}" (SIE)
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    {(['keep', 'overwrite', 'skip'] as const).map((r) => (
+                      <label
+                        key={r}
+                        className="flex items-center gap-1.5"
+                      >
+                        <input
+                          type="radio"
+                          name={`conflict-${c.account_number}`}
+                          value={r}
+                          checked={resolution === r}
+                          onChange={() =>
+                            onConflictResolutionChange?.(c.account_number, r)
+                          }
+                          data-testid={`conflict-${c.account_number}-${r}`}
+                        />
+                        {r === 'keep'
+                          ? 'Behåll existerande (default)'
+                          : r === 'overwrite'
+                            ? 'Skriv över'
+                            : 'Skippa konto'}
+                      </label>
+                    ))}
+                  </div>
+                  {invalidSkip && (
+                    <div
+                      role="alert"
+                      className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700"
+                      data-testid={`conflict-${c.account_number}-invalid-skip`}
+                    >
+                      ⚠ Skip av {c.account_number}: {c.referenced_by_entries}{' '}
+                      verifikat refererar detta konto. Importen kan inte
+                      genomföras. Välj "Behåll" eller "Skriv över".
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <button
           type="button"
@@ -154,12 +241,19 @@ export function ImportPreviewPhase({
           <button
             type="button"
             onClick={onImport}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            disabled={hasInvalidSkip}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            data-testid="sie4-import-btn"
           >
             Importera
           </button>
         )}
       </div>
+      {hasInvalidSkip && (
+        <p className="mt-2 text-right text-xs text-red-600">
+          Kan inte importera med oanvänd-konflikt-skip. Ändra val ovan.
+        </p>
+      )}
     </div>
   )
 }
