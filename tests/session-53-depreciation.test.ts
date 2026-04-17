@@ -240,6 +240,72 @@ describe('disposeFixedAsset', () => {
       expect(totalDebit).toBe(totalCredit)
     })
 
+    it('F62-c-ext sale_price_ore == book_value_ore → ingen 3970/7970-rad', () => {
+      ensureAccount('1930', 'Bank', 'asset')
+      const c = createFixedAsset(db, baseInput({ acquisition_date: '2025-01-01', useful_life_months: 12, acquisition_cost_ore: 120_000 }))
+      if (!c.success) throw new Error('create failed')
+      executeDepreciationPeriod(db, fyId, '2025-03-31') // ack 30_000, book_value 90_000
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true, 90_000, '1930')
+      expect(r.success).toBe(true)
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      // 3 rader: D 1229, K 1220, D 1930 (ingen 3970/7970)
+      expect(lines).toHaveLength(3)
+      expect(lines[0]).toEqual({ account_number: '1229', debit_ore: 30_000, credit_ore: 0 })
+      expect(lines[1]).toEqual({ account_number: '1220', debit_ore: 0, credit_ore: 120_000 })
+      expect(lines[2]).toEqual({ account_number: '1930', debit_ore: 90_000, credit_ore: 0 })
+      const td = lines.reduce((s, l) => s + l.debit_ore, 0)
+      const tc = lines.reduce((s, l) => s + l.credit_ore, 0)
+      expect(td).toBe(tc)
+    })
+
+    it('F62-c-ext sale_price > book_value → K 3970 (vinst)', () => {
+      ensureAccount('1930', 'Bank', 'asset')
+      ensureAccount('3970', 'Vinst vid avyttring', 'revenue')
+      const c = createFixedAsset(db, baseInput({ acquisition_date: '2025-01-01', useful_life_months: 12, acquisition_cost_ore: 120_000 }))
+      if (!c.success) throw new Error('create failed')
+      executeDepreciationPeriod(db, fyId, '2025-03-31')
+      // sale 100_000, book 90_000 → vinst 10_000
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true, 100_000, '1930')
+      expect(r.success).toBe(true)
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      expect(lines).toHaveLength(4)
+      expect(lines[3]).toEqual({ account_number: '3970', debit_ore: 0, credit_ore: 10_000 })
+      expect(lines.reduce((s, l) => s + l.debit_ore, 0)).toBe(lines.reduce((s, l) => s + l.credit_ore, 0))
+    })
+
+    it('F62-c-ext sale_price < book_value → D 7970 (förlust)', () => {
+      ensureAccount('1930', 'Bank', 'asset')
+      ensureAccount('7970', 'Förlust vid avyttring', 'expense')
+      const c = createFixedAsset(db, baseInput({ acquisition_date: '2025-01-01', useful_life_months: 12, acquisition_cost_ore: 120_000 }))
+      if (!c.success) throw new Error('create failed')
+      executeDepreciationPeriod(db, fyId, '2025-03-31')
+      // sale 70_000, book 90_000 → förlust 20_000
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true, 70_000, '1930')
+      expect(r.success).toBe(true)
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      expect(lines).toHaveLength(4)
+      expect(lines[3]).toEqual({ account_number: '7970', debit_ore: 20_000, credit_ore: 0 })
+      expect(lines.reduce((s, l) => s + l.debit_ore, 0)).toBe(lines.reduce((s, l) => s + l.credit_ore, 0))
+    })
+
+    it('F62-c-ext sale_price == 0 → identisk med S54-basic (D 7970 full)', () => {
+      ensureAccount('7970', 'Förlust vid avyttring', 'expense')
+      const c = createFixedAsset(db, baseInput())
+      if (!c.success) throw new Error('create failed')
+      // Explicit sale_price_ore=0 och proceeds_account=null
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true, 0, null)
+      expect(r.success).toBe(true)
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      // Identiskt med "utan tidigare avskrivning" — K 1220, D 7970 (båda 1_000_000)
+      expect(lines).toHaveLength(2)
+      expect(lines[0]).toEqual({ account_number: '1220', debit_ore: 0, credit_ore: 1_000_000 })
+      expect(lines[1]).toEqual({ account_number: '7970', debit_ore: 1_000_000, credit_ore: 0 })
+    })
+
     it('generate_journal_entry=true när konto 7970 saknas → VALIDATION_ERROR', () => {
       // Ingen ensureAccount('7970') här
       const c = createFixedAsset(db, baseInput())

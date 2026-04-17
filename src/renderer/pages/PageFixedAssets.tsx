@@ -12,6 +12,7 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { CreateFixedAssetDialog } from '../components/fixed-assets/CreateFixedAssetDialog'
 import { FixedAssetDetailPanel } from '../components/fixed-assets/FixedAssetDetailPanel'
+import { DisposeDialog } from '../components/fixed-assets/DisposeDialog'
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Aktiv',
@@ -26,6 +27,7 @@ function fmtKr(ore: number): string {
 export function PageFixedAssets() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [showCreate, setShowCreate] = useState(false)
+  const [disposingAsset, setDisposingAsset] = useState<{ id: number; name: string } | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
   const executeMutation = useExecuteDepreciationPeriod()
@@ -62,20 +64,26 @@ export function PageFixedAssets() {
     }
   }
 
-  async function handleDispose(id: number, name: string) {
-    const date = prompt(`Avyttringsdatum för "${name}" (ÅÅÅÅ-MM-DD)?`, new Date().toISOString().slice(0, 10))
-    if (!date) return
-    const generateEntry = confirm(
-      `Skapa disposal-verifikat automatiskt?\n\n` +
-        `Bokar hela återstående bokfört värde som förlust mot konto 7970 ` +
-        `(nedskrivning) och nollställer anskaffningsvärde + ack. avskrivning. ` +
-        `Välj OK för att skapa verifikat, Avbryt för att bara markera som avyttrad.`,
-    )
+  function handleDispose(id: number, name: string) {
+    setDisposingAsset({ id, name })
+  }
+
+  async function handleDisposeConfirm(result: {
+    disposed_date: string
+    generate_journal_entry: boolean
+    sale_price_ore: number
+    proceeds_account: string | null
+  }) {
+    if (!disposingAsset) return
+    const { id, name } = disposingAsset
     try {
-      await disposeMutation.mutateAsync({ id, disposed_date: date, generate_journal_entry: generateEntry })
+      await disposeMutation.mutateAsync({ id, ...result })
       toast.success(
-        generateEntry ? `${name} avyttrad + disposal-verifikat bokfört` : `${name} markerad som avyttrad`,
+        result.generate_journal_entry
+          ? `${name} avyttrad + disposal-verifikat bokfört`
+          : `${name} markerad som avyttrad`,
       )
+      setDisposingAsset(null)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Kunde inte avyttra')
     }
@@ -226,6 +234,13 @@ export function PageFixedAssets() {
       </div>
 
       <CreateFixedAssetDialog open={showCreate} onOpenChange={setShowCreate} />
+      {disposingAsset && (
+        <DisposeDialog
+          assetName={disposingAsset.name}
+          onConfirm={handleDisposeConfirm}
+          onCancel={() => setDisposingAsset(null)}
+        />
+      )}
     </div>
   )
 }

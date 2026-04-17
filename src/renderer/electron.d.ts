@@ -423,7 +423,13 @@ interface ElectronAPI {
   getFixedAsset: (data: { id: number }) => Promise<
     IpcResult<import('../shared/types').FixedAssetWithSchedule>
   >
-  disposeFixedAsset: (data: { id: number; disposed_date: string; generate_journal_entry?: boolean }) => Promise<IpcResult<void>>
+  disposeFixedAsset: (data: {
+    id: number
+    disposed_date: string
+    generate_journal_entry?: boolean
+    sale_price_ore?: number
+    proceeds_account?: string | null
+  }) => Promise<IpcResult<void>>
   deleteFixedAsset: (data: { id: number }) => Promise<IpcResult<void>>
   executeDepreciationPeriod: (data: {
     fiscal_year_id: number

@@ -263,17 +263,21 @@ export function getFixedAsset(
 }
 
 /**
- * Avyttringskonto (förlust vid avyttring av anläggningstillgångar) — BAS 7970.
- * Basic MVP: all återstående book_value bokas som förlust. Sale-price-scenarier
- * (vinst/förlust relativt försäljningspris) hanteras inte i denna variant.
+ * Avyttringskonto — BAS 7970 (förlust) / 3970 (vinst).
+ * Sale-price ≥ book_value → vinst (skillnad) krediteras 3970.
+ * Sale-price < book_value → förlust (skillnad) debiteras 7970.
+ * Sale-price = 0 (S54-basic): full book_value → 7970 (samma som förlust-varianten).
  */
 const DISPOSAL_LOSS_ACCOUNT = '7970'
+const DISPOSAL_GAIN_ACCOUNT = '3970'
 
 export function disposeFixedAsset(
   db: Database.Database,
   id: number,
   disposedDate: string,
   generateJournalEntry = false,
+  salePriceOre = 0,
+  proceedsAccount: string | null = null,
 ): IpcResult<void> {
   return db.transaction(() => {
     const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
@@ -303,22 +307,40 @@ export function disposeFixedAsset(
       const accumulated = accRow.total
       const bookValue = asset.acquisition_cost_ore - accumulated
 
-      // F62-c basic: ingen sale price — full förlust av book_value
       if (bookValue < 0) {
         return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Ack. avskrivning överstiger anskaffningsvärdet — disposal-verifikat kan inte genereras automatiskt' }
       }
+      if (salePriceOre < 0) {
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Försäljningspris kan inte vara negativt', field: 'sale_price_ore' }
+      }
+      if (salePriceOre > 0 && !proceedsAccount) {
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Intäktskonto (t.ex. bankkonto 1930) krävs vid försäljningspris > 0', field: 'proceeds_account' }
+      }
 
-      // Verifiera berörda konton existerar och är aktiva (kastar strukturerat fel vid inactive)
+      // Beräkna vinst/förlust
+      // sale_price == 0 → följer S54-baseline: full förlust av book_value via 7970.
+      // sale_price > 0 → gain_or_loss = sale_price - book_value
+      //   > 0 → vinst → K 3970
+      //   < 0 → förlust → D 7970
+      //   = 0 → ingen 3970/7970-rad
+      const gainOrLoss = salePriceOre > 0 ? salePriceOre - bookValue : -bookValue
+      const isGain = gainOrLoss > 0
+      const isLoss = gainOrLoss < 0
+      const diffAmount = Math.abs(gainOrLoss)
+
+      // Konton att verifiera
       const accountsToCheck = [asset.account_asset]
       if (accumulated > 0) accountsToCheck.push(asset.account_accumulated_depreciation)
-      if (bookValue > 0) accountsToCheck.push(DISPOSAL_LOSS_ACCOUNT)
-      // Existens-check: alla konton i listan måste finnas
+      if (salePriceOre > 0 && proceedsAccount) accountsToCheck.push(proceedsAccount)
+      if (isLoss || (salePriceOre === 0 && bookValue > 0)) accountsToCheck.push(DISPOSAL_LOSS_ACCOUNT)
+      if (isGain) accountsToCheck.push(DISPOSAL_GAIN_ACCOUNT)
+
       const placeholders = accountsToCheck.map(() => '?').join(',')
       const existing = db.prepare(`SELECT account_number FROM accounts WHERE account_number IN (${placeholders})`).all(...accountsToCheck) as { account_number: string }[]
       if (existing.length !== accountsToCheck.length) {
         const found = new Set(existing.map((e) => e.account_number))
         const missing = accountsToCheck.filter((a) => !found.has(a))
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: `Konto ${missing.join(', ')} saknas i kontoplanen (kontrollera att 7970 är aktivt)` }
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: `Konto ${missing.join(', ')} saknas i kontoplanen` }
       }
       validateAccountsActive(db, accountsToCheck)
 
@@ -347,11 +369,23 @@ export function disposeFixedAsset(
         ) VALUES (?, ?, ?, ?, ?, ?)
       `)
       let lineNum = 1
+      // D ack_dep
       if (accumulated > 0) {
         insertLine.run(disposalJournalEntryId, lineNum++, asset.account_accumulated_depreciation, accumulated, 0, description)
       }
+      // K asset (anskaffningsvärdet bort)
       insertLine.run(disposalJournalEntryId, lineNum++, asset.account_asset, 0, asset.acquisition_cost_ore, description)
-      if (bookValue > 0) {
+      // D proceeds (om försäljningspris > 0)
+      if (salePriceOre > 0 && proceedsAccount) {
+        insertLine.run(disposalJournalEntryId, lineNum++, proceedsAccount, salePriceOre, 0, description)
+      }
+      // K 3970 (vinst) eller D 7970 (förlust)
+      if (isGain) {
+        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_GAIN_ACCOUNT, 0, diffAmount, description)
+      } else if (isLoss) {
+        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_LOSS_ACCOUNT, diffAmount, 0, description)
+      } else if (salePriceOre === 0 && bookValue > 0) {
+        // Baseline S54: sale_price=0, book_value>0 → full förlust
         insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_LOSS_ACCOUNT, bookValue, 0, description)
       }
 

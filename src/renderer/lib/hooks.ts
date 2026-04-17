@@ -981,7 +981,13 @@ export function useCreateFixedAsset() {
 
 export function useDisposeFixedAsset() {
   return useIpcMutation<
-    { id: number; disposed_date: string; generate_journal_entry?: boolean },
+    {
+      id: number
+      disposed_date: string
+      generate_journal_entry?: boolean
+      sale_price_ore?: number
+      proceeds_account?: string | null
+    },
     void
   >((data) => window.api.disposeFixedAsset(data), { invalidateAll: true })
 }

@@ -926,6 +926,8 @@ export const DepreciationDisposeSchema = z
     id: z.number().int().positive(),
     disposed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     generate_journal_entry: z.boolean().optional(),
+    sale_price_ore: z.number().int().min(0).optional(),
+    proceeds_account: z.string().min(4).max(10).nullable().optional(),
   })
   .strict()
 

@@ -271,8 +271,13 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('depreciation:list', data),
   getFixedAsset: (data: { id: number }) =>
     ipcRenderer.invoke('depreciation:get', data),
-  disposeFixedAsset: (data: { id: number; disposed_date: string; generate_journal_entry?: boolean }) =>
-    ipcRenderer.invoke('depreciation:dispose', data),
+  disposeFixedAsset: (data: {
+    id: number
+    disposed_date: string
+    generate_journal_entry?: boolean
+    sale_price_ore?: number
+    proceeds_account?: string | null
+  }) => ipcRenderer.invoke('depreciation:dispose', data),
   deleteFixedAsset: (data: { id: number }) =>
     ipcRenderer.invoke('depreciation:delete', data),
   executeDepreciationPeriod: (data: { fiscal_year_id: number; period_end_date: string }) =>
