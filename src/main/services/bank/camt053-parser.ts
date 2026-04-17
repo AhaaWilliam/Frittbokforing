@@ -11,6 +11,12 @@ export interface ParsedBankTransaction {
   counterparty_iban: string | null
   counterparty_name: string | null
   bank_transaction_code: string | null
+  /** ISO 20022 BkTxCd-Domn.Cd (t.ex. 'PMNT', 'ACMT') */
+  bank_tx_domain: string | null
+  /** ISO 20022 BkTxCd-Domn.Fmly.Cd (t.ex. 'RCDT', 'ICDT') */
+  bank_tx_family: string | null
+  /** ISO 20022 BkTxCd-Domn.Fmly.SubFmlyCd (t.ex. 'CHRG', 'INTR') */
+  bank_tx_subfamily: string | null
 }
 
 export interface ParsedBankStatement {
@@ -221,6 +227,11 @@ function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
     text(pick(entry, ['BkTxCd', 'Prtry', 'Cd'])) ??
     text(pick(entry, ['BkTxCd', 'Domn', 'Cd']))
 
+  // ISO 20022 BkTxCd strukturerad hierarki (Domn/Fmly/SubFmlyCd)
+  const bankTxDomain = text(pick(entry, ['BkTxCd', 'Domn', 'Cd']))
+  const bankTxFamily = text(pick(entry, ['BkTxCd', 'Domn', 'Fmly', 'Cd']))
+  const bankTxSubfamily = text(pick(entry, ['BkTxCd', 'Domn', 'Fmly', 'SubFmlyCd']))
+
   // NtryDtls/TxDtls kan vara array (split transactions) — vi tar första
   const txDtls = (() => {
     const first = pick(entry, ['NtryDtls', 'TxDtls'])
@@ -254,5 +265,8 @@ function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
     counterparty_iban: counterpartyIban,
     counterparty_name: counterpartyName,
     bank_transaction_code: txCode,
+    bank_tx_domain: bankTxDomain,
+    bank_tx_family: bankTxFamily,
+    bank_tx_subfamily: bankTxSubfamily,
   }
 }

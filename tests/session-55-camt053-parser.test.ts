@@ -119,4 +119,77 @@ describe('S55 A2 — camt.053-parser', () => {
     const result = parseCamt053(xml)
     expect(result.transactions).toHaveLength(3)
   })
+
+  // S58 F66-d: BkTxCd Domn/Fmly/SubFmlyCd strukturerad parsing
+  function wrapCamt053(entriesXml: string): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <Stmt>
+      <Id>STMT-1</Id>
+      <CreDtTm>2026-04-15T10:00:00</CreDtTm>
+      <Acct><Id><IBAN>SE4550000000058398257466</IBAN></Id><Ccy>SEK</Ccy></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp><Amt>0</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt>0</Amt><CdtDbtInd>CRDT</CdtDbtInd></Bal>
+      ${entriesXml}
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>`
+  }
+
+  it('11. BkTxCd full hierarki (Domn+Fmly+SubFmly) parsas till alla tre fält', () => {
+    const xml = wrapCamt053(`
+      <Ntry>
+        <Amt>50.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-10</Dt></BookgDt>
+        <ValDt><Dt>2026-04-10</Dt></ValDt>
+        <BkTxCd>
+          <Domn><Cd>PMNT</Cd>
+            <Fmly><Cd>NTAV</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly>
+          </Domn>
+        </BkTxCd>
+      </Ntry>
+    `)
+    const result = parseCamt053(xml)
+    expect(result.transactions).toHaveLength(1)
+    expect(result.transactions[0].bank_tx_domain).toBe('PMNT')
+    expect(result.transactions[0].bank_tx_family).toBe('NTAV')
+    expect(result.transactions[0].bank_tx_subfamily).toBe('CHRG')
+  })
+
+  it('12. BkTxCd med endast Prtry → alla tre strukturerade fält NULL', () => {
+    const xml = wrapCamt053(`
+      <Ntry>
+        <Amt>100.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-10</Dt></BookgDt>
+        <ValDt><Dt>2026-04-10</Dt></ValDt>
+        <BkTxCd>
+          <Prtry><Cd>CUST-CODE</Cd></Prtry>
+        </BkTxCd>
+      </Ntry>
+    `)
+    const result = parseCamt053(xml)
+    expect(result.transactions[0].bank_tx_domain).toBeNull()
+    expect(result.transactions[0].bank_tx_family).toBeNull()
+    expect(result.transactions[0].bank_tx_subfamily).toBeNull()
+    expect(result.transactions[0].bank_transaction_code).toBe('CUST-CODE')
+  })
+
+  it('13. Ingen BkTxCd alls → alla tre strukturerade fält NULL', () => {
+    const xml = wrapCamt053(`
+      <Ntry>
+        <Amt>250.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-10</Dt></BookgDt>
+        <ValDt><Dt>2026-04-10</Dt></ValDt>
+      </Ntry>
+    `)
+    const result = parseCamt053(xml)
+    expect(result.transactions[0].bank_tx_domain).toBeNull()
+    expect(result.transactions[0].bank_tx_family).toBeNull()
+    expect(result.transactions[0].bank_tx_subfamily).toBeNull()
+    expect(result.transactions[0].bank_transaction_code).toBeNull()
+  })
 })
