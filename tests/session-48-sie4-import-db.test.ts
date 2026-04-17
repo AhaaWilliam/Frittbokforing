@@ -221,7 +221,11 @@ describe('S48: SIE4 import — merge strategy', () => {
       '#KTYP 1930 T',
     ])
     const parsed = parseSie4(buffer)
-    const result = importSie4(db, parsed, { strategy: 'merge' })
+    const result = importSie4(db, parsed, {
+      strategy: 'merge',
+      // Sprint 56 B2: default 'keep'; explicit overwrite krävs nu.
+      conflict_resolutions: { '1930': 'overwrite' },
+    })
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
     expect(result.data.accountsUpdated).toBe(1)

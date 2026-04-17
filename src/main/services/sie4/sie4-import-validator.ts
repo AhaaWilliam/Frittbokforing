@@ -2,12 +2,23 @@
  * SIE4 import validator — validates parsed SIE4 data.
  * Returns blocking errors and non-blocking warnings.
  */
+import type Database from 'better-sqlite3'
 import type { SieParseResult } from './sie4-import-parser'
+
+export interface AccountConflict {
+  account_number: string
+  existing_name: string
+  new_name: string
+  /** Antal verifikat-rader i SIE-filen som refererar detta konto. Används av UI för V6-varning (M148-mönstret). */
+  referenced_by_entries: number
+}
 
 export interface SieValidationResult {
   valid: boolean
   errors: Array<{ code: string; message: string; context?: string }>
   warnings: Array<{ code: string; message: string; context?: string }>
+  /** Konto-namnkonflikter (merge-strategi). Tom array vid 'new'-strategi. */
+  conflicts: AccountConflict[]
   summary: {
     accounts: number
     entries: number
@@ -18,6 +29,49 @@ export interface SieValidationResult {
     companyName: string | null
     orgNumber: string | null
   }
+}
+
+/**
+ * Detekterar konto-namnkonflikter mellan SIE-filens accounts och DB:s
+ * existerande accounts. Endast namn-divergens räknas som konflikt (M132-scope).
+ *
+ * @param db open database
+ * @param parseResult SIE parse result
+ * @returns lista över konflikter (tom vid inga konflikter)
+ */
+export function detectAccountConflicts(
+  db: Database.Database,
+  parseResult: SieParseResult,
+): AccountConflict[] {
+  const existing = new Map(
+    (db
+      .prepare('SELECT account_number, name FROM accounts')
+      .all() as Array<{ account_number: string; name: string }>).map((a) => [
+      a.account_number,
+      a.name,
+    ]),
+  )
+
+  const refCounts = new Map<string, number>()
+  for (const e of parseResult.entries) {
+    for (const t of e.transactions) {
+      refCounts.set(t.accountNumber, (refCounts.get(t.accountNumber) ?? 0) + 1)
+    }
+  }
+
+  const conflicts: AccountConflict[] = []
+  for (const acc of parseResult.accounts) {
+    const existingName = existing.get(acc.number)
+    if (existingName !== undefined && existingName !== acc.name) {
+      conflicts.push({
+        account_number: acc.number,
+        existing_name: existingName,
+        new_name: acc.name,
+        referenced_by_entries: refCounts.get(acc.number) ?? 0,
+      })
+    }
+  }
+  return conflicts
 }
 
 export function validateSieParseResult(result: SieParseResult): SieValidationResult {
@@ -174,6 +228,7 @@ export function validateSieParseResult(result: SieParseResult): SieValidationRes
     valid: errors.length === 0,
     errors,
     warnings,
+    conflicts: [],
     summary: {
       accounts: result.accounts.length,
       entries: result.entries.length,

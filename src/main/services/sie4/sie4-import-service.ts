@@ -18,10 +18,18 @@ import { createCompany } from '../company-service'
 
 export type ImportStrategy = 'new' | 'merge'
 
+export type ConflictResolution = 'keep' | 'overwrite' | 'skip'
+
 export interface ImportOptions {
   strategy: ImportStrategy
   /** If merge: target fiscal year (if absent, RAR 0 is matched by date range or created) */
   fiscalYearId?: number
+  /**
+   * Per-konto-resolution vid namnkonflikt (M148). Sprint 56 B2.
+   * Saknad nyckel defaultar till 'keep' (tidigare tyst overwrite-beteende borttaget).
+   * 'skip' på konto som refereras av importens verifikat → VALIDATION_ERROR.
+   */
+  conflict_resolutions?: Record<string, ConflictResolution>
 }
 
 export interface ImportResult {
@@ -124,7 +132,7 @@ export function importSie4(
         }
       }
 
-      // ═══ 3. Accounts — merge by account_number ═══
+      // ═══ 3. Accounts — merge by account_number (Sprint 56 B2 conflict_resolutions) ═══
       let accountsAdded = 0
       let accountsUpdated = 0
 
@@ -134,6 +142,24 @@ export function importSie4(
           name: string
         }>).map((a) => [a.account_number, a.name]),
       )
+
+      // Pre-flight: validera 'skip' inte refererar verifikat (defense-in-depth, V6).
+      const resolutions = options.conflict_resolutions ?? {}
+      for (const [accNum, resolution] of Object.entries(resolutions)) {
+        if (resolution === 'skip') {
+          const refCount = parseResult.entries.reduce(
+            (s, e) => s + e.transactions.filter((t) => t.accountNumber === accNum).length,
+            0,
+          )
+          if (refCount > 0) {
+            throw {
+              code: 'VALIDATION_ERROR',
+              error: `Kan inte skippa konto ${accNum} — det används av ${refCount} verifikat-rader i importen.`,
+              field: `conflict_resolutions.${accNum}`,
+            }
+          }
+        }
+      }
 
       for (const acc of parseResult.accounts) {
         const existing = existingAccounts.get(acc.number)
@@ -145,12 +171,16 @@ export function importSie4(
           ).run(acc.number, acc.name, accountType)
           accountsAdded++
         } else if (existing !== acc.name) {
-          // Update name on existing account
-          db.prepare('UPDATE accounts SET name = ? WHERE account_number = ?').run(
-            acc.name,
-            acc.number,
-          )
-          accountsUpdated++
+          // Konflikt: läs resolution (default 'keep')
+          const resolution = resolutions[acc.number] ?? 'keep'
+          if (resolution === 'overwrite') {
+            db.prepare('UPDATE accounts SET name = ? WHERE account_number = ?').run(
+              acc.name,
+              acc.number,
+            )
+            accountsUpdated++
+          }
+          // 'keep' / 'skip' → ingen UPDATE
         }
       }
 
