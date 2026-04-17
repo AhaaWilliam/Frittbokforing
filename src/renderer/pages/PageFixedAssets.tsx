@@ -102,7 +102,7 @@ export function PageFixedAssets() {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden" data-testid="page-fixed-assets">
+    <div className="flex flex-1 flex-col overflow-hidden">
       <PageHeader
         title="Anläggningstillgångar"
         action={
