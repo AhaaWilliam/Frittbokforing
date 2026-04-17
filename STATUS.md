@@ -1,5 +1,60 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 54 -- S53 follow-through ✅ KLAR
+
+Session S54. Fokuserad uppföljning av S53-leverabler: F65-c (cash flow UI +
+Excel-export) + F65-b (year-end edge-case-fix i cash-flow-service) + F62-b
+(asset detail-vy) + F62-c basic (disposal-verifikat-generering). Inga nya
+migrationer, inga nya M-principer.
+
+**Testbaslinje:** 2302 → 2314 vitest (+12). 225 → 226 testfiler (+1).
+**Playwright:** 47/47 (baseline grön pre-S54, post-S54 ej omkörd — låg risk).
+**PRAGMA user_version:** 38 (oförändrat). **Tabeller:** 33 (oförändrat).
+**IPC-kanaler:** oförändrat antal; DepreciationDisposeSchema utökad med
+`generate_journal_entry?: boolean`.
+
+### Leverabler
+
+#### F65-c — Cash flow UI + Excel (1–2 SP)
+- CashFlowView-komponent (operating/investing/financing sections + netChange
+  + opening/closing cash + drift-warning vid F65-b-indicator).
+- PageReports 3:e flik "Kassaflöde". Print-container renderar RR + BR + CF.
+- Excel: ny flik "Kassaflöde" mellan Saldobalans och Företagsinfo (5 flikar).
+- 6 nya CashFlowView-unit-tester.
+
+#### F65-b — Year-end edge-case-fix (1 SP)
+- getYearEndBookedAmount detekterar YE-bokning via signed 8999-delta.
+- effectiveNetResult = pre-YE netresult (från YE-bokning eller rå
+  calculateResultSummary).
+- equityDeltaExclYE = equityDelta + yearEndAmount (kompenserar 2099-effekten).
+- 3 nya tester verifierar invariant netChange = closing − opening för scenarion
+  med/utan YE, vinst/förlust.
+
+#### F62-b — Asset detail-vy (1 SP)
+- FixedAssetDetailPanel (ny komponent): inline-expansion i PageFixedAssets.
+- Visar metod, nyttjandetid, restvärde, 3 konton, full schedule-tabell.
+- ChevronRight/Down-toggle per rad, endast ett expanderat åt gången.
+
+#### F62-c basic — Disposal-verifikat (2 SP)
+- disposeFixedAsset tar nu optional generate_journal_entry: boolean.
+- E-serie-verifikat (M151): D ack_dep + K asset + D 7970 (loss).
+- Invariant debet = kredit alltid. Skippar 0-belopp-rader.
+- Saknat 7970 eller felaktigt FY → VALIDATION_ERROR + rollback.
+- UI: confirm-dialog efter datum-prompt. Sale-price-scenarier kvarstår i backlog.
+- 4 nya tester.
+
+### Stängda items
+- F65-c (UI + Excel): STÄNGD
+- F65-b (year-end-fix): STÄNGD
+- F62-b (detail-vy): STÄNGD
+- F62-c basic: STÄNGD (sale-price som F62-c-extension i backlog)
+
+### Kvarstående (S55-backlog)
+- F62-c-extension: sale-price-scenarion (försäljningspris ≠ book_value).
+- F62-b E2E-spec (Playwright).
+- F49-b AST-baserad M133-utökning. Bankavstämning camt.053. F63-polish-b.
+  A11y-bredd. Pagination. M133-städning.
+
 ## Sprint 53 -- Avskrivningar + Kassaflöde + polish ✅ KLAR
 
 Session S53. Två genuint saknade features (F62 avskrivningar, F65 kassaflöde)
