@@ -461,6 +461,10 @@ interface ElectronAPI {
   suggestBankMatches: (data: { statement_id: number }) => Promise<
     IpcResult<import('../../main/services/bank/bank-match-suggester').TxSuggestion[]>
   >
+  unmatchBankTransaction: (data: {
+    bank_transaction_id: number
+    correction_description?: string
+  }) => Promise<IpcResult<import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

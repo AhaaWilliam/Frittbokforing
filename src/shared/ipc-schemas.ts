@@ -988,6 +988,14 @@ export const BankMatchTransactionSchema = z
   })
   .strict()
 
+// S58 F66-e: unmatch av bank-reconciliation (skapar korrigeringsverifikat)
+export const BankUnmatchTransactionSchema = z
+  .object({
+    bank_transaction_id: z.number().int().positive(),
+    correction_description: z.string().max(200).optional(),
+  })
+  .strict()
+
 // ---------------------------------------------------------------------------
 // channelMap — explicit mapping of every IPC channel to its Zod input schema.
 // Used by mock-IPC (tests/setup/mock-ipc.ts) for input validation.
@@ -1161,6 +1169,7 @@ export const channelMap = {
   'bank-statement:get': BankStatementGetSchema,
   'bank-statement:match-transaction': BankMatchTransactionSchema,
   'bank-statement:suggest-matches': BankStatementSuggestMatchesSchema,
+  'bank-statement:unmatch-transaction': BankUnmatchTransactionSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

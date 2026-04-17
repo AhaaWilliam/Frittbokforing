@@ -50,6 +50,8 @@ export type ErrorCode =
   | 'ENTRY_IS_CORRECTION'
   | 'HAS_DEPENDENT_PAYMENTS'
   | 'PERIOD_CLOSED'
+  | 'NOT_MATCHED'
+  | 'BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED'
   | 'UNEXPECTED_ERROR'
 
 // === Page navigation ===

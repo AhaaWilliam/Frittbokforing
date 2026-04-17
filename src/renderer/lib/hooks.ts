@@ -873,6 +873,20 @@ export function useSuggestBankMatches(
   )
 }
 
+// S58 F66-e: unmatch bank-reconciliation
+export function useUnmatchBankTransaction() {
+  return useIpcMutation<
+    { bank_transaction_id: number; correction_description?: string },
+    import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult
+  >((data) => window.api.unmatchBankTransaction(data), {
+    invalidate: [
+      queryKeys.allBankStatements(),
+      queryKeys.allInvoices(),
+      queryKeys.allExpenses(),
+    ],
+  })
+}
+
 export function useExportWriteFile() {
   return useIpcMutation<
     {

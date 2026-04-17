@@ -304,6 +304,10 @@ contextBridge.exposeInMainWorld('api', {
   }) => ipcRenderer.invoke('bank-statement:match-transaction', data),
   suggestBankMatches: (data: { statement_id: number }) =>
     ipcRenderer.invoke('bank-statement:suggest-matches', data),
+  unmatchBankTransaction: (data: {
+    bank_transaction_id: number
+    correction_description?: string
+  }) => ipcRenderer.invoke('bank-statement:unmatch-transaction', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>
