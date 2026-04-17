@@ -877,7 +877,7 @@ interface PayInvoiceTxResult {
  * Throws structured { code, error, field? } on failure.
  * Returns journalEntryId for bulk batch linking.
  */
-function _payInvoiceTx(
+export function _payInvoiceTx(
   db: Database.Database,
   input: {
     invoice_id: number

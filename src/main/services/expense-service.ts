@@ -610,7 +610,7 @@ interface PayExpenseTxResult {
  * Throws structured { code, error, field? } on failure.
  * skipChronologyCheck: bulk wrapper validates chronology once at batch level.
  */
-function _payExpenseTx(
+export function _payExpenseTx(
   db: Database.Database,
   input: {
     expense_id: number
