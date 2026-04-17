@@ -15,6 +15,7 @@ import {
   type ExportDateRange,
   type AccountInfo,
 } from '../export/export-data-queries'
+import { getCashFlowStatement } from '../cash-flow-service'
 
 export interface ExcelExportOptions {
   fiscalYearId: number
@@ -431,7 +432,35 @@ export async function exportExcel(
     addPartialRows(accounts.filter((a) => !isBalanceSheet(a.account_number)))
   }
 
-  // ═══ FLIK 4: Företagsinfo ═══
+  // ═══ FLIK 4: Kassaflödesanalys (F65-c) ═══
+  const cashFlowResult = getCashFlowStatement(db, fiscalYearId)
+  if (cashFlowResult.success) {
+    const cf = cashFlowResult.data
+    const sheetCf = workbook.addWorksheet('Kassaflöde')
+    sheetCf.columns = [
+      { header: 'Post', key: 'label', width: 45 },
+      { header: 'Belopp', key: 'amount', width: 18, style: { numFmt: AMOUNT_FMT } },
+    ]
+    const pushSection = (section: typeof cf.operating) => {
+      sheetCf.addRow({ label: section.label.toUpperCase() }).font = { bold: true }
+      section.items.forEach((item) =>
+        sheetCf.addRow({ label: `  ${item.label}`, amount: oreToKr(item.amount_ore) }),
+      )
+      sheetCf.addRow({
+        label: `Summa ${section.label.toLowerCase()}`,
+        amount: oreToKr(section.subtotal_ore),
+      }).font = { bold: true }
+      sheetCf.addRow({})
+    }
+    pushSection(cf.operating)
+    pushSection(cf.investing)
+    pushSection(cf.financing)
+    sheetCf.addRow({ label: 'Periodens kassaflöde', amount: oreToKr(cf.netChangeOre) }).font = { bold: true }
+    sheetCf.addRow({ label: 'Ingående likvida medel', amount: oreToKr(cf.openingCashOre) })
+    sheetCf.addRow({ label: 'Utgående likvida medel', amount: oreToKr(cf.closingCashOre) }).font = { bold: true }
+  }
+
+  // ═══ FLIK 5: Företagsinfo ═══
   const sheetInfo = workbook.addWorksheet('Företagsinfo')
   sheetInfo.columns = [
     { header: 'Fält', key: 'field', width: 25 },

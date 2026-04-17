@@ -196,11 +196,11 @@ describe('Excel Export', () => {
     expect(result.buffer).toBeInstanceOf(Buffer)
     expect(result.buffer.byteLength).toBeGreaterThan(0)
     const wb = await parseWorkbook(result)
-    expect(wb.worksheets.length).toBe(4)
+    expect(wb.worksheets.length).toBe(5)
   })
 
-  // 2. 4 tabs
-  it('har 4 flikar med korrekta namn', async () => {
+  // 2. 5 tabs (Sprint 54: added Kassaflöde)
+  it('har 5 flikar med korrekta namn', async () => {
     const result = await exportExcel(db, { fiscalYearId: seed.fyId })
     const wb = await parseWorkbook(result)
     const names = wb.worksheets.map((s) => s.name)
@@ -208,6 +208,7 @@ describe('Excel Export', () => {
       'Verifikationslista',
       'Huvudbok',
       'Saldobalans',
+      'Kassaflöde',
       'Företagsinfo',
     ])
   })
@@ -533,10 +534,10 @@ describe('Excel Export', () => {
   })
 
   // 23. Empty database
-  it('tom databas → 4 flikar men inga data-rader', async () => {
+  it('tom databas → 5 flikar men inga data-rader', async () => {
     const result = await exportExcel(db, { fiscalYearId: seed.fyId })
     const wb = await parseWorkbook(result)
-    expect(wb.worksheets.length).toBe(4)
+    expect(wb.worksheets.length).toBe(5)
     const ver = wb.getWorksheet('Verifikationslista')!
     expect(ver.rowCount).toBe(1) // Just header
   })

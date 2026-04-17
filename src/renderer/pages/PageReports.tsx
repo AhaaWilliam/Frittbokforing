@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Printer } from 'lucide-react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
-import { useIncomeStatement, useBalanceSheet } from '../lib/hooks'
+import { useIncomeStatement, useBalanceSheet, useCashFlow } from '../lib/hooks'
 import { IncomeStatementView } from '../components/reports/IncomeStatementView'
 import { BalanceSheetView } from '../components/reports/BalanceSheetView'
+import { CashFlowView } from '../components/reports/CashFlowView'
 
-type Tab = 'income-statement' | 'balance-sheet'
+type Tab = 'income-statement' | 'balance-sheet' | 'cash-flow'
 
 export function PageReports() {
   const { activeFiscalYear } = useFiscalYearContext()
@@ -26,6 +27,7 @@ export function PageReports() {
     fyId,
     dateRange,
   )
+  const { data: cashFlow, isLoading: isLoadingCF } = useCashFlow(fyId)
 
   if (!activeFiscalYear) {
     return (
@@ -38,7 +40,11 @@ export function PageReports() {
     )
   }
 
-  const isLoading = isLoadingIS || isLoadingBS
+  const isLoading =
+    (tab === 'income-statement' && isLoadingIS) ||
+    (tab === 'balance-sheet' && isLoadingBS) ||
+    (tab === 'cash-flow' && isLoadingCF)
+  const fiscalYearLabel = `${activeFiscalYear.start_date} \u2013 ${activeFiscalYear.end_date}`
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
@@ -116,6 +122,17 @@ export function PageReports() {
           >
             Balansräkning
           </button>
+          <button
+            onClick={() => setTab('cash-flow')}
+            data-testid="tab-cash-flow"
+            className={`px-4 py-2 text-sm font-medium ${
+              tab === 'cash-flow'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Kassaflöde
+          </button>
         </div>
 
         {/* Interactive view */}
@@ -130,15 +147,28 @@ export function PageReports() {
         {!isLoading && tab === 'balance-sheet' && balanceSheet && (
           <BalanceSheetView data={balanceSheet} />
         )}
+        {!isLoading && tab === 'cash-flow' && cashFlow && (
+          <CashFlowView data={cashFlow} fiscalYearLabel={fiscalYearLabel} />
+        )}
       </div>
 
-      {/* M34: PrintContainer — always renders both reports, hidden on screen */}
+      {/* M34: PrintContainer — always renders all reports, hidden on screen */}
       <div className="hidden print:block print:p-[15mm] print:text-[10pt]">
         {incomeStatement && (
           <IncomeStatementView data={incomeStatement} printMode />
         )}
         <div className="break-before-page" />
         {balanceSheet && <BalanceSheetView data={balanceSheet} printMode />}
+        {cashFlow && (
+          <>
+            <div className="break-before-page" />
+            <CashFlowView
+              data={cashFlow}
+              fiscalYearLabel={fiscalYearLabel}
+              printMode
+            />
+          </>
+        )}
       </div>
     </div>
   )

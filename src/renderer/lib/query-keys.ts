@@ -60,6 +60,7 @@ export const queryKeys = {
     ['income-statement', fyId, dateRange ?? 'full-year'] as const,
   balanceSheet: (fyId: number, dateRange?: { from: string; to: string }) =>
     ['balance-sheet', fyId, dateRange ?? 'full-year'] as const,
+  cashFlow: (fyId: number) => ['cash-flow', fyId] as const,
   accountStatement: (fyId: number, accountNumber: string, dateFrom?: string, dateTo?: string) =>
     ['account-statement', fyId, accountNumber, dateFrom, dateTo] as const,
 

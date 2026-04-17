@@ -793,6 +793,16 @@ export function useBalanceSheet(
   )
 }
 
+export function useCashFlow(fiscalYearId: number | undefined) {
+  return useIpcQuery<
+    import('../../main/services/cash-flow-service').CashFlowReport
+  >(
+    queryKeys.cashFlow(fiscalYearId!),
+    () => window.api.getCashFlowStatement({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId, staleTime: 30_000 },
+  )
+}
+
 export function useExportWriteFile() {
   return useIpcMutation<
     {
