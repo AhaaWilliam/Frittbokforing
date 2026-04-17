@@ -1,5 +1,37 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 57 -- UI + E2E follow-through från S56 + F66-c quick win ✅ KLAR
+
+Session S57 (2026-04-17). Stänger UI/E2E-skulden från S56-PARTIAL och
+lägger till F66-c (IBAN ↔ counterparty auto-update).
+
+**Testbaslinje:** 2380 → 2402 vitest (+22). 232 → 236 testfiler (+4).
+**Playwright:** 50 → 54 (+4 nya specs registrerade).
+**PRAGMA user_version:** 40 (oförändrat — ingen migration).
+**Tabeller:** 36 (oförändrat). **IPC-kanaler:** +1 test-only
+(`__test:getCounterpartyById`). **Nya M-principer:** inga.
+
+### Levererat
+
+- **A4** SuggestedMatchesPanel + bulk-accept (snapshot + suggester-pause)
+  + 4 RTL.
+- **A5** 2 E2E-specs (happy + empty); partial-failure-spec uppskjuten.
+- **B3a** validate-handler exponerar `conflicts[]`, schema utökad med
+  `conflict_resolutions`, server-side filter av främmande nycklar.
+- **B3b** ImportPreviewPhase konflikt-sektion + V6 invariant-blockad
+  + 4 RTL.
+- **B4** 2 E2E-specs (happy: skriv-över; negative: skip blocked).
+- **C2a** `<Pagination>` med required `testIdPrefix` + 4 RTL.
+- **C2b** Integration i InvoiceList + ExpenseList (PAGE_SIZE = 50,
+  selection-bevarande över page-byte, FY-byte rensar både).
+- **C3** 3 RTL i InvoiceList (tom lista, selection-bevarande, position).
+- **D1** F66-c: opportunistisk `counterparties.bank_account`-uppdatering
+  i `matchBankTransaction`. Lokal try-catch, normaliserad IBAN, warning
+  vid konflikt. 4 unit.
+- **D2** `__test:getCounterpartyById`-helper + 1 E2E-spec.
+
+Se `docs/s57-summary.md` för detaljer.
+
 ## Sprint 56 -- F66-b auto-match + F63-polish-b + F67 pagination (PARTIAL)
 
 Session S56 (2026-04-17). Backend-tunga delar av S56 levererade i en
