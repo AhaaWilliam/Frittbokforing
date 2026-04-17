@@ -20,7 +20,8 @@ test('S57 B4 negative: skip på used-account → Importera disabled', async () =
   const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sie4-blocked-'))
   const fixturePath = path.join(fixtureDir, 'blocked.se')
 
-  // SIE-filen har 1930 med nytt namn OCH refererar 1930 i ett verifikat
+  // SIE-filen har 1930 med nytt namn (DB-default är "Företagskonto") OCH
+  // refererar 1930 i ett verifikat
   const sieContent = buildSie4([
     '#FLAGGA 0',
     '#PROGRAM "TestApp" "1.0"',
@@ -33,7 +34,7 @@ test('S57 B4 negative: skip på used-account → Importera disabled', async () =
     '#RAR 0 20260101 20261231',
     '#KPTYP BAS2014',
     '#VALUTA SEK',
-    '#KONTO 1930 "Företagskonto"',
+    '#KONTO 1930 "Bankkonto"',
     '#KONTO 3001 "Försäljning 25%"',
     '#KONTO 2610 "Utgående moms 25%"',
     '#VER "A" 1 20260315 "Försäljning"',

@@ -1,5 +1,58 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint D -- Backlog-cleanup: E2E-failures + M100-avvikelser ✅ KLAR
+
+Session SD (2026-04-17). Ren städsprint: stänger 5 pre-existing E2E-failures
+från S57/S58 plus 2 M100-avvikelser i export-lagret. Noll nya features.
+
+**Testbaslinje:** 2471 → **2475 vitest (+4)**. 243 → 244 testfiler (+1).
+**Playwright:** 65 specfiler, 102 `test()`-kallor (oförändrat). Full E2E:
+61p/5f → **66p/0f** (alla 5 pre-existing fails stängda).
+**PRAGMA user_version:** 41 (oförändrat).
+**Nya IPC-kanaler:** 0. **Nya M-principer:** 0. **Nya ErrorCodes:** 0.
+
+### Levererat
+
+**A. Triage (5 specs, 2 kat-2 + 3 kat-1).** Alla inom B1/B2-scope, ingen
+Sprint E-split behövd. Loggar i `docs/sprint-d-triage-logs/`.
+
+**B1 (test-utdaterat).**
+- **F7c** bank-unmatch batch-blocked: payload uppdaterat från `items:`/
+  `fiscal_year_id:`/`bank_fee_ore: null` → `payments:` utan extras.
+- **F7d** sie4-import-conflict happy: SIE-filen ändrad från `1930 "Företagskonto"`
+  (identiskt med DB-default) → `1930 "Bankkonto"` så konflikt triggas.
+- **F7e** sie4-import-conflict-blocked negative: samma namn-fix som F7d.
+
+**B2 (app-bug).**
+- **F7a** `bank-statement-service.importBankStatement` INSERT-statement
+  kompletterat med `bank_tx_domain/family/subfamily`-kolumner. Migration 041
+  lade till kolumnerna, parser + suggester använder dem, men service sparade
+  dem aldrig → fee-classifier triggade aldrig.
+- **F7b** `SuggestedMatchesPanel` failure-sektion flyttad ut ur
+  `suggestions.length === 0`-ternary. Cache-invalidation efter bulk-accept
+  gjorde `suggestions` tom → "Inga förslag"-branch dolde failure-sektionen.
+- **F7f** `bank-match-service.matchBankTransaction` inre + yttre catch
+  fixade: raw struct-fel returnerades `as IpcResult` utan `success`-fält,
+  vilket `wrapIpcHandler.isIpcResult` missade → error-objektet wrappades som
+  `{success: true, data: {code, error}}`. Renderer rapporterade falskt
+  success trots att DB-match avvisades. Upptäckt under F7b-debugning.
+
+**C. M100-fixar i export-lagret.**
+- **C1** `export-data-queries.ts` — `throw new Error(...)` (2 st) →
+  `throw { code: 'NOT_FOUND', error }`.
+- **C2** `excel-export-service.ts` — `throw new Error(...)` (2 st) →
+  `throw { code: 'VALIDATION_ERROR', error, field }`.
+- **C3** `tests/session-60-m100-export.test.ts` (+4 tester, +1 fil).
+- **C4** `tests/s24b-br-rr-consistency.test.ts` uppdaterat för nya M100-format.
+
+Se `docs/sprint-d-summary.md` för detaljer.
+
+**Latent backlog:** bank-statement-service.ts:219 har samma
+IpcResult-wrapping-mönster som F7f (yttre catch med `return err as IpcResult`
+utan `success`-fält), men `importBankStatement` kastar aldrig
+struct-fel → oreachable i produktion. Kan fixas för typ-säkerhet, utanför
+Sprint D-scope.
+
 ## Sprint C -- F62-d Asset-redigering + B1 URL-pagination ✅ KLAR
 
 Session SC (2026-04-17). Två små oberoende features: asset-edit

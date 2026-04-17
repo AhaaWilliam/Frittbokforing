@@ -13,7 +13,7 @@
  */
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
-import type { IpcResult } from '../../../shared/types'
+import type { IpcResult, ErrorCode } from '../../../shared/types'
 import { _payInvoiceTx } from '../invoice-service'
 import { _payExpenseTx } from '../expense-service'
 import { normalizeIban } from './bank-match-suggester'
@@ -116,10 +116,11 @@ export function matchBankTransaction(
           journal_entry_id = res.journalEntryId
         }
       } catch (err) {
-        // _payXTx kastar strukturerade fel — propagera
-        if (err && typeof err === 'object' && 'code' in err) {
-          return err as IpcResult<MatchBankTransactionResult>
-        }
+        // _payXTx kastar strukturerade { code, error, field? } — re-throw
+        // så yttre catch kan wrappa som IpcResult. Return av raw struct
+        // från db.transaction-callback saknar `success`-fält, vilket
+        // wrapIpcHandler.isIpcResult missar → fel-objektet skulle
+        // felklassificeras som data.
         throw err
       }
 
@@ -198,7 +199,13 @@ export function matchBankTransaction(
     })()
   } catch (err) {
     if (err && typeof err === 'object' && 'code' in err) {
-      return err as IpcResult<MatchBankTransactionResult>
+      const se = err as { code: ErrorCode; error?: string; field?: string }
+      return {
+        success: false,
+        code: se.code,
+        error: se.error ?? 'Matchning misslyckades.',
+        ...(se.field != null ? { field: se.field } : {}),
+      }
     }
     if (err instanceof Error) {
       log.error('matchBankTransaction failed:', err)

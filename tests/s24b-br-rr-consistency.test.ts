@@ -133,10 +133,10 @@ describe('BR/RR netResult konsistens (F19 — M134)', () => {
 })
 
 describe('Negativa kontrakt', () => {
-  it('obefintligt fiscal_year_id kastar Error', () => {
-    // getFiscalYear throws plain Error for non-existent FY
+  it('obefintligt fiscal_year_id kastar strukturerat NOT_FOUND-fel (M100)', () => {
+    // getFiscalYear throws { code: 'NOT_FOUND', error: 'Räkenskapsår 99999 hittades inte' }
     expect(() => getIncomeStatement(db, 99999)).toThrow(
-      'Fiscal year 99999 not found',
+      expect.objectContaining({ code: 'NOT_FOUND' }),
     )
   })
 

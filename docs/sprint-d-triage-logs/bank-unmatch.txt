@@ -1,0 +1,38 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 tests/e2e/bank-unmatch.spec.ts:43:5 › S58 D2 happy: unmatch invoice-match skapar C-serie-korrigering + återställer paid_amount (1.4s)
+  ✘  2 tests/e2e/bank-unmatch.spec.ts:109:5 › S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED (1.1s)
+
+
+  1) tests/e2e/bank-unmatch.spec.ts:109:5 › S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      132 |       },
+      133 |     )
+    > 134 |     expect(bulk.success).toBe(true)
+          |                          ^
+      135 |     const paymentId = bulk.data!.succeeded[0].payment_id
+      136 |
+      137 |     // Importera TX + länka manuellt
+        at /Users/william/fritt-bokforing/tests/e2e/bank-unmatch.spec.ts:134:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/bank-unmatch-S58-D2-batch--4f158-YMENT-UNMATCH-NOT-SUPPORTED/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bank-unmatch-S58-D2-batch--4f158-YMENT-UNMATCH-NOT-SUPPORTED/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bank-unmatch-S58-D2-batch--4f158-YMENT-UNMATCH-NOT-SUPPORTED/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/bank-unmatch.spec.ts:109:5 › S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED 
+  1 passed (3.1s)

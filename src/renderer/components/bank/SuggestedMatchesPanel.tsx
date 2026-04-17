@@ -333,26 +333,26 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
                     </li>
                   ))}
               </ul>
-
-              {results && results.failed.length > 0 && (
-                <div
-                  className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-xs"
-                  role="alert"
-                  data-testid="suggested-matches-failures"
-                >
-                  <div className="mb-1 font-medium">
-                    {results.ok} av {results.total} accepterade — {results.failed.length} misslyckades:
-                  </div>
-                  <ul className="ml-4 list-disc">
-                    {results.failed.map((f) => (
-                      <li key={f.txId}>
-                        TX #{f.txId}: {f.reason}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </>
+          )}
+
+          {results && results.failed.length > 0 && (
+            <div
+              className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-xs"
+              role="alert"
+              data-testid="suggested-matches-failures"
+            >
+              <div className="mb-1 font-medium">
+                {results.ok} av {results.total} accepterade — {results.failed.length} misslyckades:
+              </div>
+              <ul className="ml-4 list-disc">
+                {results.failed.map((f) => (
+                  <li key={f.txId}>
+                    TX #{f.txId}: {f.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       )}

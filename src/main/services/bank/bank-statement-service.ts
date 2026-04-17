@@ -185,8 +185,9 @@ export function importBankStatement(
         `INSERT INTO bank_transactions (
            bank_statement_id, booking_date, value_date, amount_ore,
            transaction_reference, remittance_info, counterparty_iban,
-           counterparty_name, bank_transaction_code
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           counterparty_name, bank_transaction_code,
+           bank_tx_domain, bank_tx_family, bank_tx_subfamily
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       for (const tx of parsed.transactions) {
         txInsert.run(
@@ -199,6 +200,9 @@ export function importBankStatement(
           tx.counterparty_iban,
           tx.counterparty_name,
           tx.bank_transaction_code,
+          tx.bank_tx_domain,
+          tx.bank_tx_family,
+          tx.bank_tx_subfamily,
         )
       }
 

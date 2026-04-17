@@ -20,8 +20,9 @@ test('S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn', async () => {
   const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sie4-conflict-'))
   const fixturePath = path.join(fixtureDir, 'conflict.se')
 
-  // SIE-filen har 1930 men med NYTT namn, och två balanserade transaktioner
-  // MOT KONTON SOM INTE KONFLIKTAR (så skip-varning inte triggas).
+  // SIE-filen har 1930 men med NYTT namn (DB-default är "Företagskonto"), och
+  // två balanserade transaktioner MOT KONTON SOM INTE KONFLIKTAR (så skip-
+  // varning inte triggas).
   const sieContent = buildSie4([
     '#FLAGGA 0',
     '#PROGRAM "TestApp" "1.0"',
@@ -34,7 +35,7 @@ test('S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn', async () => {
     '#RAR 0 20260101 20261231',
     '#KPTYP BAS2014',
     '#VALUTA SEK',
-    '#KONTO 1930 "Företagskonto"',
+    '#KONTO 1930 "Bankkonto"',
     '#KONTO 3002 "Försäljning"',
     // Refererar ENDAST 3002 (nytt konto) — 1930 har 0 refererade entries
     '#VER "A" 1 20260315 "Försäljning"',
@@ -96,7 +97,7 @@ test('S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn', async () => {
       ).api.listAllAccounts({})
       return r.data?.find((a) => a.account_number === '1930')?.name ?? null
     })
-    expect(accountName).toBe('Företagskonto')
+    expect(accountName).toBe('Bankkonto')
   } finally {
     delete process.env.E2E_MOCK_OPEN_FILE
     fs.rmSync(fixtureDir, { recursive: true, force: true })

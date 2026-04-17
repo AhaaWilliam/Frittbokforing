@@ -89,9 +89,17 @@ export async function exportExcel(
 
   // Validate date range
   if (startDate && startDate < fy.start_date)
-    throw new Error('startDate is before fiscal year start')
+    throw {
+      code: 'VALIDATION_ERROR' as const,
+      error: 'startDate ligger före räkenskapsårets start',
+      field: 'startDate',
+    }
   if (endDate && endDate > fy.end_date)
-    throw new Error('endDate is after fiscal year end')
+    throw {
+      code: 'VALIDATION_ERROR' as const,
+      error: 'endDate ligger efter räkenskapsårets slut',
+      field: 'endDate',
+    }
 
   const dateRange: ExportDateRange | undefined =
     startDate || endDate ? { startDate, endDate } : undefined

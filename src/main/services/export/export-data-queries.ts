@@ -94,7 +94,7 @@ export function getCompanyInfo(db: Database.Database): CompanyInfo {
   const row = db
     .prepare('SELECT org_number, name FROM companies LIMIT 1')
     .get() as CompanyInfo | undefined
-  if (!row) throw new Error('No company found')
+  if (!row) throw { code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
   return {
     org_number: row.org_number || '000000-0000',
     name: row.name,
@@ -108,7 +108,11 @@ export function getFiscalYear(
   const row = db
     .prepare('SELECT id, start_date, end_date FROM fiscal_years WHERE id = ?')
     .get(fiscalYearId) as FiscalYearInfo | undefined
-  if (!row) throw new Error(`Fiscal year ${fiscalYearId} not found`)
+  if (!row)
+    throw {
+      code: 'NOT_FOUND' as const,
+      error: `Räkenskapsår ${fiscalYearId} hittades inte`,
+    }
   return row
 }
 

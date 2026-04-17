@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/bank-statement-auto-match-partial.spec.ts:62:5 › S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista (11.3s)
+
+
+  1) tests/e2e/bank-statement-auto-match-partial.spec.ts:62:5 › S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('suggested-matches-failures')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('suggested-matches-failures')[22m
+
+
+      126 |     // Failure-sektionen visas med "2 av 3 accepterade"
+      127 |     const failures = ctx.window.getByTestId('suggested-matches-failures')
+    > 128 |     await expect(failures).toBeVisible({ timeout: 10_000 })
+          |                            ^
+      129 |     await expect(failures).toContainText('2 av 3 accepterade')
+      130 |
+      131 |     // Verifiera att exakt 2 A-serie-payment-verifikat skapades (utöver
+        at /Users/william/fritt-bokforing/tests/e2e/bank-statement-auto-match-partial.spec.ts:128:28
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/bank-statement-auto-match--c6ed5-3-accepterade-failure-lista/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bank-statement-auto-match--c6ed5-3-accepterade-failure-lista/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bank-statement-auto-match--c6ed5-3-accepterade-failure-lista/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/bank-statement-auto-match-partial.spec.ts:62:5 › S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista 

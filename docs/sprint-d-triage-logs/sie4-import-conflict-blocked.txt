@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/sie4-import-conflict-blocked.spec.ts:19:5 › S57 B4 negative: skip på used-account → Importera disabled (6.2s)
+
+
+  1) tests/e2e/sie4-import-conflict-blocked.spec.ts:19:5 › S57 B4 negative: skip på used-account → Importera disabled 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('conflict-1930')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('conflict-1930')[22m
+
+
+      67 |
+      68 |     await ctx.window.getByLabel(/Slå samman/).check()
+    > 69 |     await expect(ctx.window.getByTestId('conflict-1930')).toBeVisible()
+         |                                                           ^
+      70 |
+      71 |     // Välj "Skippa"
+      72 |     await ctx.window.getByTestId('conflict-1930-skip').check()
+        at /Users/william/fritt-bokforing/tests/e2e/sie4-import-conflict-blocked.spec.ts:69:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/sie4-import-conflict-block-f69ec-ccount-→-Importera-disabled/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sie4-import-conflict-block-f69ec-ccount-→-Importera-disabled/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sie4-import-conflict-block-f69ec-ccount-→-Importera-disabled/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/sie4-import-conflict-blocked.spec.ts:19:5 › S57 B4 negative: skip på used-account → Importera disabled 

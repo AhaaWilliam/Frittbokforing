@@ -122,13 +122,11 @@ test('S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_U
 
     // Bulk-pay (skapar payment_batch + payment)
     const bulk = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { payInvoicesBulk: (d: unknown) => Promise<{ success: boolean; data?: { succeeded: Array<{ payment_id: number }> } }> } }).api.payInvoicesBulk(p),
+      async (p) => (window as unknown as { api: { payInvoicesBulk: (d: unknown) => Promise<{ success: boolean; data?: { succeeded: Array<{ payment_id: number }> }; error?: string }> } }).api.payInvoicesBulk(p),
       {
-        fiscal_year_id: fiscalYearId,
         payment_date: '2026-03-18',
         account_number: '1930',
-        bank_fee_ore: null,
-        items: [{ invoice_id: invoiceId, amount_ore: 12500 }],
+        payments: [{ invoice_id: invoiceId, amount_ore: 12500 }],
       },
     )
     expect(bulk.success).toBe(true)

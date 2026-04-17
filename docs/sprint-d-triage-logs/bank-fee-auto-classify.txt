@@ -1,0 +1,33 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/bank-fee-auto-classify.spec.ts:45:5 › S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat (1.9s)
+
+
+  1) tests/e2e/bank-fee-auto-classify.spec.ts:45:5 › S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat 
+
+    TypeError: Cannot read properties of undefined (reading 'entity_type')
+
+      93 |     expect(sug).toHaveLength(1)
+      94 |     const cand = sug[0].candidates[0]
+    > 95 |     expect(cand.entity_type).toBe('bank_fee')
+         |                 ^
+      96 |     expect(cand.account).toBe('6570')
+      97 |     expect(cand.confidence).toBe('HIGH')
+      98 |     expect(cand.score).toBe(100)
+        at /Users/william/fritt-bokforing/tests/e2e/bank-fee-auto-classify.spec.ts:95:17
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/bank-fee-auto-classify-S58-7a8e2-pt-skapar-B-serie-verifikat/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bank-fee-auto-classify-S58-7a8e2-pt-skapar-B-serie-verifikat/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bank-fee-auto-classify-S58-7a8e2-pt-skapar-B-serie-verifikat/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/bank-fee-auto-classify.spec.ts:45:5 › S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat 

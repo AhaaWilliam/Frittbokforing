@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/sie4-import-conflict.spec.ts:19:5 › S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn (6.1s)
+
+
+  1) tests/e2e/sie4-import-conflict.spec.ts:19:5 › S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('conflict-1930')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('conflict-1930')[22m
+
+
+      75 |     await expect(
+      76 |       ctx.window.getByTestId('conflict-1930'),
+    > 77 |     ).toBeVisible()
+         |       ^
+      78 |
+      79 |     // Välj "Skriv över"
+      80 |     await ctx.window.getByTestId('conflict-1930-overwrite').check()
+        at /Users/william/fritt-bokforing/tests/e2e/sie4-import-conflict.spec.ts:77:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/sie4-import-conflict-S57-B-5ff54-nflikt-uppdaterar-kontonamn/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sie4-import-conflict-S57-B-5ff54-nflikt-uppdaterar-kontonamn/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sie4-import-conflict-S57-B-5ff54-nflikt-uppdaterar-kontonamn/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/sie4-import-conflict.spec.ts:19:5 › S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn 
