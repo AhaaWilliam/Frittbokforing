@@ -1,5 +1,44 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint A / S58 -- Bank-MVP stängning (F66-d + F66-e) ✅ KLAR
+
+Session S58 (2026-04-17). Stänger bank-reconciliation-storyn från S55–S57
+genom att lägga till auto-klassificering av bankavgifter/ränta (F66-d) och
+unmatch via correction-service (F66-e).
+
+**Testbaslinje:** 2402 → **2437 vitest (+35)**. 236 → 240 testfiler (+4).
+**Playwright:** 55 → 58 (+3 nya specs registrerade).
+**PRAGMA user_version:** 40 → **41 (migration 041)**.
+**Nya IPC-kanaler:** +2 (`bank-statement:create-fee-entry`,
+`bank-statement:unmatch-transaction`). Nya test-only: +2
+(`__test:getReconciliationMatches`, `__test:linkPaymentToBankTx`).
+**Nya M-principer:** M154 (unmatch via korrigeringsverifikat).
+**Nya ErrorCodes:** `NOT_MATCHED`, `BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED`.
+
+### Levererat
+
+- **A1** Migration 041 — `match_method` + `fee_journal_entry_id` +
+  BkTxCd-kolumner via M122 table-recreate. Pre-flight Q1+Q2+Q3. +2 smoke.
+- **A2** camt053-parser utökad med `bank_tx_domain/family/subfamily`. +3.
+- **A3** `bank-fee-classifier.ts` — deterministisk scoring
+  (BkTxCd-whitelist +100 HIGH, heuristik bank+text +30/+40), beloppsgräns
+  MAX_FEE_HEURISTIC_ORE, heltalspoäng (M153-clean). +10.
+- **A4** `bank-fee-entry-service.ts` — split A (intäkt) / B (kostnad) -serie.
+  Ingen moms. Chronology + period-check. +6.
+- **A5** Suggester integrerar fee-candidates i gemensam score-skala. +3.
+- **B1+B2** `SuggestedMatchesPanel` discriminated union, fee-rendering,
+  `useCreateBankFeeEntry`, bulk-chronology-sort per serie. +2 RTL.
+- **B3** E2E fee-auto-match (camt.053 CHRG → bulk-accept). +1 Playwright.
+- **C1** `bank-unmatch-service.ts` — atomär komposition DELETE
+  reconciliation → DELETE payment → `createCorrectionEntry` → recalc
+  paid_amount. 4 guards. +9 tester.
+- **C2** IPC-kanaler + `useUnmatchBankTransaction` + `useCreateBankFeeEntry`.
+- **D1** "Ångra"-knapp på matched-rader, disabled+tooltip för batch,
+  `ConfirmDialog` med M154-text, per-ErrorCode toast.
+- **D2** 2 E2E (unmatch happy + batch-blocked). +2 Playwright.
+
+Se `docs/sprintA-summary.md` för detaljer.
+
 ## Sprint 57 -- UI + E2E follow-through från S56 + F66-c quick win ✅ KLAR
 
 Session S57 (2026-04-17). Stänger UI/E2E-skulden från S56-PARTIAL och

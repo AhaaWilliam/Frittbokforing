@@ -746,6 +746,43 @@ auto-klassificering. Scope-utvidgning kräver uppdatering av
 **Referens:** Sprint 56 F66-b — `bank-match-suggester.ts`,
 `tests/session-56-bank-match-suggester.test.ts`.
 
+## 58. Unmatch via korrigeringsverifikat (M154)
+
+**M154.** `unmatchBankTransaction` återställer en bank-reconciliation genom
+(1) skapa ett korrigeringsverifikat via `correction-service` på det
+ursprungliga payment/fee-verifikatet, (2) radera reconciliation-raden,
+(3) radera payment-raden (för invoice/expense-matches; fee-matches har
+ingen payment), (4) räkna om `paid_amount_ore` och `status` från
+`SUM(payments)` för att bibehålla M101-invariant, (5) sätta
+`bank_transactions.reconciliation_status='unmatched'`.
+
+**Payment-raden raderas** — audit-trail upprätthålls av
+korrigeringsverifikatet i C-serien, inte av bevarad payment-rad.
+Voided-flag-mönstret övervägdes men förkastades: det skulle kräva att
+alla SUM-queries, `paid_amount`-CASE och listor exkluderar voided,
+en genomgripande ändring som inte motiveras när C-serie-korrigeringen
+ger fullständig spårbarhet.
+
+**Ordning är kritisk:** DELETE reconciliation + DELETE payment FÖRE
+`createCorrectionEntry`. Annars blockerar (a) correction-service guard
+#4 (HAS_DEPENDENT_PAYMENTS) och (b) DB-trigger
+`trg_no_correct_with_payments` mot UPDATE status='corrected'. Trigger
+och service är defense-in-depth mot korrigering av payment-JE utan att
+först rensa payment-raderna.
+
+**En-gångs-lås (M140) gäller per payment-verifikat, inte per TX.** Efter
+unmatch kan användaren skapa en **ny manuell match** (som skapar ett
+nytt payment-verifikat). Det nya kan också unmatchas en gång. Endast
+det specifika verifikat som redan har `corrected_by_id IS NOT NULL` är
+permanent låst.
+
+**Batch-payments (M112) kan inte unmatchas per rad.** Blockeras av
+`BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED`. UI döljer inte knappen utan
+visar den som disabled med tooltip. Batch-unmatch är backlog.
+
+**Referens:** Sprint A / S58 F66-e — `bank-unmatch-service.ts`,
+`tests/session-58-bank-unmatch.test.ts`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
