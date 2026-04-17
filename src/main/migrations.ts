@@ -1307,7 +1307,91 @@ END;`,
   // M121 (trigger reattach), M122 (FK-off table-recreate of journal_entries),
   // M141 (cross-table trigger inventory), M151 (E-series decision).
   { sql: '-- Migration 038: F62 avskrivningar (se programmatic)', programmatic: migration038Programmatic },
+  // Sprint 55: F66-a — Bankavstämning MVP (camt.053)
+  // 3 nya tabeller: bank_statements, bank_transactions, bank_reconciliation_matches.
+  // Split polymorphic FK (invoice_payment_id / expense_payment_id + CHECK).
+  // M152: signed amount i bank-extern rådata (bank_transactions.amount_ore).
+  { sql: `
+    CREATE TABLE bank_statements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      statement_number TEXT NOT NULL,
+      bank_account_iban TEXT NOT NULL,
+      statement_date TEXT NOT NULL,
+      opening_balance_ore INTEGER NOT NULL,
+      closing_balance_ore INTEGER NOT NULL,
+      source_format TEXT NOT NULL DEFAULT 'camt.053',
+      import_file_hash TEXT NOT NULL,
+      imported_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (source_format IN ('camt.053')),
+      UNIQUE (company_id, import_file_hash)
+    );
+
+    CREATE TABLE bank_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bank_statement_id INTEGER NOT NULL REFERENCES bank_statements(id) ON DELETE CASCADE,
+      booking_date TEXT NOT NULL,
+      value_date TEXT NOT NULL,
+      amount_ore INTEGER NOT NULL,
+      transaction_reference TEXT,
+      remittance_info TEXT,
+      counterparty_iban TEXT,
+      counterparty_name TEXT,
+      bank_transaction_code TEXT,
+      reconciliation_status TEXT NOT NULL DEFAULT 'unmatched',
+      CHECK (amount_ore <> 0),
+      CHECK (reconciliation_status IN ('unmatched','matched','excluded'))
+    );
+
+    CREATE TABLE bank_reconciliation_matches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bank_transaction_id INTEGER NOT NULL UNIQUE REFERENCES bank_transactions(id) ON DELETE CASCADE,
+      matched_entity_type TEXT NOT NULL,
+      matched_entity_id INTEGER NOT NULL,
+      invoice_payment_id INTEGER REFERENCES invoice_payments(id) ON DELETE RESTRICT,
+      expense_payment_id INTEGER REFERENCES expense_payments(id) ON DELETE RESTRICT,
+      match_method TEXT NOT NULL DEFAULT 'manual',
+      matched_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (matched_entity_type IN ('invoice','expense')),
+      CHECK (match_method IN ('manual')),
+      CHECK (
+        (matched_entity_type = 'invoice' AND invoice_payment_id IS NOT NULL AND expense_payment_id IS NULL)
+        OR
+        (matched_entity_type = 'expense' AND expense_payment_id IS NOT NULL AND invoice_payment_id IS NULL)
+      )
+    );
+
+    CREATE INDEX idx_bank_tx_statement ON bank_transactions(bank_statement_id);
+    CREATE INDEX idx_bank_tx_status ON bank_transactions(reconciliation_status);
+    CREATE INDEX idx_bank_tx_value_date ON bank_transactions(value_date);
+    CREATE INDEX idx_bank_tx_booking_date ON bank_transactions(booking_date);
+    CREATE INDEX idx_bank_match_entity ON bank_reconciliation_matches(matched_entity_type, matched_entity_id);
+  `, programmatic: migration039Verify },
 ]
+
+function migration039Verify(db: import('better-sqlite3').Database): void {
+  const expectedTables = ['bank_statements', 'bank_transactions', 'bank_reconciliation_matches']
+  for (const t of expectedTables) {
+    const exists = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+      .get(t)
+    if (!exists) throw new Error(`Migration 039 failed: tabell ${t} saknas`)
+  }
+  const expectedIndexes = [
+    'idx_bank_tx_statement',
+    'idx_bank_tx_status',
+    'idx_bank_tx_value_date',
+    'idx_bank_tx_booking_date',
+    'idx_bank_match_entity',
+  ]
+  for (const idx of expectedIndexes) {
+    const exists = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name=?")
+      .get(idx)
+    if (!exists) throw new Error(`Migration 039 failed: index ${idx} saknas`)
+  }
+}
 
 /**
  * Migration 022: Sprint 15 S42 — öre-suffix rename (M119/F1).

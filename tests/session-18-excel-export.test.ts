@@ -573,12 +573,12 @@ describe('Excel Export', () => {
   // 27. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(38) // S53: Uppdatera vid nya migrationer
+    expect(version).toBe(39) // S53: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
       )
       .get() as { count: number }
-    expect(tables.count).toBe(33)
+    expect(tables.count).toBe(36)
   })
 })
