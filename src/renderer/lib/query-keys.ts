@@ -87,6 +87,8 @@ export const queryKeys = {
   bankStatements: (fyId: number) => ['bank-statements', fyId] as const,
   bankStatement: (id: number) => ['bank-statement', id] as const,
   allBankStatements: () => ['bank-statements'] as const,
+  bankSuggestMatches: (statementId: number) =>
+    ['bank-suggest-matches', statementId] as const,
 
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,

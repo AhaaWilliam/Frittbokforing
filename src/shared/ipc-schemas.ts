@@ -959,6 +959,12 @@ export const BankStatementGetSchema = z
   })
   .strict()
 
+export const BankStatementSuggestMatchesSchema = z
+  .object({
+    statement_id: z.number().int().positive(),
+  })
+  .strict()
+
 export const BankMatchTransactionSchema = z
   .object({
     bank_transaction_id: z.number().int().positive(),
@@ -1140,6 +1146,7 @@ export const channelMap = {
   'bank-statement:list': BankStatementListSchema,
   'bank-statement:get': BankStatementGetSchema,
   'bank-statement:match-transaction': BankMatchTransactionSchema,
+  'bank-statement:suggest-matches': BankStatementSuggestMatchesSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

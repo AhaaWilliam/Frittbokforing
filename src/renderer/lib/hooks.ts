@@ -852,6 +852,19 @@ export function useMatchBankTransaction() {
   })
 }
 
+export function useSuggestBankMatches(
+  statementId: number | undefined,
+  enabled: boolean,
+) {
+  return useIpcQuery<
+    import('../../main/services/bank/bank-match-suggester').TxSuggestion[]
+  >(
+    queryKeys.bankSuggestMatches(statementId!),
+    () => window.api.suggestBankMatches({ statement_id: statementId! }),
+    { enabled: !!statementId && enabled, staleTime: 30_000 },
+  )
+}
+
 export function useExportWriteFile() {
   return useIpcMutation<
     {

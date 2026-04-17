@@ -457,6 +457,9 @@ interface ElectronAPI {
     matched_entity_id: number
     payment_account: string
   }) => Promise<IpcResult<import('../../main/services/bank/bank-match-service').MatchBankTransactionResult>>
+  suggestBankMatches: (data: { statement_id: number }) => Promise<
+    IpcResult<import('../../main/services/bank/bank-match-suggester').TxSuggestion[]>
+  >
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

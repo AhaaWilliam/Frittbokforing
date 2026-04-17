@@ -144,6 +144,7 @@ import {
   getBankStatement,
 } from './services/bank/bank-statement-service'
 import { matchBankTransaction } from './services/bank/bank-match-service'
+import { suggestMatchesForStatement } from './services/bank/bank-match-suggester'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -230,6 +231,7 @@ import {
   BankStatementListSchema,
   BankStatementGetSchema,
   BankMatchTransactionSchema,
+  BankStatementSuggestMatchesSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -999,6 +1001,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('bank-statement:match-transaction', wrapIpcHandler(BankMatchTransactionSchema, (data) =>
     matchBankTransaction(db, data),
+  ))
+
+  ipcMain.handle('bank-statement:suggest-matches', wrapIpcHandler(BankStatementSuggestMatchesSchema, (data) =>
+    suggestMatchesForStatement(db, data.statement_id),
   ))
 
   // === Settings ===

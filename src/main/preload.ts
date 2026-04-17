@@ -298,6 +298,8 @@ contextBridge.exposeInMainWorld('api', {
     matched_entity_id: number
     payment_account: string
   }) => ipcRenderer.invoke('bank-statement:match-transaction', data),
+  suggestBankMatches: (data: { statement_id: number }) =>
+    ipcRenderer.invoke('bank-statement:suggest-matches', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>
