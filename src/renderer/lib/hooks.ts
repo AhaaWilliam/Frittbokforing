@@ -803,6 +803,55 @@ export function useCashFlow(fiscalYearId: number | undefined) {
   )
 }
 
+// === Bank statements (Sprint 55 F66-a) ===
+export function useBankStatements(fiscalYearId: number | undefined) {
+  return useIpcQuery<
+    import('../../main/services/bank/bank-statement-service').BankStatementSummary[]
+  >(
+    queryKeys.bankStatements(fiscalYearId!),
+    () => window.api.listBankStatements({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId, staleTime: 10_000 },
+  )
+}
+
+export function useBankStatement(statementId: number | undefined) {
+  return useIpcQuery<
+    import('../../main/services/bank/bank-statement-service').BankStatementDetail | null
+  >(
+    queryKeys.bankStatement(statementId!),
+    () => window.api.getBankStatement({ statement_id: statementId! }),
+    { enabled: !!statementId, staleTime: 5_000 },
+  )
+}
+
+export function useImportBankStatement() {
+  return useIpcMutation<
+    { company_id: number; fiscal_year_id: number; xml_content: string },
+    import('../../main/services/bank/bank-statement-service').ImportBankStatementResult
+  >(
+    (data) => window.api.importBankStatement(data),
+    { invalidate: [queryKeys.allBankStatements()] },
+  )
+}
+
+export function useMatchBankTransaction() {
+  return useIpcMutation<
+    {
+      bank_transaction_id: number
+      matched_entity_type: 'invoice' | 'expense'
+      matched_entity_id: number
+      payment_account: string
+    },
+    import('../../main/services/bank/bank-match-service').MatchBankTransactionResult
+  >((data) => window.api.matchBankTransaction(data), {
+    invalidate: [
+      queryKeys.allBankStatements(),
+      queryKeys.allInvoices(),
+      queryKeys.allExpenses(),
+    ],
+  })
+}
+
 export function useExportWriteFile() {
   return useIpcMutation<
     {

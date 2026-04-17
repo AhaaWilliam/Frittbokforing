@@ -138,6 +138,12 @@ import {
   executeDepreciationPeriod,
 } from './services/depreciation-service'
 import { getCashFlowStatement } from './services/cash-flow-service'
+import {
+  importBankStatement,
+  listBankStatements,
+  getBankStatement,
+} from './services/bank/bank-statement-service'
+import { matchBankTransaction } from './services/bank/bank-match-service'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
   FiscalPeriodListInputSchema,
@@ -220,6 +226,10 @@ import {
   DepreciationDisposeSchema,
   DepreciationExecutePeriodSchema,
   CashFlowInputSchema,
+  BankStatementImportSchema,
+  BankStatementListSchema,
+  BankStatementGetSchema,
+  BankMatchTransactionSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -965,6 +975,23 @@ export function registerIpcHandlers(): void {
   // === Cash Flow (Sprint 53 F65) ===
   ipcMain.handle('report:cash-flow', wrapIpcHandler(CashFlowInputSchema, (data) =>
     getCashFlowStatement(db, data.fiscal_year_id),
+  ))
+
+  // === Bank statement / reconciliation (Sprint 55 F66-a) ===
+  ipcMain.handle('bank-statement:import', wrapIpcHandler(BankStatementImportSchema, (data) =>
+    importBankStatement(db, data),
+  ))
+
+  ipcMain.handle('bank-statement:list', wrapIpcHandler(BankStatementListSchema, (data) =>
+    listBankStatements(db, data.fiscal_year_id),
+  ))
+
+  ipcMain.handle('bank-statement:get', wrapIpcHandler(BankStatementGetSchema, (data) =>
+    getBankStatement(db, data.statement_id),
+  ))
+
+  ipcMain.handle('bank-statement:match-transaction', wrapIpcHandler(BankMatchTransactionSchema, (data) =>
+    matchBankTransaction(db, data),
   ))
 
   // === Settings ===

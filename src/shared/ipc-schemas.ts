@@ -936,6 +936,36 @@ export const DepreciationExecutePeriodSchema = z
   })
   .strict()
 
+// === Bank statement / reconciliation (Sprint 55 F66-a) ===
+export const BankStatementImportSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+    fiscal_year_id: z.number().int().positive(),
+    xml_content: z.string().min(1),
+  })
+  .strict()
+
+export const BankStatementListSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const BankStatementGetSchema = z
+  .object({
+    statement_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const BankMatchTransactionSchema = z
+  .object({
+    bank_transaction_id: z.number().int().positive(),
+    matched_entity_type: z.enum(['invoice', 'expense']),
+    matched_entity_id: z.number().int().positive(),
+    payment_account: z.string().min(4).max(10),
+  })
+  .strict()
+
 // ---------------------------------------------------------------------------
 // channelMap — explicit mapping of every IPC channel to its Zod input schema.
 // Used by mock-IPC (tests/setup/mock-ipc.ts) for input validation.
@@ -1102,6 +1132,12 @@ export const channelMap = {
   'depreciation:dispose': DepreciationDisposeSchema,
   'depreciation:delete': DepreciationIdSchema,
   'depreciation:execute-period': DepreciationExecutePeriodSchema,
+
+  // Bank statement / reconciliation (Sprint 55 F66-a)
+  'bank-statement:import': BankStatementImportSchema,
+  'bank-statement:list': BankStatementListSchema,
+  'bank-statement:get': BankStatementGetSchema,
+  'bank-statement:match-transaction': BankMatchTransactionSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

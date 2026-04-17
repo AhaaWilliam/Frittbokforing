@@ -68,6 +68,7 @@ export type PageId =
   | 'accounts'
   | 'suppliers'
   | 'account-statement'
+  | 'bank-statements'
 
 // === Company ===
 export interface Company {

@@ -433,6 +433,24 @@ interface ElectronAPI {
   getCashFlowStatement: (data: { fiscal_year_id: number }) => Promise<
     IpcResult<import('../../main/services/cash-flow-service').CashFlowReport>
   >
+  // Bank statement / reconciliation (Sprint 55 F66-a)
+  importBankStatement: (data: {
+    company_id: number
+    fiscal_year_id: number
+    xml_content: string
+  }) => Promise<IpcResult<import('../../main/services/bank/bank-statement-service').ImportBankStatementResult>>
+  listBankStatements: (data: { fiscal_year_id: number }) => Promise<
+    IpcResult<import('../../main/services/bank/bank-statement-service').BankStatementSummary[]>
+  >
+  getBankStatement: (data: { statement_id: number }) => Promise<
+    IpcResult<import('../../main/services/bank/bank-statement-service').BankStatementDetail | null>
+  >
+  matchBankTransaction: (data: {
+    bank_transaction_id: number
+    matched_entity_type: 'invoice' | 'expense'
+    matched_entity_id: number
+    payment_account: string
+  }) => Promise<IpcResult<import('../../main/services/bank/bank-match-service').MatchBankTransactionResult>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

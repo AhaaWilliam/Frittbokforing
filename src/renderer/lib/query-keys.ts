@@ -83,6 +83,11 @@ export const queryKeys = {
   fixedAsset: (id: number) => ['fixed-asset', id] as const,
   allFixedAssets: () => ['fixed-assets'] as const,
 
+  // === Bank statements (Sprint 55 F66-a) ===
+  bankStatements: (fyId: number) => ['bank-statements', fyId] as const,
+  bankStatement: (id: number) => ['bank-statement', id] as const,
+  allBankStatements: () => ['bank-statements'] as const,
+
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
   budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,

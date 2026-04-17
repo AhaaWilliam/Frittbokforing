@@ -280,6 +280,19 @@ contextBridge.exposeInMainWorld('api', {
   // Cash Flow (Sprint 53 F65)
   getCashFlowStatement: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('report:cash-flow', data),
+  // Bank statement / reconciliation (Sprint 55 F66-a)
+  importBankStatement: (data: { company_id: number; fiscal_year_id: number; xml_content: string }) =>
+    ipcRenderer.invoke('bank-statement:import', data),
+  listBankStatements: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('bank-statement:list', data),
+  getBankStatement: (data: { statement_id: number }) =>
+    ipcRenderer.invoke('bank-statement:get', data),
+  matchBankTransaction: (data: {
+    bank_transaction_id: number
+    matched_entity_type: 'invoice' | 'expense'
+    matched_entity_id: number
+    payment_account: string
+  }) => ipcRenderer.invoke('bank-statement:match-transaction', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>
