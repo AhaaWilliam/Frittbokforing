@@ -24,6 +24,7 @@ import { PageBudget } from './PageBudget'
 import { PageAccruals } from './PageAccruals'
 import { PageFixedAssets } from './PageFixedAssets'
 import { PageImport } from './PageImport'
+import { PageBankStatements } from './PageBankStatements'
 
 interface AppShellProps {
   company: Company
@@ -69,6 +70,8 @@ function PageContent({ page }: { page: string }) {
       return <PageFixedAssets />
     case 'import':
       return <PageImport />
+    case 'bank-statements':
+      return <PageBankStatements />
     default:
       return <PageOverview />
   }

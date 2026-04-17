@@ -18,6 +18,7 @@ import {
   CalendarClock,
   Upload,
   Building2,
+  Banknote,
   type LucideIcon,
 } from 'lucide-react'
 import type { Company } from '../../../shared/types'
@@ -81,6 +82,7 @@ export function Sidebar({ company }: SidebarProps) {
         <SidebarLink to="/manual-entries" icon={FileText} label="Bokföringsorder" testId="nav-manual-entries" />
         <SidebarLink to="/accruals" icon={CalendarClock} label="Periodiseringar" testId="nav-accruals" />
         <SidebarLink to="/fixed-assets" icon={Building2} label="Anläggningstillgångar" testId="nav-fixed-assets" />
+        <SidebarLink to="/bank-statements" icon={Banknote} label="Bankavstämning" testId="nav-bank-statements" />
 
         <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Register
