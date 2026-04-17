@@ -15,9 +15,10 @@
  * Anropas inom db.transaction() — kastar strukturerade fel.
  */
 import type Database from 'better-sqlite3'
+import log from 'electron-log'
 import { checkChronology } from '../chronology-guard'
-import type { FeeClassification } from './bank-fee-classifier'
-import type { ErrorCode } from '../../../shared/types'
+import { classifyBankFeeTx, type FeeClassification } from './bank-fee-classifier'
+import type { ErrorCode, IpcResult } from '../../../shared/types'
 
 // ═══ Types ═══
 
@@ -194,4 +195,72 @@ export function _createBankFeeEntryTx(
   ).run(input.bank_transaction_id)
 
   return { journal_entry_id: journalEntryId, match_id: matchId }
+}
+
+// ═══ Public API ═══
+
+export interface CreateBankFeeEntryPublicInput {
+  bank_transaction_id: number
+  payment_account: string
+  skipChronologyCheck?: boolean
+}
+
+/**
+ * Skapar ett bank-fee-verifikat utifrån TX:ens egen klassificering.
+ * Klassificering körs server-side (renderer kan inte styra bokföringslogik).
+ *
+ * Öppnar egen transaktion — används från IPC-handler och bulk-accept.
+ */
+export function createBankFeeEntry(
+  db: Database.Database,
+  input: CreateBankFeeEntryPublicInput,
+): IpcResult<CreateBankFeeEntryResult> {
+  try {
+    const result = db.transaction(() => {
+      const tx = db
+        .prepare(
+          `SELECT amount_ore, counterparty_name, remittance_info, bank_tx_subfamily
+           FROM bank_transactions WHERE id = ?`,
+        )
+        .get(input.bank_transaction_id) as
+        | {
+            amount_ore: number
+            counterparty_name: string | null
+            remittance_info: string | null
+            bank_tx_subfamily: string | null
+          }
+        | undefined
+      if (!tx) {
+        throw {
+          code: 'VALIDATION_ERROR' as ErrorCode,
+          error: 'Bank-transaktionen hittades inte.',
+          field: 'bank_transaction_id',
+        }
+      }
+      const classification = classifyBankFeeTx(tx)
+      if (!classification) {
+        throw {
+          code: 'VALIDATION_ERROR' as ErrorCode,
+          error: 'Transaktionen kan inte auto-klassificeras som bankavgift/ränta.',
+          field: 'bank_transaction_id',
+        }
+      }
+      return _createBankFeeEntryTx(db, {
+        bank_transaction_id: input.bank_transaction_id,
+        classification,
+        payment_account: input.payment_account,
+        skipChronologyCheck: input.skipChronologyCheck,
+      })
+    })()
+    return { success: true, data: result }
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      log.error(`[bank-fee-entry] ${e.code}: ${e.error}`)
+      return { success: false, code: e.code, error: e.error, field: e.field }
+    }
+    const message = err instanceof Error ? err.message : 'Okänt fel'
+    log.error(`[bank-fee-entry] unexpected: ${message}`)
+    return { success: false, code: 'UNEXPECTED_ERROR', error: message }
+  }
 }

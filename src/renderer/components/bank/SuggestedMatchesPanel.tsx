@@ -16,10 +16,11 @@ import { ChevronRight } from 'lucide-react'
 import {
   useSuggestBankMatches,
   useMatchBankTransaction,
+  useCreateBankFeeEntry,
 } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 
-type MatchCandidate = {
+type EntityCandidate = {
   entity_type: 'invoice' | 'expense'
   entity_id: number
   entity_number: string | null
@@ -32,6 +33,33 @@ type MatchCandidate = {
   confidence: 'HIGH' | 'MEDIUM'
   method: string
   reasons: string[]
+}
+
+type FeeCandidate = {
+  entity_type: 'bank_fee' | 'interest_income' | 'interest_expense'
+  account: '6570' | '8310' | '8410'
+  series: 'A' | 'B'
+  amount_ore: number
+  score: number
+  confidence: 'HIGH' | 'MEDIUM'
+  method: 'auto_fee' | 'auto_interest_income' | 'auto_interest_expense'
+  reasons: string[]
+}
+
+type MatchCandidate = EntityCandidate | FeeCandidate
+
+function isFee(c: MatchCandidate): c is FeeCandidate {
+  return (
+    c.entity_type === 'bank_fee' ||
+    c.entity_type === 'interest_income' ||
+    c.entity_type === 'interest_expense'
+  )
+}
+
+function feeLabel(c: FeeCandidate): string {
+  if (c.entity_type === 'bank_fee') return 'Bankavgift'
+  if (c.entity_type === 'interest_income') return 'Ränteintäkt'
+  return 'Räntekostnad'
 }
 
 type TxSuggestion = {
@@ -65,6 +93,7 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
   // Beslut 2: query pausad under bulk-pending (undviker mid-loop refetch)
   const query = useSuggestBankMatches(statementId, expanded && !pending)
   const matchMutation = useMatchBankTransaction()
+  const feeMutation = useCreateBankFeeEntry()
 
   const suggestions = (query.data ?? []) as TxSuggestion[]
 
@@ -81,18 +110,23 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
   async function acceptCandidate(txId: number, candidate: MatchCandidate) {
     if (pending) return
     try {
-      const r = await matchMutation.mutateAsync({
-        bank_transaction_id: txId,
-        matched_entity_type: candidate.entity_type,
-        matched_entity_id: candidate.entity_id,
-        payment_account: '1930',
-      })
+      const r = isFee(candidate)
+        ? await feeMutation.mutateAsync({
+            bank_transaction_id: txId,
+            payment_account: '1930',
+          })
+        : await matchMutation.mutateAsync({
+            bank_transaction_id: txId,
+            matched_entity_type: candidate.entity_type,
+            matched_entity_id: candidate.entity_id,
+            payment_account: '1930',
+          })
       const success = (r as { success?: boolean }).success !== false
       if (success) {
-        toast.success('Matchning accepterad')
+        toast.success(isFee(candidate) ? 'Bokfört' : 'Matchning accepterad')
       } else {
         toast.error(
-          `Matchning misslyckades: ${(r as { error?: string }).error ?? 'okänt fel'}`,
+          `${isFee(candidate) ? 'Bokföring' : 'Matchning'} misslyckades: ${(r as { error?: string }).error ?? 'okänt fel'}`,
         )
       }
     } catch (err) {
@@ -114,20 +148,46 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
 
     if (highCandidates.length === 0) return
 
+    // B1: pre-sort per serie + TX-id för deterministisk chronology vid bulk
+    // (hämta TX-datum via snapshot i suggestions är inte tillgängligt här —
+    // sortera stabilt på entity_type+id för reproducerbarhet; backend kör
+    // skipChronologyCheck på fee-bulk).
+    highCandidates.sort((a, b) => {
+      const aFee = isFee(a.candidate)
+      const bFee = isFee(b.candidate)
+      if (aFee !== bFee) return aFee ? 1 : -1 // entity först, fee sist
+      return a.txId - b.txId
+    })
+
     setPending(true)
     setResults(null)
 
     let ok = 0
     const failed: Array<{ txId: number; reason: string }> = []
 
+    // Per fee-serie: första mutationen kör chronology-check, efterföljande skippar
+    const feeSeriesSeen = new Set<string>()
+
     for (const { txId, candidate } of highCandidates) {
       try {
-        const r = await matchMutation.mutateAsync({
-          bank_transaction_id: txId,
-          matched_entity_type: candidate.entity_type,
-          matched_entity_id: candidate.entity_id,
-          payment_account: '1930',
-        })
+        let r: unknown
+        if (isFee(candidate)) {
+          const serie = candidate.series
+          const skip = feeSeriesSeen.has(serie)
+          feeSeriesSeen.add(serie)
+          r = await feeMutation.mutateAsync({
+            bank_transaction_id: txId,
+            payment_account: '1930',
+            skipChronologyCheck: skip,
+          })
+        } else {
+          r = await matchMutation.mutateAsync({
+            bank_transaction_id: txId,
+            matched_entity_type: candidate.entity_type,
+            matched_entity_id: candidate.entity_id,
+            payment_account: '1930',
+          })
+        }
         const success = (r as { success?: boolean }).success !== false
         if (success) {
           ok++
@@ -218,19 +278,31 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
                       <div className="mb-1 text-xs text-muted-foreground">
                         TX #{s.bank_transaction_id}
                       </div>
-                      {s.candidates.map((c) => (
+                      {s.candidates.map((c, idx) => (
                         <div
-                          key={`${c.entity_type}-${c.entity_id}`}
+                          key={isFee(c) ? `fee-${c.entity_type}-${idx}` : `${c.entity_type}-${c.entity_id}`}
                           className="flex items-center justify-between gap-2 py-1"
                         >
                           <div className="flex-1 text-xs">
-                            <span className="font-medium">
-                              {c.entity_number ?? '—'}
-                            </span>
-                            {' · '}
-                            {c.counterparty_name ?? '—'}
-                            {' · '}
-                            {fmtKr(c.total_amount_ore)}
+                            {isFee(c) ? (
+                              <>
+                                <span className="font-medium">{feeLabel(c)}</span>
+                                {' · konto '}
+                                {c.account}
+                                {' · '}
+                                {fmtKr(c.amount_ore)}
+                              </>
+                            ) : (
+                              <>
+                                <span className="font-medium">
+                                  {c.entity_number ?? '—'}
+                                </span>
+                                {' · '}
+                                {c.counterparty_name ?? '—'}
+                                {' · '}
+                                {fmtKr(c.total_amount_ore)}
+                              </>
+                            )}
                             <span
                               className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${
                                 c.confidence === 'HIGH'
@@ -248,7 +320,11 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
                               acceptCandidate(s.bank_transaction_id, c)
                             }
                             className="rounded border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                            data-testid={`accept-${s.bank_transaction_id}-${c.entity_type}-${c.entity_id}`}
+                            data-testid={
+                              isFee(c)
+                                ? `accept-${s.bank_transaction_id}-${c.entity_type}`
+                                : `accept-${s.bank_transaction_id}-${c.entity_type}-${c.entity_id}`
+                            }
                           >
                             Acceptera
                           </button>

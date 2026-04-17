@@ -465,6 +465,11 @@ interface ElectronAPI {
     bank_transaction_id: number
     correction_description?: string
   }) => Promise<IpcResult<import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult>>
+  createBankFeeEntry: (data: {
+    bank_transaction_id: number
+    payment_account: string
+    skipChronologyCheck?: boolean
+  }) => Promise<IpcResult<import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

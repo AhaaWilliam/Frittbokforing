@@ -996,6 +996,15 @@ export const BankUnmatchTransactionSchema = z
   })
   .strict()
 
+// S58 F66-d: skapa bank-fee-verifikat för auto-klassificerad TX
+export const BankCreateFeeEntrySchema = z
+  .object({
+    bank_transaction_id: z.number().int().positive(),
+    payment_account: z.string().min(4).max(10),
+    skipChronologyCheck: z.boolean().optional(),
+  })
+  .strict()
+
 // ---------------------------------------------------------------------------
 // channelMap — explicit mapping of every IPC channel to its Zod input schema.
 // Used by mock-IPC (tests/setup/mock-ipc.ts) for input validation.
@@ -1170,6 +1179,7 @@ export const channelMap = {
   'bank-statement:match-transaction': BankMatchTransactionSchema,
   'bank-statement:suggest-matches': BankStatementSuggestMatchesSchema,
   'bank-statement:unmatch-transaction': BankUnmatchTransactionSchema,
+  'bank-statement:create-fee-entry': BankCreateFeeEntrySchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

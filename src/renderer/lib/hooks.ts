@@ -873,6 +873,16 @@ export function useSuggestBankMatches(
   )
 }
 
+// S58 F66-d: skapa bank-fee-verifikat för auto-klassificerad TX
+export function useCreateBankFeeEntry() {
+  return useIpcMutation<
+    { bank_transaction_id: number; payment_account: string; skipChronologyCheck?: boolean },
+    import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult
+  >((data) => window.api.createBankFeeEntry(data), {
+    invalidate: [queryKeys.allBankStatements()],
+  })
+}
+
 // S58 F66-e: unmatch bank-reconciliation
 export function useUnmatchBankTransaction() {
   return useIpcMutation<

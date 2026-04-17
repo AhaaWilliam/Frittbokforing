@@ -308,6 +308,11 @@ contextBridge.exposeInMainWorld('api', {
     bank_transaction_id: number
     correction_description?: string
   }) => ipcRenderer.invoke('bank-statement:unmatch-transaction', data),
+  createBankFeeEntry: (data: {
+    bank_transaction_id: number
+    payment_account: string
+    skipChronologyCheck?: boolean
+  }) => ipcRenderer.invoke('bank-statement:create-fee-entry', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

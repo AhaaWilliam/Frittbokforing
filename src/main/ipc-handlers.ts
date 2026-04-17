@@ -145,6 +145,7 @@ import {
 } from './services/bank/bank-statement-service'
 import { matchBankTransaction } from './services/bank/bank-match-service'
 import { unmatchBankTransaction } from './services/bank/bank-unmatch-service'
+import { createBankFeeEntry } from './services/bank/bank-fee-entry-service'
 import { suggestMatchesForStatement } from './services/bank/bank-match-suggester'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
 import {
@@ -234,6 +235,7 @@ import {
   BankMatchTransactionSchema,
   BankStatementSuggestMatchesSchema,
   BankUnmatchTransactionSchema,
+  BankCreateFeeEntrySchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -1028,6 +1030,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('bank-statement:unmatch-transaction', wrapIpcHandler(BankUnmatchTransactionSchema, (data) =>
     unmatchBankTransaction(db, data),
+  ))
+
+  ipcMain.handle('bank-statement:create-fee-entry', wrapIpcHandler(BankCreateFeeEntrySchema, (data) =>
+    createBankFeeEntry(db, data),
   ))
 
   // === Settings ===

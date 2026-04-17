@@ -202,4 +202,91 @@ describe('SuggestedMatchesPanel (S57 A4)', () => {
     // Resolve pending promise så testet kan avslutas rent
     resolveMatch({ success: true, data: { journal_entry_id: 1 } })
   })
+
+  // S58 B2 — fee-candidates
+  it('S58: fee-candidate renderas med konto + belopp + confidence', async () => {
+    const suggestBankMatches = vi.fn(async () => ({
+      success: true,
+      data: [
+        {
+          bank_transaction_id: 501,
+          candidates: [
+            {
+              entity_type: 'bank_fee',
+              account: '6570',
+              series: 'B',
+              amount_ore: 5000,
+              score: 100,
+              confidence: 'HIGH',
+              method: 'auto_fee',
+              reasons: ['BkTxCd SubFmlyCd=CHRG'],
+            },
+          ],
+        },
+      ],
+    }))
+    const api = (window as unknown as { api: Record<string, unknown> }).api
+    api.suggestBankMatches = suggestBankMatches
+
+    renderWithProviders(<SuggestedMatchesPanel statementId={1} />)
+    await userEvent.click(screen.getByText('Föreslå matchningar'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggested-tx-501')).toBeDefined()
+    })
+    const panel = screen.getByTestId('suggested-tx-501')
+    expect(panel.textContent).toContain('Bankavgift')
+    expect(panel.textContent).toContain('6570')
+    expect(panel.textContent).toContain('HIGH')
+    expect(panel.textContent).toContain('100')
+  })
+
+  it('S58: accept fee-candidate anropar createBankFeeEntry (inte matchBankTransaction)', async () => {
+    const suggestBankMatches = vi.fn(async () => ({
+      success: true,
+      data: [
+        {
+          bank_transaction_id: 601,
+          candidates: [
+            {
+              entity_type: 'bank_fee',
+              account: '6570',
+              series: 'B',
+              amount_ore: 5000,
+              score: 100,
+              confidence: 'HIGH',
+              method: 'auto_fee',
+              reasons: [],
+            },
+          ],
+        },
+      ],
+    }))
+    const createBankFeeEntry = vi.fn(async () => ({
+      success: true,
+      data: { journal_entry_id: 99, match_id: 1 },
+    }))
+    const matchBankTransaction = vi.fn()
+    const api = (window as unknown as { api: Record<string, unknown> }).api
+    api.suggestBankMatches = suggestBankMatches
+    api.createBankFeeEntry = createBankFeeEntry
+    api.matchBankTransaction = matchBankTransaction
+
+    renderWithProviders(<SuggestedMatchesPanel statementId={1} />)
+    await userEvent.click(screen.getByText('Föreslå matchningar'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('accept-601-bank_fee')).toBeDefined()
+    })
+    await userEvent.click(screen.getByTestId('accept-601-bank_fee'))
+
+    await waitFor(() => {
+      expect(createBankFeeEntry).toHaveBeenCalledTimes(1)
+    })
+    expect(createBankFeeEntry).toHaveBeenCalledWith({
+      bank_transaction_id: 601,
+      payment_account: '1930',
+    })
+    expect(matchBankTransaction).not.toHaveBeenCalled()
+  })
 })
