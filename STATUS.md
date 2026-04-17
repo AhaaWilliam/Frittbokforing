@@ -1,5 +1,56 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 56 -- F66-b auto-match + F63-polish-b + F67 pagination (PARTIAL)
+
+Session S56 (2026-04-17). Backend-tunga delar av S56 levererade i en
+session; UI- och E2E-delar uppskjutna till S57 pga budget.
+
+**Testbaslinje:** 2343 → 2380 vitest (+37). 229 → 232 testfiler (+3).
+**Playwright:** 50/50 (oförändrat — inga E2E i S56-partial).
+**PRAGMA user_version:** 39 → 40 (migration 040). **Tabeller:** 36 (oförändrat).
+**IPC-kanaler:** +1 (bank-statement:suggest-matches).
+**Nya M-principer:** M153 (deterministisk scoring för auto-matchning).
+**Nya enforcement-script:** `npm run check:m153`.
+
+### Levererat
+
+**A. F66-b auto-matchning (backend + IPC + hook)**
+- A1: Migration 040 — match_method-enum-utökning (manual + 4 auto-värden).
+  K1+K2+K3 tillämpade. Inga inkommande FK → inuti transaktion.
+- A2: bank-match-suggester service med deterministisk scoring (M153).
+  HIGH (≥130, unik topp) / MEDIUM (≥80) / LOW (filtreras). K5 tie-break.
+  Direction-guard. 19 tester (13 scoring + 4 helpers + 1 max-5 + 1 CHECK).
+- A3: IPC-kanal `bank-statement:suggest-matches` + useSuggestBankMatches
+  hook (default disabled, M144). 3 hook-tester.
+
+**B. F63-polish-b SIE4-konflikt-resolution (backend)**
+- B1: detectAccountConflicts(db, parseResult) + conflicts[] i
+  SieValidationResult. 3 tester.
+- B2: importSie4 conflict_resolutions ('keep' | 'overwrite' | 'skip').
+  Default = 'keep' (tidigare tyst overwrite borttaget — breaking change,
+  S48 M3 uppdaterad). 'skip' på använt konto → VALIDATION_ERROR utan
+  partial commit (V6 defense-in-depth). 5 tester.
+
+**C. F67 pagination (backend)**
+- C1: InvoiceListInputSchema + ListExpensesSchema utökade med limit/offset
+  (default 50, max 200). Service returnerar total_items (filter-aware) +
+  counts (FY-totalt, oförändrat). 6 tester (V5 invariant verifierad).
+
+**M-enforcement**
+- scripts/check-m153.mjs + npm run check:m153 (grep-scan, filter för
+  kommentarer). Exit 0 på baseline.
+
+### Uppskjutet till S57 (UI + E2E, ~3.5 SP kvar)
+- A4: SuggestedMatchesPanel + bulk-accept state-machine + UI-tester
+- A5: 2 E2E-specs auto-match (happy + negative)
+- B3: ImportPreviewPhase konflikt-sektion + invariant-varning
+- B4: 2 E2E-specs SIE4-konflikt (happy + negative)
+- C2: Pagination-komponent + integration (InvoiceList/ExpenseList/
+  BankStatementDetail) + selection-bevarande + first-render-guard
+- C3: 4 UI-unit-tester pagination
+
+Se `docs/s56-prompt.md` för full ursprunglig spec.
+
 ## Sprint 55 -- Bankavstämning MVP + F62-c-extension ✅ KLAR
 
 Session S55 (2026-04-17). Bankavstämning camt.053 (import + manuell match) +

@@ -712,6 +712,40 @@ bank-tabellerna:
 - `bank_statements` ← bank_transactions
 - `bank_transactions` ← bank_reconciliation_matches
 
+## 57. Deterministisk scoring för auto-matchning (M153)
+
+**M153.** Alla scoring-funktioner i `src/main/services/bank/**.ts` (och
+framtida auto-klassificerare i samma scope) ska vara:
+
+1. **Heltalspoäng** — inga floats i score/thresholds (heltalsaritmetik
+   speglar systemets öre-konvention).
+2. **Deterministiska** — inga `Math.random`, `Date.now`, `performance.now`
+   eller externa tillståndskällor.
+3. **Rena** — samma input ger samma output oavsett när/var funktionen
+   körs.
+
+**Varför:** Scoring för bank-match-suggester är affärslogik som revisor
+ska kunna re-derivera. Om scoringen vore icke-deterministisk skulle
+samma TX kunna få olika matchnings-förslag mellan körningar — gör
+spårbarhet omöjlig och bryter idempotens.
+
+**Enforcement:** `npm run check:m153` (`scripts/check-m153.mjs`) kör
+grep-scan över scope efter förbjudna tokens. Filter för kommentarer.
+Körs i valideringsmatrisen.
+
+**Persisterad data:** `match_method`-kolumnen lagrar enbart den
+*starkaste enskilda signalen* som vann — inga sammansatta metoder.
+`reasons[]` är runtime-only (returneras från suggester, persisteras
+inte). Revisor kan re-derivera reasons deterministiskt från
+TX-data + invoice/expense-snapshot.
+
+**Framtida scope:** `src/main/services/**/auto-*.ts` vid F66-d
+auto-klassificering. Scope-utvidgning kräver uppdatering av
+`scripts/check-m153.mjs`.
+
+**Referens:** Sprint 56 F66-b — `bank-match-suggester.ts`,
+`tests/session-56-bank-match-suggester.test.ts`.
+
 ## Projektstatus
 
 Se `STATUS.md` for aktuell sprint, test-count, kanda fynd och infrastruktur-kontrakt.
