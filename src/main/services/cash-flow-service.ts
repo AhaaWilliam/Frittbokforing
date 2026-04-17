@@ -98,6 +98,34 @@ function sumRawDelta(
 }
 
 /**
+ * Detekterar year-end-booking (bookYearEndResult) via netto-rörelse på konto 8999.
+ *
+ * `bookYearEndResult` bokför D 8999 / K 2099 vid vinst, K 8999 / D 2099 vid förlust.
+ * Konto 8999 ("Årets resultat") används i praktiken enbart för denna operation.
+ *
+ * Returnerar:
+ *  - +X om year-end bokades med vinst X
+ *  - −X om year-end bokades med förlust X
+ *  - 0 om ingen year-end-booking har skett
+ *
+ * F65-b (Sprint 54): utan denna detektion bröt `-netResult`-subtraktionen i
+ * financing-sektionen för FY utan year-end-booking (-netResult subtraherades
+ * från equity-delta=0 → financing visade felaktigt −netResult).
+ */
+function getYearEndBookedAmount(db: Database.Database, fiscalYearId: number): number {
+  const row = db
+    .prepare(
+      `SELECT COALESCE(SUM(jel.debit_ore - jel.credit_ore), 0) AS signed
+       FROM journal_entry_lines jel
+       JOIN journal_entries je ON jel.journal_entry_id = je.id
+       WHERE je.fiscal_year_id = ? AND je.status = 'booked'
+         AND jel.account_number = '8999'`,
+    )
+    .get(fiscalYearId) as { signed: number }
+  return row.signed
+}
+
+/**
  * Sum expense-side (debit) charges on 78xx accounts — non-cash depreciation
  * to add back in operating cash flow.
  */
@@ -183,8 +211,15 @@ export function getCashFlowStatement(
     return { success: false, code: 'NOT_FOUND', error: 'Räkenskapsår hittades inte' }
   }
 
-  const netResultOre = calculateResultSummary(db, fiscalYearId).netResultOre
+  const rawNetResultOre = calculateResultSummary(db, fiscalYearId).netResultOre
   const depreciationExpense = sumDepreciationExpense(db, fiscalYearId)
+
+  // F65-b: detektera year-end-booking (konto 8999). `bookYearEndResult` flyttar
+  // netresultatet från klass 3–8 till 2099; efter det returnerar calculateResultSummary
+  // 0 (eftersom 8999 offsettar revenue/cost). Det pre-YE-netresultatet ligger då som
+  // signed 8999-rörelse.
+  const yearEndAmount = getYearEndBookedAmount(db, fiscalYearId)
+  const effectiveNetResult = yearEndAmount !== 0 ? yearEndAmount : rawNetResultOre
 
   // Raw period deltas (debit-credit) — EXCLUDING opening_balance journal entries
   const assetsDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.current_assets])
@@ -193,13 +228,12 @@ export function getCashFlowStatement(
   const equityDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.financing_equity])
   const debtDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.financing_long_term_liabilities])
 
-  // Operating: netResult + depreciation - ΔassetsRaw - (-ΔliabRaw)
-  //          = netResult + depreciation - ΔassetsRaw - ΔliabRaw
+  // Operating: effectiveNetResult + depreciation - ΔassetsRaw - ΔliabRaw
   // (Raw liab delta is negative when liabilities increased; subtracting a negative adds.)
   const workingCapitalChange = -assetsDelta - liabilitiesDelta
 
   const operating = buildSection('Operativ verksamhet', [
-    { label: 'Årets resultat', amount_ore: netResultOre },
+    { label: 'Årets resultat', amount_ore: effectiveNetResult },
     { label: 'Återlagda avskrivningar', amount_ore: depreciationExpense },
     { label: 'Förändring rörelsekapital', amount_ore: workingCapitalChange },
   ])
@@ -214,10 +248,12 @@ export function getCashFlowStatement(
     },
   ])
 
-  // Financing: -ΔequityRaw - netResult + -ΔdebtRaw
-  // (-ΔequityRaw gives equity-increase magnitude; subtract netResult to avoid double-counting
-  //  year-end profit allocation. -ΔdebtRaw = debt-increase magnitude.)
-  const equityContribution = -equityDelta - netResultOre
+  // Financing: -(equityDelta + yearEndAmount) - debtDelta
+  // yearEndAmount compenserar för year-end-booking: vid vinst är 2099-effekten på equityDelta
+  // = -yearEndAmount (credit), och vi vill exkludera detta från financing-flödet.
+  // Addera yearEndAmount till equityDelta ger 0 om enda equity-rörelsen är year-end.
+  const equityDeltaExclYE = equityDelta + yearEndAmount
+  const equityContribution = -equityDeltaExclYE
   const debtContribution = -debtDelta
   const financing = buildSection('Finansieringsverksamhet', [
     { label: 'Eget kapital netto (exkl. årets resultat)', amount_ore: equityContribution },
@@ -236,7 +272,7 @@ export function getCashFlowStatement(
   return {
     success: true,
     data: {
-      netResultOre,
+      netResultOre: effectiveNetResult,
       openingCashOre,
       closingCashOre,
       operating,

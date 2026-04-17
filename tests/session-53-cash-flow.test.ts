@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
+import { bookYearEndResult } from '../src/main/services/opening-balance-service'
 import { getCashFlowStatement, WORKING_CAPITAL_RANGES } from '../src/main/services/cash-flow-service'
 
 let db: Database.Database
@@ -68,7 +69,7 @@ beforeEach(() => {
   fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
 
   // Seed required accounts — use ensureAccount for each
-  for (const acc of ['1220', '1229', '1510', '1920', '2350', '2440', '2081', '3000', '7832']) {
+  for (const acc of ['1220', '1229', '1510', '1920', '2099', '2350', '2440', '2081', '3000', '6990', '7832', '8999']) {
     ensureAccount(acc, `Test ${acc}`, 'asset')
   }
 })
@@ -90,8 +91,8 @@ describe('WORKING_CAPITAL_RANGES', () => {
 })
 
 describe('getCashFlowStatement — invariant: op+inv+fin === ΔCash', () => {
-  it('kontantförsäljning: cash flow = netResult', () => {
-    // Debet bank 100 000, kredit sales 100 000
+  it('kontantförsäljning (utan year-end-booking): netChange = +netResult, financing = 0', () => {
+    // F65-b: utan year-end-booking ska financing = 0 (inte −netResult som i S53).
     bookEntry('2025-01-15', [
       { account: '1920', debit: 100_000 },
       { account: '3000', credit: 100_000 },
@@ -104,10 +105,50 @@ describe('getCashFlowStatement — invariant: op+inv+fin === ΔCash', () => {
     expect(r.data.netResultOre).toBe(100_000)
     expect(r.data.operating.subtotal_ore).toBe(100_000)
     expect(r.data.investing.subtotal_ore).toBe(0)
-    // financing: equity-delta raw = 0 (no year-end booking), -0 - netResult = -100_000
-    // NOTE: this means financing shows -100_000 because we haven't booked year-end result
-    // netChange = 100_000 + 0 + (-100_000) = 0 ... which doesn't match expected +100_000 cash change
-    // BUG in my formula when year-end is NOT booked.
+    expect(r.data.financing.subtotal_ore).toBe(0)
+    expect(r.data.netChangeOre).toBe(100_000)
+    // Invariant: op + inv + fin === closingCash − openingCash
+    expect(r.data.netChangeOre).toBe(r.data.closingCashOre - r.data.openingCashOre)
+  })
+
+  it('kontantförsäljning + year-end booked: invariant håller, financing = 0', () => {
+    // F65-b: med year-end-booking (D 8999 / K 2099) ska invarianten fortfarande hålla.
+    bookEntry('2025-01-15', [
+      { account: '1920', debit: 100_000 },
+      { account: '3000', credit: 100_000 },
+    ], 'A')
+    // Boka årsresultat
+    bookYearEndResult(db, fyId, 100_000)
+
+    const r = getCashFlowStatement(db, fyId)
+    expect(r.success).toBe(true)
+    if (!r.success) return
+
+    // netResultOre exponeras som pre-YE-värde (= +100_000)
+    expect(r.data.netResultOre).toBe(100_000)
+    expect(r.data.operating.subtotal_ore).toBe(100_000)
+    expect(r.data.financing.subtotal_ore).toBe(0)
+    expect(r.data.netChangeOre).toBe(100_000)
+    expect(r.data.netChangeOre).toBe(r.data.closingCashOre - r.data.openingCashOre)
+  })
+
+  it('kontantförlust + year-end booked (förlust): invariant håller', () => {
+    // F65-b: förlust med year-end-booking (D 2099 / K 8999).
+    bookEntry('2025-02-01', [
+      { account: '6990', debit: 50_000 }, // Cost (expense class)
+      { account: '1920', credit: 50_000 }, // Bank minskar
+    ], 'B')
+    bookYearEndResult(db, fyId, -50_000)
+
+    const r = getCashFlowStatement(db, fyId)
+    expect(r.success).toBe(true)
+    if (!r.success) return
+
+    expect(r.data.netResultOre).toBe(-50_000)
+    expect(r.data.operating.subtotal_ore).toBe(-50_000)
+    expect(r.data.financing.subtotal_ore).toBe(0)
+    expect(r.data.netChangeOre).toBe(-50_000)
+    expect(r.data.netChangeOre).toBe(r.data.closingCashOre - r.data.openingCashOre)
   })
 
   it('kreditförsäljning: cash flow = 0 (ingen cash)', () => {
