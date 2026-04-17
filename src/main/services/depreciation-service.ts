@@ -262,10 +262,18 @@ export function getFixedAsset(
   }
 }
 
+/**
+ * Avyttringskonto (förlust vid avyttring av anläggningstillgångar) — BAS 7970.
+ * Basic MVP: all återstående book_value bokas som förlust. Sale-price-scenarier
+ * (vinst/förlust relativt försäljningspris) hanteras inte i denna variant.
+ */
+const DISPOSAL_LOSS_ACCOUNT = '7970'
+
 export function disposeFixedAsset(
   db: Database.Database,
   id: number,
   disposedDate: string,
+  generateJournalEntry = false,
 ): IpcResult<void> {
   return db.transaction(() => {
     const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
@@ -274,11 +282,93 @@ export function disposeFixedAsset(
       return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Tillgången är redan avyttrad' }
     }
 
-    db.prepare(`UPDATE fixed_assets SET status = 'disposed', disposed_date = ?, updated_at = ? WHERE id = ?`)
-      .run(disposedDate, todayLocalFromNow(), id)
+    let disposalJournalEntryId: number | null = null
+
+    if (generateJournalEntry) {
+      const fy = db.prepare(`
+        SELECT id, company_id FROM fiscal_years
+        WHERE company_id = ?
+          AND date(?) BETWEEN date(start_date) AND date(end_date)
+          AND is_closed = 0
+        LIMIT 1
+      `).get(asset.company_id, disposedDate) as { id: number; company_id: number } | undefined
+      if (!fy) {
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Avyttringsdatum ligger utanför ett öppet räkenskapsår' }
+      }
+
+      const accRow = db.prepare(`
+        SELECT COALESCE(SUM(amount_ore), 0) AS total FROM depreciation_schedules
+        WHERE fixed_asset_id = ? AND status = 'executed'
+      `).get(id) as { total: number }
+      const accumulated = accRow.total
+      const bookValue = asset.acquisition_cost_ore - accumulated
+
+      // F62-c basic: ingen sale price — full förlust av book_value
+      if (bookValue < 0) {
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Ack. avskrivning överstiger anskaffningsvärdet — disposal-verifikat kan inte genereras automatiskt' }
+      }
+
+      // Verifiera berörda konton existerar och är aktiva (kastar strukturerat fel vid inactive)
+      const accountsToCheck = [asset.account_asset]
+      if (accumulated > 0) accountsToCheck.push(asset.account_accumulated_depreciation)
+      if (bookValue > 0) accountsToCheck.push(DISPOSAL_LOSS_ACCOUNT)
+      // Existens-check: alla konton i listan måste finnas
+      const placeholders = accountsToCheck.map(() => '?').join(',')
+      const existing = db.prepare(`SELECT account_number FROM accounts WHERE account_number IN (${placeholders})`).all(...accountsToCheck) as { account_number: string }[]
+      if (existing.length !== accountsToCheck.length) {
+        const found = new Set(existing.map((e) => e.account_number))
+        const missing = accountsToCheck.filter((a) => !found.has(a))
+        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: `Konto ${missing.join(', ')} saknas i kontoplanen (kontrollera att 7970 är aktivt)` }
+      }
+      validateAccountsActive(db, accountsToCheck)
+
+      checkChronology(db, fy.id, 'E', disposedDate)
+
+      const nextVer = db.prepare(`
+        SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
+        FROM journal_entries
+        WHERE fiscal_year_id = ? AND verification_series = 'E'
+      `).get(fy.id) as { next_ver: number }
+
+      const description = `Avyttring: ${asset.name}`
+      const jeResult = db.prepare(`
+        INSERT INTO journal_entries (
+          company_id, fiscal_year_id, verification_number, verification_series,
+          journal_date, description, status, source_type
+        ) VALUES (?, ?, ?, 'E', ?, ?, 'draft', 'auto_depreciation')
+      `).run(fy.company_id, fy.id, nextVer.next_ver, disposedDate, description)
+
+      disposalJournalEntryId = Number(jeResult.lastInsertRowid)
+
+      const insertLine = db.prepare(`
+        INSERT INTO journal_entry_lines (
+          journal_entry_id, line_number, account_number,
+          debit_ore, credit_ore, description
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `)
+      let lineNum = 1
+      if (accumulated > 0) {
+        insertLine.run(disposalJournalEntryId, lineNum++, asset.account_accumulated_depreciation, accumulated, 0, description)
+      }
+      insertLine.run(disposalJournalEntryId, lineNum++, asset.account_asset, 0, asset.acquisition_cost_ore, description)
+      if (bookValue > 0) {
+        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_LOSS_ACCOUNT, bookValue, 0, description)
+      }
+
+      db.prepare(`UPDATE journal_entries SET status = 'booked' WHERE id = ?`).run(disposalJournalEntryId)
+    }
+
+    db.prepare(`UPDATE fixed_assets SET status = 'disposed', disposed_date = ?, disposed_journal_entry_id = ?, updated_at = ? WHERE id = ?`)
+      .run(disposedDate, disposalJournalEntryId, todayLocalFromNow(), id)
 
     db.prepare(`UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND status = 'pending'`)
       .run(id)
+
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      // M143: rebuild failure får inte bryta bokföringsoperation
+    }
 
     return { success: true as const, data: undefined }
   })()

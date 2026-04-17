@@ -271,7 +271,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('depreciation:list', data),
   getFixedAsset: (data: { id: number }) =>
     ipcRenderer.invoke('depreciation:get', data),
-  disposeFixedAsset: (data: { id: number; disposed_date: string }) =>
+  disposeFixedAsset: (data: { id: number; disposed_date: string; generate_journal_entry?: boolean }) =>
     ipcRenderer.invoke('depreciation:dispose', data),
   deleteFixedAsset: (data: { id: number }) =>
     ipcRenderer.invoke('depreciation:delete', data),

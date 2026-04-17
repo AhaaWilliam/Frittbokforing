@@ -182,6 +182,80 @@ describe('disposeFixedAsset', () => {
     const r = disposeFixedAsset(db, c.data.id, '2025-07-01')
     expect(r.success).toBe(false)
   })
+
+  describe('F62-c: disposal-verifikat-generering', () => {
+    it('utan generate_journal_entry → ingen verifikation skapas', () => {
+      const c = createFixedAsset(db, baseInput())
+      if (!c.success) throw new Error('create failed')
+      disposeFixedAsset(db, c.data.id, '2025-06-30')
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      expect(asset.disposed_journal_entry_id).toBeNull()
+    })
+
+    it('generate_journal_entry=true utan tidigare avskrivning → K asset, D 7970 (full förlust)', () => {
+      ensureAccount('7970', 'Förlust vid avyttring', 'expense')
+      const c = createFixedAsset(db, baseInput())
+      if (!c.success) throw new Error('create failed')
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true)
+      expect(r.success).toBe(true)
+
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      expect(asset.disposed_journal_entry_id).not.toBeNull()
+
+      const je = db.prepare('SELECT verification_series, status, journal_date, source_type FROM journal_entries WHERE id = ?').get(asset.disposed_journal_entry_id!) as { verification_series: string; status: string; journal_date: string; source_type: string }
+      expect(je.verification_series).toBe('E')
+      expect(je.status).toBe('booked')
+      expect(je.journal_date).toBe('2025-06-30')
+      expect(je.source_type).toBe('auto_depreciation')
+
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      // Förväntat: K 1220 cost, D 7970 cost (inga avskrivningar ännu)
+      expect(lines).toHaveLength(2)
+      expect(lines[0]).toEqual({ account_number: '1220', debit_ore: 0, credit_ore: 1_000_000 })
+      expect(lines[1]).toEqual({ account_number: '7970', debit_ore: 1_000_000, credit_ore: 0 })
+    })
+
+    it('generate_journal_entry=true med bokförda avskrivningar → D ack.avskr, K asset, D 7970 (restförlust)', () => {
+      ensureAccount('7970', 'Förlust vid avyttring', 'expense')
+      // Skapa tillgång + kör 3 månaders avskrivning
+      const c = createFixedAsset(db, baseInput({ acquisition_date: '2025-01-01', useful_life_months: 12, acquisition_cost_ore: 120_000 }))
+      if (!c.success) throw new Error('create failed')
+      executeDepreciationPeriod(db, fyId, '2025-03-31')
+
+      // Disposed efter 3 månader (ack. = 30_000, book_value = 90_000)
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true)
+      expect(r.success).toBe(true)
+
+      const asset = db.prepare('SELECT disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { disposed_journal_entry_id: number | null }
+      const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(asset.disposed_journal_entry_id!) as { account_number: string; debit_ore: number; credit_ore: number }[]
+
+      expect(lines).toHaveLength(3)
+      expect(lines[0]).toEqual({ account_number: '1229', debit_ore: 30_000, credit_ore: 0 })
+      expect(lines[1]).toEqual({ account_number: '1220', debit_ore: 0, credit_ore: 120_000 })
+      expect(lines[2]).toEqual({ account_number: '7970', debit_ore: 90_000, credit_ore: 0 })
+
+      // Invariant: debets = credits
+      const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
+      const totalCredit = lines.reduce((s, l) => s + l.credit_ore, 0)
+      expect(totalDebit).toBe(totalCredit)
+    })
+
+    it('generate_journal_entry=true när konto 7970 saknas → VALIDATION_ERROR', () => {
+      // Ingen ensureAccount('7970') här
+      const c = createFixedAsset(db, baseInput())
+      if (!c.success) throw new Error('create failed')
+      const r = disposeFixedAsset(db, c.data.id, '2025-06-30', true)
+      expect(r.success).toBe(false)
+      if (r.success) return
+      expect(r.code).toBe('VALIDATION_ERROR')
+      expect(r.error).toContain('7970')
+
+      // Asset ska fortsätta vara 'active' (transaktion rullades tillbaka)
+      const asset = db.prepare('SELECT status, disposed_journal_entry_id FROM fixed_assets WHERE id = ?').get(c.data.id) as { status: string; disposed_journal_entry_id: number | null }
+      expect(asset.status).toBe('active')
+      expect(asset.disposed_journal_entry_id).toBeNull()
+    })
+  })
 })
 
 // ── executeDepreciationPeriod ──

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, Play, Trash2, XCircle } from 'lucide-react'
+import { Fragment, useState } from 'react'
+import { ChevronDown, ChevronRight, Plus, Play, Trash2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import {
@@ -11,6 +11,7 @@ import {
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { CreateFixedAssetDialog } from '../components/fixed-assets/CreateFixedAssetDialog'
+import { FixedAssetDetailPanel } from '../components/fixed-assets/FixedAssetDetailPanel'
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Aktiv',
@@ -25,6 +26,7 @@ function fmtKr(ore: number): string {
 export function PageFixedAssets() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [showCreate, setShowCreate] = useState(false)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
   const executeMutation = useExecuteDepreciationPeriod()
   const disposeMutation = useDisposeFixedAsset()
@@ -63,9 +65,17 @@ export function PageFixedAssets() {
   async function handleDispose(id: number, name: string) {
     const date = prompt(`Avyttringsdatum för "${name}" (ÅÅÅÅ-MM-DD)?`, new Date().toISOString().slice(0, 10))
     if (!date) return
+    const generateEntry = confirm(
+      `Skapa disposal-verifikat automatiskt?\n\n` +
+        `Bokar hela återstående bokfört värde som förlust mot konto 7970 ` +
+        `(nedskrivning) och nollställer anskaffningsvärde + ack. avskrivning. ` +
+        `Välj OK för att skapa verifikat, Avbryt för att bara markera som avyttrad.`,
+    )
     try {
-      await disposeMutation.mutateAsync({ id, disposed_date: date })
-      toast.success(`${name} markerad som avyttrad`)
+      await disposeMutation.mutateAsync({ id, disposed_date: date, generate_journal_entry: generateEntry })
+      toast.success(
+        generateEntry ? `${name} avyttrad + disposal-verifikat bokfört` : `${name} markerad som avyttrad`,
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Kunde inte avyttra')
     }
@@ -121,6 +131,7 @@ export function PageFixedAssets() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                <th className="w-8 py-2" />
                 <th className="py-2 pr-4">Namn</th>
                 <th className="py-2 pr-4">Anskaffning</th>
                 <th className="py-2 pr-4 text-right">Anskaffningsvärde</th>
@@ -132,8 +143,27 @@ export function PageFixedAssets() {
               </tr>
             </thead>
             <tbody data-testid="fa-list">
-              {assets.map((a) => (
-                <tr key={a.id} className="border-b" data-testid={`fa-row-${a.id}`}>
+              {assets.map((a) => {
+                const isExpanded = expandedId === a.id
+                return (
+                <Fragment key={a.id}>
+                <tr className="border-b" data-testid={`fa-row-${a.id}`}>
+                  <td className="py-2">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                      aria-label={isExpanded ? 'Dölj detaljer' : 'Visa detaljer'}
+                      aria-expanded={isExpanded}
+                      data-testid={`fa-toggle-${a.id}`}
+                      className="flex h-5 w-5 items-center justify-center rounded hover:bg-muted"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </td>
                   <td className="py-2 pr-4 font-medium">{a.name}</td>
                   <td className="py-2 pr-4 text-muted-foreground">{a.acquisition_date}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.acquisition_cost_ore)}</td>
@@ -180,7 +210,16 @@ export function PageFixedAssets() {
                     )}
                   </td>
                 </tr>
-              ))}
+                {isExpanded && (
+                  <tr data-testid={`fa-detail-row-${a.id}`}>
+                    <td colSpan={9} className="p-0">
+                      <FixedAssetDetailPanel assetId={a.id} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
+                )
+              })}
             </tbody>
           </table>
         )}

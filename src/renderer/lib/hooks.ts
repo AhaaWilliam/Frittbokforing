@@ -931,10 +931,10 @@ export function useCreateFixedAsset() {
 }
 
 export function useDisposeFixedAsset() {
-  return useIpcMutation<{ id: number; disposed_date: string }, void>(
-    (data) => window.api.disposeFixedAsset(data),
-    { invalidateAll: true },
-  )
+  return useIpcMutation<
+    { id: number; disposed_date: string; generate_journal_entry?: boolean },
+    void
+  >((data) => window.api.disposeFixedAsset(data), { invalidateAll: true })
 }
 
 export function useDeleteFixedAsset() {

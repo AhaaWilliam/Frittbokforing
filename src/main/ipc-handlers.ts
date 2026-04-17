@@ -951,7 +951,7 @@ export function registerIpcHandlers(): void {
   ))
 
   ipcMain.handle('depreciation:dispose', wrapIpcHandler(DepreciationDisposeSchema, (data) =>
-    disposeFixedAsset(db, data.id, data.disposed_date),
+    disposeFixedAsset(db, data.id, data.disposed_date, data.generate_journal_entry ?? false),
   ))
 
   ipcMain.handle('depreciation:delete', wrapIpcHandler(DepreciationIdSchema, (data) =>
