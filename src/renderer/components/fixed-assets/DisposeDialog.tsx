@@ -28,7 +28,9 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
   )
 
   function submit() {
-    const saleOre = salePriceKr ? Math.round(parseFloat(salePriceKr.replace(',', '.')) * 100) : 0
+    const saleOre = salePriceKr
+      ? Math.round(parseFloat(salePriceKr.replace(',', '.')) * 100)
+      : 0
     onConfirm({
       disposed_date: disposedDate,
       generate_journal_entry: generateEntry,
@@ -48,7 +50,9 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
         <h2 className="mb-3 text-lg font-semibold">Avyttra {assetName}</h2>
 
         <label className="mb-3 block text-sm">
-          <span className="mb-1 block text-xs uppercase text-muted-foreground">Datum</span>
+          <span className="mb-1 block text-xs uppercase text-muted-foreground">
+            Datum
+          </span>
           <input
             type="date"
             className="w-full rounded border bg-background p-2 text-sm"

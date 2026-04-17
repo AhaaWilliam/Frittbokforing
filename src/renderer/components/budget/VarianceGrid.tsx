@@ -16,15 +16,25 @@ export function VarianceGrid({ fiscalYearId }: { fiscalYearId: number }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-            <th className="sticky left-0 bg-background px-3 py-2 min-w-[200px]" rowSpan={2}>
+            <th
+              className="sticky left-0 bg-background px-3 py-2 min-w-[200px]"
+              rowSpan={2}
+            >
               Rad
             </th>
             {PERIOD_LABELS.map((label) => (
-              <th key={label} className="px-1 py-1 text-center border-l" colSpan={3}>
+              <th
+                key={label}
+                className="px-1 py-1 text-center border-l"
+                colSpan={3}
+              >
                 {label}
               </th>
             ))}
-            <th className="px-1 py-1 text-center border-l font-semibold" colSpan={3}>
+            <th
+              className="px-1 py-1 text-center border-l font-semibold"
+              colSpan={3}
+            >
               Helår
             </th>
           </tr>
@@ -86,7 +96,12 @@ function VarianceRow({
           {line.label}
         </td>
         {line.periods.map((p) => (
-          <VarianceCells key={p.periodNumber} budget={p.budgetOre} actual={p.actualOre} variance={p.varianceOre} />
+          <VarianceCells
+            key={p.periodNumber}
+            budget={p.budgetOre}
+            actual={p.actualOre}
+            variance={p.varianceOre}
+          />
         ))}
         <VarianceCells
           budget={line.totalBudgetOre}
@@ -111,11 +126,7 @@ function VarianceCells({
   bold?: boolean
 }) {
   const varianceColor =
-    variance > 0
-      ? 'text-green-600'
-      : variance < 0
-        ? 'text-red-600'
-        : ''
+    variance > 0 ? 'text-green-600' : variance < 0 ? 'text-red-600' : ''
   const weight = bold ? 'font-medium' : ''
 
   return (
@@ -126,7 +137,9 @@ function VarianceCells({
       <td className={`px-1 py-1.5 text-right tabular-nums ${weight}`}>
         {actual !== 0 ? formatKr(actual) : '—'}
       </td>
-      <td className={`px-1 py-1.5 text-right tabular-nums ${varianceColor} ${weight}`}>
+      <td
+        className={`px-1 py-1.5 text-right tabular-nums ${varianceColor} ${weight}`}
+      >
         {variance !== 0 ? formatKr(variance) : '—'}
       </td>
     </>

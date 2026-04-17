@@ -16,10 +16,12 @@ export const CustomerFormStateSchema = z.object({
   city: z.string(),
   country: z.string(),
   contact_person: z.string(),
-  email: z.string().refine(
-    (v) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-    'Ogiltig e-postadress',
-  ),
+  email: z
+    .string()
+    .refine(
+      (v) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      'Ogiltig e-postadress',
+    ),
   phone: z.string(),
   default_payment_terms: z.number(),
   bankgiro: z.string(),
@@ -53,7 +55,9 @@ export const CUSTOMER_DEFAULTS: CustomerFormState = {
  * Mappar formulär-state → payload som backend förväntar sig.
  * Trimmar strängar och konverterar tomma strängar till null.
  */
-export function transformCustomerForm(form: CustomerFormState): CustomerPayload {
+export function transformCustomerForm(
+  form: CustomerFormState,
+): CustomerPayload {
   return {
     name: form.name.trim(),
     type: form.type,

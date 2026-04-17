@@ -42,7 +42,9 @@ beforeAll(() => {
     fiscal_year_start: '2025-01-01',
     fiscal_year_end: '2025-12-31',
   })
-  fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+  fyId = (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
 })
 
 afterAll(() => {
@@ -127,7 +129,9 @@ describe('S45: Accrual service', () => {
 
     // Verify balance
     const lines = db
-      .prepare('SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines WHERE journal_entry_id = ?')
+      .prepare(
+        'SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines WHERE journal_entry_id = ?',
+      )
       .get(result.data.journalEntryId) as { d: number; c: number }
     expect(lines.d).toBe(lines.c)
     expect(lines.d).toBeGreaterThan(0)
@@ -153,7 +157,11 @@ describe('S45: Accrual service', () => {
     const r7 = executeAccrualForPeriod(db, schedId, 7)
     expect(r7.success).toBe(true)
     if (!r7.success) throw new Error(r7.error)
-    const l7 = db.prepare('SELECT debit_ore FROM journal_entry_lines WHERE journal_entry_id = ? AND debit_ore > 0').get(r7.data.journalEntryId) as { debit_ore: number }
+    const l7 = db
+      .prepare(
+        'SELECT debit_ore FROM journal_entry_lines WHERE journal_entry_id = ? AND debit_ore > 0',
+      )
+      .get(r7.data.journalEntryId) as { debit_ore: number }
     expect(l7.debit_ore).toBe(3333) // floor(10000/3) = 3333
 
     // Execute P8
@@ -165,7 +173,11 @@ describe('S45: Accrual service', () => {
     const r9 = executeAccrualForPeriod(db, schedId, 9)
     expect(r9.success).toBe(true)
     if (!r9.success) throw new Error(r9.error)
-    const l9 = db.prepare('SELECT debit_ore FROM journal_entry_lines WHERE journal_entry_id = ? AND debit_ore > 0').get(r9.data.journalEntryId) as { debit_ore: number }
+    const l9 = db
+      .prepare(
+        'SELECT debit_ore FROM journal_entry_lines WHERE journal_entry_id = ? AND debit_ore > 0',
+      )
+      .get(r9.data.journalEntryId) as { debit_ore: number }
     expect(l9.debit_ore).toBe(3334) // 10000 - 3333*2 = 3334
   })
 
@@ -178,7 +190,9 @@ describe('S45: Accrual service', () => {
 
   it('A8: rejects closed period', () => {
     // Close period 2
-    db.prepare('UPDATE accounting_periods SET is_closed = 1 WHERE fiscal_year_id = ? AND period_number = 2').run(fyId)
+    db.prepare(
+      'UPDATE accounting_periods SET is_closed = 1 WHERE fiscal_year_id = ? AND period_number = 2',
+    ).run(fyId)
 
     const result = executeAccrualForPeriod(db, 1, 2)
     expect(result.success).toBe(false)
@@ -186,7 +200,9 @@ describe('S45: Accrual service', () => {
     expect(result.code).toBe('VALIDATION_ERROR')
 
     // Reopen for subsequent tests
-    db.prepare('UPDATE accounting_periods SET is_closed = 0 WHERE fiscal_year_id = ? AND period_number = 2').run(fyId)
+    db.prepare(
+      'UPDATE accounting_periods SET is_closed = 0 WHERE fiscal_year_id = ? AND period_number = 2',
+    ).run(fyId)
   })
 
   // ═══ D/K logic ═══
@@ -197,13 +213,19 @@ describe('S45: Accrual service', () => {
     const schedules = getAccrualSchedules(db, fyId)
     expect(schedules.success).toBe(true)
     if (!schedules.success) throw new Error(schedules.error)
-    const s1 = schedules.data.find(s => s.id === 1)!
-    const p1Entry = s1.periodStatuses.find(p => p.periodNumber === 1)!
+    const s1 = schedules.data.find((s) => s.id === 1)!
+    const p1Entry = s1.periodStatuses.find((p) => p.periodNumber === 1)!
     expect(p1Entry.executed).toBe(true)
 
     const lines = db
-      .prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number')
-      .all(p1Entry.journalEntryId!) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+      .prepare(
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+      )
+      .all(p1Entry.journalEntryId!) as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
 
     expect(lines[0].account_number).toBe('1710') // balance = debit
     expect(lines[0].debit_ore).toBeGreaterThan(0)
@@ -216,13 +238,19 @@ describe('S45: Accrual service', () => {
     const schedules = getAccrualSchedules(db, fyId)
     expect(schedules.success).toBe(true)
     if (!schedules.success) throw new Error(schedules.error)
-    const s2 = schedules.data.find(s => s.id === 2)!
-    const p7Entry = s2.periodStatuses.find(p => p.periodNumber === 7)!
+    const s2 = schedules.data.find((s) => s.id === 2)!
+    const p7Entry = s2.periodStatuses.find((p) => p.periodNumber === 7)!
     expect(p7Entry.executed).toBe(true)
 
     const lines = db
-      .prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number')
-      .all(p7Entry.journalEntryId!) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+      .prepare(
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+      )
+      .all(p7Entry.journalEntryId!) as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
 
     // accrued_expense: debit=result, credit=balance
     expect(lines[0].account_number).toBe('5010') // result = debit
@@ -262,7 +290,7 @@ describe('S45: Accrual service', () => {
     const schedules = getAccrualSchedules(db, fyId)
     expect(schedules.success).toBe(true)
     if (!schedules.success) throw new Error(schedules.error)
-    const s1 = schedules.data.find(s => s.id === 1)!
+    const s1 = schedules.data.find((s) => s.id === 1)!
     expect(s1.is_active).toBe(0)
     expect(s1.executedCount).toBeGreaterThan(0) // entries preserved
   })
@@ -282,7 +310,7 @@ describe('S45: Accrual service', () => {
     if (!result.success) throw new Error(result.error)
     expect(result.data.length).toBeGreaterThan(0)
 
-    const s1 = result.data.find(s => s.id === 1)!
+    const s1 = result.data.find((s) => s.id === 1)!
     expect(s1.periodStatuses.length).toBe(6) // period_count = 6
     expect(s1.periodStatuses[0].executed).toBe(true) // P1 executed
   })
@@ -291,19 +319,23 @@ describe('S45: Accrual service', () => {
 
   it('A15: accrual_schedules table has correct CHECK constraints', () => {
     expect(() =>
-      db.prepare(
-        `INSERT INTO accrual_schedules (fiscal_year_id, description, accrual_type, balance_account, result_account, total_amount_ore, period_count, start_period)
+      db
+        .prepare(
+          `INSERT INTO accrual_schedules (fiscal_year_id, description, accrual_type, balance_account, result_account, total_amount_ore, period_count, start_period)
          VALUES (?, 'test', 'invalid_type', '1710', '5010', 10000, 3, 1)`,
-      ).run(fyId),
+        )
+        .run(fyId),
     ).toThrow()
   })
 
   it('A16: accrual_entries table has correct CHECK constraints', () => {
     expect(() =>
-      db.prepare(
-        `INSERT INTO accrual_entries (accrual_schedule_id, journal_entry_id, period_number, amount_ore, entry_type)
+      db
+        .prepare(
+          `INSERT INTO accrual_entries (accrual_schedule_id, journal_entry_id, period_number, amount_ore, entry_type)
          VALUES (1, 1, 1, -100, 'accrual')`,
-      ).run(),
+        )
+        .run(),
     ).toThrow() // amount_ore > 0 check
   })
 })

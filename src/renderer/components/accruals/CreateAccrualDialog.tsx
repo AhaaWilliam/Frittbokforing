@@ -16,7 +16,11 @@ export function CreateAccrualDialog({
   fiscalRule: string
 }) {
   const createMutation = useCreateAccrual()
-  const { data: balanceAccounts } = useAccounts(fiscalRule as 'K2' | 'K3', undefined, true)
+  const { data: balanceAccounts } = useAccounts(
+    fiscalRule as 'K2' | 'K3',
+    undefined,
+    true,
+  )
 
   const [form, setForm] = useState({
     description: '',
@@ -69,7 +73,9 @@ export function CreateAccrualDialog({
         start_period: 1,
       })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte skapa periodisering')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte skapa periodisering',
+      )
     }
   }
 
@@ -86,11 +92,15 @@ export function CreateAccrualDialog({
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">Beskrivning</label>
+            <label className="mb-1 block text-sm font-medium">
+              Beskrivning
+            </label>
             <input
               type="text"
               value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="T.ex. Förutbetald hyra 2025"
@@ -101,54 +111,77 @@ export function CreateAccrualDialog({
             <label className="mb-1 block text-sm font-medium">Typ</label>
             <select
               value={form.accrual_type}
-              onChange={(e) => setForm((f) => ({ ...f, accrual_type: e.target.value as AccrualType }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  accrual_type: e.target.value as AccrualType,
+                }))
+              }
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
               {ACCRUAL_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Balanskonto (klass 1–2)</label>
+              <label className="mb-1 block text-sm font-medium">
+                Balanskonto (klass 1–2)
+              </label>
               <input
                 type="text"
                 value={form.balance_account}
-                onChange={(e) => setForm((f) => ({ ...f, balance_account: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, balance_account: e.target.value }))
+                }
                 required
                 placeholder="1710"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
               {form.balance_account && (
-                <p className="mt-0.5 text-xs text-muted-foreground">{getAccountName(form.balance_account)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {getAccountName(form.balance_account)}
+                </p>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Resultatkonto (klass 3–8)</label>
+              <label className="mb-1 block text-sm font-medium">
+                Resultatkonto (klass 3–8)
+              </label>
               <input
                 type="text"
                 value={form.result_account}
-                onChange={(e) => setForm((f) => ({ ...f, result_account: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, result_account: e.target.value }))
+                }
                 required
                 placeholder="5010"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
               {form.result_account && (
-                <p className="mt-0.5 text-xs text-muted-foreground">{getAccountName(form.result_account)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {getAccountName(form.result_account)}
+                </p>
               )}
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Totalbelopp (kr)</label>
+            <label className="mb-1 block text-sm font-medium">
+              Totalbelopp (kr)
+            </label>
             <input
               type="number"
               step="0.01"
               min="0.01"
               value={form.amount_kr}
-              onChange={(e) => setForm((f) => ({ ...f, amount_kr: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, amount_kr: e.target.value }))
+              }
               required
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
@@ -156,7 +189,9 @@ export function CreateAccrualDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Startperiod</label>
+              <label className="mb-1 block text-sm font-medium">
+                Startperiod
+              </label>
               <select
                 value={form.start_period}
                 onChange={(e) => {
@@ -170,19 +205,33 @@ export function CreateAccrualDialog({
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {Array.from({ length: 11 }, (_, i) => i + 1).map((p) => (
-                  <option key={p} value={p}>Period {p}</option>
+                  <option key={p} value={p}>
+                    Period {p}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Antal perioder</label>
+              <label className="mb-1 block text-sm font-medium">
+                Antal perioder
+              </label>
               <select
                 value={form.period_count}
-                onChange={(e) => setForm((f) => ({ ...f, period_count: parseInt(e.target.value, 10) }))}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    period_count: parseInt(e.target.value, 10),
+                  }))
+                }
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                {Array.from({ length: Math.max(maxPeriods - 1, 1) }, (_, i) => i + 2).map((n) => (
-                  <option key={n} value={n}>{n} perioder</option>
+                {Array.from(
+                  { length: Math.max(maxPeriods - 1, 1) },
+                  (_, i) => i + 2,
+                ).map((n) => (
+                  <option key={n} value={n}>
+                    {n} perioder
+                  </option>
                 ))}
               </select>
             </div>

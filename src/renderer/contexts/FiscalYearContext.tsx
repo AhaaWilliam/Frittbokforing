@@ -22,12 +22,16 @@ export function FiscalYearProvider({
   const [restoredIdLoaded, setRestoredIdLoaded] = useState(false)
 
   useEffect(() => {
-    window.api.getSetting('last_fiscal_year_id')
+    window.api
+      .getSetting('last_fiscal_year_id')
       .then((id: unknown) => {
         if (typeof id === 'number') setRestoredId(id)
       })
       .catch((err: unknown) => {
-        console.warn('[FiscalYearContext] Kunde inte läsa last_fiscal_year_id:', err)
+        console.warn(
+          '[FiscalYearContext] Kunde inte läsa last_fiscal_year_id:',
+          err,
+        )
       })
       .finally(() => {
         setRestoredIdLoaded(true)

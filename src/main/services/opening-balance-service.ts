@@ -86,8 +86,10 @@ export function createOpeningBalance(
   }
 
   // Hämta saldon för BS-konton (klass 1-2) via numerisk jämförelse (M98)
-  const balances = getBalanceSheetAccountBalances(db, previousFiscalYearId)
-    .filter((b) => b.balance !== 0)
+  const balances = getBalanceSheetAccountBalances(
+    db,
+    previousFiscalYearId,
+  ).filter((b) => b.balance !== 0)
 
   // Skapa journal_entry (O-serie)
   const entryResult = db
@@ -196,7 +198,10 @@ export function reTransferOpeningBalance(
     .get(fiscalYearId) as { id: number } | undefined
 
   if (!prevFy) {
-    throw { code: 'NOT_FOUND' as const, error: 'Inget föregående räkenskapsår hittades.' }
+    throw {
+      code: 'NOT_FOUND' as const,
+      error: 'Inget föregående räkenskapsår hittades.',
+    }
   }
 
   return db.transaction(() => {

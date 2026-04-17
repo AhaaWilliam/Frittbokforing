@@ -39,19 +39,27 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     await window.getByText('Nästa').click()
 
     // Step 3: Confirm + submit
-    await expect(window.getByText('Sammanfattning')).toBeVisible({ timeout: 5_000 })
+    await expect(window.getByText('Sammanfattning')).toBeVisible({
+      timeout: 5_000,
+    })
     await window.getByText('Starta bokföringen').click()
 
     // Wait for app shell
-    await expect(window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
+    await expect(window.getByTestId('app-ready')).toBeVisible({
+      timeout: 15_000,
+    })
 
     // ── 2. Seed kund + faktura via IPC (proven approach from S50) ──
     const customerId = await seedCustomer(window, 'Testkund Fullcykel')
 
     // Get FY id
-    const fyResult = await window.evaluate(async () => {
-      return await (window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }).api.listFiscalYears()
-    }) as { success: boolean; data: Array<{ id: number }> }
+    const fyResult = (await window.evaluate(async () => {
+      return await (
+        window as unknown as {
+          api: { listFiscalYears: () => Promise<unknown> }
+        }
+      ).api.listFiscalYears()
+    })) as { success: boolean; data: Array<{ id: number }> }
     const fyId = fyResult.data[0].id
 
     // Seed and finalize invoice (1 line, 125 kr, 25% VAT)
@@ -66,36 +74,54 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // ── 3. UI: registrera betalning ────────────────────────────────
     // Navigate to invoices
-    await window.evaluate(() => { location.hash = '#/income' })
-    await expect(window.getByTestId('page-income')).toBeVisible({ timeout: 10_000 })
-    await expect(window.locator('table tbody tr')).toHaveCount(1, { timeout: 10_000 })
+    await window.evaluate(() => {
+      location.hash = '#/income'
+    })
+    await expect(window.getByTestId('page-income')).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(window.locator('table tbody tr')).toHaveCount(1, {
+      timeout: 10_000,
+    })
 
     // Verify A1 appears
     await expect(window.getByText('A1')).toBeVisible()
 
     // Click "Betala" action button in the row (action column, stopPropagation)
-    await window.locator('table tbody tr').first().locator('button[title="Registrera betalning"]').click()
+    await window
+      .locator('table tbody tr')
+      .first()
+      .locator('button[title="Registrera betalning"]')
+      .click()
 
     // Payment dialog opens
     const payDialog = window.locator('.fixed.inset-0').last()
     await expect(payDialog).toBeVisible({ timeout: 5_000 })
 
     // Submit (amount pre-filled with full remaining)
-    const submitPayBtn = payDialog.locator('button').filter({ hasText: /Registrera/i })
+    const submitPayBtn = payDialog
+      .locator('button')
+      .filter({ hasText: /Registrera/i })
     await submitPayBtn.click()
 
     // Wait for toast/success
     await window.waitForTimeout(1000)
 
     // ── 4. UI: skapa manuell C-entry ───────────────────────────────
-    await window.evaluate(() => { location.hash = '#/manual-entries/create' })
-    await expect(window.getByTestId('page-manual-entries')).toBeVisible({ timeout: 10_000 })
+    await window.evaluate(() => {
+      location.hash = '#/manual-entries/create'
+    })
+    await expect(window.getByTestId('page-manual-entries')).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Date
     await window.locator('input[type="date"]').first().fill('2020-06-20')
 
     // Description
-    await window.getByPlaceholder('T.ex. Periodisering hyra').fill('Kontorshyra juni')
+    await window
+      .getByPlaceholder('T.ex. Periodisering hyra')
+      .fill('Kontorshyra juni')
 
     // Line 1: account 6110, debit 500
     const accountInputs = window.locator('input[placeholder="1910"]')
@@ -128,17 +154,23 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // ── 5. Verify verifications via __testApi ──────────────────────
     const { entries } = await getJournalEntries(window, fyId)
-    const bookedEntries = entries.filter(e => e.status === 'booked')
-    const series = bookedEntries.map(e => `${e.verification_series}${e.verification_number}`)
+    const bookedEntries = entries.filter((e) => e.status === 'booked')
+    const series = bookedEntries.map(
+      (e) => `${e.verification_series}${e.verification_number}`,
+    )
 
     expect(series).toContain('A1') // invoice booking
     // Check for C-series entry
-    const cEntries = bookedEntries.filter(e => e.verification_series === 'C')
+    const cEntries = bookedEntries.filter((e) => e.verification_series === 'C')
     expect(cEntries.length).toBeGreaterThanOrEqual(1)
 
     // ── 6. UI: exportera SIE4 ──────────────────────────────────────
-    await window.evaluate(() => { location.hash = '#/export' })
-    await expect(window.getByTestId('page-export')).toBeVisible({ timeout: 10_000 })
+    await window.evaluate(() => {
+      location.hash = '#/export'
+    })
+    await expect(window.getByTestId('page-export')).toBeVisible({
+      timeout: 10_000,
+    })
 
     await window.getByText('Exportera SIE4').click()
 
@@ -147,14 +179,14 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // ── 7. Read and verify SIE4 file ───────────────────────────────
     const files = fs.readdirSync(downloadDir)
-    const sie4File = files.find(f => f.endsWith('.se'))
+    const sie4File = files.find((f) => f.endsWith('.se'))
     expect(sie4File).toBeDefined()
 
     const sie4Buffer = fs.readFileSync(path.join(downloadDir, sie4File!))
     const sie4Content = iconv.decode(Buffer.from(sie4Buffer), 'cp437')
 
     // #FNAMN must contain correctly decoded company name
-    const fnamLine = sie4Content.split('\n').find(l => l.startsWith('#FNAMN'))
+    const fnamLine = sie4Content.split('\n').find((l) => l.startsWith('#FNAMN'))
     expect(fnamLine).toBeDefined()
     expect(fnamLine).toContain('Åkerlund & Öberg AB')
 
@@ -163,7 +195,6 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // Verify C-series verification exists in SIE4
     expect(sie4Content).toContain('#VER "C"')
-
   } finally {
     await cleanup()
   }

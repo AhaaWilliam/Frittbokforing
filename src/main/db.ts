@@ -8,7 +8,11 @@ import { rebuildSearchIndex } from './services/search-service'
 
 import { resolveDbPath } from './db-path'
 
-const defaultDbPath = path.join(app.getPath('documents'), 'Fritt Bokföring', 'data.db')
+const defaultDbPath = path.join(
+  app.getPath('documents'),
+  'Fritt Bokföring',
+  'data.db',
+)
 const DB_PATH = resolveDbPath(process.env, defaultDbPath)
 const DB_DIR = path.dirname(DB_PATH)
 
@@ -74,7 +78,9 @@ function runMigrations(database: Database.Database): void {
       // Verify FK integrity after re-enabling (M122 step 4)
       const fkCheck = database.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK integrity check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK integrity check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }

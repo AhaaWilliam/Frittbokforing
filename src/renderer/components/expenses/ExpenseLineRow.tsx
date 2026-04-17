@@ -25,7 +25,8 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
 }: ExpenseLineRowProps) {
   // M131: heltalsaritmetik — defensiv, qty är int i produktion (F47)
   const lineNetOre = Math.round(
-    Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100
+    (Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100)) /
+      100,
   )
   const lineVatOre = Math.round(lineNetOre * line.vat_rate)
 
@@ -35,9 +36,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
         <input
           type="text"
           value={line.description}
-          onChange={(e) =>
-            onUpdate(index, { description: e.target.value })
-          }
+          onChange={(e) => onUpdate(index, { description: e.target.value })}
           aria-label="Beskrivning"
           data-testid={`expense-line-${index}-description`}
           className={inputClass}
@@ -46,9 +45,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
       <td className="px-2 py-1">
         <select
           value={line.account_number}
-          onChange={(e) =>
-            onUpdate(index, { account_number: e.target.value })
-          }
+          onChange={(e) => onUpdate(index, { account_number: e.target.value })}
           aria-label="Konto"
           data-testid={`expense-line-${index}-account`}
           className={inputClass}
@@ -112,7 +109,11 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           ))}
         </select>
       </td>
-      <td className="px-2 py-1 text-right tabular-nums" data-testid={`expense-line-net-ore-${index}`} data-value={lineNetOre}>
+      <td
+        className="px-2 py-1 text-right tabular-nums"
+        data-testid={`expense-line-net-ore-${index}`}
+        data-value={lineNetOre}
+      >
         {formatKr(lineNetOre + lineVatOre)}
       </td>
       <td className="px-2 py-1">

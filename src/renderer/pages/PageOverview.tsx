@@ -41,7 +41,9 @@ export function PageOverview() {
               />
               <MetricCard
                 label="Rörelseresultat"
-                value={summary ? formatKr(summary.operatingResultOre) : undefined}
+                value={
+                  summary ? formatKr(summary.operatingResultOre) : undefined
+                }
                 isLoading={isLoading}
                 sublabel="exkl. finansiella poster & skatt"
                 variant={

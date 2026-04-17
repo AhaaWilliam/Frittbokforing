@@ -2,7 +2,16 @@
  * S14 — invoice_lines.account_number NOT NULL guard vid finalize (M024).
  * Testar trigger + service-felmappning + negativ regression (draft tillåter NULL).
  */
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+  vi,
+} from 'vitest'
 import {
   createTemplateDb,
   createSystemTestContext,
@@ -12,7 +21,10 @@ import {
   getVatCode25Out,
   type SystemTestContext,
 } from './helpers/system-test-context'
-import { saveDraft, finalizeDraft } from '../../src/main/services/invoice-service'
+import {
+  saveDraft,
+  finalizeDraft,
+} from '../../src/main/services/invoice-service'
 
 let ctx: SystemTestContext
 
@@ -94,12 +106,16 @@ describe('Invoice finalize — account_number guard (S14)', () => {
     if (!draft.success) throw new Error('setup failed')
 
     // Set account_number to NULL directly in DB
-    ctx.db.prepare('UPDATE invoice_lines SET account_number = NULL WHERE invoice_id = ?')
+    ctx.db
+      .prepare(
+        'UPDATE invoice_lines SET account_number = NULL WHERE invoice_id = ?',
+      )
       .run(draft.data.id)
 
     // Bypass service layer — direct SQL UPDATE triggers the DB-level defense
     expect(() => {
-      ctx.db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?")
+      ctx.db
+        .prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?")
         .run(draft.data.id)
     }).toThrow('kontonummer')
   })
@@ -164,8 +180,12 @@ describe('Invoice finalize — account_number guard (S14)', () => {
     expect(line.account_number).toBeNull()
 
     // Updating other fields on the draft should not trigger the validation
-    ctx.db.prepare("UPDATE invoices SET notes = 'test' WHERE id = ?").run(draft.data.id)
-    const inv = ctx.db.prepare('SELECT status FROM invoices WHERE id = ?').get(draft.data.id) as { status: string }
+    ctx.db
+      .prepare("UPDATE invoices SET notes = 'test' WHERE id = ?")
+      .run(draft.data.id)
+    const inv = ctx.db
+      .prepare('SELECT status FROM invoices WHERE id = ?')
+      .get(draft.data.id) as { status: string }
     expect(inv.status).toBe('draft')
   })
 })

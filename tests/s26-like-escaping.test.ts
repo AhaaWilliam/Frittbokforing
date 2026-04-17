@@ -64,12 +64,18 @@ describe('F8 — LIKE escaping: counterparty-service', () => {
 
 describe('F8 — LIKE escaping: SQL-level verification', () => {
   it('ESCAPE ! makes % literal in SQL-concat pattern', () => {
-    db.prepare("INSERT INTO counterparties (name, type) VALUES (?, 'customer')").run('100% Match')
-    db.prepare("INSERT INTO counterparties (name, type) VALUES (?, 'customer')").run('Normal')
+    db.prepare(
+      "INSERT INTO counterparties (name, type) VALUES (?, 'customer')",
+    ).run('100% Match')
+    db.prepare(
+      "INSERT INTO counterparties (name, type) VALUES (?, 'customer')",
+    ).run('Normal')
 
-    const rows = db.prepare(
-      "SELECT name FROM counterparties WHERE name LIKE '%' || ? || '%' ESCAPE '!'",
-    ).all('100!%') as { name: string }[]
+    const rows = db
+      .prepare(
+        "SELECT name FROM counterparties WHERE name LIKE '%' || ? || '%' ESCAPE '!'",
+      )
+      .all('100!%') as { name: string }[]
 
     expect(rows).toHaveLength(1)
     expect(rows[0].name).toBe('100% Match')

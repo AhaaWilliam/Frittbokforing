@@ -112,7 +112,10 @@ function sumRawDelta(
  * financing-sektionen för FY utan year-end-booking (-netResult subtraherades
  * från equity-delta=0 → financing visade felaktigt −netResult).
  */
-function getYearEndBookedAmount(db: Database.Database, fiscalYearId: number): number {
+function getYearEndBookedAmount(
+  db: Database.Database,
+  fiscalYearId: number,
+): number {
   const row = db
     .prepare(
       `SELECT COALESCE(SUM(jel.debit_ore - jel.credit_ore), 0) AS signed
@@ -129,7 +132,10 @@ function getYearEndBookedAmount(db: Database.Database, fiscalYearId: number): nu
  * Sum expense-side (debit) charges on 78xx accounts — non-cash depreciation
  * to add back in operating cash flow.
  */
-function sumDepreciationExpense(db: Database.Database, fiscalYearId: number): number {
+function sumDepreciationExpense(
+  db: Database.Database,
+  fiscalYearId: number,
+): number {
   const row = db
     .prepare(
       `SELECT COALESCE(SUM(jel.debit_ore - jel.credit_ore), 0) AS total
@@ -149,7 +155,11 @@ function sumDepreciationExpense(db: Database.Database, fiscalYearId: number): nu
  * status='booked').
  */
 function getCashBalance(db: Database.Database, fiscalYearId: number): number {
-  return sumRawDelta(db, fiscalYearId, WORKING_CAPITAL_RANGES.cash as unknown as AccountRange[])
+  return sumRawDelta(
+    db,
+    fiscalYearId,
+    WORKING_CAPITAL_RANGES.cash as unknown as AccountRange[],
+  )
 }
 
 /**
@@ -208,7 +218,11 @@ export function getCashFlowStatement(
     .prepare('SELECT id FROM fiscal_years WHERE id = ?')
     .get(fiscalYearId) as { id: number } | undefined
   if (!fy) {
-    return { success: false, code: 'NOT_FOUND', error: 'Räkenskapsår hittades inte' }
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Räkenskapsår hittades inte',
+    }
   }
 
   const rawNetResultOre = calculateResultSummary(db, fiscalYearId).netResultOre
@@ -219,14 +233,25 @@ export function getCashFlowStatement(
   // 0 (eftersom 8999 offsettar revenue/cost). Det pre-YE-netresultatet ligger då som
   // signed 8999-rörelse.
   const yearEndAmount = getYearEndBookedAmount(db, fiscalYearId)
-  const effectiveNetResult = yearEndAmount !== 0 ? yearEndAmount : rawNetResultOre
+  const effectiveNetResult =
+    yearEndAmount !== 0 ? yearEndAmount : rawNetResultOre
 
   // Raw period deltas (debit-credit) — EXCLUDING opening_balance journal entries
-  const assetsDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.current_assets])
-  const liabilitiesDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.current_liabilities])
-  const investingDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.investing_fixed_assets])
-  const equityDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.financing_equity])
-  const debtDelta = sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.financing_long_term_liabilities])
+  const assetsDelta = sumPeriodDelta(db, fiscalYearId, [
+    ...WORKING_CAPITAL_RANGES.current_assets,
+  ])
+  const liabilitiesDelta = sumPeriodDelta(db, fiscalYearId, [
+    ...WORKING_CAPITAL_RANGES.current_liabilities,
+  ])
+  const investingDelta = sumPeriodDelta(db, fiscalYearId, [
+    ...WORKING_CAPITAL_RANGES.investing_fixed_assets,
+  ])
+  const equityDelta = sumPeriodDelta(db, fiscalYearId, [
+    ...WORKING_CAPITAL_RANGES.financing_equity,
+  ])
+  const debtDelta = sumPeriodDelta(db, fiscalYearId, [
+    ...WORKING_CAPITAL_RANGES.financing_long_term_liabilities,
+  ])
 
   // Operating: effectiveNetResult + depreciation - ΔassetsRaw - ΔliabRaw
   // (Raw liab delta is negative when liabilities increased; subtracting a negative adds.)
@@ -256,15 +281,21 @@ export function getCashFlowStatement(
   const equityContribution = -equityDeltaExclYE
   const debtContribution = -debtDelta
   const financing = buildSection('Finansieringsverksamhet', [
-    { label: 'Eget kapital netto (exkl. årets resultat)', amount_ore: equityContribution },
+    {
+      label: 'Eget kapital netto (exkl. årets resultat)',
+      amount_ore: equityContribution,
+    },
     { label: 'Långfristiga skulder netto', amount_ore: debtContribution },
   ])
 
-  const netChangeOre = operating.subtotal_ore + investing.subtotal_ore + financing.subtotal_ore
+  const netChangeOre =
+    operating.subtotal_ore + investing.subtotal_ore + financing.subtotal_ore
 
   // opening + closing cash
   const closingCashOre = getCashBalance(db, fiscalYearId)
-  const openingCashOre = sumRawDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.cash]) - sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.cash])
+  const openingCashOre =
+    sumRawDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.cash]) -
+    sumPeriodDelta(db, fiscalYearId, [...WORKING_CAPITAL_RANGES.cash])
   // closingCashOre = opening + period delta (from booked entries incl IB)
   // opening = closing - period delta; but delta here excludes opening_balance entries,
   // so: opening from IB entries = closingCash - periodDelta

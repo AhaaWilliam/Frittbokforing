@@ -115,7 +115,19 @@ export function subtractMonths(dateStr: string, months: number): string {
   const newMonth = (totalMonth % 12) + 1
 
   const daysInMonth = [
-    0, 31, isLeapYear(newYear) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+    0,
+    31,
+    isLeapYear(newYear) ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
   ]
   const clampedDay = Math.min(d, daysInMonth[newMonth])
 

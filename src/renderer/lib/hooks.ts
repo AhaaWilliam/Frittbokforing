@@ -44,9 +44,8 @@ import { queryKeys } from './query-keys'
 // === Company ===
 
 export function useCompany() {
-  return useIpcQuery<Company | null>(
-    queryKeys.company(),
-    () => window.api.getCompany(),
+  return useIpcQuery<Company | null>(queryKeys.company(), () =>
+    window.api.getCompany(),
   )
 }
 
@@ -67,9 +66,8 @@ export function useUpdateCompany() {
 // === Fiscal Years ===
 
 export function useFiscalYears() {
-  return useIpcQuery<FiscalYear[]>(
-    queryKeys.fiscalYears(),
-    () => window.api.listFiscalYears(),
+  return useIpcQuery<FiscalYear[]>(queryKeys.fiscalYears(), () =>
+    window.api.listFiscalYears(),
   )
 }
 
@@ -117,9 +115,7 @@ export function useClosePeriod(fiscalYearId: number | undefined) {
   return useIpcMutation<{ period_id: number }, FiscalPeriod>(
     (data) => window.api.closePeriod(data),
     {
-      invalidate: fiscalYearId
-        ? [queryKeys.fiscalPeriods(fiscalYearId)]
-        : [],
+      invalidate: fiscalYearId ? [queryKeys.fiscalPeriods(fiscalYearId)] : [],
     },
   )
 }
@@ -128,9 +124,7 @@ export function useReopenPeriod(fiscalYearId: number | undefined) {
   return useIpcMutation<{ period_id: number }, FiscalPeriod>(
     (data) => window.api.reopenPeriod(data),
     {
-      invalidate: fiscalYearId
-        ? [queryKeys.fiscalPeriods(fiscalYearId)]
-        : [],
+      invalidate: fiscalYearId ? [queryKeys.fiscalPeriods(fiscalYearId)] : [],
     },
   )
 }
@@ -229,32 +223,25 @@ export function useSetCustomerPrice(productId: number | undefined) {
   return useIpcMutation<
     { product_id: number; counterparty_id: number; price_ore: number },
     CustomerPrice
-  >(
-    (data) => window.api.setCustomerPrice(data),
-    {
-      invalidate: productId ? [queryKeys.product(productId)] : [],
-    },
-  )
+  >((data) => window.api.setCustomerPrice(data), {
+    invalidate: productId ? [queryKeys.product(productId)] : [],
+  })
 }
 
 export function useRemoveCustomerPrice(productId: number | undefined) {
   return useIpcMutation<
     { product_id: number; counterparty_id: number },
     undefined
-  >(
-    (data) => window.api.removeCustomerPrice(data),
-    {
-      invalidate: productId ? [queryKeys.product(productId)] : [],
-    },
-  )
+  >((data) => window.api.removeCustomerPrice(data), {
+    invalidate: productId ? [queryKeys.product(productId)] : [],
+  })
 }
 
 // === Stödjande ===
 
 export function useVatCodes(direction?: 'outgoing' | 'incoming') {
-  return useIpcQuery<VatCode[]>(
-    queryKeys.vatCodes(direction),
-    () => window.api.listVatCodes({ direction }),
+  return useIpcQuery<VatCode[]>(queryKeys.vatCodes(direction), () =>
+    window.api.listVatCodes({ direction }),
   )
 }
 
@@ -275,9 +262,8 @@ export function useAccounts(
 }
 
 export function useAllAccounts(isActive?: boolean) {
-  return useIpcQuery<Account[]>(
-    queryKeys.allAccounts(isActive),
-    () => window.api.listAllAccounts({ is_active: isActive }),
+  return useIpcQuery<Account[]>(queryKeys.allAccounts(isActive), () =>
+    window.api.listAllAccounts({ is_active: isActive }),
   )
 }
 
@@ -374,9 +360,7 @@ export function useSaveDraft(fiscalYearId: number | undefined) {
   return useIpcMutation<SaveDraftInput, InvoiceWithLines>(
     (data) => window.api.saveDraft(data),
     {
-      invalidate: fiscalYearId
-        ? [queryKeys.invoiceDrafts(fiscalYearId)]
-        : [],
+      invalidate: fiscalYearId ? [queryKeys.invoiceDrafts(fiscalYearId)] : [],
     },
   )
 }
@@ -385,9 +369,7 @@ export function useUpdateDraft(fiscalYearId: number | undefined) {
   return useIpcMutation<UpdateDraftInput, InvoiceWithLines>(
     (data) => window.api.updateDraft(data),
     {
-      invalidate: fiscalYearId
-        ? [queryKeys.invoiceDrafts(fiscalYearId)]
-        : [],
+      invalidate: fiscalYearId ? [queryKeys.invoiceDrafts(fiscalYearId)] : [],
     },
   )
 }
@@ -396,9 +378,7 @@ export function useDeleteDraft(fiscalYearId: number | undefined) {
   return useIpcMutation<{ id: number }, undefined>(
     (data) => window.api.deleteDraft(data),
     {
-      invalidate: fiscalYearId
-        ? [queryKeys.invoiceDrafts(fiscalYearId)]
-        : [],
+      invalidate: fiscalYearId ? [queryKeys.invoiceDrafts(fiscalYearId)] : [],
     },
   )
 }
@@ -407,14 +387,11 @@ export function useCreateCreditNoteDraft(fiscalYearId: number | undefined) {
   return useIpcMutation<
     { original_invoice_id: number; fiscal_year_id: number },
     InvoiceWithLines
-  >(
-    (data) => window.api.createCreditNoteDraft(data),
-    {
-      invalidate: fiscalYearId
-        ? [queryKeys.invoiceDrafts(fiscalYearId), queryKeys.allInvoices()]
-        : [],
-    },
-  )
+  >((data) => window.api.createCreditNoteDraft(data), {
+    invalidate: fiscalYearId
+      ? [queryKeys.invoiceDrafts(fiscalYearId), queryKeys.allInvoices()]
+      : [],
+  })
 }
 
 export function usePayInvoice() {
@@ -447,7 +424,10 @@ export function useBulkPayInvoices() {
     },
     BulkPaymentResult
   >(
-    (input) => window.api.payInvoicesBulk(input) as Promise<IpcResult<BulkPaymentResult>>,
+    (input) =>
+      window.api.payInvoicesBulk(input) as Promise<
+        IpcResult<BulkPaymentResult>
+      >,
     {
       invalidate: [
         queryKeys.allInvoices(),
@@ -506,12 +486,9 @@ export function useUpdateSentInvoice() {
       due_date?: string
     },
     Invoice
-  >(
-    (data) => window.api.updateSentInvoice(data),
-    {
-      invalidate: [queryKeys.anyInvoice(), queryKeys.allInvoices()],
-    },
-  )
+  >((data) => window.api.updateSentInvoice(data), {
+    invalidate: [queryKeys.anyInvoice(), queryKeys.allInvoices()],
+  })
 }
 
 export function useNextInvoiceNumber(fiscalYearId: number | undefined) {
@@ -588,18 +565,17 @@ export function useExpense(id: number | undefined) {
   )
 }
 
-export function useCreateExpenseCreditNoteDraft(fiscalYearId: number | undefined) {
+export function useCreateExpenseCreditNoteDraft(
+  fiscalYearId: number | undefined,
+) {
   return useIpcMutation<
     { original_expense_id: number; fiscal_year_id: number },
     { id: number }
-  >(
-    (data) => window.api.createExpenseCreditNoteDraft(data),
-    {
-      invalidate: fiscalYearId
-        ? [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()]
-        : [],
-    },
-  )
+  >((data) => window.api.createExpenseCreditNoteDraft(data), {
+    invalidate: fiscalYearId
+      ? [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()]
+      : [],
+  })
 }
 
 export function usePayExpense() {
@@ -633,7 +609,10 @@ export function useBulkPayExpenses() {
     },
     BulkPaymentResult
   >(
-    (input) => window.api.payExpensesBulk(input) as Promise<IpcResult<BulkPaymentResult>>,
+    (input) =>
+      window.api.payExpensesBulk(input) as Promise<
+        IpcResult<BulkPaymentResult>
+      >,
     {
       invalidate: [
         queryKeys.allExpenseDrafts(),
@@ -720,8 +699,7 @@ export function useTaxForecast(fiscalYearId: number | undefined) {
 export function useManualEntryDrafts(fiscalYearId: number | undefined) {
   return useIpcQuery(
     queryKeys.manualEntryDrafts(fiscalYearId!),
-    () =>
-      window.api.listManualEntryDrafts({ fiscal_year_id: fiscalYearId! }),
+    () => window.api.listManualEntryDrafts({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
   )
 }
@@ -729,8 +707,7 @@ export function useManualEntryDrafts(fiscalYearId: number | undefined) {
 export function useManualEntries(fiscalYearId: number | undefined) {
   return useIpcQuery(
     queryKeys.manualEntries(fiscalYearId!),
-    () =>
-      window.api.listManualEntries({ fiscal_year_id: fiscalYearId! }),
+    () => window.api.listManualEntries({ fiscal_year_id: fiscalYearId! }),
     { enabled: !!fiscalYearId },
   )
 }
@@ -824,7 +801,8 @@ export function useBankStatements(fiscalYearId: number | undefined) {
 
 export function useBankStatement(statementId: number | undefined) {
   return useIpcQuery<
-    import('../../main/services/bank/bank-statement-service').BankStatementDetail | null
+    | import('../../main/services/bank/bank-statement-service').BankStatementDetail
+    | null
   >(
     queryKeys.bankStatement(statementId!),
     () => window.api.getBankStatement({ statement_id: statementId! }),
@@ -836,10 +814,9 @@ export function useImportBankStatement() {
   return useIpcMutation<
     { company_id: number; fiscal_year_id: number; xml_content: string },
     import('../../main/services/bank/bank-statement-service').ImportBankStatementResult
-  >(
-    (data) => window.api.importBankStatement(data),
-    { invalidate: [queryKeys.allBankStatements()] },
-  )
+  >((data) => window.api.importBankStatement(data), {
+    invalidate: [queryKeys.allBankStatements()],
+  })
 }
 
 export function useMatchBankTransaction() {
@@ -876,7 +853,11 @@ export function useSuggestBankMatches(
 // S58 F66-d: skapa bank-fee-verifikat för auto-klassificerad TX
 export function useCreateBankFeeEntry() {
   return useIpcMutation<
-    { bank_transaction_id: number; payment_account: string; skipChronologyCheck?: boolean },
+    {
+      bank_transaction_id: number
+      payment_account: string
+      skipChronologyCheck?: boolean
+    },
     import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult
   >((data) => window.api.createBankFeeEntry(data), {
     invalidate: [queryKeys.allBankStatements()],
@@ -924,10 +905,17 @@ export function useFinalizeManualEntry() {
 
 // === Aging Report ===
 
-export function useAgingReceivables(fyId: number | undefined, asOfDate?: string) {
+export function useAgingReceivables(
+  fyId: number | undefined,
+  asOfDate?: string,
+) {
   return useIpcQuery(
     queryKeys.agingReceivables(fyId!, asOfDate),
-    () => window.api.getAgingReceivables({ fiscal_year_id: fyId!, as_of_date: asOfDate }),
+    () =>
+      window.api.getAgingReceivables({
+        fiscal_year_id: fyId!,
+        as_of_date: asOfDate,
+      }),
     { enabled: !!fyId },
   )
 }
@@ -935,7 +923,11 @@ export function useAgingReceivables(fyId: number | undefined, asOfDate?: string)
 export function useAgingPayables(fyId: number | undefined, asOfDate?: string) {
   return useIpcQuery(
     queryKeys.agingPayables(fyId!, asOfDate),
-    () => window.api.getAgingPayables({ fiscal_year_id: fyId!, as_of_date: asOfDate }),
+    () =>
+      window.api.getAgingPayables({
+        fiscal_year_id: fyId!,
+        as_of_date: asOfDate,
+      }),
     { enabled: !!fyId },
   )
 }
@@ -948,10 +940,11 @@ export function useGlobalSearch(
 ) {
   return useIpcQuery(
     queryKeys.globalSearch(fiscalYearId!, query),
-    () => window.api.globalSearch({
-      fiscal_year_id: fiscalYearId!,
-      query,
-    }),
+    () =>
+      window.api.globalSearch({
+        fiscal_year_id: fiscalYearId!,
+        query,
+      }),
     { enabled: !!fiscalYearId && query.length >= 2 },
   )
 }
@@ -977,20 +970,14 @@ export function useExecuteAccrual() {
   return useIpcMutation<
     { schedule_id: number; period_number: number },
     { journalEntryId: number }
-  >(
-    (data) => window.api.executeAccrual(data),
-    { invalidateAll: true },
-  )
+  >((data) => window.api.executeAccrual(data), { invalidateAll: true })
 }
 
 export function useExecuteAllAccruals() {
   return useIpcMutation<
     { fiscal_year_id: number; period_number: number },
     { executed: number; failed: Array<{ scheduleId: number; error: string }> }
-  >(
-    (data) => window.api.executeAllAccruals(data),
-    { invalidateAll: true },
-  )
+  >((data) => window.api.executeAllAccruals(data), { invalidateAll: true })
 }
 
 export function useDeactivateAccrual() {
@@ -1055,15 +1042,16 @@ export function useExecuteDepreciationPeriod() {
   return useIpcMutation<
     { fiscal_year_id: number; period_end_date: string },
     import('../../shared/types').ExecuteDepreciationPeriodResult
-  >((data) => window.api.executeDepreciationPeriod(data), { invalidateAll: true })
+  >((data) => window.api.executeDepreciationPeriod(data), {
+    invalidateAll: true,
+  })
 }
 
 // === Budget ===
 
 export function useBudgetLines() {
-  return useIpcQuery<BudgetLineMeta[]>(
-    queryKeys.budgetLines(),
-    () => window.api.getBudgetLines({}),
+  return useIpcQuery<BudgetLineMeta[]>(queryKeys.budgetLines(), () =>
+    window.api.getBudgetLines({}),
   )
 }
 
@@ -1087,20 +1075,16 @@ export function useSaveBudgetTargets() {
   return useIpcMutation<
     { fiscal_year_id: number; targets: SaveBudgetTargetItem[] },
     { count: number }
-  >(
-    (data) => window.api.saveBudgetTargets(data),
-    { invalidateAll: true },
-  )
+  >((data) => window.api.saveBudgetTargets(data), { invalidateAll: true })
 }
 
 export function useCopyBudgetFromPreviousFy() {
   return useIpcMutation<
     { target_fiscal_year_id: number; source_fiscal_year_id: number },
     { count: number }
-  >(
-    (data) => window.api.copyBudgetFromPreviousFy(data),
-    { invalidateAll: true },
-  )
+  >((data) => window.api.copyBudgetFromPreviousFy(data), {
+    invalidateAll: true,
+  })
 }
 
 export { useDebouncedSearch } from './use-debounced-search'

@@ -4,7 +4,10 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useGlobalSearch, useDebouncedSearch } from '../../lib/hooks'
 import { useNavigate } from '../../lib/router'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
-import type { SearchResult, SearchResultType } from '../../../shared/search-types'
+import type {
+  SearchResult,
+  SearchResultType,
+} from '../../../shared/search-types'
 
 const TYPE_LABELS: Record<SearchResultType, string> = {
   invoice: 'Fakturor',
@@ -29,7 +32,9 @@ const TYPE_ORDER: SearchResultType[] = [
 const MAX_PER_GROUP = 5
 const MAX_TOTAL = 20
 
-function groupResults(results: SearchResult[]): Map<SearchResultType, SearchResult[]> {
+function groupResults(
+  results: SearchResult[],
+): Map<SearchResultType, SearchResult[]> {
   const groups = new Map<SearchResultType, SearchResult[]>()
   for (const r of results) {
     let list = groups.get(r.type)
@@ -44,7 +49,9 @@ function groupResults(results: SearchResult[]): Map<SearchResultType, SearchResu
   return groups
 }
 
-function flattenGroups(groups: Map<SearchResultType, SearchResult[]>): SearchResult[] {
+function flattenGroups(
+  groups: Map<SearchResultType, SearchResult[]>,
+): SearchResult[] {
   const flat: SearchResult[] = []
   for (const type of TYPE_ORDER) {
     const items = groups.get(type)
@@ -98,7 +105,10 @@ export function GlobalSearch() {
   // Close dropdown on click outside
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false)
         setActiveIndex(-1)
       }
@@ -137,7 +147,11 @@ export function GlobalSearch() {
   const showDropdown = isOpen && search.length >= 2
 
   // Build grouped display with headers
-  const displayGroups: Array<{ type: SearchResultType; label: string; items: SearchResult[] }> = []
+  const displayGroups: Array<{
+    type: SearchResultType
+    label: string
+    items: SearchResult[]
+  }> = []
   for (const type of TYPE_ORDER) {
     const items = grouped.get(type)
     if (items && items.length > 0) {
@@ -163,7 +177,11 @@ export function GlobalSearch() {
             role="searchbox"
             aria-autocomplete="list"
             aria-controls={showDropdown ? 'search-results' : undefined}
-            aria-activedescendant={showDropdown && activeIndex >= 0 ? `search-result-${activeIndex}` : undefined}
+            aria-activedescendant={
+              showDropdown && activeIndex >= 0
+                ? `search-result-${activeIndex}`
+                : undefined
+            }
             placeholder="Sök (Ctrl+K)..."
             value={search}
             onChange={(e) => {
@@ -216,11 +234,15 @@ export function GlobalSearch() {
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setActiveIndex(idx)}
                       className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-sm ${
-                        idx === activeIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
+                        idx === activeIndex
+                          ? 'bg-accent text-accent-foreground'
+                          : 'hover:bg-accent/50'
                       }`}
                     >
                       <span className="truncate font-medium">{item.title}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{item.subtitle}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {item.subtitle}
+                      </span>
                     </li>
                   )
                 })

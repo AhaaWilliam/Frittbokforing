@@ -65,7 +65,10 @@ export function StepCompany({
       </div>
 
       <div>
-        <label htmlFor="wizard-org-number" className="mb-1 block text-sm font-medium">
+        <label
+          htmlFor="wizard-org-number"
+          className="mb-1 block text-sm font-medium"
+        >
           Organisationsnummer
         </label>
         <input
@@ -78,7 +81,8 @@ export function StepCompany({
         />
         {org_number.length > 0 && !orgNumberValid ? (
           <p className="mt-1 text-xs text-red-500" role="alert">
-            Måste ha 10 siffror och börja med 5–9 (aktiebolag, enskild firma, HB m.fl.)
+            Måste ha 10 siffror och börja med 5–9 (aktiebolag, enskild firma, HB
+            m.fl.)
           </p>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -133,7 +137,10 @@ export function StepCompany({
       </div>
 
       <div>
-        <label htmlFor="wizard-share-capital" className="mb-1 block text-sm font-medium">
+        <label
+          htmlFor="wizard-share-capital"
+          className="mb-1 block text-sm font-medium"
+        >
           Insatt aktiekapital vid registrering
         </label>
         <div className="relative">
@@ -162,7 +169,10 @@ export function StepCompany({
       </div>
 
       <div>
-        <label htmlFor="wizard-registration-date" className="mb-1 block text-sm font-medium">
+        <label
+          htmlFor="wizard-registration-date"
+          className="mb-1 block text-sm font-medium"
+        >
           När registrerades bolaget?
         </label>
         <input

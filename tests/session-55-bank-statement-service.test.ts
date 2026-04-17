@@ -41,7 +41,9 @@ describe('S55 A3 — importBankStatement + list + get', () => {
     if (result.success) {
       expect(result.data.transaction_count).toBe(3)
       const rows = db
-        .prepare('SELECT COUNT(*) as c FROM bank_transactions WHERE bank_statement_id = ?')
+        .prepare(
+          'SELECT COUNT(*) as c FROM bank_transactions WHERE bank_statement_id = ?',
+        )
         .get(result.data.statement_id) as { c: number }
       expect(rows.c).toBe(3)
     }

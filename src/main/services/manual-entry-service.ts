@@ -130,9 +130,16 @@ export function updateManualEntryDraft(
       const entry = db
         .prepare('SELECT status FROM manual_entries WHERE id = ?')
         .get(input.id) as { status: string } | undefined
-      if (!entry) throw { code: 'MANUAL_ENTRY_NOT_FOUND' as const, error: 'Bokföringsorder hittades inte.' }
+      if (!entry)
+        throw {
+          code: 'MANUAL_ENTRY_NOT_FOUND' as const,
+          error: 'Bokföringsorder hittades inte.',
+        }
       if (entry.status !== 'draft')
-        throw { code: 'ALREADY_FINALIZED' as const, error: 'Kan inte ändra bokförd verifikation.' }
+        throw {
+          code: 'ALREADY_FINALIZED' as const,
+          error: 'Kan inte ändra bokförd verifikation.',
+        }
 
       const filtered = filterEmptyLines(input.lines)
 
@@ -249,8 +256,13 @@ export function finalizeManualEntry(
       const entry = db
         .prepare('SELECT * FROM manual_entries WHERE id = ?')
         .get(id) as ManualEntry | undefined
-      if (!entry) throw { code: 'MANUAL_ENTRY_NOT_FOUND' as const, error: 'Bokföringsorder hittades inte.' }
-      if (entry.status !== 'draft') throw { code: 'ALREADY_FINALIZED' as const, error: 'Redan bokförd.' }
+      if (!entry)
+        throw {
+          code: 'MANUAL_ENTRY_NOT_FOUND' as const,
+          error: 'Bokföringsorder hittades inte.',
+        }
+      if (entry.status !== 'draft')
+        throw { code: 'ALREADY_FINALIZED' as const, error: 'Redan bokförd.' }
 
       const rawLines = db
         .prepare(
@@ -266,7 +278,10 @@ export function finalizeManualEntry(
         (l) => l.debit_ore > 0 || l.credit_ore > 0,
       )
       if (linesWithAmount.length < 2)
-        throw { code: 'VALIDATION_ERROR' as const, error: 'Minst 2 rader med belopp krävs.' }
+        throw {
+          code: 'VALIDATION_ERROR' as const,
+          error: 'Minst 2 rader med belopp krävs.',
+        }
 
       // 4. Validate balance
       const sumDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
@@ -279,7 +294,11 @@ export function finalizeManualEntry(
 
       // 5. Validate date
       if (!entry.entry_date || entry.entry_date.trim() === '')
-        throw { code: 'VALIDATION_ERROR' as const, error: 'Datum saknas.', field: 'entry_date' }
+        throw {
+          code: 'VALIDATION_ERROR' as const,
+          error: 'Datum saknas.',
+          field: 'entry_date',
+        }
 
       // 6. Validate date within fiscal year
       const fy = db
@@ -290,9 +309,17 @@ export function finalizeManualEntry(
         is_closed?: number
       }
       if (fy.is_closed === 1)
-        throw { code: 'YEAR_IS_CLOSED' as const, error: 'Räkenskapsåret är stängt. Nya verifikationer kan inte bokföras.' }
+        throw {
+          code: 'YEAR_IS_CLOSED' as const,
+          error:
+            'Räkenskapsåret är stängt. Nya verifikationer kan inte bokföras.',
+        }
       if (entry.entry_date < fy.start_date || entry.entry_date > fy.end_date)
-        throw { code: 'VALIDATION_ERROR' as const, error: 'Datum utanför räkenskapsåret.', field: 'entry_date' }
+        throw {
+          code: 'VALIDATION_ERROR' as const,
+          error: 'Datum utanför räkenskapsåret.',
+          field: 'entry_date',
+        }
 
       // 7. Validate period open
       const period = db
@@ -302,7 +329,8 @@ export function finalizeManualEntry(
         .get(fiscalYearId, entry.entry_date) as
         | { is_closed: number }
         | undefined
-      if (period && period.is_closed) throw { code: 'YEAR_IS_CLOSED' as const, error: 'Perioden är stängd.' }
+      if (period && period.is_closed)
+        throw { code: 'YEAR_IS_CLOSED' as const, error: 'Perioden är stängd.' }
 
       // 8. Validate accounts exist
       for (const line of lines) {
@@ -311,7 +339,11 @@ export function finalizeManualEntry(
             'SELECT account_number FROM accounts WHERE account_number = ?',
           )
           .get(line.account_number)
-        if (!acct) throw { code: 'ACCOUNT_NOT_FOUND' as const, error: `Ogiltigt konto: ${line.account_number}` }
+        if (!acct)
+          throw {
+            code: 'ACCOUNT_NOT_FOUND' as const,
+            error: `Ogiltigt konto: ${line.account_number}`,
+          }
       }
 
       // 8b. Validate all referenced accounts are active
@@ -382,7 +414,11 @@ export function finalizeManualEntry(
       return { journalEntryId, verificationNumber }
     })()
 
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: result }
   } catch (err: unknown) {
     // M100: Strukturerade fel från validation helpers och interna throw-sites

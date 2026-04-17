@@ -677,7 +677,9 @@ export function seedAndFinalizeInvoice(
 
   // finalizeDraft returns InvoiceWithLines — get verification_number from linked journal_entry
   const je = ctx.db
-    .prepare('SELECT verification_number FROM journal_entries WHERE id = (SELECT journal_entry_id FROM invoices WHERE id = ?)')
+    .prepare(
+      'SELECT verification_number FROM journal_entries WHERE id = (SELECT journal_entry_id FROM invoices WHERE id = ?)',
+    )
     .get(draft.data.id) as { verification_number: number }
 
   return {

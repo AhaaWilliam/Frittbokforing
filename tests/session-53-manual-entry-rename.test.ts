@@ -41,8 +41,9 @@ describe('Migration 019 — manual_entry_lines rename', () => {
   })
 
   it('column rename: debit_ore/credit_ore exist, debit_amount/credit_amount do not', () => {
-    const cols = (db.pragma('table_info(manual_entry_lines)') as { name: string }[])
-      .map((c) => c.name)
+    const cols = (
+      db.pragma('table_info(manual_entry_lines)') as { name: string }[]
+    ).map((c) => c.name)
     expect(cols).toContain('debit_ore')
     expect(cols).toContain('credit_ore')
     expect(cols).not.toContain('debit_amount')

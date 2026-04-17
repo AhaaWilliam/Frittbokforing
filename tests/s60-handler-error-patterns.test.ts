@@ -6,7 +6,15 @@
  * services called by the 15 migrated handlers.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest'
 import {
   type SystemTestContext,
   createTemplateDb,
@@ -15,11 +23,17 @@ import {
   destroyContext,
 } from './system/helpers/system-test-context'
 import { listInvoices, getPayments } from '../src/main/services/invoice-service'
-import { listExpenses, getExpensePayments } from '../src/main/services/expense-service'
+import {
+  listExpenses,
+  getExpensePayments,
+} from '../src/main/services/expense-service'
 import { getDashboardSummary } from '../src/main/services/dashboard-service'
 import { getVatReport } from '../src/main/services/vat-report-service'
 import { getTaxForecast } from '../src/main/services/tax-service'
-import { getIncomeStatement, getBalanceSheet } from '../src/main/services/report/report-service'
+import {
+  getIncomeStatement,
+  getBalanceSheet,
+} from '../src/main/services/report/report-service'
 import { exportSie4 } from '../src/main/services/sie4/sie4-export-service'
 import { exportSie5 } from '../src/main/services/sie5/sie5-export-service'
 
@@ -27,7 +41,9 @@ let ctx: SystemTestContext
 
 beforeAll(() => createTemplateDb())
 afterAll(() => destroyTemplateDb())
-beforeEach(() => { ctx = createSystemTestContext() })
+beforeEach(() => {
+  ctx = createSystemTestContext()
+})
 afterEach(() => destroyContext(ctx))
 
 describe('Migrated handler services return expected data shapes', () => {

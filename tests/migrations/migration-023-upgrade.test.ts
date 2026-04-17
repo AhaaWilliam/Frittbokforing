@@ -9,7 +9,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     // M122: migrations that use table-recreate on tables with inbound FK
     const needsFkOff = i === 20 || i === 21 || i === 22
@@ -25,7 +29,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -89,30 +95,42 @@ describe('Migration 023 upgrade smoke test', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(23)
 
     // Step 4: Verify all 6 manual_entry_lines are intact
-    const melCount = db.prepare('SELECT COUNT(*) as cnt FROM manual_entry_lines').get() as { cnt: number }
+    const melCount = db
+      .prepare('SELECT COUNT(*) as cnt FROM manual_entry_lines')
+      .get() as { cnt: number }
     expect(melCount.cnt).toBe(6)
 
     // Verify specific values
-    const mel1 = db.prepare('SELECT * FROM manual_entry_lines WHERE id = 1').get() as Record<string, unknown>
+    const mel1 = db
+      .prepare('SELECT * FROM manual_entry_lines WHERE id = 1')
+      .get() as Record<string, unknown>
     expect(mel1.account_number).toBe('1930')
     expect(mel1.debit_ore).toBe(10000)
     expect(mel1.credit_ore).toBe(0)
     expect(mel1.manual_entry_id).toBe(1)
 
-    const mel5 = db.prepare('SELECT * FROM manual_entry_lines WHERE id = 5').get() as Record<string, unknown>
+    const mel5 = db
+      .prepare('SELECT * FROM manual_entry_lines WHERE id = 5')
+      .get() as Record<string, unknown>
     expect(mel5.account_number).toBe('6570')
     expect(mel5.debit_ore).toBe(200)
 
     // Step 5: Verify all 2 payment_batches are intact
-    const pbCount = db.prepare('SELECT COUNT(*) as cnt FROM payment_batches').get() as { cnt: number }
+    const pbCount = db
+      .prepare('SELECT COUNT(*) as cnt FROM payment_batches')
+      .get() as { cnt: number }
     expect(pbCount.cnt).toBe(2)
 
-    const pb1 = db.prepare('SELECT * FROM payment_batches WHERE id = 1').get() as Record<string, unknown>
+    const pb1 = db
+      .prepare('SELECT * FROM payment_batches WHERE id = 1')
+      .get() as Record<string, unknown>
     expect(pb1.account_number).toBe('1930')
     expect(pb1.batch_type).toBe('invoice')
     expect(pb1.bank_fee_ore).toBe(0)
 
-    const pb2 = db.prepare('SELECT * FROM payment_batches WHERE id = 2').get() as Record<string, unknown>
+    const pb2 = db
+      .prepare('SELECT * FROM payment_batches WHERE id = 2')
+      .get() as Record<string, unknown>
     expect(pb2.account_number).toBe('1930')
     expect(pb2.status).toBe('partial')
     expect(pb2.bank_fee_ore).toBe(5000)
@@ -120,29 +138,43 @@ describe('Migration 023 upgrade smoke test', () => {
     // Step 6: Verify FK actively blocks insert with non-existent account_number
     expect(() => {
       db.prepare(
-        "INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore) VALUES (1, 99, '9999', 100, 0)"
+        "INSERT INTO manual_entry_lines (manual_entry_id, line_number, account_number, debit_ore, credit_ore) VALUES (1, 99, '9999', 100, 0)",
       ).run()
     }).toThrow(/FOREIGN KEY constraint failed/)
 
     expect(() => {
       db.prepare(
-        "INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number) VALUES (1, 'invoice', '2025-01-25', '9999')"
+        "INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number) VALUES (1, 'invoice', '2025-01-25', '9999')",
       ).run()
     }).toThrow(/FOREIGN KEY constraint failed/)
 
     // Step 7: Verify schema has REFERENCES
-    const melSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'").get() as { sql: string }
+    const melSql = db
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'",
+      )
+      .get() as { sql: string }
     expect(melSql.sql).toContain('REFERENCES accounts(account_number)')
 
-    const pbSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'").get() as { sql: string }
+    const pbSql = db
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'",
+      )
+      .get() as { sql: string }
     expect(pbSql.sql).toContain('REFERENCES accounts(account_number)')
 
     // Step 8: Verify index recreated
-    const pbIdx = db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pb_fiscal_year'").get()
+    const pbIdx = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pb_fiscal_year'",
+      )
+      .get()
     expect(pbIdx).toBeTruthy()
 
     // Step 9: Verify trigger count unchanged (11)
-    const triggerCount = db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'").get() as { cnt: number }
+    const triggerCount = db
+      .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+      .get() as { cnt: number }
     expect(triggerCount.cnt).toBe(11)
 
     // Step 10: FK integrity check passes

@@ -25,11 +25,17 @@ const VALID_COMPANY = {
 
 function seedAll(testDb: Database.Database) {
   createCompany(testDb, VALID_COMPANY)
-  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
   if (!cp.success) throw new Error('CP failed')
-  const vatCode = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-  const account = testDb.prepare("SELECT id FROM accounts WHERE account_number = '3002'").get() as { id: number }
+  const vatCode = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
+  const account = testDb
+    .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
+    .get() as { id: number }
   const product = createProduct(testDb, {
     name: 'Konsult',
     default_price_ore: 100000,
@@ -45,20 +51,25 @@ function seedAll(testDb: Database.Database) {
   }
 }
 
-function createFinalizedInvoice(testDb: Database.Database, seed: ReturnType<typeof seedAll>) {
+function createFinalizedInvoice(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedAll>,
+) {
   const result = saveDraft(testDb, {
     counterparty_id: seed.cpId,
     fiscal_year_id: seed.fiscalYearId,
     invoice_date: '2026-03-15',
     due_date: '2026-04-14',
-    lines: [{
-      product_id: seed.productId,
-      description: 'Konsult',
-      quantity: 10,
-      unit_price_ore: 100000,
-      vat_code_id: seed.vatCodeId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        product_id: seed.productId,
+        description: 'Konsult',
+        quantity: 10,
+        unit_price_ore: 100000,
+        vat_code_id: seed.vatCodeId,
+        sort_order: 0,
+      },
+    ],
   })
   if (!result.success) throw new Error('Draft failed: ' + result.error)
   const fResult = finalizeDraft(testDb, result.data.id)
@@ -66,8 +77,12 @@ function createFinalizedInvoice(testDb: Database.Database, seed: ReturnType<type
   return fResult.data
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  db.close()
+})
 
 describe('Kreditfakturor', () => {
   describe('createCreditNoteDraft', () => {
@@ -98,14 +113,16 @@ describe('Kreditfakturor', () => {
         fiscal_year_id: seed.fiscalYearId,
         invoice_date: '2025-03-15',
         due_date: '2025-04-14',
-        lines: [{
-          product_id: seed.productId,
-          description: 'Konsult',
-          quantity: 1,
-          unit_price_ore: 100000,
-          vat_code_id: seed.vatCodeId,
-          sort_order: 0,
-        }],
+        lines: [
+          {
+            product_id: seed.productId,
+            description: 'Konsult',
+            quantity: 1,
+            unit_price_ore: 100000,
+            vat_code_id: seed.vatCodeId,
+            sort_order: 0,
+          },
+        ],
       })
       if (!draft.success) throw new Error('Draft failed')
 
@@ -132,7 +149,8 @@ describe('Kreditfakturor', () => {
 
       // Finalisera kreditfakturan
       const fnResult = finalizeDraft(db, cn.data.id)
-      if (!fnResult.success) throw new Error('CN finalize failed: ' + fnResult.error)
+      if (!fnResult.success)
+        throw new Error('CN finalize failed: ' + fnResult.error)
 
       // Försök kreditera kreditfakturan
       const result = createCreditNoteDraft(db, {
@@ -193,28 +211,37 @@ describe('Kreditfakturor', () => {
       if (!cn.success) throw new Error('CN draft failed')
 
       const fnResult = finalizeDraft(db, cn.data.id)
-      if (!fnResult.success) throw new Error('CN finalize failed: ' + fnResult.error)
+      if (!fnResult.success)
+        throw new Error('CN finalize failed: ' + fnResult.error)
 
       // Hämta journal entry lines
-      const lines = db.prepare(`
+      const lines = db
+        .prepare(
+          `
         SELECT jel.account_number, jel.debit_ore, jel.credit_ore
         FROM journal_entry_lines jel
         WHERE jel.journal_entry_id = ?
         ORDER BY jel.line_number
-      `).all(fnResult.data.journal_entry_id) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      `,
+        )
+        .all(fnResult.data.journal_entry_id) as {
+        account_number: string
+        debit_ore: number
+        credit_ore: number
+      }[]
 
       // 1510 ska vara KREDIT (inte DEBET som vanlig faktura)
-      const receivable = lines.find(l => l.account_number === '1510')!
+      const receivable = lines.find((l) => l.account_number === '1510')!
       expect(receivable.debit_ore).toBe(0)
       expect(receivable.credit_ore).toBeGreaterThan(0)
 
       // Intäktskonto ska vara DEBET (inte KREDIT)
-      const revenue = lines.find(l => l.account_number === '3002')!
+      const revenue = lines.find((l) => l.account_number === '3002')!
       expect(revenue.debit_ore).toBeGreaterThan(0)
       expect(revenue.credit_ore).toBe(0)
 
       // Momskonto ska vara DEBET (inte KREDIT)
-      const vat = lines.find(l => l.account_number === '2610')!
+      const vat = lines.find((l) => l.account_number === '2610')!
       expect(vat.debit_ore).toBeGreaterThan(0)
       expect(vat.credit_ore).toBe(0)
 
@@ -235,13 +262,17 @@ describe('Kreditfakturor', () => {
       if (!cn.success) throw new Error('CN draft failed')
 
       const fnResult = finalizeDraft(db, cn.data.id)
-      if (!fnResult.success) throw new Error('CN finalize failed: ' + fnResult.error)
+      if (!fnResult.success)
+        throw new Error('CN finalize failed: ' + fnResult.error)
 
-      const entry = db.prepare('SELECT description FROM journal_entries WHERE id = ?')
+      const entry = db
+        .prepare('SELECT description FROM journal_entries WHERE id = ?')
         .get(fnResult.data.journal_entry_id) as { description: string }
 
       expect(entry.description).toContain('Kreditfaktura')
-      expect(entry.description).toContain(`avser faktura #${invoice.invoice_number}`)
+      expect(entry.description).toContain(
+        `avser faktura #${invoice.invoice_number}`,
+      )
     })
   })
 
@@ -258,10 +289,10 @@ describe('Kreditfakturor', () => {
       if (!cn.success) throw new Error('CN draft failed')
 
       const list = listInvoices(db, { fiscal_year_id: seed.fiscalYearId })
-      const original = list.items.find(i => i.id === invoice.id)!
+      const original = list.items.find((i) => i.id === invoice.id)!
       expect(original.has_credit_note).toBeTruthy()
 
-      const creditNote = list.items.find(i => i.id === cn.data.id)!
+      const creditNote = list.items.find((i) => i.id === cn.data.id)!
       expect(creditNote.invoice_type).toBe('credit_note')
       expect(creditNote.credits_invoice_id).toBe(invoice.id)
     })

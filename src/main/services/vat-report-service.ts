@@ -116,9 +116,15 @@ export function getVatReport(
       ORDER BY quarter_index`,
       )
       .all(
-        VAT_OUT_25_ACCOUNT, VAT_OUT_12_ACCOUNT, VAT_OUT_6_ACCOUNT, VAT_IN_ACCOUNT,
+        VAT_OUT_25_ACCOUNT,
+        VAT_OUT_12_ACCOUNT,
+        VAT_OUT_6_ACCOUNT,
+        VAT_IN_ACCOUNT,
         fiscalYearId,
-        VAT_OUT_25_ACCOUNT, VAT_OUT_12_ACCOUNT, VAT_OUT_6_ACCOUNT, VAT_IN_ACCOUNT,
+        VAT_OUT_25_ACCOUNT,
+        VAT_OUT_12_ACCOUNT,
+        VAT_OUT_6_ACCOUNT,
+        VAT_IN_ACCOUNT,
       ) as VatDataRow[]
 
     // Build map for merge

@@ -8,10 +8,15 @@ import {
   finalizeManualEntry,
 } from '../src/main/services/manual-entry-service'
 import { createCorrectionEntry } from '../src/main/services/correction-service'
-import type { GlobalSearchResponse, SearchResultType } from '../src/shared/search-types'
+import type {
+  GlobalSearchResponse,
+  SearchResultType,
+} from '../src/shared/search-types'
 import type { IpcResult } from '../src/shared/types'
 
-function getData(result: IpcResult<GlobalSearchResponse>): GlobalSearchResponse {
+function getData(
+  result: IpcResult<GlobalSearchResponse>,
+): GlobalSearchResponse {
   if (!result.success) throw new Error('Expected success: ' + result.error)
   return result.data
 }
@@ -38,7 +43,9 @@ afterEach(() => {
 
 function seedCompany() {
   createCompany(db, VALID_COMPANY)
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   return fy.id
 }
 
@@ -66,8 +73,10 @@ describe('B5 — verifikat search', () => {
   it('matches description ("Hyra" → Cn — Hyra kontor)', () => {
     const fyId = seedCompany()
     bookManualEntry(fyId, 'Hyra kontor')
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeDefined()
     expect(je!.title).toContain('Hyra kontor')
   })
@@ -76,8 +85,10 @@ describe('B5 — verifikat search', () => {
     const fyId = seedCompany()
     const entry = bookManualEntry(fyId, 'Hyra kontor')
     const ref = `C${entry.verificationNumber}`
-    const results = getData(globalSearch(db, { query: ref, fiscal_year_id: fyId })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: ref, fiscal_year_id: fyId }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeDefined()
     expect(je!.title).toContain(ref)
   })
@@ -89,8 +100,10 @@ describe('B5 — verifikat search', () => {
       bookManualEntry(fyId, `Entry ${i + 1}`)
     }
     // Search for C1 — should find only C1, not C10
-    const results = getData(globalSearch(db, { query: 'C1', fiscal_year_id: fyId })).results
-    const jes = results.filter(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'C1', fiscal_year_id: fyId }),
+    ).results
+    const jes = results.filter((r) => r.type === 'journal_entry')
     expect(jes.length).toBe(1)
     expect(jes[0].title).toMatch(/^C1 —/)
   })
@@ -99,8 +112,10 @@ describe('B5 — verifikat search', () => {
     const fyId = seedCompany()
     bookManualEntry(fyId, 'Hyra kontor')
     // Use a fake FY id
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId + 999 })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId + 999 }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeUndefined()
   })
 
@@ -116,16 +131,20 @@ describe('B5 — verifikat search', () => {
         { account_number: '1930', debit_ore: 0, credit_ore: 100_000 },
       ],
     })
-    const results = getData(globalSearch(db, { query: 'Utkast', fiscal_year_id: fyId })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Utkast', fiscal_year_id: fyId }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeUndefined()
   })
 
   it('route → /manual-entries/view/{me.id}', () => {
     const fyId = seedCompany()
     const entry = bookManualEntry(fyId, 'Hyra kontor')
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeDefined()
     expect(je!.route).toBe(`/manual-entries/view/${entry.manualEntryId}`)
   })
@@ -140,9 +159,11 @@ describe('B5 — verifikat search', () => {
     })
     expect(correction.success).toBe(true)
 
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
-    const jes = results.filter(r => r.type === 'journal_entry')
-    const original = jes.find(r => r.title.includes('(korrigerad)'))
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
+    const jes = results.filter((r) => r.type === 'journal_entry')
+    const original = jes.find((r) => r.title.includes('(korrigerad)'))
     expect(original).toBeDefined()
   })
 
@@ -154,9 +175,11 @@ describe('B5 — verifikat search', () => {
       fiscal_year_id: fyId,
     })
 
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
-    const jes = results.filter(r => r.type === 'journal_entry')
-    const corr = jes.find(r => r.subtitle.includes('korrigering'))
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
+    const jes = results.filter((r) => r.type === 'journal_entry')
+    const corr = jes.find((r) => r.subtitle.includes('korrigering'))
     expect(corr).toBeDefined()
   })
 
@@ -168,12 +191,14 @@ describe('B5 — verifikat search', () => {
       fiscal_year_id: fyId,
     })
 
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
-    const jes = results.filter(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
+    const jes = results.filter((r) => r.type === 'journal_entry')
     // Both: original (korrigerad) + correction entry
     expect(jes.length).toBe(2)
-    expect(jes.some(r => r.title.includes('(korrigerad)'))).toBe(true)
-    expect(jes.some(r => r.subtitle.includes('korrigering'))).toBe(true)
+    expect(jes.some((r) => r.title.includes('(korrigerad)'))).toBe(true)
+    expect(jes.some((r) => r.subtitle.includes('korrigering'))).toBe(true)
   })
 
   it('correction routes to original manual entry with highlight param', () => {
@@ -185,8 +210,12 @@ describe('B5 — verifikat search', () => {
     })
     if (!correction.success) throw new Error('Correction failed')
 
-    const results = getData(globalSearch(db, { query: 'Korrigering', fiscal_year_id: fyId })).results
-    const corr = results.find(r => r.type === 'journal_entry' && r.subtitle.includes('korrigering'))
+    const results = getData(
+      globalSearch(db, { query: 'Korrigering', fiscal_year_id: fyId }),
+    ).results
+    const corr = results.find(
+      (r) => r.type === 'journal_entry' && r.subtitle.includes('korrigering'),
+    )
     expect(corr).toBeDefined()
     // Routes to original's manual_entry view with highlight param
     expect(corr!.route).toContain(`/manual-entries/view/${entry.manualEntryId}`)
@@ -203,8 +232,10 @@ describe('B5 — verifikat search', () => {
     if (!correction.success) throw new Error('Correction failed')
 
     const corrRef = `C${correction.data.correction_verification_number}`
-    const results = getData(globalSearch(db, { query: corrRef, fiscal_year_id: fyId })).results
-    const corr = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: corrRef, fiscal_year_id: fyId }),
+    ).results
+    const corr = results.find((r) => r.type === 'journal_entry')
     expect(corr).toBeDefined()
     expect(corr!.title).toContain(corrRef)
     expect(corr!.subtitle).toContain('korrigering')
@@ -218,29 +249,43 @@ describe('B5 — verifikat search', () => {
       fiscal_year_id: fyId,
     })
 
-    const bad = db.prepare(`
+    const bad = db
+      .prepare(
+        `
       SELECT COUNT(*) AS c FROM journal_entries
       WHERE corrects_entry_id IS NOT NULL AND corrected_by_id IS NOT NULL
-    `).get() as { c: number }
+    `,
+      )
+      .get() as { c: number }
     expect(bad.c).toBe(0)
   })
 
   it('draft status excluded from search', () => {
     const fyId = seedCompany()
-    const companyId = (db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }).id
-    db.prepare(`
+    const companyId = (
+      db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }
+    ).id
+    db.prepare(
+      `
       INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number,
         verification_series, journal_date, description, status, source_type)
       VALUES (?, ?, 999, 'C', '2026-03-15', 'Draft test entry', 'draft', 'manual')
-    `).run(companyId, fyId)
-    const jeId = (db.prepare('SELECT last_insert_rowid() AS id').get() as { id: number }).id
-    db.prepare(`
+    `,
+    ).run(companyId, fyId)
+    const jeId = (
+      db.prepare('SELECT last_insert_rowid() AS id').get() as { id: number }
+    ).id
+    db.prepare(
+      `
       INSERT INTO manual_entries (fiscal_year_id, entry_date, description, status, journal_entry_id)
       VALUES (?, '2026-03-15', 'Draft test entry', 'finalized', ?)
-    `).run(fyId, jeId)
+    `,
+    ).run(fyId, jeId)
 
-    const results = getData(globalSearch(db, { query: 'Draft test', fiscal_year_id: fyId })).results
-    const je = results.find(r => r.type === 'journal_entry')
+    const results = getData(
+      globalSearch(db, { query: 'Draft test', fiscal_year_id: fyId }),
+    ).results
+    const je = results.find((r) => r.type === 'journal_entry')
     expect(je).toBeUndefined()
   })
 
@@ -249,12 +294,20 @@ describe('B5 — verifikat search', () => {
     // the search-service output ordering: journal_entry results appear after accounts.
     const fyId = seedCompany()
     bookManualEntry(fyId, 'Hyra kontor')
-    const results = getData(globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId })).results
+    const results = getData(
+      globalSearch(db, { query: 'Hyra', fiscal_year_id: fyId }),
+    ).results
     // journal_entry type exists in results
-    expect(results.some(r => r.type === 'journal_entry')).toBe(true)
+    expect(results.some((r) => r.type === 'journal_entry')).toBe(true)
     // Verify the type is part of the valid set
     const validTypes: SearchResultType[] = [
-      'invoice', 'expense', 'customer', 'supplier', 'product', 'account', 'journal_entry',
+      'invoice',
+      'expense',
+      'customer',
+      'supplier',
+      'product',
+      'account',
+      'journal_entry',
     ]
     for (const r of results) {
       expect(validTypes).toContain(r.type)

@@ -42,11 +42,7 @@ export interface UseEntityFormReturn<TForm extends object> {
   reset: (data?: Partial<TForm>) => void
 }
 
-export function useEntityForm<
-  TForm extends object,
-  TPayload,
-  TResult = void,
->(
+export function useEntityForm<TForm extends object, TPayload, TResult = void>(
   options: UseEntityFormOptions<TForm, TPayload, TResult>,
 ): UseEntityFormReturn<TForm> {
   const {
@@ -72,15 +68,18 @@ export function useEntityForm<
     return formData[name]
   }
 
-  const setField = useCallback(<K extends keyof TForm>(name: K, value: TForm[K]) => {
-    dirtyRef.current = true
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => {
-      const next = { ...prev }
-      delete next[name]
-      return next
-    })
-  }, [])
+  const setField = useCallback(
+    <K extends keyof TForm>(name: K, value: TForm[K]) => {
+      dirtyRef.current = true
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    },
+    [],
+  )
 
   const isDirty = dirtyRef.current
 

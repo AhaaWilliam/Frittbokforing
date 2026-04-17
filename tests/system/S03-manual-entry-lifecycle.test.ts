@@ -91,14 +91,12 @@ describe('Manuella verifikationer — C-serie', () => {
       description: 'Obalanserad',
       lines: [
         {
-
           account_number: '6210',
           debit_ore: 50000,
           credit_ore: 0,
           description: '',
         },
         {
-
           account_number: '1930',
           debit_ore: 0,
           credit_ore: 49900,
@@ -173,35 +171,30 @@ describe('Manuella verifikationer — C-serie', () => {
       description: 'Med tomma rader',
       lines: [
         {
-
           account_number: '6210',
           debit_ore: 50000,
           credit_ore: 0,
           description: '',
         },
         {
-
           account_number: '',
           debit_ore: 0,
           credit_ore: 0,
           description: '',
         },
         {
-
           account_number: '1930',
           debit_ore: 0,
           credit_ore: 50000,
           description: '',
         },
         {
-
           account_number: '',
           debit_ore: 0,
           credit_ore: 0,
           description: '',
         },
         {
-
           account_number: '',
           debit_ore: 0,
           credit_ore: 0,

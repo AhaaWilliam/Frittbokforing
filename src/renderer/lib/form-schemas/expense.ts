@@ -1,13 +1,20 @@
 import { z } from 'zod'
 import { SaveExpenseDraftSchema } from '../../../shared/ipc-schemas'
-import { MAX_QTY_EXPENSE, ERR_MSG_MAX_QTY_EXPENSE } from '../../../shared/constants'
+import {
+  MAX_QTY_EXPENSE,
+  ERR_MSG_MAX_QTY_EXPENSE,
+} from '../../../shared/constants'
 import { toOre } from '../format'
 
 export const ExpenseLineFormSchema = z.object({
   temp_id: z.string(),
   description: z.string(),
   account_number: z.string(),
-  quantity: z.number().int().min(1, { message: 'Antal måste vara minst 1' }).max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
+  quantity: z
+    .number()
+    .int()
+    .min(1, { message: 'Antal måste vara minst 1' })
+    .max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
   unit_price_kr: z.number(),
   vat_code_id: z.number(),
   vat_rate: z.number(),
@@ -16,8 +23,10 @@ export const ExpenseLineFormSchema = z.object({
 export type ExpenseLineForm = z.infer<typeof ExpenseLineFormSchema>
 
 export const ExpenseFormStateSchema = z.object({
-  _supplier: z.object({ id: z.number(), name: z.string() }).nullable()
-    .refine(v => v !== null, 'Välj en leverantör'),
+  _supplier: z
+    .object({ id: z.number(), name: z.string() })
+    .nullable()
+    .refine((v) => v !== null, 'Välj en leverantör'),
   expense_type: z.enum(['normal', 'credit_note']).default('normal'),
   credits_expense_id: z.number().nullable(),
   supplierInvoiceNumber: z.string(),
@@ -26,7 +35,9 @@ export const ExpenseFormStateSchema = z.object({
   dueDate: z.string().min(1),
   description: z.string().min(1, 'Ange en beskrivning'),
   notes: z.string(),
-  lines: z.array(ExpenseLineFormSchema).min(1, 'Lägg till minst en kostnadsrad'),
+  lines: z
+    .array(ExpenseLineFormSchema)
+    .min(1, 'Lägg till minst en kostnadsrad'),
 })
 
 export type ExpenseFormState = z.infer<typeof ExpenseFormStateSchema>
@@ -77,7 +88,10 @@ function newTempId(): string {
   return `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function makeEmptyExpenseLine(defaultVatCodeId: number, defaultVatRate: number): ExpenseLineForm {
+export function makeEmptyExpenseLine(
+  defaultVatCodeId: number,
+  defaultVatRate: number,
+): ExpenseLineForm {
   return {
     temp_id: newTempId(),
     description: '',

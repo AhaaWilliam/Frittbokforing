@@ -1104,19 +1104,27 @@ export const migrations: MigrationEntry[] = [
   { sql: migration012, programmatic: migration012Programmatic },
   { sql: migration013 },
   { sql: migration014 },
-  { sql: '-- Migration 015: expense paid_amount (se programmatic)', programmatic: migration015Programmatic },
-  { sql: 'ALTER TABLE invoice_lines RENAME COLUMN unit_price TO unit_price_ore;' },
+  {
+    sql: '-- Migration 015: expense paid_amount (se programmatic)',
+    programmatic: migration015Programmatic,
+  },
+  {
+    sql: 'ALTER TABLE invoice_lines RENAME COLUMN unit_price TO unit_price_ore;',
+  },
   // Fas 6: Slutför öre-rename för invoice-domänen.
   // Symmetri DB+TS med expense-domänen. Filformat behåller legacy-aliaser (M92).
-  { sql: `ALTER TABLE invoice_lines RENAME COLUMN line_total TO line_total_ore;
+  {
+    sql: `ALTER TABLE invoice_lines RENAME COLUMN line_total TO line_total_ore;
     ALTER TABLE invoice_lines RENAME COLUMN vat_amount TO vat_amount_ore;
     ALTER TABLE invoices RENAME COLUMN total_amount TO total_amount_ore;
     ALTER TABLE invoices RENAME COLUMN vat_amount TO vat_amount_ore;
-    ALTER TABLE invoices RENAME COLUMN net_amount TO net_amount_ore;` },
+    ALTER TABLE invoices RENAME COLUMN net_amount TO net_amount_ore;`,
+  },
   // Fas 7: Rename journal_entry_lines belopp-kolumner (M48).
   // debit_amount → debit_ore, credit_amount → credit_ore, vat_amount → vat_ore.
   // Trigger trg_check_balance_on_booking refererar dessa kolumner och måste återskapas.
-  { sql: `ALTER TABLE journal_entry_lines RENAME COLUMN debit_amount TO debit_ore;
+  {
+    sql: `ALTER TABLE journal_entry_lines RENAME COLUMN debit_amount TO debit_ore;
     ALTER TABLE journal_entry_lines RENAME COLUMN credit_amount TO credit_ore;
     ALTER TABLE journal_entry_lines RENAME COLUMN vat_amount TO vat_ore;
 
@@ -1146,25 +1154,41 @@ export const migrations: MigrationEntry[] = [
             THEN RAISE(ABORT, 'Verifikation måste ha minst två rader.')
         END;
     END;`,
-    programmatic: migration018Verify },
+    programmatic: migration018Verify,
+  },
   // Fas 8: Rename manual_entry_lines belopp-kolumner (M48, final).
   // debit_amount → debit_ore, credit_amount → credit_ore.
   // Inga triggers att återskapa — tabellen har inga.
-  { sql: `ALTER TABLE manual_entry_lines RENAME COLUMN debit_amount TO debit_ore;
+  {
+    sql: `ALTER TABLE manual_entry_lines RENAME COLUMN debit_amount TO debit_ore;
     ALTER TABLE manual_entry_lines RENAME COLUMN credit_amount TO credit_ore;`,
-    programmatic: migration019Verify },
+    programmatic: migration019Verify,
+  },
   // Sprint 12: bank_fee_ore + bank_fee_account on both payment tables
-  { sql: '-- Migration 020: bank fee columns (se programmatic)', programmatic: migration020Programmatic },
+  {
+    sql: '-- Migration 020: bank fee columns (se programmatic)',
+    programmatic: migration020Programmatic,
+  },
   // Sprint 13: payment_batches + auto_bank_fee source_type
-  { sql: '-- Migration 021: payment_batches + auto_bank_fee (se programmatic)', programmatic: migration021Programmatic },
+  {
+    sql: '-- Migration 021: payment_batches + auto_bank_fee (se programmatic)',
+    programmatic: migration021Programmatic,
+  },
   // Sprint 15 S42: öre-suffix på 5 belopp-kolumner (M119/F1)
-  { sql: '-- Migration 022: öre-suffix rename (se programmatic)', programmatic: migration022Programmatic },
+  {
+    sql: '-- Migration 022: öre-suffix rename (se programmatic)',
+    programmatic: migration022Programmatic,
+  },
   // Sprint 15 S43: FK på manual_entry_lines + payment_batches (F2, F6)
-  { sql: '-- Migration 023: FK account_number (se programmatic)', programmatic: migration023Programmatic },
+  {
+    sql: '-- Migration 023: FK account_number (se programmatic)',
+    programmatic: migration023Programmatic,
+  },
   // Sprint 15 S44: invoice_lines.account_number conditional NOT NULL vid finalize (F5)
   // Trigger validerar att freeform-rader (product_id IS NULL) har account_number.
   // Produktbaserade rader hämtar konto via products.account_id → accounts, inte invoice_lines.account_number.
-  { sql: `CREATE TRIGGER trg_invoice_lines_account_number_on_finalize
+  {
+    sql: `CREATE TRIGGER trg_invoice_lines_account_number_on_finalize
     BEFORE UPDATE OF status ON invoices
     WHEN OLD.status = 'draft' AND NEW.status = 'unpaid'
     BEGIN
@@ -1177,34 +1201,50 @@ export const migrations: MigrationEntry[] = [
         )
         THEN RAISE(ABORT, 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.')
       END;
-    END;`, programmatic: migration024Verify },
+    END;`,
+    programmatic: migration024Verify,
+  },
   // Sprint 16 S48: öre-suffix rename on products + price_list_items (M119/F4)
-  { sql: `ALTER TABLE products RENAME COLUMN default_price TO default_price_ore;
+  {
+    sql: `ALTER TABLE products RENAME COLUMN default_price TO default_price_ore;
     ALTER TABLE price_list_items RENAME COLUMN price TO price_ore;`,
-    programmatic: migration025Verify },
+    programmatic: migration025Verify,
+  },
   // Sprint 16 S49: F10 expense_lines paritet — sort_order + created_at (se programmatic)
-  { sql: '-- Migration 026: expense_lines sort_order + created_at (se programmatic)', programmatic: migration026Programmatic },
+  {
+    sql: '-- Migration 026: expense_lines sort_order + created_at (se programmatic)',
+    programmatic: migration026Programmatic,
+  },
   // Sprint 16 S58: F4 schema-namnkonvention — journal_entries.created_by → created_by_id
   // FK till users(id) utan _id-suffix. Inkonsistent med corrected_by_id på samma tabell.
   // Inga triggers refererar kolumnen — enkel RENAME COLUMN räcker.
-  { sql: 'ALTER TABLE journal_entries RENAME COLUMN created_by TO created_by_id;',
-    programmatic: migration027Verify },
+  {
+    sql: 'ALTER TABLE journal_entries RENAME COLUMN created_by TO created_by_id;',
+    programmatic: migration027Verify,
+  },
   // Sprint 27: F7 — drop unused verification_sequences + rename payment_terms_days
-  { sql: `DROP TABLE IF EXISTS verification_sequences;
+  {
+    sql: `DROP TABLE IF EXISTS verification_sequences;
 ALTER TABLE counterparties RENAME COLUMN payment_terms_days TO payment_terms;`,
-    programmatic: migration028Verify },
+    programmatic: migration028Verify,
+  },
   // Sprint 28: Kreditfakturor — credits_invoice_id FK
-  { sql: `ALTER TABLE invoices ADD COLUMN credits_invoice_id INTEGER REFERENCES invoices(id);
+  {
+    sql: `ALTER TABLE invoices ADD COLUMN credits_invoice_id INTEGER REFERENCES invoices(id);
 CREATE INDEX idx_inv_credits ON invoices(credits_invoice_id);`,
-    programmatic: migration029Verify },
+    programmatic: migration029Verify,
+  },
   // Sprint 28b: Leverantörskreditnotor — expense_type + credits_expense_id
-  { sql: `ALTER TABLE expenses ADD COLUMN expense_type TEXT NOT NULL DEFAULT 'normal'
+  {
+    sql: `ALTER TABLE expenses ADD COLUMN expense_type TEXT NOT NULL DEFAULT 'normal'
   CHECK(expense_type IN ('normal', 'credit_note'));
 ALTER TABLE expenses ADD COLUMN credits_expense_id INTEGER REFERENCES expenses(id);
 CREATE INDEX idx_exp_credits ON expenses(credits_expense_id);`,
-    programmatic: migration030Verify },
+    programmatic: migration030Verify,
+  },
   // Sprint 30: B4 — Immutability-hardening triggers (Q8, Q9, Q10)
-  { sql: `
+  {
+    sql: `
 -- Q9: source_type kan inte ändras på bokfört verifikat
 CREATE TRIGGER trg_immutable_source_type
 BEFORE UPDATE ON journal_entries
@@ -1246,18 +1286,25 @@ BEGIN
         THEN RAISE(ABORT, 'Kan inte korrigera verifikat med beroende betalningar.')
     END;
 END;`,
-    programmatic: migration031Verify },
+    programmatic: migration031Verify,
+  },
   // Sprint 33: F46b — quantity-CHECK defense-in-depth (table-recreate, M121)
-  { sql: '-- Migration 032: quantity-CHECK (se programmatic)', programmatic: migration032Programmatic },
+  {
+    sql: '-- Migration 032: quantity-CHECK (se programmatic)',
+    programmatic: migration032Programmatic,
+  },
   // Sprint 33: B6 — FTS5 virtual table for global search
-  { sql: `CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
+  {
+    sql: `CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
     entity_type,
     entity_id,
     search_text,
     tokenize='unicode61 remove_diacritics 2'
-  );` },
+  );`,
+  },
   // Sprint 43: Feature 2 — Budget targets
-  { sql: `CREATE TABLE budget_targets (
+  {
+    sql: `CREATE TABLE budget_targets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
     line_id TEXT NOT NULL,
@@ -1267,9 +1314,11 @@ END;`,
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(fiscal_year_id, line_id, period_number)
   );
-  CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);` },
+  CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);`,
+  },
   // Sprint 45: Feature 3 — Periodiseringar (accruals)
-  { sql: `CREATE TABLE accrual_schedules (
+  {
+    sql: `CREATE TABLE accrual_schedules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
     description TEXT NOT NULL,
@@ -1293,25 +1342,34 @@ END;`,
     entry_type TEXT NOT NULL CHECK (entry_type IN ('accrual', 'reversal')),
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
-  CREATE INDEX idx_accrual_entries_schedule ON accrual_entries (accrual_schedule_id);` },
+  CREATE INDEX idx_accrual_entries_schedule ON accrual_entries (accrual_schedule_id);`,
+  },
   // Sprint 46: Feature 4 — Counterparty payment fields
-  { sql: `ALTER TABLE counterparties ADD COLUMN bankgiro TEXT DEFAULT NULL;
+  {
+    sql: `ALTER TABLE counterparties ADD COLUMN bankgiro TEXT DEFAULT NULL;
   ALTER TABLE counterparties ADD COLUMN plusgiro TEXT DEFAULT NULL;
   ALTER TABLE counterparties ADD COLUMN bank_account TEXT DEFAULT NULL;
-  ALTER TABLE counterparties ADD COLUMN bank_clearing TEXT DEFAULT NULL;` },
+  ALTER TABLE counterparties ADD COLUMN bank_clearing TEXT DEFAULT NULL;`,
+  },
   // Sprint 46: Feature 4 — Payment batch export tracking
-  { sql: `ALTER TABLE payment_batches ADD COLUMN exported_at TEXT DEFAULT NULL;
+  {
+    sql: `ALTER TABLE payment_batches ADD COLUMN exported_at TEXT DEFAULT NULL;
   ALTER TABLE payment_batches ADD COLUMN export_format TEXT DEFAULT NULL;
-  ALTER TABLE payment_batches ADD COLUMN export_filename TEXT DEFAULT NULL;` },
+  ALTER TABLE payment_batches ADD COLUMN export_filename TEXT DEFAULT NULL;`,
+  },
   // Sprint 53: F62 — fixed_assets + depreciation_schedules + verification_series CHECK
   // M121 (trigger reattach), M122 (FK-off table-recreate of journal_entries),
   // M141 (cross-table trigger inventory), M151 (E-series decision).
-  { sql: '-- Migration 038: F62 avskrivningar (se programmatic)', programmatic: migration038Programmatic },
+  {
+    sql: '-- Migration 038: F62 avskrivningar (se programmatic)',
+    programmatic: migration038Programmatic,
+  },
   // Sprint 55: F66-a — Bankavstämning MVP (camt.053)
   // 3 nya tabeller: bank_statements, bank_transactions, bank_reconciliation_matches.
   // Split polymorphic FK (invoice_payment_id / expense_payment_id + CHECK).
   // M152: signed amount i bank-extern rådata (bank_transactions.amount_ore).
-  { sql: `
+  {
+    sql: `
     CREATE TABLE bank_statements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       company_id INTEGER NOT NULL REFERENCES companies(id),
@@ -1367,12 +1425,17 @@ END;`,
     CREATE INDEX idx_bank_tx_value_date ON bank_transactions(value_date);
     CREATE INDEX idx_bank_tx_booking_date ON bank_transactions(booking_date);
     CREATE INDEX idx_bank_match_entity ON bank_reconciliation_matches(matched_entity_type, matched_entity_id);
-  `, programmatic: migration039Verify },
+  `,
+    programmatic: migration039Verify,
+  },
   // Sprint 56: F66-b — match_method-enum-utökning för auto-matchning.
   // Utöka CHECK från ('manual') till ('manual','auto_amount_exact','auto_amount_date',
   // 'auto_amount_ref','auto_iban'). Pre-flight whitelist (K2), explicit kolumnlista (K1),
   // M141 cross-table-trigger-inventering (K3). Inga inkommande FK → ingen FK-OFF behövs.
-  { sql: '-- Migration 040: F66-b match_method-enum (se programmatic)', programmatic: migration040Programmatic },
+  {
+    sql: '-- Migration 040: F66-b match_method-enum (se programmatic)',
+    programmatic: migration040Programmatic,
+  },
   // Sprint A / S58: F66-d — bank-fee-reconciliation + BkTxCd-fält.
   // (1) bank_reconciliation_matches: utöka match_method-enum med auto_fee/auto_interest_*,
   //     lägg till fee_journal_entry_id, utöka matched_entity_type med 'bank_fee',
@@ -1380,11 +1443,18 @@ END;`,
   // M122 table-recreate på bank_reconciliation_matches (inga inkommande FK → ingen FK-OFF).
   // Pre-flight: Q1 match_method-whitelist, Q2 exactly-one-of på befintlig data, Q3 M141
   // cross-table-trigger-inventering (informativ).
-  { sql: '-- Migration 041: S58 F66-d bank-fee-reconciliation (se programmatic)', programmatic: migration041Programmatic },
+  {
+    sql: '-- Migration 041: S58 F66-d bank-fee-reconciliation (se programmatic)',
+    programmatic: migration041Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
-  const expectedTables = ['bank_statements', 'bank_transactions', 'bank_reconciliation_matches']
+  const expectedTables = [
+    'bank_statements',
+    'bank_transactions',
+    'bank_reconciliation_matches',
+  ]
   for (const t of expectedTables) {
     const exists = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
@@ -1419,7 +1489,9 @@ function migration039Verify(db: import('better-sqlite3').Database): void {
 function migration040Programmatic(db: import('better-sqlite3').Database): void {
   // Idempotency
   const tableInfo = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'",
+    )
     .get() as { sql: string } | undefined
   if (tableInfo?.sql?.includes("'auto_iban'")) return
 
@@ -1486,16 +1558,21 @@ function migration040Programmatic(db: import('better-sqlite3').Database): void {
   // Verify
   const sql = (
     db
-      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'",
+      )
       .get() as { sql: string }
   ).sql
   if (!sql.includes("'auto_iban'")) {
     throw new Error('Migration 040 failed: auto_iban saknas i CHECK')
   }
   const idx = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bank_match_entity'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bank_match_entity'",
+    )
     .get()
-  if (!idx) throw new Error('Migration 040 failed: idx_bank_match_entity saknas')
+  if (!idx)
+    throw new Error('Migration 040 failed: idx_bank_match_entity saknas')
 }
 
 /**
@@ -1621,21 +1698,35 @@ function migration041Programmatic(db: import('better-sqlite3').Database): void {
   // Verify
   const sqlNew = (
     db
-      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'",
+      )
       .get() as { sql: string }
   ).sql
   if (!sqlNew.includes('fee_journal_entry_id')) {
-    throw new Error('Migration 041 failed: fee_journal_entry_id saknas i bank_reconciliation_matches')
+    throw new Error(
+      'Migration 041 failed: fee_journal_entry_id saknas i bank_reconciliation_matches',
+    )
   }
   if (!sqlNew.includes("'auto_fee'")) {
-    throw new Error('Migration 041 failed: auto_fee saknas i match_method CHECK')
+    throw new Error(
+      'Migration 041 failed: auto_fee saknas i match_method CHECK',
+    )
   }
   if (!sqlNew.includes("'bank_fee'")) {
-    throw new Error('Migration 041 failed: bank_fee saknas i matched_entity_type CHECK')
+    throw new Error(
+      'Migration 041 failed: bank_fee saknas i matched_entity_type CHECK',
+    )
   }
   const btCols = getTableColumns(db, 'bank_transactions')
-  if (!btCols.has('bank_tx_domain') || !btCols.has('bank_tx_family') || !btCols.has('bank_tx_subfamily')) {
-    throw new Error('Migration 041 failed: BkTxCd-kolumner saknas på bank_transactions')
+  if (
+    !btCols.has('bank_tx_domain') ||
+    !btCols.has('bank_tx_family') ||
+    !btCols.has('bank_tx_subfamily')
+  ) {
+    throw new Error(
+      'Migration 041 failed: BkTxCd-kolumner saknas på bank_transactions',
+    )
   }
 }
 
@@ -1792,8 +1883,10 @@ function migration022Verify(db: import('better-sqlite3').Database): void {
   ]
   for (const [table, expected, forbidden] of checks) {
     const cols = getTableColumns(db, table)
-    if (!cols.has(expected)) throw new Error(`Migration 022 failed: ${table}.${expected} saknas`)
-    if (cols.has(forbidden)) throw new Error(`Migration 022 failed: ${table}.${forbidden} finns kvar`)
+    if (!cols.has(expected))
+      throw new Error(`Migration 022 failed: ${table}.${expected} saknas`)
+    if (cols.has(forbidden))
+      throw new Error(`Migration 022 failed: ${table}.${forbidden} finns kvar`)
   }
 }
 
@@ -1810,17 +1903,23 @@ function migration022Verify(db: import('better-sqlite3').Database): void {
 function migration023Programmatic(db: import('better-sqlite3').Database): void {
   // Idempotency: check if manual_entry_lines already has FK on account_number
   const melSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'",
+    )
     .get() as { sql: string } | undefined
   if (melSchema && melSchema.sql.includes('REFERENCES accounts')) return
 
   // === Del A: manual_entry_lines (M121) ===
   // Verify no triggers attached before drop
   const melTriggers = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='manual_entry_lines'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='manual_entry_lines'",
+    )
     .all() as { name: string }[]
   if (melTriggers.length > 0) {
-    throw new Error(`Migration 023: unexpected triggers on manual_entry_lines: ${melTriggers.map(t => t.name).join(', ')}`)
+    throw new Error(
+      `Migration 023: unexpected triggers on manual_entry_lines: ${melTriggers.map((t) => t.name).join(', ')}`,
+    )
   }
 
   db.exec(`
@@ -1844,10 +1943,14 @@ function migration023Programmatic(db: import('better-sqlite3').Database): void {
   // === Del B: payment_batches (M122) ===
   // Verify no triggers attached before drop
   const pbTriggers = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='payment_batches'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='payment_batches'",
+    )
     .all() as { name: string }[]
   if (pbTriggers.length > 0) {
-    throw new Error(`Migration 023: unexpected triggers on payment_batches: ${pbTriggers.map(t => t.name).join(', ')}`)
+    throw new Error(
+      `Migration 023: unexpected triggers on payment_batches: ${pbTriggers.map((t) => t.name).join(', ')}`,
+    )
   }
 
   db.exec(`
@@ -1882,23 +1985,33 @@ function migration023Programmatic(db: import('better-sqlite3').Database): void {
 function migration023Verify(db: import('better-sqlite3').Database): void {
   // 1. manual_entry_lines has FK on account_number
   const melSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='manual_entry_lines'",
+    )
     .get() as { sql: string }
   if (!melSchema.sql.includes('REFERENCES accounts(account_number)')) {
-    throw new Error('Migration 023 failed: manual_entry_lines.account_number FK saknas')
+    throw new Error(
+      'Migration 023 failed: manual_entry_lines.account_number FK saknas',
+    )
   }
 
   // 2. payment_batches has FK on account_number
   const pbSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'",
+    )
     .get() as { sql: string }
   if (!pbSchema.sql.includes('REFERENCES accounts(account_number)')) {
-    throw new Error('Migration 023 failed: payment_batches.account_number FK saknas')
+    throw new Error(
+      'Migration 023 failed: payment_batches.account_number FK saknas',
+    )
   }
 
   // 3. Index recreated
   const idx = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pb_fiscal_year'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_pb_fiscal_year'",
+    )
     .get()
   if (!idx) throw new Error('Migration 023 failed: idx_pb_fiscal_year saknas')
 
@@ -1907,34 +2020,51 @@ function migration023Verify(db: import('better-sqlite3').Database): void {
     .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
     .get() as { cnt: number }
   if (triggerCount.cnt !== 11) {
-    throw new Error(`Migration 023 failed: expected 11 triggers, found ${triggerCount.cnt}`)
+    throw new Error(
+      `Migration 023 failed: expected 11 triggers, found ${triggerCount.cnt}`,
+    )
   }
 }
 
 function migration024Verify(db: import('better-sqlite3').Database): void {
   const trigger = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_invoice_lines_account_number_on_finalize'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_invoice_lines_account_number_on_finalize'",
+    )
     .get()
-  if (!trigger) throw new Error('Migration 024 failed: trigger trg_invoice_lines_account_number_on_finalize saknas')
+  if (!trigger)
+    throw new Error(
+      'Migration 024 failed: trigger trg_invoice_lines_account_number_on_finalize saknas',
+    )
 
   const triggerCount = db
     .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
     .get() as { cnt: number }
   if (triggerCount.cnt !== 12) {
-    throw new Error(`Migration 024 failed: expected 12 triggers, found ${triggerCount.cnt}`)
+    throw new Error(
+      `Migration 024 failed: expected 12 triggers, found ${triggerCount.cnt}`,
+    )
   }
 }
 
 function migration025Verify(db: import('better-sqlite3').Database): void {
-  const prodCols = db.prepare('PRAGMA table_info(products)').all() as { name: string }[]
-  const prodNames = prodCols.map(c => c.name)
-  if (!prodNames.includes('default_price_ore')) throw new Error('Migration 025 failed: default_price_ore saknas')
-  if (prodNames.includes('default_price')) throw new Error('Migration 025 failed: default_price finns kvar')
+  const prodCols = db.prepare('PRAGMA table_info(products)').all() as {
+    name: string
+  }[]
+  const prodNames = prodCols.map((c) => c.name)
+  if (!prodNames.includes('default_price_ore'))
+    throw new Error('Migration 025 failed: default_price_ore saknas')
+  if (prodNames.includes('default_price'))
+    throw new Error('Migration 025 failed: default_price finns kvar')
 
-  const pliCols = db.prepare('PRAGMA table_info(price_list_items)').all() as { name: string }[]
-  const pliNames = pliCols.map(c => c.name)
-  if (!pliNames.includes('price_ore')) throw new Error('Migration 025 failed: price_ore saknas')
-  if (pliNames.includes('price')) throw new Error('Migration 025 failed: price finns kvar')
+  const pliCols = db.prepare('PRAGMA table_info(price_list_items)').all() as {
+    name: string
+  }[]
+  const pliNames = pliCols.map((c) => c.name)
+  if (!pliNames.includes('price_ore'))
+    throw new Error('Migration 025 failed: price_ore saknas')
+  if (pliNames.includes('price'))
+    throw new Error('Migration 025 failed: price finns kvar')
 }
 
 /**
@@ -1961,7 +2091,9 @@ function migration026Programmatic(db: import('better-sqlite3').Database): void {
   }
 
   // ADD COLUMN sort_order — matches invoice_lines: INTEGER NOT NULL DEFAULT 0
-  db.exec('ALTER TABLE expense_lines ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0')
+  db.exec(
+    'ALTER TABLE expense_lines ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+  )
 
   // Backfill: deterministic 0-indexed order per expense_id (matches invoice_lines convention)
   db.exec(`
@@ -1979,7 +2111,9 @@ function migration026Programmatic(db: import('better-sqlite3').Database): void {
   // we recreate the table constraint check won't trigger since we immediately backfill all rows.
   // Note: SQLite ADD COLUMN does NOT support non-constant defaults even in 3.45+.
   // We use a placeholder constant and backfill immediately.
-  db.exec("ALTER TABLE expense_lines ADD COLUMN created_at TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'")
+  db.exec(
+    "ALTER TABLE expense_lines ADD COLUMN created_at TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'",
+  )
 
   // Backfill: inherit from parent expenses.created_at
   db.exec(`
@@ -1991,19 +2125,40 @@ function migration026Programmatic(db: import('better-sqlite3').Database): void {
 
   // Verify
   const newCols = getTableColumns(db, 'expense_lines')
-  if (!newCols.has('sort_order')) throw new Error('Migration 026 failed: sort_order saknas')
-  if (!newCols.has('created_at')) throw new Error('Migration 026 failed: created_at saknas')
+  if (!newCols.has('sort_order'))
+    throw new Error('Migration 026 failed: sort_order saknas')
+  if (!newCols.has('created_at'))
+    throw new Error('Migration 026 failed: created_at saknas')
 
   // Parity check: compare sort_order + created_at column definitions with invoice_lines
-  const elInfo = db.prepare('PRAGMA table_info(expense_lines)').all() as { name: string; notnull: number; dflt_value: string | null; type: string }[]
-  const ilInfo = db.prepare('PRAGMA table_info(invoice_lines)').all() as { name: string; notnull: number; dflt_value: string | null; type: string }[]
+  const elInfo = db.prepare('PRAGMA table_info(expense_lines)').all() as {
+    name: string
+    notnull: number
+    dflt_value: string | null
+    type: string
+  }[]
+  const ilInfo = db.prepare('PRAGMA table_info(invoice_lines)').all() as {
+    name: string
+    notnull: number
+    dflt_value: string | null
+    type: string
+  }[]
 
   for (const colName of ['sort_order', 'created_at']) {
-    const elCol = elInfo.find(c => c.name === colName)
-    const ilCol = ilInfo.find(c => c.name === colName)
-    if (!elCol || !ilCol) throw new Error(`Migration 026 failed: ${colName} saknas i en av tabellerna`)
-    if (elCol.notnull !== ilCol.notnull) throw new Error(`Migration 026 parity failed: ${colName} notnull mismatch (expense_lines=${elCol.notnull}, invoice_lines=${ilCol.notnull})`)
-    if (elCol.type !== ilCol.type) throw new Error(`Migration 026 parity failed: ${colName} type mismatch (expense_lines=${elCol.type}, invoice_lines=${ilCol.type})`)
+    const elCol = elInfo.find((c) => c.name === colName)
+    const ilCol = ilInfo.find((c) => c.name === colName)
+    if (!elCol || !ilCol)
+      throw new Error(
+        `Migration 026 failed: ${colName} saknas i en av tabellerna`,
+      )
+    if (elCol.notnull !== ilCol.notnull)
+      throw new Error(
+        `Migration 026 parity failed: ${colName} notnull mismatch (expense_lines=${elCol.notnull}, invoice_lines=${ilCol.notnull})`,
+      )
+    if (elCol.type !== ilCol.type)
+      throw new Error(
+        `Migration 026 parity failed: ${colName} type mismatch (expense_lines=${elCol.type}, invoice_lines=${ilCol.type})`,
+      )
   }
 
   // Trigger count should be unchanged (12)
@@ -2011,33 +2166,43 @@ function migration026Programmatic(db: import('better-sqlite3').Database): void {
     .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
     .get() as { cnt: number }
   if (triggerCount.cnt !== 12) {
-    throw new Error(`Migration 026 failed: expected 12 triggers, found ${triggerCount.cnt}`)
+    throw new Error(
+      `Migration 026 failed: expected 12 triggers, found ${triggerCount.cnt}`,
+    )
   }
 }
 
 function migration018Verify(db: import('better-sqlite3').Database): void {
-  const cols = db.prepare('PRAGMA table_info(journal_entry_lines)').all() as { name: string }[]
-  const colNames = cols.map(c => c.name)
+  const cols = db.prepare('PRAGMA table_info(journal_entry_lines)').all() as {
+    name: string
+  }[]
+  const colNames = cols.map((c) => c.name)
   const expectedNew = ['debit_ore', 'credit_ore', 'vat_ore']
   const forbiddenOld = ['debit_amount', 'credit_amount', 'vat_amount']
   for (const name of expectedNew) {
-    if (!colNames.includes(name)) throw new Error(`Migration 018 failed: ${name} saknas`)
+    if (!colNames.includes(name))
+      throw new Error(`Migration 018 failed: ${name} saknas`)
   }
   for (const name of forbiddenOld) {
-    if (colNames.includes(name)) throw new Error(`Migration 018 failed: ${name} finns kvar`)
+    if (colNames.includes(name))
+      throw new Error(`Migration 018 failed: ${name} finns kvar`)
   }
 }
 
 function migration019Verify(db: import('better-sqlite3').Database): void {
-  const cols = db.prepare('PRAGMA table_info(manual_entry_lines)').all() as { name: string }[]
-  const colNames = cols.map(c => c.name)
+  const cols = db.prepare('PRAGMA table_info(manual_entry_lines)').all() as {
+    name: string
+  }[]
+  const colNames = cols.map((c) => c.name)
   const expectedNew = ['debit_ore', 'credit_ore']
   const forbiddenOld = ['debit_amount', 'credit_amount']
   for (const name of expectedNew) {
-    if (!colNames.includes(name)) throw new Error(`Migration 019 failed: ${name} saknas`)
+    if (!colNames.includes(name))
+      throw new Error(`Migration 019 failed: ${name} saknas`)
   }
   for (const name of forbiddenOld) {
-    if (colNames.includes(name)) throw new Error(`Migration 019 failed: ${name} finns kvar`)
+    if (colNames.includes(name))
+      throw new Error(`Migration 019 failed: ${name} finns kvar`)
   }
 }
 
@@ -2065,7 +2230,9 @@ function migration020Programmatic(db: import('better-sqlite3').Database): void {
 function migration021Programmatic(db: import('better-sqlite3').Database): void {
   // === Idempotency guard: check if auto_bank_fee is already in CHECK ===
   const tableInfo = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'",
+    )
     .get() as { sql: string } | undefined
   const needsRebuild = !tableInfo?.sql?.includes('auto_bank_fee')
 
@@ -2118,7 +2285,9 @@ function migration021Programmatic(db: import('better-sqlite3').Database): void {
 
     // Recreate 4 indexes
     db.exec(`CREATE INDEX idx_je_date ON journal_entries (journal_date);`)
-    db.exec(`CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);`)
+    db.exec(
+      `CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);`,
+    )
     db.exec(`CREATE INDEX idx_je_status ON journal_entries (status);`)
     db.exec(`
       CREATE UNIQUE INDEX idx_journal_entries_verify_series_unique
@@ -2269,17 +2438,35 @@ function migration021Programmatic(db: import('better-sqlite3').Database): void {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `)
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_pb_fiscal_year ON payment_batches(fiscal_year_id);`)
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_pb_fiscal_year ON payment_batches(fiscal_year_id);`,
+  )
 
   // === payment_batch_id on invoice_payments ===
   const ipCols = getTableColumns(db, 'invoice_payments')
-  addColumnIfMissing(db, 'invoice_payments', 'payment_batch_id', 'INTEGER REFERENCES payment_batches(id)', ipCols)
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`)
+  addColumnIfMissing(
+    db,
+    'invoice_payments',
+    'payment_batch_id',
+    'INTEGER REFERENCES payment_batches(id)',
+    ipCols,
+  )
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_ip_batch ON invoice_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`,
+  )
 
   // === payment_batch_id on expense_payments ===
   const epCols = getTableColumns(db, 'expense_payments')
-  addColumnIfMissing(db, 'expense_payments', 'payment_batch_id', 'INTEGER REFERENCES payment_batches(id)', epCols)
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`)
+  addColumnIfMissing(
+    db,
+    'expense_payments',
+    'payment_batch_id',
+    'INTEGER REFERENCES payment_batches(id)',
+    epCols,
+  )
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_ep_batch ON expense_payments(payment_batch_id) WHERE payment_batch_id IS NOT NULL;`,
+  )
 
   // Verify
   migration021Verify(db)
@@ -2287,26 +2474,37 @@ function migration021Programmatic(db: import('better-sqlite3').Database): void {
 
 function migration027Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'journal_entries')
-  if (!cols.has('created_by_id')) throw new Error('Migration 027 failed: created_by_id saknas')
-  if (cols.has('created_by')) throw new Error('Migration 027 failed: created_by finns kvar')
+  if (!cols.has('created_by_id'))
+    throw new Error('Migration 027 failed: created_by_id saknas')
+  if (cols.has('created_by'))
+    throw new Error('Migration 027 failed: created_by finns kvar')
 }
 
 function migration028Verify(db: import('better-sqlite3').Database): void {
   // 1. verification_sequences should not exist
   const vsTable = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='verification_sequences'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='verification_sequences'",
+    )
     .get() as { name: string } | undefined
-  if (vsTable) throw new Error('Migration 028 failed: verification_sequences still exists')
+  if (vsTable)
+    throw new Error('Migration 028 failed: verification_sequences still exists')
 
   // 2. counterparties should have payment_terms, not payment_terms_days
   const cols = getTableColumns(db, 'counterparties')
-  if (!cols.has('payment_terms')) throw new Error('Migration 028 failed: counterparties.payment_terms saknas')
-  if (cols.has('payment_terms_days')) throw new Error('Migration 028 failed: counterparties.payment_terms_days finns kvar')
+  if (!cols.has('payment_terms'))
+    throw new Error('Migration 028 failed: counterparties.payment_terms saknas')
+  if (cols.has('payment_terms_days'))
+    throw new Error(
+      'Migration 028 failed: counterparties.payment_terms_days finns kvar',
+    )
 }
 
 function migration031Verify(db: import('better-sqlite3').Database): void {
   const triggers = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='journal_entries'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='journal_entries'",
+    )
     .all() as { name: string }[]
   const triggerNames = new Set(triggers.map((t) => t.name))
   const expected = [
@@ -2316,45 +2514,61 @@ function migration031Verify(db: import('better-sqlite3').Database): void {
     'trg_no_correct_with_payments',
   ]
   for (const name of expected) {
-    if (!triggerNames.has(name)) throw new Error(`Migration 031 failed: trigger ${name} saknas`)
+    if (!triggerNames.has(name))
+      throw new Error(`Migration 031 failed: trigger ${name} saknas`)
   }
 }
 
 function migration030Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'expenses')
-  if (!cols.has('expense_type')) throw new Error('Migration 030 failed: expenses.expense_type saknas')
-  if (!cols.has('credits_expense_id')) throw new Error('Migration 030 failed: expenses.credits_expense_id saknas')
+  if (!cols.has('expense_type'))
+    throw new Error('Migration 030 failed: expenses.expense_type saknas')
+  if (!cols.has('credits_expense_id'))
+    throw new Error('Migration 030 failed: expenses.credits_expense_id saknas')
 
   const idxRows = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='expenses' AND name='idx_exp_credits'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='expenses' AND name='idx_exp_credits'",
+    )
     .all() as { name: string }[]
-  if (idxRows.length === 0) throw new Error('Migration 030 failed: idx_exp_credits index saknas')
+  if (idxRows.length === 0)
+    throw new Error('Migration 030 failed: idx_exp_credits index saknas')
 }
 
 function migration029Verify(db: import('better-sqlite3').Database): void {
   const cols = getTableColumns(db, 'invoices')
-  if (!cols.has('credits_invoice_id')) throw new Error('Migration 029 failed: invoices.credits_invoice_id saknas')
+  if (!cols.has('credits_invoice_id'))
+    throw new Error('Migration 029 failed: invoices.credits_invoice_id saknas')
 
   const idxRows = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='invoices' AND name='idx_inv_credits'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='invoices' AND name='idx_inv_credits'",
+    )
     .all() as { name: string }[]
-  if (idxRows.length === 0) throw new Error('Migration 029 failed: idx_inv_credits index saknas')
+  if (idxRows.length === 0)
+    throw new Error('Migration 029 failed: idx_inv_credits index saknas')
 }
 
 function migration021Verify(db: import('better-sqlite3').Database): void {
   // 1. CHECK constraint includes auto_bank_fee
   const tableInfo = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'",
+    )
     .get() as { sql: string }
   if (!tableInfo.sql.includes('auto_bank_fee')) {
-    throw new Error('Migration 021 failed: auto_bank_fee not in journal_entries CHECK')
+    throw new Error(
+      'Migration 021 failed: auto_bank_fee not in journal_entries CHECK',
+    )
   }
 
   // 2. All 7 triggers exist
   const triggers = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('journal_entries', 'journal_entry_lines')")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name IN ('journal_entries', 'journal_entry_lines')",
+    )
     .all() as { name: string }[]
-  const triggerNames = new Set(triggers.map(t => t.name))
+  const triggerNames = new Set(triggers.map((t) => t.name))
   const expected = [
     'trg_immutable_booked_entry_update',
     'trg_immutable_booked_entry_delete',
@@ -2372,23 +2586,36 @@ function migration021Verify(db: import('better-sqlite3').Database): void {
 
   // 3. trg_immutable_booked_entry_update still has opening_balance exception
   const updateTrigger = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='trigger' AND name='trg_immutable_booked_entry_update'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='trg_immutable_booked_entry_update'",
+    )
     .get() as { sql: string }
   if (!updateTrigger.sql.includes('opening_balance')) {
-    throw new Error('Migration 021 failed: trg_immutable_booked_entry_update missing opening_balance exception')
+    throw new Error(
+      'Migration 021 failed: trg_immutable_booked_entry_update missing opening_balance exception',
+    )
   }
 
   // 4. payment_batches exists with correct CHECK
   const pbInfo = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'",
+    )
     .get() as { sql: string } | undefined
-  if (!pbInfo) throw new Error('Migration 021 failed: payment_batches table missing')
+  if (!pbInfo)
+    throw new Error('Migration 021 failed: payment_batches table missing')
 
   // 5. payment_batch_id column exists on both payment tables
   const ipCols = getTableColumns(db, 'invoice_payments')
-  if (!ipCols.has('payment_batch_id')) throw new Error('Migration 021 failed: invoice_payments.payment_batch_id missing')
+  if (!ipCols.has('payment_batch_id'))
+    throw new Error(
+      'Migration 021 failed: invoice_payments.payment_batch_id missing',
+    )
   const epCols = getTableColumns(db, 'expense_payments')
-  if (!epCols.has('payment_batch_id')) throw new Error('Migration 021 failed: expense_payments.payment_batch_id missing')
+  if (!epCols.has('payment_batch_id'))
+    throw new Error(
+      'Migration 021 failed: expense_payments.payment_batch_id missing',
+    )
 }
 
 /**
@@ -2404,29 +2631,41 @@ function migration021Verify(db: import('better-sqlite3').Database): void {
 function migration032Programmatic(db: import('better-sqlite3').Database): void {
   // Idempotency: check if invoice_lines already has upper-bound CHECK
   const ilSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'",
+    )
     .get() as { sql: string } | undefined
   if (ilSchema && ilSchema.sql.includes('9999.99')) return
 
   // Pre-flight validation — fail early if existing rows violate new CHECK
   const ilViolations = db
-    .prepare('SELECT COUNT(*) as cnt FROM invoice_lines WHERE quantity <= 0 OR quantity > 9999.99')
+    .prepare(
+      'SELECT COUNT(*) as cnt FROM invoice_lines WHERE quantity <= 0 OR quantity > 9999.99',
+    )
     .get() as { cnt: number }
   if (ilViolations.cnt > 0) {
-    throw new Error(`F46b pre-flight: ${ilViolations.cnt} invoice_lines rows violate new CHECK (quantity <= 0 OR > 9999.99)`)
+    throw new Error(
+      `F46b pre-flight: ${ilViolations.cnt} invoice_lines rows violate new CHECK (quantity <= 0 OR > 9999.99)`,
+    )
   }
 
   const elViolations = db
-    .prepare('SELECT COUNT(*) as cnt FROM expense_lines WHERE quantity < 1 OR quantity > 9999')
+    .prepare(
+      'SELECT COUNT(*) as cnt FROM expense_lines WHERE quantity < 1 OR quantity > 9999',
+    )
     .get() as { cnt: number }
   if (elViolations.cnt > 0) {
-    throw new Error(`F46b pre-flight: ${elViolations.cnt} expense_lines rows violate new CHECK (quantity < 1 OR > 9999)`)
+    throw new Error(
+      `F46b pre-flight: ${elViolations.cnt} expense_lines rows violate new CHECK (quantity < 1 OR > 9999)`,
+    )
   }
 
   // === invoice_lines table-recreate ===
   // trg_invoice_lines_account_number_on_finalize is on `invoices` but references
   // `invoice_lines` in its body — must be dropped before DROP TABLE and recreated after.
-  db.exec('DROP TRIGGER IF EXISTS trg_invoice_lines_account_number_on_finalize;')
+  db.exec(
+    'DROP TRIGGER IF EXISTS trg_invoice_lines_account_number_on_finalize;',
+  )
 
   db.exec(`
     CREATE TABLE invoice_lines_new (
@@ -2457,7 +2696,9 @@ function migration032Programmatic(db: import('better-sqlite3').Database): void {
   `)
 
   // Recreate index (M121)
-  db.exec('CREATE INDEX idx_invoice_lines_invoice ON invoice_lines(invoice_id);')
+  db.exec(
+    'CREATE INDEX idx_invoice_lines_invoice ON invoice_lines(invoice_id);',
+  )
 
   // Recreate trigger (cross-table reference from invoices → invoice_lines)
   db.exec(`
@@ -2512,32 +2753,45 @@ function migration032Programmatic(db: import('better-sqlite3').Database): void {
 function migration032Verify(db: import('better-sqlite3').Database): void {
   // 1. invoice_lines has upper-bound CHECK
   const ilSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='invoice_lines'",
+    )
     .get() as { sql: string }
   if (!ilSchema.sql.includes('9999.99')) {
-    throw new Error('Migration 032 failed: invoice_lines missing quantity upper-bound CHECK')
+    throw new Error(
+      'Migration 032 failed: invoice_lines missing quantity upper-bound CHECK',
+    )
   }
 
   // 2. expense_lines has CHECK with integer bounds
   const elSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='expense_lines'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='expense_lines'",
+    )
     .get() as { sql: string }
   if (!elSchema.sql.includes('9999')) {
-    throw new Error('Migration 032 failed: expense_lines missing quantity upper-bound CHECK')
+    throw new Error(
+      'Migration 032 failed: expense_lines missing quantity upper-bound CHECK',
+    )
   }
 
   // 3. Index recreated
   const idx = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_invoice_lines_invoice'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_invoice_lines_invoice'",
+    )
     .get()
-  if (!idx) throw new Error('Migration 032 failed: idx_invoice_lines_invoice saknas')
+  if (!idx)
+    throw new Error('Migration 032 failed: idx_invoice_lines_invoice saknas')
 
   // 4. Total trigger count unchanged (16 triggers in current schema)
   const triggerCount = db
     .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
     .get() as { cnt: number }
   if (triggerCount.cnt !== 16) {
-    throw new Error(`Migration 032 failed: expected 16 triggers, found ${triggerCount.cnt}`)
+    throw new Error(
+      `Migration 032 failed: expected 16 triggers, found ${triggerCount.cnt}`,
+    )
   }
 }
 
@@ -2561,9 +2815,11 @@ function migration032Verify(db: import('better-sqlite3').Database): void {
 function migration038Programmatic(db: import('better-sqlite3').Database): void {
   // === Idempotency: check if verification_series CHECK already exists ===
   const jeTableInfo = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'",
+    )
     .get() as { sql: string } | undefined
-  const needsJeRebuild = !jeTableInfo?.sql?.includes("verification_series IN")
+  const needsJeRebuild = !jeTableInfo?.sql?.includes('verification_series IN')
 
   // === 1. fixed_assets ===
   // Idempotent via IF NOT EXISTS — running migration twice is safe.
@@ -2681,7 +2937,9 @@ function migration038Programmatic(db: import('better-sqlite3').Database): void {
 
   // Recreate indexes
   db.exec('CREATE INDEX idx_je_date ON journal_entries (journal_date);')
-  db.exec('CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);')
+  db.exec(
+    'CREATE INDEX idx_je_fiscal_year ON journal_entries (fiscal_year_id);',
+  )
   db.exec('CREATE INDEX idx_je_status ON journal_entries (status);')
   db.exec(`
     CREATE UNIQUE INDEX idx_journal_entries_verify_series_unique
@@ -2849,20 +3107,27 @@ function migration038Programmatic(db: import('better-sqlite3').Database): void {
 function migration038Verify(db: import('better-sqlite3').Database): void {
   // 1. fixed_assets + depreciation_schedules exist
   const fixedAssets = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='fixed_assets'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='fixed_assets'",
+    )
     .get()
   if (!fixedAssets) throw new Error('Migration 038 failed: fixed_assets saknas')
 
   const depSchedules = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='depreciation_schedules'")
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='depreciation_schedules'",
+    )
     .get()
-  if (!depSchedules) throw new Error('Migration 038 failed: depreciation_schedules saknas')
+  if (!depSchedules)
+    throw new Error('Migration 038 failed: depreciation_schedules saknas')
 
   // 2. journal_entries has verification_series CHECK
   const jeSchema = db
-    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'")
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'",
+    )
     .get() as { sql: string }
-  if (!jeSchema.sql.includes("verification_series IN")) {
+  if (!jeSchema.sql.includes('verification_series IN')) {
     throw new Error('Migration 038 failed: verification_series CHECK saknas')
   }
 

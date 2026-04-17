@@ -84,7 +84,12 @@ export function PageAccountStatement() {
     setHashParams(params)
   }, [selectedAccount, dateFrom, dateTo])
 
-  const { data: statement, isLoading, isError, error } = useAccountStatement(
+  const {
+    data: statement,
+    isLoading,
+    isError,
+    error,
+  } = useAccountStatement(
     activeFiscalYear?.id,
     selectedAccount || undefined,
     dateFrom || undefined,
@@ -94,7 +99,7 @@ export function PageAccountStatement() {
   const groupedAccounts = useMemo(() => groupAccounts(accounts), [accounts])
   const selectedAccountName = useMemo(() => {
     if (!selectedAccount) return ''
-    const acct = accounts.find(a => a.account_number === selectedAccount)
+    const acct = accounts.find((a) => a.account_number === selectedAccount)
     return acct ? `${acct.account_number} ${acct.name}` : selectedAccount
   }, [selectedAccount, accounts])
 
@@ -140,7 +145,10 @@ export function PageAccountStatement() {
 
       <div className="flex flex-1 flex-col overflow-hidden px-8 py-4">
         {/* Filters */}
-        <div className="mb-4 space-y-3 print:hidden" data-testid="filter-section">
+        <div
+          className="mb-4 space-y-3 print:hidden"
+          data-testid="filter-section"
+        >
           <div className="flex items-center gap-3">
             <label htmlFor="account-select" className="text-sm font-medium">
               Konto:
@@ -155,7 +163,10 @@ export function PageAccountStatement() {
               {Array.from(groupedAccounts.entries())
                 .sort(([a], [b]) => a - b)
                 .map(([cls, accts]) => (
-                  <optgroup key={cls} label={`${cls} — ${ACCOUNT_CLASS_NAMES[cls] ?? ''}`}>
+                  <optgroup
+                    key={cls}
+                    label={`${cls} — ${ACCOUNT_CLASS_NAMES[cls] ?? ''}`}
+                  >
                     {accts.map((a) => (
                       <option key={a.account_number} value={a.account_number}>
                         {a.account_number} {a.name}
@@ -210,7 +221,10 @@ export function PageAccountStatement() {
         ) : isLoading ? (
           <LoadingSpinner />
         ) : isError ? (
-          <div role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div
+            role="alert"
+            className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
             {(error as Error)?.message ?? 'Ett fel uppstod.'}
           </div>
         ) : statement && statement.lines.length === 0 ? (
@@ -240,10 +254,14 @@ export function PageAccountStatement() {
                     </td>
                     <td className="px-3 py-2">{line.description}</td>
                     <td className="px-3 py-2 text-right">
-                      {line.debit_ore > 0 ? formatReportAmount(line.debit_ore) : ''}
+                      {line.debit_ore > 0
+                        ? formatReportAmount(line.debit_ore)
+                        : ''}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {line.credit_ore > 0 ? formatReportAmount(line.credit_ore) : ''}
+                      {line.credit_ore > 0
+                        ? formatReportAmount(line.credit_ore)
+                        : ''}
                     </td>
                     <td className="px-3 py-2 text-right">
                       {formatReportAmount(Math.abs(line.running_balance_ore))}
@@ -264,7 +282,9 @@ export function PageAccountStatement() {
                     {formatReportAmount(statement.summary.total_credit_ore)}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    {formatReportAmount(Math.abs(statement.summary.closing_balance_ore))}
+                    {formatReportAmount(
+                      Math.abs(statement.summary.closing_balance_ore),
+                    )}
                     {balanceSuffix(statement.summary.closing_balance_ore)}
                   </td>
                 </tr>

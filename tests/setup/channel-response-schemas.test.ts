@@ -16,9 +16,13 @@ describe('F59 — per-channel response-schema validation', () => {
         success: true,
         data: [
           {
-            id: 1, company_id: 1, year_label: '2026',
-            start_date: '2026-01-01', end_date: '2026-12-31',
-            is_closed: 0, annual_report_status: 'not_started',
+            id: 1,
+            company_id: 1,
+            year_label: '2026',
+            start_date: '2026-01-01',
+            end_date: '2026-12-31',
+            is_closed: 0,
+            annual_report_status: 'not_started',
           },
         ],
       })

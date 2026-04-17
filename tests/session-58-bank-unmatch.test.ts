@@ -52,8 +52,12 @@ function seed(db: Database.Database): Seeded {
     default_payment_terms: 30,
   })
   if (!supp.success) throw new Error(supp.error)
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
-  const vatIn = db.prepare("SELECT id FROM vat_codes WHERE code='IP1'").get() as { id: number }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
+  const vatIn = db
+    .prepare("SELECT id FROM vat_codes WHERE code='IP1'")
+    .get() as { id: number }
   return {
     companyId: 1,
     fyId: 1,
@@ -64,7 +68,11 @@ function seed(db: Database.Database): Seeded {
   }
 }
 
-function createUnpaidInvoice(db: Database.Database, s: Seeded, netOre: number): { id: number; totalOre: number } {
+function createUnpaidInvoice(
+  db: Database.Database,
+  s: Seeded,
+  netOre: number,
+): { id: number; totalOre: number } {
   const draft = saveInvoiceDraft(db, {
     counterparty_id: s.custId,
     fiscal_year_id: s.fyId,
@@ -85,11 +93,17 @@ function createUnpaidInvoice(db: Database.Database, s: Seeded, netOre: number): 
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeInvoice(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
-  const row = db.prepare('SELECT total_amount_ore FROM invoices WHERE id=?').get(draft.data.id) as { total_amount_ore: number }
+  const row = db
+    .prepare('SELECT total_amount_ore FROM invoices WHERE id=?')
+    .get(draft.data.id) as { total_amount_ore: number }
   return { id: draft.data.id, totalOre: row.total_amount_ore }
 }
 
-function createUnpaidExpense(db: Database.Database, s: Seeded, netOre: number): { id: number; totalOre: number } {
+function createUnpaidExpense(
+  db: Database.Database,
+  s: Seeded,
+  netOre: number,
+): { id: number; totalOre: number } {
   const draft = saveExpenseDraft(db, {
     fiscal_year_id: s.fyId,
     counterparty_id: s.suppId,
@@ -97,13 +111,21 @@ function createUnpaidExpense(db: Database.Database, s: Seeded, netOre: number): 
     due_date: '2026-03-31',
     description: 'Utg',
     lines: [
-      { description: 'Pennor', account_number: '6110', quantity: 1, unit_price_ore: netOre, vat_code_id: s.vatInId },
+      {
+        description: 'Pennor',
+        account_number: '6110',
+        quantity: 1,
+        unit_price_ore: netOre,
+        vat_code_id: s.vatInId,
+      },
     ],
   })
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeExpense(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
-  const row = db.prepare('SELECT total_amount_ore FROM expenses WHERE id=?').get(draft.data.id) as { total_amount_ore: number }
+  const row = db
+    .prepare('SELECT total_amount_ore FROM expenses WHERE id=?')
+    .get(draft.data.id) as { total_amount_ore: number }
   return { id: draft.data.id, totalOre: row.total_amount_ore }
 }
 
@@ -119,7 +141,13 @@ function insertBankTx(
          statement_date, opening_balance_ore, closing_balance_ore, source_format, import_file_hash)
        VALUES (?, ?, 'STMT', 'SE4550000000058398257466', ?, 0, ?, 'camt.053', ?)`,
     )
-    .run(s.companyId, s.fyId, valueDate, amountOre, `h-${valueDate}-${amountOre}-${Math.random()}`)
+    .run(
+      s.companyId,
+      s.fyId,
+      valueDate,
+      amountOre,
+      `h-${valueDate}-${amountOre}-${Math.random()}`,
+    )
   const txRes = db
     .prepare(
       `INSERT INTO bank_transactions (bank_statement_id, booking_date, value_date, amount_ore)
@@ -153,11 +181,16 @@ describe('S58 C1 — bank-unmatch-service', () => {
     const jeId = match.data.journal_entry_id
 
     // Radera först reconciliation + payment (frigör FK + guard)
-    db.prepare('DELETE FROM bank_reconciliation_matches WHERE bank_transaction_id = ?').run(txId)
+    db.prepare(
+      'DELETE FROM bank_reconciliation_matches WHERE bank_transaction_id = ?',
+    ).run(txId)
     db.prepare('DELETE FROM invoice_payments WHERE id = ?').run(paymentId)
 
     // Nu ska correction gå igenom
-    const corr = createCorrectionEntry(db, { journal_entry_id: jeId, fiscal_year_id: s.fyId })
+    const corr = createCorrectionEntry(db, {
+      journal_entry_id: jeId,
+      fiscal_year_id: s.fyId,
+    })
     expect(corr.success).toBe(true)
     if (!corr.success) return
     expect(corr.data.correction_entry_id).toBeGreaterThan(0)
@@ -176,7 +209,9 @@ describe('S58 C1 — bank-unmatch-service', () => {
     if (!match.success) throw new Error(match.error)
 
     // Verifiera pre-state
-    const preInvoice = db.prepare('SELECT paid_amount_ore, status FROM invoices WHERE id=?').get(inv.id) as { paid_amount_ore: number; status: string }
+    const preInvoice = db
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id=?')
+      .get(inv.id) as { paid_amount_ore: number; status: string }
     expect(preInvoice.paid_amount_ore).toBe(inv.totalOre)
     expect(preInvoice.status).toBe('paid')
 
@@ -188,24 +223,38 @@ describe('S58 C1 — bank-unmatch-service', () => {
     expect(unmatch.data.unmatched_payment_id).toBe(match.data.payment_id)
 
     // Payment borta
-    const payment = db.prepare('SELECT 1 FROM invoice_payments WHERE id=?').get(match.data.payment_id)
+    const payment = db
+      .prepare('SELECT 1 FROM invoice_payments WHERE id=?')
+      .get(match.data.payment_id)
     expect(payment).toBeUndefined()
 
     // Reconciliation borta
-    const rec = db.prepare('SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?').get(txId)
+    const rec = db
+      .prepare(
+        'SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?',
+      )
+      .get(txId)
     expect(rec).toBeUndefined()
 
     // Invoice paid_amount=0, status=unpaid
-    const postInvoice = db.prepare('SELECT paid_amount_ore, status FROM invoices WHERE id=?').get(inv.id) as { paid_amount_ore: number; status: string }
+    const postInvoice = db
+      .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id=?')
+      .get(inv.id) as { paid_amount_ore: number; status: string }
     expect(postInvoice.paid_amount_ore).toBe(0)
     expect(postInvoice.status).toBe('unpaid')
 
     // TX unmatched
-    const tx = db.prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?').get(txId) as { reconciliation_status: string }
+    const tx = db
+      .prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?')
+      .get(txId) as { reconciliation_status: string }
     expect(tx.reconciliation_status).toBe('unmatched')
 
     // Korrigeringsverifikat finns i C-serie
-    const corr = db.prepare('SELECT verification_series FROM journal_entries WHERE id=?').get(unmatch.data.correction_journal_entry_id) as { verification_series: string }
+    const corr = db
+      .prepare('SELECT verification_series FROM journal_entries WHERE id=?')
+      .get(unmatch.data.correction_journal_entry_id) as {
+      verification_series: string
+    }
     expect(corr.verification_series).toBe('C')
   })
 
@@ -225,11 +274,15 @@ describe('S58 C1 — bank-unmatch-service', () => {
     expect(unmatch.success).toBe(true)
     if (!unmatch.success) return
 
-    const post = db.prepare('SELECT paid_amount_ore, status FROM expenses WHERE id=?').get(exp.id) as { paid_amount_ore: number; status: string }
+    const post = db
+      .prepare('SELECT paid_amount_ore, status FROM expenses WHERE id=?')
+      .get(exp.id) as { paid_amount_ore: number; status: string }
     expect(post.paid_amount_ore).toBe(0)
     expect(post.status).toBe('unpaid')
 
-    const payment = db.prepare('SELECT 1 FROM expense_payments WHERE id=?').get(match.data.payment_id)
+    const payment = db
+      .prepare('SELECT 1 FROM expense_payments WHERE id=?')
+      .get(match.data.payment_id)
     expect(payment).toBeUndefined()
   })
 
@@ -258,10 +311,16 @@ describe('S58 C1 — bank-unmatch-service', () => {
     expect(unmatch.data.unmatched_fee_entry_id).toBe(feeResult.journal_entry_id)
     expect(unmatch.data.unmatched_payment_id).toBeNull()
 
-    const rec = db.prepare('SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?').get(txId)
+    const rec = db
+      .prepare(
+        'SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?',
+      )
+      .get(txId)
     expect(rec).toBeUndefined()
 
-    const tx = db.prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?').get(txId) as { reconciliation_status: string }
+    const tx = db
+      .prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?')
+      .get(txId) as { reconciliation_status: string }
     expect(tx.reconciliation_status).toBe('unmatched')
   })
 
@@ -293,7 +352,9 @@ describe('S58 C1 — bank-unmatch-service', () => {
          VALUES (?, 'invoice', '2026-03-15', '1930', 'completed')`,
       )
       .run(s.fyId)
-    db.prepare('UPDATE invoice_payments SET payment_batch_id = ? WHERE id = ?').run(Number(batchRes.lastInsertRowid), match.data.payment_id)
+    db.prepare(
+      'UPDATE invoice_payments SET payment_batch_id = ? WHERE id = ?',
+    ).run(Number(batchRes.lastInsertRowid), match.data.payment_id)
 
     const result = unmatchBankTransaction(db, { bank_transaction_id: txId })
     expect(result.success).toBe(false)
@@ -314,7 +375,9 @@ describe('S58 C1 — bank-unmatch-service', () => {
     if (!match.success) throw new Error(match.error)
 
     // Stäng mars
-    db.prepare('UPDATE accounting_periods SET is_closed = 1 WHERE period_number = 3 AND fiscal_year_id = ?').run(s.fyId)
+    db.prepare(
+      'UPDATE accounting_periods SET is_closed = 1 WHERE period_number = 3 AND fiscal_year_id = ?',
+    ).run(s.fyId)
 
     const result = unmatchBankTransaction(db, { bank_transaction_id: txId })
     expect(result.success).toBe(false)
@@ -376,13 +439,21 @@ describe('S58 C1 — bank-unmatch-service', () => {
     db.prepare('UPDATE fiscal_years SET is_closed = 0 WHERE id = ?').run(s.fyId)
 
     // State ska vara oförändrat
-    const payment = db.prepare('SELECT 1 FROM invoice_payments WHERE id=?').get(match.data.payment_id)
+    const payment = db
+      .prepare('SELECT 1 FROM invoice_payments WHERE id=?')
+      .get(match.data.payment_id)
     expect(payment).toBeDefined() // payment-raden ska finnas kvar
 
-    const rec = db.prepare('SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?').get(txId)
+    const rec = db
+      .prepare(
+        'SELECT 1 FROM bank_reconciliation_matches WHERE bank_transaction_id=?',
+      )
+      .get(txId)
     expect(rec).toBeDefined() // reconciliation-raden ska finnas kvar
 
-    const tx = db.prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?').get(txId) as { reconciliation_status: string }
+    const tx = db
+      .prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?')
+      .get(txId) as { reconciliation_status: string }
     expect(tx.reconciliation_status).toBe('matched') // TX ska fortfarande vara matched
   })
 })

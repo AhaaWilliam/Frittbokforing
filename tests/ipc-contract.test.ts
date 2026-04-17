@@ -75,13 +75,17 @@ function invalid(schema: { parse: (v: unknown) => unknown }, data: unknown) {
 // ── Fiscal Period ──────────────────────────────────────────────────
 
 describe('FiscalPeriodListInputSchema', () => {
-  it('accepts valid input', () => valid(FiscalPeriodListInputSchema, { fiscal_year_id: 1 }))
-  it('rejects missing fiscal_year_id', () => invalid(FiscalPeriodListInputSchema, {}))
-  it('rejects non-integer', () => invalid(FiscalPeriodListInputSchema, { fiscal_year_id: 1.5 }))
+  it('accepts valid input', () =>
+    valid(FiscalPeriodListInputSchema, { fiscal_year_id: 1 }))
+  it('rejects missing fiscal_year_id', () =>
+    invalid(FiscalPeriodListInputSchema, {}))
+  it('rejects non-integer', () =>
+    invalid(FiscalPeriodListInputSchema, { fiscal_year_id: 1.5 }))
 })
 
 describe('PeriodActionInputSchema', () => {
-  it('accepts valid input', () => valid(PeriodActionInputSchema, { period_id: 1 }))
+  it('accepts valid input', () =>
+    valid(PeriodActionInputSchema, { period_id: 1 }))
   it('rejects zero', () => invalid(PeriodActionInputSchema, { period_id: 0 }))
 })
 
@@ -98,19 +102,26 @@ describe('CreateCompanyInputSchema', () => {
     fiscal_year_end: '2026-12-31',
   }
 
-  it('accepts valid company', () => valid(CreateCompanyInputSchema, validCompany))
-  it('rejects short name', () => invalid(CreateCompanyInputSchema, { ...validCompany, name: 'A' }))
-  it('rejects bad org_number format', () => invalid(CreateCompanyInputSchema, { ...validCompany, org_number: '123' }))
-  it('rejects low share_capital', () => invalid(CreateCompanyInputSchema, { ...validCompany, share_capital: 100 }))
+  it('accepts valid company', () =>
+    valid(CreateCompanyInputSchema, validCompany))
+  it('rejects short name', () =>
+    invalid(CreateCompanyInputSchema, { ...validCompany, name: 'A' }))
+  it('rejects bad org_number format', () =>
+    invalid(CreateCompanyInputSchema, { ...validCompany, org_number: '123' }))
+  it('rejects low share_capital', () =>
+    invalid(CreateCompanyInputSchema, { ...validCompany, share_capital: 100 }))
 })
 
 describe('UpdateCompanyInputSchema', () => {
-  it('accepts valid update', () => valid(UpdateCompanyInputSchema, { vat_number: 'SE556036079301' }))
-  it('rejects extra fields', () => invalid(UpdateCompanyInputSchema, { name: 'new' }))
+  it('accepts valid update', () =>
+    valid(UpdateCompanyInputSchema, { vat_number: 'SE556036079301' }))
+  it('rejects extra fields', () =>
+    invalid(UpdateCompanyInputSchema, { name: 'new' }))
 })
 
 describe('VatNumberSchema', () => {
-  it('accepts valid VAT', () => expect(VatNumberSchema.parse('SE123456789012')).toBe('SE123456789012'))
+  it('accepts valid VAT', () =>
+    expect(VatNumberSchema.parse('SE123456789012')).toBe('SE123456789012'))
   it('accepts null', () => expect(VatNumberSchema.parse(null)).toBeNull())
   it('rejects bad format', () => invalid(VatNumberSchema, 'abc'))
 })
@@ -125,15 +136,25 @@ describe('Counterparty schemas', () => {
     default_payment_terms: 30,
   }
 
-  it('CreateCounterpartyInputSchema accepts valid', () => valid(CreateCounterpartyInputSchema, validCounterparty))
-  it('CreateCounterpartyInputSchema rejects empty name', () => invalid(CreateCounterpartyInputSchema, { ...validCounterparty, name: '' }))
-  it('CreateCounterpartyInputSchema rejects extra fields', () => invalid(CreateCounterpartyInputSchema, { ...validCounterparty, foo: 'bar' }))
+  it('CreateCounterpartyInputSchema accepts valid', () =>
+    valid(CreateCounterpartyInputSchema, validCounterparty))
+  it('CreateCounterpartyInputSchema rejects empty name', () =>
+    invalid(CreateCounterpartyInputSchema, { ...validCounterparty, name: '' }))
+  it('CreateCounterpartyInputSchema rejects extra fields', () =>
+    invalid(CreateCounterpartyInputSchema, {
+      ...validCounterparty,
+      foo: 'bar',
+    }))
 
-  it('UpdateCounterpartyInputSchema requires id', () => invalid(UpdateCounterpartyInputSchema, { name: 'Updated' }))
-  it('UpdateCounterpartyInputSchema accepts valid', () => valid(UpdateCounterpartyInputSchema, { id: 1, name: 'Updated' }))
+  it('UpdateCounterpartyInputSchema requires id', () =>
+    invalid(UpdateCounterpartyInputSchema, { name: 'Updated' }))
+  it('UpdateCounterpartyInputSchema accepts valid', () =>
+    valid(UpdateCounterpartyInputSchema, { id: 1, name: 'Updated' }))
 
-  it('CounterpartyListInputSchema accepts empty', () => valid(CounterpartyListInputSchema, {}))
-  it('CounterpartyIdSchema rejects zero', () => invalid(CounterpartyIdSchema, { id: 0 }))
+  it('CounterpartyListInputSchema accepts empty', () =>
+    valid(CounterpartyListInputSchema, {}))
+  it('CounterpartyIdSchema rejects zero', () =>
+    invalid(CounterpartyIdSchema, { id: 0 }))
 })
 
 // ── Product ────────────────────────────────────────────────────────
@@ -148,24 +169,40 @@ describe('Product schemas', () => {
     article_type: 'service',
   }
 
-  it('CreateProductInputSchema accepts valid', () => valid(CreateProductInputSchema, validProduct))
-  it('CreateProductInputSchema rejects negative price', () => invalid(CreateProductInputSchema, { ...validProduct, default_price_ore: -1 }))
-  it('CreateProductInputSchema rejects extra fields', () => invalid(CreateProductInputSchema, { ...validProduct, extra: true }))
+  it('CreateProductInputSchema accepts valid', () =>
+    valid(CreateProductInputSchema, validProduct))
+  it('CreateProductInputSchema rejects negative price', () =>
+    invalid(CreateProductInputSchema, {
+      ...validProduct,
+      default_price_ore: -1,
+    }))
+  it('CreateProductInputSchema rejects extra fields', () =>
+    invalid(CreateProductInputSchema, { ...validProduct, extra: true }))
 
-  it('UpdateProductInputSchema requires id', () => invalid(UpdateProductInputSchema, { name: 'X' }))
-  it('ProductListInputSchema accepts empty', () => valid(ProductListInputSchema, {}))
-  it('ProductIdSchema rejects string id', () => invalid(ProductIdSchema, { id: 'abc' }))
+  it('UpdateProductInputSchema requires id', () =>
+    invalid(UpdateProductInputSchema, { name: 'X' }))
+  it('ProductListInputSchema accepts empty', () =>
+    valid(ProductListInputSchema, {}))
+  it('ProductIdSchema rejects string id', () =>
+    invalid(ProductIdSchema, { id: 'abc' }))
 })
 
 // ── Pricing ────────────────────────────────────────────────────────
 
 describe('Pricing schemas', () => {
   it('SetCustomerPriceInputSchema accepts valid', () =>
-    valid(SetCustomerPriceInputSchema, { product_id: 1, counterparty_id: 2, price_ore: 50000 }))
+    valid(SetCustomerPriceInputSchema, {
+      product_id: 1,
+      counterparty_id: 2,
+      price_ore: 50000,
+    }))
   it('RemoveCustomerPriceInputSchema rejects missing field', () =>
     invalid(RemoveCustomerPriceInputSchema, { product_id: 1 }))
   it('GetPriceForCustomerInputSchema accepts valid', () =>
-    valid(GetPriceForCustomerInputSchema, { product_id: 1, counterparty_id: 2 }))
+    valid(GetPriceForCustomerInputSchema, {
+      product_id: 1,
+      counterparty_id: 2,
+    }))
 })
 
 // ── Accounts ───────────────────────────────────────────────────────
@@ -178,13 +215,31 @@ describe('Account schemas', () => {
   it('AccountListAllInputSchema accepts empty', () =>
     valid(AccountListAllInputSchema, {}))
   it('AccountCreateInputSchema accepts valid', () =>
-    valid(AccountCreateInputSchema, { account_number: '1930', name: 'Bank', k2_allowed: true, k3_only: false }))
+    valid(AccountCreateInputSchema, {
+      account_number: '1930',
+      name: 'Bank',
+      k2_allowed: true,
+      k3_only: false,
+    }))
   it('AccountCreateInputSchema rejects bad number', () =>
-    invalid(AccountCreateInputSchema, { account_number: 'ab', name: 'X', k2_allowed: true, k3_only: false }))
+    invalid(AccountCreateInputSchema, {
+      account_number: 'ab',
+      name: 'X',
+      k2_allowed: true,
+      k3_only: false,
+    }))
   it('AccountUpdateInputSchema accepts valid', () =>
-    valid(AccountUpdateInputSchema, { account_number: '1930', name: 'Bank upd', k2_allowed: true, k3_only: false }))
+    valid(AccountUpdateInputSchema, {
+      account_number: '1930',
+      name: 'Bank upd',
+      k2_allowed: true,
+      k3_only: false,
+    }))
   it('AccountToggleActiveInputSchema accepts valid', () =>
-    valid(AccountToggleActiveInputSchema, { account_number: '1930', is_active: true }))
+    valid(AccountToggleActiveInputSchema, {
+      account_number: '1930',
+      is_active: true,
+    }))
 })
 
 // ── Invoice Draft ──────────────────────────────────────────────────
@@ -209,11 +264,13 @@ describe('Invoice schemas', () => {
     lines: [validLine],
   }
 
-  it('InvoiceDraftLineSchema accepts valid', () => valid(InvoiceDraftLineSchema, validLine))
+  it('InvoiceDraftLineSchema accepts valid', () =>
+    valid(InvoiceDraftLineSchema, validLine))
   it('InvoiceDraftLineSchema rejects zero quantity', () =>
     invalid(InvoiceDraftLineSchema, { ...validLine, quantity: 0 }))
 
-  it('SaveDraftInputSchema accepts valid', () => valid(SaveDraftInputSchema, validDraft))
+  it('SaveDraftInputSchema accepts valid', () =>
+    valid(SaveDraftInputSchema, validDraft))
   it('SaveDraftInputSchema rejects empty lines', () =>
     invalid(SaveDraftInputSchema, { ...validDraft, lines: [] }))
 
@@ -221,9 +278,12 @@ describe('Invoice schemas', () => {
     invalid(UpdateDraftInputSchema, validDraft))
 
   it('InvoiceIdSchema accepts valid', () => valid(InvoiceIdSchema, { id: 1 }))
-  it('DraftListInputSchema accepts valid', () => valid(DraftListInputSchema, { fiscal_year_id: 1 }))
-  it('NextNumberInputSchema accepts valid', () => valid(NextNumberInputSchema, { fiscal_year_id: 1 }))
-  it('FinalizeInvoiceInputSchema accepts valid', () => valid(FinalizeInvoiceInputSchema, { id: 1 }))
+  it('DraftListInputSchema accepts valid', () =>
+    valid(DraftListInputSchema, { fiscal_year_id: 1 }))
+  it('NextNumberInputSchema accepts valid', () =>
+    valid(NextNumberInputSchema, { fiscal_year_id: 1 }))
+  it('FinalizeInvoiceInputSchema accepts valid', () =>
+    valid(FinalizeInvoiceInputSchema, { id: 1 }))
 })
 
 // ── Sent Invoice ───────────────────────────────────────────────────
@@ -286,18 +346,24 @@ describe('Expense schemas', () => {
     lines: [validExpenseLine],
   }
 
-  it('SaveExpenseDraftSchema accepts valid', () => valid(SaveExpenseDraftSchema, validExpense))
+  it('SaveExpenseDraftSchema accepts valid', () =>
+    valid(SaveExpenseDraftSchema, validExpense))
   it('SaveExpenseDraftSchema rejects empty lines', () =>
     invalid(SaveExpenseDraftSchema, { ...validExpense, lines: [] }))
   it('SaveExpenseDraftSchema rejects missing description', () =>
     invalid(SaveExpenseDraftSchema, { ...validExpense, description: '' }))
 
   it('UpdateExpenseDraftSchema requires id', () =>
-    invalid(UpdateExpenseDraftSchema, { ...validExpense, fiscal_year_id: undefined }))
+    invalid(UpdateExpenseDraftSchema, {
+      ...validExpense,
+      fiscal_year_id: undefined,
+    }))
 
   it('ExpenseIdSchema accepts valid', () => valid(ExpenseIdSchema, { id: 1 }))
-  it('ListExpenseDraftsSchema accepts valid', () => valid(ListExpenseDraftsSchema, { fiscal_year_id: 1 }))
-  it('FinalizeExpenseSchema accepts valid', () => valid(FinalizeExpenseSchema, { id: 1 }))
+  it('ListExpenseDraftsSchema accepts valid', () =>
+    valid(ListExpenseDraftsSchema, { fiscal_year_id: 1 }))
+  it('FinalizeExpenseSchema accepts valid', () =>
+    valid(FinalizeExpenseSchema, { id: 1 }))
 })
 
 describe('PayExpenseInputSchema', () => {
@@ -330,7 +396,8 @@ describe('GetExpenseSchema', () => {
 // ── Dashboard / Tax / VAT ──────────────────────────────────────────
 
 describe('DashboardSummaryInputSchema', () => {
-  it('accepts valid', () => valid(DashboardSummaryInputSchema, { fiscalYearId: 1 }))
+  it('accepts valid', () =>
+    valid(DashboardSummaryInputSchema, { fiscalYearId: 1 }))
   it('rejects missing field', () => invalid(DashboardSummaryInputSchema, {}))
 })
 
@@ -345,11 +412,18 @@ describe('VatReportInputSchema', () => {
 // ── Export ──────────────────────────────────────────────────────────
 
 describe('Export schemas', () => {
-  it('ExportSie5Schema accepts valid', () => valid(ExportSie5Schema, { fiscal_year_id: 1 }))
-  it('ExportExcelSchema accepts valid', () => valid(ExportExcelSchema, { fiscal_year_id: 1 }))
+  it('ExportSie5Schema accepts valid', () =>
+    valid(ExportSie5Schema, { fiscal_year_id: 1 }))
+  it('ExportExcelSchema accepts valid', () =>
+    valid(ExportExcelSchema, { fiscal_year_id: 1 }))
   it('ExportExcelSchema accepts with date range', () =>
-    valid(ExportExcelSchema, { fiscal_year_id: 1, start_date: '2026-01-01', end_date: '2026-12-31' }))
-  it('ExportSie4Schema accepts valid', () => valid(ExportSie4Schema, { fiscal_year_id: 1 }))
+    valid(ExportExcelSchema, {
+      fiscal_year_id: 1,
+      start_date: '2026-01-01',
+      end_date: '2026-12-31',
+    }))
+  it('ExportSie4Schema accepts valid', () =>
+    valid(ExportSie4Schema, { fiscal_year_id: 1 }))
 })
 
 // ── Manual Entry ───────────────────────────────────────────────────
@@ -368,9 +442,13 @@ describe('Manual Entry schemas', () => {
   it('UpdateManualEntryDraftSchema requires id', () =>
     invalid(UpdateManualEntryDraftSchema, validManualEntry))
   it('UpdateManualEntryDraftSchema accepts valid', () =>
-    valid(UpdateManualEntryDraftSchema, { id: 1, lines: validManualEntry.lines }))
+    valid(UpdateManualEntryDraftSchema, {
+      id: 1,
+      lines: validManualEntry.lines,
+    }))
 
-  it('ManualEntryIdSchema accepts valid', () => valid(ManualEntryIdSchema, { id: 1 }))
+  it('ManualEntryIdSchema accepts valid', () =>
+    valid(ManualEntryIdSchema, { id: 1 }))
   it('ManualEntryFinalizeSchema accepts valid', () =>
     valid(ManualEntryFinalizeSchema, { id: 1, fiscal_year_id: 1 }))
   it('ManualEntryListSchema accepts valid', () =>
@@ -382,7 +460,10 @@ describe('Manual Entry schemas', () => {
 describe('ReportRequestSchema', () => {
   it('accepts valid', () => valid(ReportRequestSchema, { fiscal_year_id: 1 }))
   it('accepts with date range', () =>
-    valid(ReportRequestSchema, { fiscal_year_id: 1, date_range: { from: '2026-01-01', to: '2026-12-31' } }))
+    valid(ReportRequestSchema, {
+      fiscal_year_id: 1,
+      date_range: { from: '2026-01-01', to: '2026-12-31' },
+    }))
   it('rejects extra fields', () =>
     invalid(ReportRequestSchema, { fiscal_year_id: 1, extra: true }))
 })
@@ -410,7 +491,10 @@ describe('Invoice PDF schemas', () => {
   it('GenerateInvoicePdfSchema accepts valid', () =>
     valid(GenerateInvoicePdfSchema, { invoiceId: 1 }))
   it('SaveInvoicePdfSchema accepts valid', () =>
-    valid(SaveInvoicePdfSchema, { data: 'base64data', defaultFileName: 'invoice.pdf' }))
+    valid(SaveInvoicePdfSchema, {
+      data: 'base64data',
+      defaultFileName: 'invoice.pdf',
+    }))
   it('SaveInvoicePdfSchema rejects empty data', () =>
     invalid(SaveInvoicePdfSchema, { data: '', defaultFileName: 'invoice.pdf' }))
 })
@@ -421,7 +505,10 @@ describe('Fiscal Year schemas', () => {
   it('FiscalYearCreateNewInputSchema accepts valid', () =>
     valid(FiscalYearCreateNewInputSchema, { confirmBookResult: true }))
   it('FiscalYearCreateNewInputSchema accepts with netResultOre', () =>
-    valid(FiscalYearCreateNewInputSchema, { confirmBookResult: true, netResultOre: 100000 }))
+    valid(FiscalYearCreateNewInputSchema, {
+      confirmBookResult: true,
+      netResultOre: 100000,
+    }))
   it('FiscalYearSwitchInputSchema accepts valid', () =>
     valid(FiscalYearSwitchInputSchema, { fiscalYearId: 2 }))
   it('NetResultInputSchema accepts valid', () =>
@@ -432,6 +519,8 @@ describe('Fiscal Year schemas', () => {
 
 describe('VatCodeListInputSchema', () => {
   it('accepts empty', () => valid(VatCodeListInputSchema, {}))
-  it('accepts with direction', () => valid(VatCodeListInputSchema, { direction: 'outgoing' }))
-  it('rejects invalid direction', () => invalid(VatCodeListInputSchema, { direction: 'both' }))
+  it('accepts with direction', () =>
+    valid(VatCodeListInputSchema, { direction: 'outgoing' }))
+  it('rejects invalid direction', () =>
+    invalid(VatCodeListInputSchema, { direction: 'both' }))
 })

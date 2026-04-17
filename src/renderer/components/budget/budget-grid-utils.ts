@@ -1,7 +1,11 @@
 export type GridState = Record<string, Record<number, number>>
 
 export function buildGridFromTargets(
-  targets: Array<{ line_id: string; period_number: number; amount_ore: number }>,
+  targets: Array<{
+    line_id: string
+    period_number: number
+    amount_ore: number
+  }>,
 ): GridState {
   const grid: GridState = {}
   for (const t of targets) {

@@ -34,7 +34,13 @@ function insertTx(
          statement_date, opening_balance_ore, closing_balance_ore, source_format, import_file_hash)
        VALUES (?, ?, 'STMT', 'SE4550000000058398257466', ?, 0, ?, 'camt.053', ?)`,
     )
-    .run(s.companyId, s.fyId, valueDate, amountOre, `h-${valueDate}-${amountOre}`)
+    .run(
+      s.companyId,
+      s.fyId,
+      valueDate,
+      amountOre,
+      `h-${valueDate}-${amountOre}`,
+    )
   const statementId = Number(stmtRes.lastInsertRowid)
   const txRes = db
     .prepare(
@@ -130,7 +136,7 @@ describe('S58 A4 — bank-fee-entry-service', () => {
 
     const match = db
       .prepare(
-        "SELECT matched_entity_type, fee_journal_entry_id, match_method FROM bank_reconciliation_matches WHERE bank_transaction_id = ?",
+        'SELECT matched_entity_type, fee_journal_entry_id, match_method FROM bank_reconciliation_matches WHERE bank_transaction_id = ?',
       )
       .get(txId) as {
       matched_entity_type: string
@@ -142,7 +148,9 @@ describe('S58 A4 — bank-fee-entry-service', () => {
     expect(match.match_method).toBe('auto_fee')
 
     const tx = db
-      .prepare('SELECT reconciliation_status FROM bank_transactions WHERE id = ?')
+      .prepare(
+        'SELECT reconciliation_status FROM bank_transactions WHERE id = ?',
+      )
       .get(txId) as { reconciliation_status: string }
     expect(tx.reconciliation_status).toBe('matched')
   })
@@ -265,7 +273,9 @@ describe('S58 A4 — bank-fee-entry-service', () => {
       thrown = err
     }
     expect(thrown).toMatchObject({ code: 'VALIDATION_ERROR', field: 'date' })
-    expect((thrown as { error: string }).error).toMatch(/2026-02-15.*före.*2026-03-15/)
+    expect((thrown as { error: string }).error).toMatch(
+      /2026-02-15.*före.*2026-03-15/,
+    )
 
     // Skippa chronology → passerar
     expect(() =>

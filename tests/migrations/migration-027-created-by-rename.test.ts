@@ -9,7 +9,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     const needsFkOff = i === 20 || i === 21 || i === 22
     if (needsFkOff) testDb.pragma('foreign_keys = OFF')
@@ -24,7 +28,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -41,7 +47,11 @@ describe('Migration 027: journal_entries.created_by → created_by_id', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(26)
 
     // Verify old column exists
-    const oldCols = (db.prepare('PRAGMA table_info(journal_entries)').all() as { name: string }[]).map(c => c.name)
+    const oldCols = (
+      db.prepare('PRAGMA table_info(journal_entries)').all() as {
+        name: string
+      }[]
+    ).map((c) => c.name)
     expect(oldCols).toContain('created_by')
     expect(oldCols).not.toContain('created_by_id')
 
@@ -54,33 +64,49 @@ describe('Migration 027: journal_entries.created_by → created_by_id', () => {
     `)
 
     // Insert two journal entries: one with created_by=1, one with NULL
-    db.prepare(`
+    db.prepare(
+      `
       INSERT INTO journal_entries (id, company_id, fiscal_year_id, journal_date, description, status, created_by)
         VALUES (1, 1, 1, '2024-01-15', 'Med skapare', 'draft', 1)
-    `).run()
-    db.prepare(`
+    `,
+    ).run()
+    db.prepare(
+      `
       INSERT INTO journal_entries (id, company_id, fiscal_year_id, journal_date, description, status, created_by)
         VALUES (2, 1, 1, '2024-02-15', 'Utan skapare', 'draft', NULL)
-    `).run()
+    `,
+    ).run()
 
     // Run migration 027
     runMigrations(db, 27, 27)
     expect(db.pragma('user_version', { simple: true })).toBe(27)
 
     // Verify new column exists and old is gone
-    const newCols = (db.prepare('PRAGMA table_info(journal_entries)').all() as { name: string }[]).map(c => c.name)
+    const newCols = (
+      db.prepare('PRAGMA table_info(journal_entries)').all() as {
+        name: string
+      }[]
+    ).map((c) => c.name)
     expect(newCols).toContain('created_by_id')
     expect(newCols).not.toContain('created_by')
 
     // Verify data preserved
-    const row1 = db.prepare('SELECT created_by_id FROM journal_entries WHERE id = 1').get() as { created_by_id: number | null }
+    const row1 = db
+      .prepare('SELECT created_by_id FROM journal_entries WHERE id = 1')
+      .get() as { created_by_id: number | null }
     expect(row1.created_by_id).toBe(1)
 
-    const row2 = db.prepare('SELECT created_by_id FROM journal_entries WHERE id = 2').get() as { created_by_id: number | null }
+    const row2 = db
+      .prepare('SELECT created_by_id FROM journal_entries WHERE id = 2')
+      .get() as { created_by_id: number | null }
     expect(row2.created_by_id).toBeNull()
 
     // Verify FK still works — created_by_id references users(id)
-    const schema = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'").get() as { sql: string }
+    const schema = db
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'",
+      )
+      .get() as { sql: string }
     expect(schema.sql).toContain('created_by_id')
 
     // Verify FK integrity
@@ -92,7 +118,13 @@ describe('Migration 027: journal_entries.created_by → created_by_id', () => {
     expect(integrity).toBe('ok')
 
     // Verify trigger count unchanged (12)
-    const triggerCount = (db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'").get() as { cnt: number }).cnt
+    const triggerCount = (
+      db
+        .prepare(
+          "SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'",
+        )
+        .get() as { cnt: number }
+    ).cnt
     expect(triggerCount).toBe(12)
   })
 })

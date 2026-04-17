@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import {
-  MAX_QTY_INVOICE, MAX_QTY_EXPENSE,
-  ERR_MSG_MAX_QTY_INVOICE, ERR_MSG_MAX_QTY_EXPENSE,
-  BFL_ALLOWED_START_MONTHS, ERR_MSG_INVALID_FY_START_MONTH,
+  MAX_QTY_INVOICE,
+  MAX_QTY_EXPENSE,
+  ERR_MSG_MAX_QTY_INVOICE,
+  ERR_MSG_MAX_QTY_EXPENSE,
+  BFL_ALLOWED_START_MONTHS,
+  ERR_MSG_INVALID_FY_START_MONTH,
 } from './constants'
 
 /**
@@ -82,7 +85,9 @@ export const CreateCompanyInputSchema = z
   .refine(
     (data) => {
       const startMonth = parseInt(data.fiscal_year_start.substring(5, 7), 10)
-      return BFL_ALLOWED_START_MONTHS.includes(startMonth as typeof BFL_ALLOWED_START_MONTHS[number])
+      return BFL_ALLOWED_START_MONTHS.includes(
+        startMonth as (typeof BFL_ALLOWED_START_MONTHS)[number],
+      )
     },
     {
       message: ERR_MSG_INVALID_FY_START_MONTH,
@@ -120,10 +125,22 @@ export const CreateCounterpartyInputSchema = z
     email: z.string().email().nullable().optional(),
     phone: z.string().max(50).nullable().optional(),
     default_payment_terms: z.number().int().min(1).max(365).default(30),
-    bankgiro: z.string().regex(/^\d{3,4}-?\d{4}$/).nullable().optional(),
-    plusgiro: z.string().regex(/^\d{2,8}$/).nullable().optional(),
+    bankgiro: z
+      .string()
+      .regex(/^\d{3,4}-?\d{4}$/)
+      .nullable()
+      .optional(),
+    plusgiro: z
+      .string()
+      .regex(/^\d{2,8}$/)
+      .nullable()
+      .optional(),
     bank_account: z.string().max(50).nullable().optional(),
-    bank_clearing: z.string().regex(/^\d{4}$/).nullable().optional(),
+    bank_clearing: z
+      .string()
+      .regex(/^\d{4}$/)
+      .nullable()
+      .optional(),
   })
   .strict()
 
@@ -285,12 +302,13 @@ export const InvoiceDraftLineSchema = z
   .object({
     product_id: z.number().int().positive().nullable(),
     description: z.string().min(1).max(500),
-    quantity: z.number().positive()
+    quantity: z
+      .number()
+      .positive()
       .max(MAX_QTY_INVOICE, { message: ERR_MSG_MAX_QTY_INVOICE })
-      .refine(
-        (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
-        { message: 'Quantity kan ha högst 2 decimaler' },
-      ),
+      .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9, {
+        message: 'Quantity kan ha högst 2 decimaler',
+      }),
     unit_price_ore: z.number().int().min(0), // ören
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0),
@@ -302,7 +320,9 @@ export const SaveDraftInputSchema = z
   .object({
     counterparty_id: z.number().int().positive(),
     fiscal_year_id: z.number().int().positive(),
-    invoice_type: z.enum(['customer_invoice', 'credit_note']).default('customer_invoice'),
+    invoice_type: z
+      .enum(['customer_invoice', 'credit_note'])
+      .default('customer_invoice'),
     credits_invoice_id: z.number().int().positive().nullable().optional(),
     invoice_date: z.string().min(10).max(10),
     due_date: z.string().min(10).max(10),
@@ -409,7 +429,11 @@ export const ExpenseLineInputSchema = z
   .object({
     description: z.string().min(1),
     account_number: z.string().min(4).max(4),
-    quantity: z.number().int().min(1).max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
+    quantity: z
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
     unit_price_ore: z.number().int(),
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0).optional(),
@@ -617,10 +641,12 @@ export const PayInvoicesBulkPayloadSchema = z
   .object({
     payments: z
       .array(
-        z.object({
-          invoice_id: z.number().int().positive(),
-          amount_ore: z.number().int().positive(),
-        }).strict(),
+        z
+          .object({
+            invoice_id: z.number().int().positive(),
+            amount_ore: z.number().int().positive(),
+          })
+          .strict(),
       )
       .min(1, 'Minst en betalning krävs'),
     payment_date: z.string().min(10).max(10),
@@ -634,10 +660,12 @@ export const PayExpensesBulkPayloadSchema = z
   .object({
     payments: z
       .array(
-        z.object({
-          expense_id: z.number().int().positive(),
-          amount_ore: z.number().int().positive(),
-        }).strict(),
+        z
+          .object({
+            expense_id: z.number().int().positive(),
+            amount_ore: z.number().int().positive(),
+          })
+          .strict(),
       )
       .min(1, 'Minst en betalning krävs'),
     payment_date: z.string().min(10).max(10),
@@ -896,7 +924,10 @@ export const AccrualDeactivateSchema = z
 export const AgingInputSchema = z
   .object({
     fiscal_year_id: z.number().int().positive(),
-    as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    as_of_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   })
   .strict()
 

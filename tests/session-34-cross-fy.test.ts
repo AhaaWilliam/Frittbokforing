@@ -4,7 +4,16 @@
  * Verifierar att fakturor och kostnader i FY2026 kan betalas i FY2027.
  * Betalningens journal_entry hamnar i FY2027 (payment_date-baserat).
  */
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+  vi,
+} from 'vitest'
 import {
   createTemplateDb,
   createSystemTestContext,
@@ -76,20 +85,28 @@ describe('Cross-FY betalning (B7)', () => {
 
     // Verify FY2027 has 12 periods
     const periodCount = ctx.db
-      .prepare('SELECT COUNT(*) as c FROM accounting_periods WHERE fiscal_year_id = ?')
+      .prepare(
+        'SELECT COUNT(*) as c FROM accounting_periods WHERE fiscal_year_id = ?',
+      )
       .get(fy2.fiscalYear.id) as { c: number }
     expect(periodCount.c).toBe(12)
 
     // Verify O-serie i FY2027 inkluderar 2440-saldo (leverantörsskuld)
     const obLines = ctx.db
-      .prepare(`
+      .prepare(
+        `
         SELECT jel.account_number, jel.debit_ore, jel.credit_ore
         FROM journal_entry_lines jel
         JOIN journal_entries je ON je.id = jel.journal_entry_id
         WHERE je.fiscal_year_id = ? AND je.source_type = 'opening_balance'
         ORDER BY jel.account_number
-      `)
-      .all(fy2.fiscalYear.id) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+      `,
+      )
+      .all(fy2.fiscalYear.id) as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
     const line2440 = obLines.find((l) => l.account_number === '2440')
     expect(line2440).toBeDefined()
     expect(line2440!.credit_ore).toBeGreaterThan(0)
@@ -143,7 +160,9 @@ describe('Cross-FY betalning (B7)', () => {
     if (!payResult.success) return
 
     const payJe = ctx.db
-      .prepare('SELECT fiscal_year_id, verification_series, verification_number FROM journal_entries WHERE id = ?')
+      .prepare(
+        'SELECT fiscal_year_id, verification_series, verification_number FROM journal_entries WHERE id = ?',
+      )
       .get(payResult.data.payment.journal_entry_id) as any
 
     // JE tillhör FY2027, inte FY2026
@@ -201,14 +220,20 @@ describe('Cross-FY betalning (B7)', () => {
     const fy2 = createFy2027()
 
     const obLines = ctx.db
-      .prepare(`
+      .prepare(
+        `
         SELECT jel.account_number, jel.debit_ore, jel.credit_ore
         FROM journal_entry_lines jel
         JOIN journal_entries je ON je.id = jel.journal_entry_id
         WHERE je.fiscal_year_id = ? AND je.source_type = 'opening_balance'
         ORDER BY jel.account_number
-      `)
-      .all(fy2.fiscalYear.id) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+      `,
+      )
+      .all(fy2.fiscalYear.id) as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
 
     // 1510 (kundfordran) bör ha debet-saldo
     const line1510 = obLines.find((l) => l.account_number === '1510')

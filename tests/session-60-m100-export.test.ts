@@ -17,7 +17,10 @@ import {
 } from '../src/main/services/export/export-data-queries'
 import { exportExcel } from '../src/main/services/excel/excel-export-service'
 
-function seedCompanyAndFy(db: Database.Database): { companyId: number; fyId: number } {
+function seedCompanyAndFy(db: Database.Database): {
+  companyId: number
+  fyId: number
+} {
   db.exec(`
     INSERT INTO companies (id, org_number, name, fiscal_rule)
       VALUES (1, '559000-1234', 'Test AB', 'K2');

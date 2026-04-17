@@ -138,7 +138,10 @@ export function unmatchBankTransaction(
         }
       }
 
-      if (rec.matched_entity_type === 'invoice' || rec.matched_entity_type === 'expense') {
+      if (
+        rec.matched_entity_type === 'invoice' ||
+        rec.matched_entity_type === 'expense'
+      ) {
         return unmatchEntityTx(db, input, rec)
       }
       return unmatchFeeTx(db, input, rec)

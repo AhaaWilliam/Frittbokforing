@@ -46,7 +46,9 @@ export function BulkPaymentResultDialog({
         } else if (issue === 'company_missing_bankgiro') {
           toast.error('Företaget saknar bankgiro — krävs för betalfil')
         } else if (validateResult.data.issues.length > 0) {
-          const names = validateResult.data.issues.map((i) => i.counterpartyName).join(', ')
+          const names = validateResult.data.issues
+            .map((i) => i.counterpartyName)
+            .join(', ')
           toast.error(`Leverantörer saknar betalningsuppgifter: ${names}`)
         }
         setExporting(false)
@@ -69,7 +71,12 @@ export function BulkPaymentResultDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div role="dialog" aria-modal="true" aria-labelledby="bulk-result-title" className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-result-title"
+        className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl"
+      >
         <h2 id="bulk-result-title" className="mb-2 text-base font-semibold">
           Bulk-betalning {result.status === 'cancelled' ? 'avbruten' : 'klar'}
         </h2>
@@ -80,9 +87,11 @@ export function BulkPaymentResultDialog({
 
         {hasFailures && (
           <div className="mb-4 max-h-40 overflow-auto rounded-md border border-red-200 bg-red-50 p-3">
-            <p className="mb-2 text-xs font-medium text-red-700">Misslyckades:</p>
+            <p className="mb-2 text-xs font-medium text-red-700">
+              Misslyckades:
+            </p>
             <ul className="space-y-1 text-xs text-red-600">
-              {result.failed.map(f => (
+              {result.failed.map((f) => (
                 <li key={f.id}>
                   ID {f.id}: {f.error}
                 </li>

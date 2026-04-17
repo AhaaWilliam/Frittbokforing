@@ -70,12 +70,8 @@ test('S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn', async () => {
     await ctx.window.getByLabel(/Slå samman/).check()
 
     // Konflikt-sektion ska synas
-    await expect(
-      ctx.window.getByTestId('sie4-conflicts-section'),
-    ).toBeVisible()
-    await expect(
-      ctx.window.getByTestId('conflict-1930'),
-    ).toBeVisible()
+    await expect(ctx.window.getByTestId('sie4-conflicts-section')).toBeVisible()
+    await expect(ctx.window.getByTestId('conflict-1930')).toBeVisible()
 
     // Välj "Skriv över"
     await ctx.window.getByTestId('conflict-1930-overwrite').check()
@@ -92,7 +88,12 @@ test('S57 B4 happy: "Skriv över"-konflikt uppdaterar kontonamn', async () => {
     const accountName = await ctx.window.evaluate(async () => {
       const r = await (
         window as unknown as {
-          api: { listAllAccounts: (d: unknown) => Promise<{ success: boolean; data?: Array<{ account_number: string; name: string }> }> }
+          api: {
+            listAllAccounts: (d: unknown) => Promise<{
+              success: boolean
+              data?: Array<{ account_number: string; name: string }>
+            }>
+          }
         }
       ).api.listAllAccounts({})
       return r.data?.find((a) => a.account_number === '1930')?.name ?? null

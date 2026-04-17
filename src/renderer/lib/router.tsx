@@ -99,7 +99,9 @@ function getHashPath(): string {
 export function getHashParams(): URLSearchParams {
   const hash = window.location.hash
   const idx = hash.indexOf('?')
-  return idx >= 0 ? new URLSearchParams(hash.slice(idx + 1)) : new URLSearchParams()
+  return idx >= 0
+    ? new URLSearchParams(hash.slice(idx + 1))
+    : new URLSearchParams()
 }
 
 /** Update query params without triggering navigation (uses replaceState). */
@@ -145,11 +147,13 @@ export function HashRouter({
     if (currentPath !== fallback) {
       window.location.hash = fallback
     }
-    return matchRoute(fallback, routes) ?? {
-      page: 'overview',
-      params: {},
-      path: fallback,
-    }
+    return (
+      matchRoute(fallback, routes) ?? {
+        page: 'overview',
+        params: {},
+        path: fallback,
+      }
+    )
   }, [currentPath, routes, fallback])
 
   const value = useMemo(
@@ -179,9 +183,7 @@ export function Link({
 }: LinkProps) {
   const { currentMatch, navigate } = useContext(RouterContext) ?? {}
 
-  const isActive = currentMatch
-    ? isRouteActive(currentMatch.path, to)
-    : false
+  const isActive = currentMatch ? isRouteActive(currentMatch.path, to) : false
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault()

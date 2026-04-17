@@ -15,8 +15,10 @@ function tx(overrides: Partial<BankTxInput> = {}): BankTxInput {
 }
 
 describe('S58 A3 — bank-fee-classifier', () => {
-  it("1. CHRG + negativ amount → bank_fee HIGH, konto 6570, B-serie", () => {
-    const c = classifyBankFeeTx(tx({ amount_ore: -5000, bank_tx_subfamily: 'CHRG' }))
+  it('1. CHRG + negativ amount → bank_fee HIGH, konto 6570, B-serie', () => {
+    const c = classifyBankFeeTx(
+      tx({ amount_ore: -5000, bank_tx_subfamily: 'CHRG' }),
+    )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('bank_fee')
     expect(c!.account).toBe('6570')
@@ -27,7 +29,9 @@ describe('S58 A3 — bank-fee-classifier', () => {
   })
 
   it('2. INTR + positiv amount → interest_income HIGH, 8310, A-serie', () => {
-    const c = classifyBankFeeTx(tx({ amount_ore: 10000, bank_tx_subfamily: 'INTR' }))
+    const c = classifyBankFeeTx(
+      tx({ amount_ore: 10000, bank_tx_subfamily: 'INTR' }),
+    )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('interest_income')
     expect(c!.account).toBe('8310')
@@ -37,7 +41,9 @@ describe('S58 A3 — bank-fee-classifier', () => {
   })
 
   it('3. INTR + negativ amount → interest_expense HIGH, 8410, B-serie', () => {
-    const c = classifyBankFeeTx(tx({ amount_ore: -20000, bank_tx_subfamily: 'INTR' }))
+    const c = classifyBankFeeTx(
+      tx({ amount_ore: -20000, bank_tx_subfamily: 'INTR' }),
+    )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('interest_expense')
     expect(c!.account).toBe('8410')
@@ -121,7 +127,10 @@ describe('S58 A3 — bank-fee-classifier', () => {
     const fs = await import('node:fs/promises')
     const path = await import('node:path')
     const src = await fs.readFile(
-      path.resolve(__dirname, '../src/main/services/bank/bank-fee-classifier.ts'),
+      path.resolve(
+        __dirname,
+        '../src/main/services/bank/bank-fee-classifier.ts',
+      ),
       'utf8',
     )
     // Strippa kommentarer och strängar för robust scan

@@ -11,7 +11,9 @@
  */
 export function errorIdFor(fieldId: string): string {
   if (!fieldId) {
-    throw new Error('errorIdFor: fieldId required (prevents duplicate-id axe-violation)')
+    throw new Error(
+      'errorIdFor: fieldId required (prevents duplicate-id axe-violation)',
+    )
   }
   return `${fieldId}-error`
 }

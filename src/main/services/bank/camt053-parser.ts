@@ -113,7 +113,9 @@ export function parseCamt053(xmlRaw: string): ParsedBankStatement {
 
   const cleaned = stripNamespace(parsed) as Record<string, unknown>
   const doc = cleaned.Document as Record<string, unknown> | undefined
-  const stmt = pick(doc, ['BkToCstmrStmt', 'Stmt']) as Record<string, unknown> | undefined
+  const stmt = pick(doc, ['BkToCstmrStmt', 'Stmt']) as
+    | Record<string, unknown>
+    | undefined
   if (!stmt) {
     throw new Camt053ParseError(
       'VALIDATION_ERROR',
@@ -127,13 +129,21 @@ export function parseCamt053(xmlRaw: string): ParsedBankStatement {
   // Statement-id
   const statementNumber = text(pick(stmtNode, ['Id']))
   if (!statementNumber) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'Saknar Stmt/Id.', 'statement_number')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'Saknar Stmt/Id.',
+      'statement_number',
+    )
   }
 
   // Statement-datum (CreDtTm)
   const creDtTm = text(pick(stmtNode, ['CreDtTm']))
   if (!creDtTm) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'Saknar Stmt/CreDtTm.', 'statement_date')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'Saknar Stmt/CreDtTm.',
+      'statement_date',
+    )
   }
   const statementDate = creDtTm.slice(0, 10)
 
@@ -211,7 +221,10 @@ function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
   const amountStr = text(pick(entry, ['Amt']))
   const sign = text(pick(entry, ['CdtDbtInd']))
   if (!amountStr || !sign) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'Transaktion saknar Amt eller CdtDbtInd.')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'Transaktion saknar Amt eller CdtDbtInd.',
+    )
   }
   const absOre = decimalToOre(amountStr)
   const amountOre = sign === 'CRDT' ? absOre : -absOre
@@ -219,7 +232,10 @@ function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
   const bookingDate = text(pick(entry, ['BookgDt', 'Dt']))
   const valueDate = text(pick(entry, ['ValDt', 'Dt']))
   if (!bookingDate || !valueDate) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'Transaktion saknar BookgDt eller ValDt.')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'Transaktion saknar BookgDt eller ValDt.',
+    )
   }
 
   const txRef = text(pick(entry, ['AcctSvcrRef']))
@@ -230,7 +246,9 @@ function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
   // ISO 20022 BkTxCd strukturerad hierarki (Domn/Fmly/SubFmlyCd)
   const bankTxDomain = text(pick(entry, ['BkTxCd', 'Domn', 'Cd']))
   const bankTxFamily = text(pick(entry, ['BkTxCd', 'Domn', 'Fmly', 'Cd']))
-  const bankTxSubfamily = text(pick(entry, ['BkTxCd', 'Domn', 'Fmly', 'SubFmlyCd']))
+  const bankTxSubfamily = text(
+    pick(entry, ['BkTxCd', 'Domn', 'Fmly', 'SubFmlyCd']),
+  )
 
   // NtryDtls/TxDtls kan vara array (split transactions) — vi tar första
   const txDtls = (() => {

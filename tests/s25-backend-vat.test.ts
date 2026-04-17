@@ -30,7 +30,9 @@ function createTestDb(): Database.Database {
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -55,16 +57,19 @@ const vatCodeMap = new Map<string, number>()
 beforeEach(() => {
   db = createTestDb()
   createCompany(db, VALID_COMPANY)
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   fyId = fy.id
   const cpResult = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
   if (!cpResult.success) throw new Error('createCounterparty failed')
   cpId = cpResult.data.id
 
   // Build vat_code lookup
-  const codes = db
-    .prepare('SELECT id, code FROM vat_codes')
-    .all() as Array<{ id: number; code: string }>
+  const codes = db.prepare('SELECT id, code FROM vat_codes').all() as Array<{
+    id: number
+    code: string
+  }>
   for (const c of codes) {
     vatCodeMap.set(c.code, c.id)
   }

@@ -59,14 +59,23 @@ export function importSie4(
       let companyId: number
       if (options.strategy === 'new') {
         if (existingCompany) {
-          throw { code: 'VALIDATION_ERROR', error: 'Databasen har redan ett företag. Använd merge-strategi.' }
+          throw {
+            code: 'VALIDATION_ERROR',
+            error: 'Databasen har redan ett företag. Använd merge-strategi.',
+          }
         }
         if (!parseResult.header.companyName || !parseResult.header.orgNumber) {
-          throw { code: 'VALIDATION_ERROR', error: 'SIE4-filen saknar företagsnamn eller orgNr' }
+          throw {
+            code: 'VALIDATION_ERROR',
+            error: 'SIE4-filen saknar företagsnamn eller orgNr',
+          }
         }
         const rar0 = parseResult.header.fiscalYears.find((fy) => fy.index === 0)
         if (!rar0) {
-          throw { code: 'VALIDATION_ERROR', error: 'SIE4-filen saknar räkenskapsår (RAR 0)' }
+          throw {
+            code: 'VALIDATION_ERROR',
+            error: 'SIE4-filen saknar räkenskapsår (RAR 0)',
+          }
         }
         const cpRes = createCompany(db, {
           name: parseResult.header.companyName,
@@ -83,7 +92,10 @@ export function importSie4(
         companyId = cpRes.data.id
       } else {
         if (!existingCompany) {
-          throw { code: 'VALIDATION_ERROR', error: 'Inget företag i databasen. Använd new-strategi.' }
+          throw {
+            code: 'VALIDATION_ERROR',
+            error: 'Inget företag i databasen. Använd new-strategi.',
+          }
         }
         if (
           parseResult.header.orgNumber &&
@@ -137,10 +149,14 @@ export function importSie4(
       let accountsUpdated = 0
 
       const existingAccounts = new Map(
-        (db.prepare('SELECT account_number, name FROM accounts').all() as Array<{
-          account_number: string
-          name: string
-        }>).map((a) => [a.account_number, a.name]),
+        (
+          db
+            .prepare('SELECT account_number, name FROM accounts')
+            .all() as Array<{
+            account_number: string
+            name: string
+          }>
+        ).map((a) => [a.account_number, a.name]),
       )
 
       // Pre-flight: validera 'skip' inte refererar verifikat (defense-in-depth, V6).
@@ -148,7 +164,9 @@ export function importSie4(
       for (const [accNum, resolution] of Object.entries(resolutions)) {
         if (resolution === 'skip') {
           const refCount = parseResult.entries.reduce(
-            (s, e) => s + e.transactions.filter((t) => t.accountNumber === accNum).length,
+            (s, e) =>
+              s +
+              e.transactions.filter((t) => t.accountNumber === accNum).length,
             0,
           )
           if (refCount > 0) {
@@ -174,10 +192,9 @@ export function importSie4(
           // Konflikt: läs resolution (default 'keep')
           const resolution = resolutions[acc.number] ?? 'keep'
           if (resolution === 'overwrite') {
-            db.prepare('UPDATE accounts SET name = ? WHERE account_number = ?').run(
-              acc.name,
-              acc.number,
-            )
+            db.prepare(
+              'UPDATE accounts SET name = ? WHERE account_number = ?',
+            ).run(acc.name, acc.number)
             accountsUpdated++
           }
           // 'keep' / 'skip' → ingen UPDATE
@@ -185,13 +202,15 @@ export function importSie4(
       }
 
       // ═══ 4. Journal entries — 'I' series ═══
-      const nextImportVer = (db
-        .prepare(
-          `SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
+      const nextImportVer = (
+        db
+          .prepare(
+            `SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
            FROM journal_entries
            WHERE fiscal_year_id = ? AND verification_series = 'I'`,
-        )
-        .get(fiscalYearId) as { next_ver: number }).next_ver
+          )
+          .get(fiscalYearId) as { next_ver: number }
+      ).next_ver
 
       let verCounter = nextImportVer
       let entriesImported = 0
@@ -339,7 +358,8 @@ function mapSieTypeToAccountType(
   // Fallback: map by account number
   const first = accountNumber.charAt(0)
   if (first === '1') return 'asset'
-  if (first === '2') return accountNumber.startsWith('20') ? 'equity' : 'liability'
+  if (first === '2')
+    return accountNumber.startsWith('20') ? 'equity' : 'liability'
   if (first === '3') return 'revenue'
   return 'expense'
 }

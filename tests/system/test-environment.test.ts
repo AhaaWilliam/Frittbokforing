@@ -5,7 +5,15 @@
  * If these fail, other test results may be unreliable.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest'
 import {
   type SystemTestContext,
   createTemplateDb,
@@ -18,7 +26,9 @@ let ctx: SystemTestContext
 
 beforeAll(() => createTemplateDb())
 afterAll(() => destroyTemplateDb())
-beforeEach(() => { ctx = createSystemTestContext() })
+beforeEach(() => {
+  ctx = createSystemTestContext()
+})
 afterEach(() => destroyContext(ctx))
 
 describe('testmiljö — meta', () => {

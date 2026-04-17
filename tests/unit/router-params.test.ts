@@ -1,11 +1,17 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import { getHashParams, setHashParams, matchRoute } from '../../src/renderer/lib/router'
+import {
+  getHashParams,
+  setHashParams,
+  matchRoute,
+} from '../../src/renderer/lib/router'
 
 describe('getHashPath strips query params (A1)', () => {
   it('matchRoute matches /account-statement from hash with params', () => {
     // matchRoute receives the path portion — verify it matches correctly
-    const routes = [{ pattern: '/account-statement', page: 'account-statement' }]
+    const routes = [
+      { pattern: '/account-statement', page: 'account-statement' },
+    ]
     const result = matchRoute('/account-statement', routes)
     expect(result).toMatchObject({ page: 'account-statement' })
   })
@@ -50,7 +56,9 @@ describe('setHashParams', () => {
 
   it('updates hash with params without triggering hashchange', () => {
     let fired = false
-    const handler = () => { fired = true }
+    const handler = () => {
+      fired = true
+    }
     window.addEventListener('hashchange', handler)
     try {
       setHashParams({ account: '1510', from: '2026-01-01' })

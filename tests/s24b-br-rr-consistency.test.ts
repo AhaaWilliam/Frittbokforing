@@ -26,7 +26,9 @@ function createTestDb(): Database.Database {
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }

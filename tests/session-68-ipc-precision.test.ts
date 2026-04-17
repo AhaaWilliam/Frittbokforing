@@ -15,10 +15,7 @@ import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
-import {
-  saveDraft,
-  updateDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, updateDraft } from '../src/main/services/invoice-service'
 
 let db: Database.Database
 
@@ -41,17 +38,23 @@ beforeEach(() => {
   db = createTestDb()
   createCompany(db, VALID_COMPANY)
 
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   fiscalYearId = fy.id
 
   const cp = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
   if (!cp.success) throw new Error('CP failed')
   counterpartyId = cp.data.id
 
-  const vc = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
+  const vc = db
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
   vatCodeId = vc.id
 
-  const acc = db.prepare("SELECT id FROM accounts WHERE account_number = '3002'").get() as { id: number }
+  const acc = db
+    .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
+    .get() as { id: number }
   const prod = createProduct(db, {
     name: 'Konsult',
     default_price_ore: 100000,

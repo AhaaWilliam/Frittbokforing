@@ -22,7 +22,11 @@ async function createAsset(window: Page, name: string): Promise<number> {
   }
   const result = await window.evaluate(
     async (data) =>
-      await (window as unknown as { api: { createFixedAsset: (d: unknown) => Promise<unknown> } }).api.createFixedAsset(data),
+      await (
+        window as unknown as {
+          api: { createFixedAsset: (d: unknown) => Promise<unknown> }
+        }
+      ).api.createFixedAsset(data),
     input,
   )
   const r = result as { success: boolean; data: { id: number }; error?: string }
@@ -37,14 +41,19 @@ async function executePeriod(
 ): Promise<void> {
   const result = await window.evaluate(
     async ({ fy, ped }) =>
-      await (window as unknown as { api: { executeDepreciationPeriod: (d: unknown) => Promise<unknown> } }).api.executeDepreciationPeriod({
+      await (
+        window as unknown as {
+          api: { executeDepreciationPeriod: (d: unknown) => Promise<unknown> }
+        }
+      ).api.executeDepreciationPeriod({
         fiscal_year_id: fy,
         period_end_date: ped,
       }),
     { fy: fiscalYearId, ped: period_end_date },
   )
   const r = result as { success: boolean; error?: string }
-  if (!r.success) throw new Error(`executeDepreciationPeriod failed: ${r.error}`)
+  if (!r.success)
+    throw new Error(`executeDepreciationPeriod failed: ${r.error}`)
 }
 
 test.describe.serial('F62-d asset edit', () => {
@@ -67,12 +76,16 @@ test.describe.serial('F62-d asset edit', () => {
     await ctx.window.evaluate(() => {
       location.hash = '#/fixed-assets'
     })
-    await expect(ctx.window.getByTestId('page-fixed-assets')).toBeVisible({ timeout: 15_000 })
+    await expect(ctx.window.getByTestId('page-fixed-assets')).toBeVisible({
+      timeout: 15_000,
+    })
     await expect(ctx.window.getByTestId(`fa-row-${assetId}`)).toBeVisible()
     await expect(ctx.window.getByTestId(`fa-edit-${assetId}`)).toBeVisible()
 
     await ctx.window.getByTestId(`fa-edit-${assetId}`).click()
-    await expect(ctx.window.getByTestId('fixed-asset-form-dialog')).toBeVisible()
+    await expect(
+      ctx.window.getByTestId('fixed-asset-form-dialog'),
+    ).toBeVisible()
 
     const nameInput = ctx.window.getByTestId('fa-name')
     await nameInput.fill('E2E Omdöpt')
@@ -84,10 +97,17 @@ test.describe.serial('F62-d asset edit', () => {
     // Verifiera via API (robust mot locale-formatering av belopp)
     const result = await ctx.window.evaluate(
       async (id) =>
-        await (window as unknown as { api: { getFixedAsset: (d: unknown) => Promise<unknown> } }).api.getFixedAsset({ id }),
+        await (
+          window as unknown as {
+            api: { getFixedAsset: (d: unknown) => Promise<unknown> }
+          }
+        ).api.getFixedAsset({ id }),
       assetId,
     )
-    const r = result as { success: boolean; data: { name: string; acquisition_cost_ore: number } }
+    const r = result as {
+      success: boolean
+      data: { name: string; acquisition_cost_ore: number }
+    }
     expect(r.success).toBe(true)
     expect(r.data.name).toBe('E2E Omdöpt')
     expect(r.data.acquisition_cost_ore).toBe(2_000_000)
@@ -105,7 +125,9 @@ test.describe.serial('F62-d asset edit', () => {
     await ctx.window.evaluate(() => {
       location.hash = '#/fixed-assets'
     })
-    await expect(ctx.window.getByTestId('page-fixed-assets')).toBeVisible({ timeout: 15_000 })
+    await expect(ctx.window.getByTestId('page-fixed-assets')).toBeVisible({
+      timeout: 15_000,
+    })
     await expect(ctx.window.getByTestId(`fa-row-${assetId}`)).toBeVisible()
 
     await expect(ctx.window.getByTestId(`fa-edit-${assetId}`)).toHaveCount(0)

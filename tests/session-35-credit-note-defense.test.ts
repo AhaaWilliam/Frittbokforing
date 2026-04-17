@@ -36,9 +36,19 @@ function seedBase() {
     fiscal_year_start: '2026-01-01',
     fiscal_year_end: '2026-12-31',
   })
-  fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
-  vatCodeOutId = (db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }).id
-  vatCodeInId = (db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }).id
+  fyId = (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
+  vatCodeOutId = (
+    db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as {
+      id: number
+    }
+  ).id
+  vatCodeInId = (
+    db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as {
+      id: number
+    }
+  ).id
 }
 
 function makeCustomer(name: string): number {
@@ -59,10 +69,17 @@ function makeInvoice(customerId: number, date: string): number {
     fiscal_year_id: fyId,
     invoice_date: date,
     due_date: '2026-04-30',
-    lines: [{
-      product_id: null, description: 'Tjänst', quantity: 1,
-      unit_price_ore: 10000, vat_code_id: vatCodeOutId, sort_order: 0, account_number: '3002',
-    }],
+    lines: [
+      {
+        product_id: null,
+        description: 'Tjänst',
+        quantity: 1,
+        unit_price_ore: 10000,
+        vat_code_id: vatCodeOutId,
+        sort_order: 0,
+        account_number: '3002',
+      },
+    ],
   })
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeDraft(db, draft.data.id)
@@ -77,10 +94,15 @@ function makeExpense(supplierId: number, date: string): number {
     expense_date: date,
     due_date: '2026-04-30',
     description: 'Testkostnad',
-    lines: [{
-      description: 'Material', account_number: '6110', quantity: 1,
-      unit_price_ore: 10000, vat_code_id: vatCodeInId,
-    }],
+    lines: [
+      {
+        description: 'Material',
+        account_number: '6110',
+        quantity: 1,
+        unit_price_ore: 10000,
+        vat_code_id: vatCodeInId,
+      },
+    ],
   })
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeExpense(db, draft.data.id)
@@ -89,17 +111,32 @@ function makeExpense(supplierId: number, date: string): number {
 }
 
 function getJE(invOrExpId: number, table: 'invoices' | 'expenses') {
-  const row = db.prepare(`SELECT journal_entry_id FROM ${table} WHERE id = ?`).get(invOrExpId) as { journal_entry_id: number }
-  return db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(row.journal_entry_id) as {
-    id: number; description: string; verification_series: string; verification_number: number
+  const row = db
+    .prepare(`SELECT journal_entry_id FROM ${table} WHERE id = ?`)
+    .get(invOrExpId) as { journal_entry_id: number }
+  return db
+    .prepare('SELECT * FROM journal_entries WHERE id = ?')
+    .get(row.journal_entry_id) as {
+    id: number
+    description: string
+    verification_series: string
+    verification_number: number
   }
 }
 
 function getLines(jeId: number) {
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT account_number, debit_ore, credit_ore
     FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number
-  `).all(jeId) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+  `,
+    )
+    .all(jeId) as Array<{
+    account_number: string
+    debit_ore: number
+    credit_ore: number
+  }>
 }
 
 beforeEach(() => {
@@ -122,7 +159,10 @@ describe('Invoice credit note — sign-flip (M137)', () => {
     const invId = makeInvoice(custId, '2026-03-15')
     const origLines = getLines(getJE(invId, 'invoices').id)
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
@@ -130,7 +170,9 @@ describe('Invoice credit note — sign-flip (M137)', () => {
     const cnLines = getLines(getJE(cn.data.id, 'invoices').id)
 
     for (const orig of origLines) {
-      const cnLine = cnLines.find(l => l.account_number === orig.account_number)
+      const cnLine = cnLines.find(
+        (l) => l.account_number === orig.account_number,
+      )
       expect(cnLine).toBeDefined()
       if (!cnLine) continue
       expect(cnLine.debit_ore).toBe(orig.credit_ore)
@@ -142,7 +184,10 @@ describe('Invoice credit note — sign-flip (M137)', () => {
     const custId = makeCustomer('Kund B')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
@@ -159,12 +204,18 @@ describe('Invoice credit note — 4-layer defense (M138)', () => {
     const custId = makeCustomer('Kund C')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn1 = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn1 = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn1.success).toBe(true)
     if (!cn1.success) return
     finalizeDraft(db, cn1.data.id)
 
-    const cn2 = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn2 = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn2.success).toBe(false)
   })
 
@@ -172,12 +223,18 @@ describe('Invoice credit note — 4-layer defense (M138)', () => {
     const custId = makeCustomer('Kund D')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
 
-    const cn2 = createCreditNoteDraft(db, { original_invoice_id: cn.data.id, fiscal_year_id: fyId })
+    const cn2 = createCreditNoteDraft(db, {
+      original_invoice_id: cn.data.id,
+      fiscal_year_id: fyId,
+    })
     expect(cn2.success).toBe(false)
   })
 
@@ -185,11 +242,17 @@ describe('Invoice credit note — 4-layer defense (M138)', () => {
     const custId = makeCustomer('Kund E')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
 
-    const row = db.prepare('SELECT credits_invoice_id, invoice_type FROM invoices WHERE id = ?')
+    const row = db
+      .prepare(
+        'SELECT credits_invoice_id, invoice_type FROM invoices WHERE id = ?',
+      )
       .get(cn.data.id) as { credits_invoice_id: number; invoice_type: string }
     expect(row.credits_invoice_id).toBe(invId)
     expect(row.invoice_type).toBe('credit_note')
@@ -199,15 +262,22 @@ describe('Invoice credit note — 4-layer defense (M138)', () => {
     const custId = makeCustomer('Kund F')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
 
-    const row = db.prepare(`
+    const row = db
+      .prepare(
+        `
       SELECT (SELECT 1 FROM invoices cn WHERE cn.credits_invoice_id = i.id LIMIT 1) as hcn
       FROM invoices i WHERE i.id = ?
-    `).get(invId) as { hcn: number | null }
+    `,
+      )
+      .get(invId) as { hcn: number | null }
     expect(row.hcn).toBe(1)
   })
 })
@@ -216,9 +286,16 @@ describe('Invoice credit note — cross-reference (M139)', () => {
   it('JE description contains original invoice number', () => {
     const custId = makeCustomer('Kund G')
     const invId = makeInvoice(custId, '2026-03-15')
-    const origNum = (db.prepare('SELECT invoice_number FROM invoices WHERE id = ?').get(invId) as { invoice_number: string }).invoice_number
+    const origNum = (
+      db
+        .prepare('SELECT invoice_number FROM invoices WHERE id = ?')
+        .get(invId) as { invoice_number: string }
+    ).invoice_number
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
@@ -231,7 +308,10 @@ describe('Invoice credit note — cross-reference (M139)', () => {
     const custId = makeCustomer('CrossRef AB')
     const invId = makeInvoice(custId, '2026-03-15')
 
-    const cn = createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const cn = createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeDraft(db, cn.data.id)
@@ -248,7 +328,10 @@ describe('Expense credit note — sign-flip (M137 parity)', () => {
     const expId = makeExpense(suppId, '2026-03-15')
     const origLines = getLines(getJE(expId, 'expenses').id)
 
-    const cn = createExpenseCreditNoteDraft(db, { original_expense_id: expId, fiscal_year_id: fyId })
+    const cn = createExpenseCreditNoteDraft(db, {
+      original_expense_id: expId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeExpense(db, cn.data.id)
@@ -256,7 +339,9 @@ describe('Expense credit note — sign-flip (M137 parity)', () => {
     const cnLines = getLines(getJE(cn.data.id, 'expenses').id)
 
     for (const orig of origLines) {
-      const cnLine = cnLines.find(l => l.account_number === orig.account_number)
+      const cnLine = cnLines.find(
+        (l) => l.account_number === orig.account_number,
+      )
       expect(cnLine).toBeDefined()
       if (!cnLine) continue
       expect(cnLine.debit_ore).toBe(orig.credit_ore)
@@ -270,12 +355,18 @@ describe('Expense credit note — 4-layer defense (M138 parity)', () => {
     const suppId = makeSupplier('Lev B')
     const expId = makeExpense(suppId, '2026-03-15')
 
-    const cn1 = createExpenseCreditNoteDraft(db, { original_expense_id: expId, fiscal_year_id: fyId })
+    const cn1 = createExpenseCreditNoteDraft(db, {
+      original_expense_id: expId,
+      fiscal_year_id: fyId,
+    })
     expect(cn1.success).toBe(true)
     if (!cn1.success) return
     finalizeExpense(db, cn1.data.id)
 
-    const cn2 = createExpenseCreditNoteDraft(db, { original_expense_id: expId, fiscal_year_id: fyId })
+    const cn2 = createExpenseCreditNoteDraft(db, {
+      original_expense_id: expId,
+      fiscal_year_id: fyId,
+    })
     expect(cn2.success).toBe(false)
   })
 
@@ -283,11 +374,17 @@ describe('Expense credit note — 4-layer defense (M138 parity)', () => {
     const suppId = makeSupplier('Lev C')
     const expId = makeExpense(suppId, '2026-03-15')
 
-    const cn = createExpenseCreditNoteDraft(db, { original_expense_id: expId, fiscal_year_id: fyId })
+    const cn = createExpenseCreditNoteDraft(db, {
+      original_expense_id: expId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
 
-    const row = db.prepare('SELECT credits_expense_id, expense_type FROM expenses WHERE id = ?')
+    const row = db
+      .prepare(
+        'SELECT credits_expense_id, expense_type FROM expenses WHERE id = ?',
+      )
       .get(cn.data.id) as { credits_expense_id: number; expense_type: string }
     expect(row.credits_expense_id).toBe(expId)
     expect(row.expense_type).toBe('credit_note')
@@ -299,7 +396,10 @@ describe('Expense credit note — cross-reference (M139 parity)', () => {
     const suppId = makeSupplier('CrossRef Lev AB')
     const expId = makeExpense(suppId, '2026-03-15')
 
-    const cn = createExpenseCreditNoteDraft(db, { original_expense_id: expId, fiscal_year_id: fyId })
+    const cn = createExpenseCreditNoteDraft(db, {
+      original_expense_id: expId,
+      fiscal_year_id: fyId,
+    })
     expect(cn.success).toBe(true)
     if (!cn.success) return
     finalizeExpense(db, cn.data.id)

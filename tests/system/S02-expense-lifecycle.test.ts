@@ -92,10 +92,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
       .all(je.id) as any[]
     const totalDebit = jels.reduce((s: number, l: any) => s + l.debit_ore, 0)
-    const totalCredit = jels.reduce(
-      (s: number, l: any) => s + l.credit_ore,
-      0,
-    )
+    const totalCredit = jels.reduce((s: number, l: any) => s + l.credit_ore, 0)
     expect(totalDebit).toBe(totalCredit)
 
     expect(

@@ -28,35 +28,45 @@ const FiscalPeriodSchema = z.object({
   is_closed: z.union([z.literal(0), z.literal(1)]),
 })
 
-const CounterpartySchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  type: z.string(),
-}).passthrough()
+const CounterpartySchema = z
+  .object({
+    id: z.number(),
+    name: z.string(),
+    type: z.string(),
+  })
+  .passthrough()
 
-const ProductSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-}).passthrough()
+const ProductSchema = z
+  .object({
+    id: z.number(),
+    name: z.string(),
+  })
+  .passthrough()
 
-const VatCodeSchema = z.object({
-  id: z.number(),
-  code: z.string(),
-}).passthrough()
+const VatCodeSchema = z
+  .object({
+    id: z.number(),
+    code: z.string(),
+  })
+  .passthrough()
 
 const BulkPaymentResultSchema = z.object({
   batch_id: z.number().nullable(),
   status: z.enum(['completed', 'partial', 'cancelled']),
-  succeeded: z.array(z.object({
-    id: z.number(),
-    payment_id: z.number(),
-    journal_entry_id: z.number(),
-  })),
-  failed: z.array(z.object({
-    id: z.number(),
-    error: z.string(),
-    code: z.string(),
-  })),
+  succeeded: z.array(
+    z.object({
+      id: z.number(),
+      payment_id: z.number(),
+      journal_entry_id: z.number(),
+    }),
+  ),
+  failed: z.array(
+    z.object({
+      id: z.number(),
+      error: z.string(),
+      code: z.string(),
+    }),
+  ),
   bank_fee_journal_entry_id: z.number().nullable(),
 })
 
@@ -65,9 +75,11 @@ const BulkPaymentResultSchema = z.object({
 export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   // Fiscal Years
   'fiscal-year:list': z.array(FiscalYearSchema),
-  'fiscal-year:create-new': z.object({
-    fiscalYear: FiscalYearSchema,
-  }).passthrough(),
+  'fiscal-year:create-new': z
+    .object({
+      fiscalYear: FiscalYearSchema,
+    })
+    .passthrough(),
   'fiscal-year:switch': FiscalYearSchema,
 
   // Fiscal Periods
@@ -100,8 +112,12 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   'import:sie4-select-file': z.object({ filePath: z.string() }).nullable(),
   'import:sie4-validate': z.object({
     valid: z.boolean(),
-    errors: z.array(z.object({ code: z.string(), message: z.string() }).passthrough()),
-    warnings: z.array(z.object({ code: z.string(), message: z.string() }).passthrough()),
+    errors: z.array(
+      z.object({ code: z.string(), message: z.string() }).passthrough(),
+    ),
+    warnings: z.array(
+      z.object({ code: z.string(), message: z.string() }).passthrough(),
+    ),
     summary: z.object({}).passthrough(),
   }),
   'import:sie4-execute': z.object({
@@ -115,15 +131,27 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   }),
 
   // Payment batch export
-  'payment-batch:validate-export': z.object({
-    valid: z.boolean(),
-    issues: z.array(z.object({ counterpartyId: z.number(), counterpartyName: z.string(), issue: z.string() })),
-  }).passthrough(),
-  'payment-batch:export-pain001': z.object({ saved: z.boolean() }).passthrough(),
+  'payment-batch:validate-export': z
+    .object({
+      valid: z.boolean(),
+      issues: z.array(
+        z.object({
+          counterpartyId: z.number(),
+          counterpartyName: z.string(),
+          issue: z.string(),
+        }),
+      ),
+    })
+    .passthrough(),
+  'payment-batch:export-pain001': z
+    .object({ saved: z.boolean() })
+    .passthrough(),
 
   // Accruals
   'accrual:create': z.object({ id: z.number() }),
-  'accrual:list': z.array(z.object({ id: z.number(), description: z.string() }).passthrough()),
+  'accrual:list': z.array(
+    z.object({ id: z.number(), description: z.string() }).passthrough(),
+  ),
   'accrual:execute': z.object({ journalEntryId: z.number() }),
   'accrual:execute-all': z.object({
     executed: z.number(),
@@ -132,26 +160,36 @@ export const CHANNEL_RESPONSE_SCHEMAS: Partial<Record<string, z.ZodType>> = {
   'accrual:deactivate': z.undefined(),
 
   // Budget
-  'budget:lines': z.array(z.object({
-    lineId: z.string(),
-    label: z.string(),
-    groupId: z.string(),
-    groupLabel: z.string(),
-    signMultiplier: z.union([z.literal(1), z.literal(-1)]),
-  })),
-  'budget:get': z.array(z.object({
-    id: z.number(),
-    fiscal_year_id: z.number(),
-    line_id: z.string(),
-    period_number: z.number(),
-    amount_ore: z.number(),
-  }).passthrough()),
-  'budget:save': z.object({ count: z.number() }),
-  'budget:variance': z.object({
-    lines: z.array(z.object({
+  'budget:lines': z.array(
+    z.object({
       lineId: z.string(),
       label: z.string(),
-    }).passthrough()),
+      groupId: z.string(),
+      groupLabel: z.string(),
+      signMultiplier: z.union([z.literal(1), z.literal(-1)]),
+    }),
+  ),
+  'budget:get': z.array(
+    z
+      .object({
+        id: z.number(),
+        fiscal_year_id: z.number(),
+        line_id: z.string(),
+        period_number: z.number(),
+        amount_ore: z.number(),
+      })
+      .passthrough(),
+  ),
+  'budget:save': z.object({ count: z.number() }),
+  'budget:variance': z.object({
+    lines: z.array(
+      z
+        .object({
+          lineId: z.string(),
+          label: z.string(),
+        })
+        .passthrough(),
+    ),
   }),
   'budget:copy-from-previous': z.object({ count: z.number() }),
 

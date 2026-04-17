@@ -33,7 +33,9 @@ describe('createPreUpdateBackup', () => {
   beforeEach(() => {
     fs.mkdirSync(TEST_DIR, { recursive: true })
     testDb = new Database(TEST_DB_PATH)
-    testDb.exec('CREATE TABLE IF NOT EXISTS test_data (id INTEGER PRIMARY KEY, val TEXT)')
+    testDb.exec(
+      'CREATE TABLE IF NOT EXISTS test_data (id INTEGER PRIMARY KEY, val TEXT)',
+    )
     testDb.exec("INSERT INTO test_data (val) VALUES ('backup-test')")
     mockGetPath.mockReturnValue(TEST_DOCS_DIR)
     mockGetDb.mockReturnValue(testDb)
@@ -56,7 +58,9 @@ describe('createPreUpdateBackup', () => {
 
     // Verify backup is a valid database with our test data
     const backupDb = new Database(backupPath, { readonly: true })
-    const row = backupDb.prepare('SELECT val FROM test_data').get() as { val: string }
+    const row = backupDb.prepare('SELECT val FROM test_data').get() as {
+      val: string
+    }
     expect(row.val).toBe('backup-test')
     backupDb.close()
   })

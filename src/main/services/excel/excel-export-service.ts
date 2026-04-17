@@ -447,12 +447,22 @@ export async function exportExcel(
     const sheetCf = workbook.addWorksheet('Kassaflöde')
     sheetCf.columns = [
       { header: 'Post', key: 'label', width: 45 },
-      { header: 'Belopp', key: 'amount', width: 18, style: { numFmt: AMOUNT_FMT } },
+      {
+        header: 'Belopp',
+        key: 'amount',
+        width: 18,
+        style: { numFmt: AMOUNT_FMT },
+      },
     ]
     const pushSection = (section: typeof cf.operating) => {
-      sheetCf.addRow({ label: section.label.toUpperCase() }).font = { bold: true }
+      sheetCf.addRow({ label: section.label.toUpperCase() }).font = {
+        bold: true,
+      }
       section.items.forEach((item) =>
-        sheetCf.addRow({ label: `  ${item.label}`, amount: oreToKr(item.amount_ore) }),
+        sheetCf.addRow({
+          label: `  ${item.label}`,
+          amount: oreToKr(item.amount_ore),
+        }),
       )
       sheetCf.addRow({
         label: `Summa ${section.label.toLowerCase()}`,
@@ -463,9 +473,18 @@ export async function exportExcel(
     pushSection(cf.operating)
     pushSection(cf.investing)
     pushSection(cf.financing)
-    sheetCf.addRow({ label: 'Periodens kassaflöde', amount: oreToKr(cf.netChangeOre) }).font = { bold: true }
-    sheetCf.addRow({ label: 'Ingående likvida medel', amount: oreToKr(cf.openingCashOre) })
-    sheetCf.addRow({ label: 'Utgående likvida medel', amount: oreToKr(cf.closingCashOre) }).font = { bold: true }
+    sheetCf.addRow({
+      label: 'Periodens kassaflöde',
+      amount: oreToKr(cf.netChangeOre),
+    }).font = { bold: true }
+    sheetCf.addRow({
+      label: 'Ingående likvida medel',
+      amount: oreToKr(cf.openingCashOre),
+    })
+    sheetCf.addRow({
+      label: 'Utgående likvida medel',
+      amount: oreToKr(cf.closingCashOre),
+    }).font = { bold: true }
   }
 
   // ═══ FLIK 5: Företagsinfo ═══

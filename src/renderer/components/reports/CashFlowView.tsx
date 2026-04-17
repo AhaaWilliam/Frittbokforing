@@ -43,7 +43,11 @@ function SectionBlock({ section }: { section: Section }) {
   )
 }
 
-export function CashFlowView({ data, fiscalYearLabel, printMode: _printMode }: Props) {
+export function CashFlowView({
+  data,
+  fiscalYearLabel,
+  printMode: _printMode,
+}: Props) {
   const reconciliation = data.openingCashOre + data.netChangeOre
   const drift = reconciliation - data.closingCashOre
 

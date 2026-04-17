@@ -7,10 +7,7 @@ import { migrations } from '../src/main/migrations'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
-import {
-  saveDraft,
-  finalizeDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
 import {
   getBudgetLines,
   getBudgetTargets,
@@ -47,7 +44,9 @@ function seedCompanyAndFy(): number {
     fiscal_year_start: '2025-01-01',
     fiscal_year_end: '2025-12-31',
   })
-  return (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+  return (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
 }
 
 beforeAll(() => {
@@ -68,12 +67,12 @@ describe('S44: Budget service', () => {
     if (!result.success) throw new Error(result.error)
     expect(result.data).toHaveLength(11)
 
-    const netRevenue = result.data.find(l => l.lineId === 'net_revenue')
+    const netRevenue = result.data.find((l) => l.lineId === 'net_revenue')
     expect(netRevenue).toBeDefined()
     expect(netRevenue!.groupId).toBe('operating_income')
     expect(netRevenue!.signMultiplier).toBe(1)
 
-    const materials = result.data.find(l => l.lineId === 'materials')
+    const materials = result.data.find((l) => l.lineId === 'materials')
     expect(materials).toBeDefined()
     expect(materials!.groupId).toBe('operating_expenses')
     expect(materials!.signMultiplier).toBe(-1)
@@ -104,7 +103,7 @@ describe('S44: Budget service', () => {
     if (!targets.success) throw new Error(targets.error)
 
     const p1 = targets.data.find(
-      t => t.line_id === 'net_revenue' && t.period_number === 1,
+      (t) => t.line_id === 'net_revenue' && t.period_number === 1,
     )
     expect(p1?.amount_ore).toBe(150000_00)
   })
@@ -151,7 +150,9 @@ describe('S44: Budget service', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const netRevLine = result.data.lines.find(l => l.lineId === 'net_revenue')!
+    const netRevLine = result.data.lines.find(
+      (l) => l.lineId === 'net_revenue',
+    )!
     expect(netRevLine.periods[0].budgetOre).toBe(150000_00) // upserted value
     expect(netRevLine.periods[1].budgetOre).toBe(120000_00)
   })
@@ -162,7 +163,7 @@ describe('S44: Budget service', () => {
     if (!result.success) throw new Error(result.error)
 
     // 'personnel' has no budget set
-    const personnel = result.data.lines.find(l => l.lineId === 'personnel')!
+    const personnel = result.data.lines.find((l) => l.lineId === 'personnel')!
     expect(personnel.periods[0].variancePercent).toBeNull()
   })
 
@@ -175,12 +176,18 @@ describe('S44: Budget service', () => {
     })
     if (!customer.success) throw new Error('Customer failed')
 
-    const vatCode = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
+    const vatCode = db
+      .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+      .get() as { id: number }
     const product = createProduct(db, {
       name: 'Budgetprodukt',
       default_price_ore: 50000_00,
       vat_code_id: vatCode.id,
-      account_id: (db.prepare("SELECT id FROM accounts WHERE account_number = '3002'").get() as { id: number }).id,
+      account_id: (
+        db
+          .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
+          .get() as { id: number }
+      ).id,
     })
     if (!product.success) throw new Error('Product failed')
 
@@ -190,14 +197,16 @@ describe('S44: Budget service', () => {
       invoice_date: '2025-01-20',
       due_date: '2025-02-19',
       payment_terms: 30,
-      lines: [{
-        product_id: product.data.id,
-        description: 'Test',
-        quantity: 1,
-        unit_price_ore: 50000_00,
-        vat_code_id: vatCode.id,
-        sort_order: 0,
-      }],
+      lines: [
+        {
+          product_id: product.data.id,
+          description: 'Test',
+          quantity: 1,
+          unit_price_ore: 50000_00,
+          vat_code_id: vatCode.id,
+          sort_order: 0,
+        },
+      ],
     })
     if (!draft.success) throw new Error('Draft failed: ' + draft.error)
 
@@ -209,7 +218,9 @@ describe('S44: Budget service', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const netRevLine = result.data.lines.find(l => l.lineId === 'net_revenue')!
+    const netRevLine = result.data.lines.find(
+      (l) => l.lineId === 'net_revenue',
+    )!
     // Invoice = 50000 öre net revenue, signMultiplier = 1, credit > debit → positive actual
     expect(netRevLine.periods[0].actualOre).toBeGreaterThan(0)
     // Variance = actual - budget
@@ -222,9 +233,13 @@ describe('S44: Budget service', () => {
 
   it('B11: copyBudgetFromPreviousFy copies targets', () => {
     // Create a second FY
-    const secondFyId = (db.prepare(
-      "INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed) VALUES (1, '2026', '2026-01-01', '2026-12-31', 0) RETURNING id",
-    ).get() as { id: number }).id
+    const secondFyId = (
+      db
+        .prepare(
+          "INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed) VALUES (1, '2026', '2026-01-01', '2026-12-31', 0) RETURNING id",
+        )
+        .get() as { id: number }
+    ).id
 
     const result = copyBudgetFromPreviousFy(db, secondFyId, fyId)
     expect(result.success).toBe(true)
@@ -239,9 +254,13 @@ describe('S44: Budget service', () => {
   })
 
   it('B12: copyBudgetFromPreviousFy returns NOT_FOUND for empty source', () => {
-    const emptyFyId = (db.prepare(
-      "INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed) VALUES (1, '2027', '2027-01-01', '2027-12-31', 0) RETURNING id",
-    ).get() as { id: number }).id
+    const emptyFyId = (
+      db
+        .prepare(
+          "INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed) VALUES (1, '2027', '2027-01-01', '2027-12-31', 0) RETURNING id",
+        )
+        .get() as { id: number }
+    ).id
 
     const result = copyBudgetFromPreviousFy(db, fyId, emptyFyId)
     expect(result.success).toBe(false)
@@ -252,9 +271,11 @@ describe('S44: Budget service', () => {
   // ═══ Migration ═══
 
   it('B13: budget_targets table exists with correct schema', () => {
-    const info = db.prepare(
-      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'budget_targets'",
-    ).get() as { sql: string }
+    const info = db
+      .prepare(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'budget_targets'",
+      )
+      .get() as { sql: string }
     expect(info.sql).toContain('fiscal_year_id')
     expect(info.sql).toContain('line_id')
     expect(info.sql).toContain('period_number')
@@ -264,9 +285,11 @@ describe('S44: Budget service', () => {
 
   it('B14: UNIQUE constraint prevents duplicate (fy, line_id, period)', () => {
     expect(() =>
-      db.prepare(
-        'INSERT INTO budget_targets (fiscal_year_id, line_id, period_number, amount_ore) VALUES (?, ?, ?, ?)',
-      ).run(fyId, 'net_revenue', 1, 999),
+      db
+        .prepare(
+          'INSERT INTO budget_targets (fiscal_year_id, line_id, period_number, amount_ore) VALUES (?, ?, ?, ?)',
+        )
+        .run(fyId, 'net_revenue', 1, 999),
     ).toThrow()
   })
 
@@ -282,10 +305,10 @@ describe('S44: Budget service', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const depLine = result.data.lines.find(l => l.lineId === 'depreciation')!
+    const depLine = result.data.lines.find((l) => l.lineId === 'depreciation')!
     expect(depLine.periods[2].budgetOre).toBe(-25000_00)
     expect(depLine.periods[2].actualOre).toBe(0)
-    expect(depLine.periods[2].varianceOre).toBe(0 - (-25000_00)) // +25000_00
+    expect(depLine.periods[2].varianceOre).toBe(0 - -25000_00) // +25000_00
     expect(depLine.periods[2].variancePercent).toBe(100)
   })
 
@@ -295,7 +318,9 @@ describe('S44: Budget service', () => {
     if (!result.success) throw new Error(result.error)
 
     // 'financial_income' has no budget set → budgetOre = 0
-    const finIncome = result.data.lines.find(l => l.lineId === 'financial_income')!
+    const finIncome = result.data.lines.find(
+      (l) => l.lineId === 'financial_income',
+    )!
     expect(finIncome.periods[0].budgetOre).toBe(0)
     expect(finIncome.periods[0].variancePercent).toBeNull()
     expect(finIncome.totalVariancePercent).toBeNull()
@@ -309,7 +334,9 @@ describe('S44: Budget service', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const materialsLine = result.data.lines.find(l => l.lineId === 'materials')!
+    const materialsLine = result.data.lines.find(
+      (l) => l.lineId === 'materials',
+    )!
     const p1 = materialsLine.periods[0]
     expect(p1.budgetOre).toBe(-50000_00)
     expect(p1.actualOre).toBe(0)
@@ -319,9 +346,13 @@ describe('S44: Budget service', () => {
 
   it('B18: concurrent FY — budget is scoped correctly', () => {
     // Second FY already created in B11, insert budget there
-    const secondFyId = (db.prepare(
-      "SELECT id FROM fiscal_years WHERE year_label = '2026' LIMIT 1",
-    ).get() as { id: number }).id
+    const secondFyId = (
+      db
+        .prepare(
+          "SELECT id FROM fiscal_years WHERE year_label = '2026' LIMIT 1",
+        )
+        .get() as { id: number }
+    ).id
 
     saveBudgetTargets(db, secondFyId, [
       { line_id: 'net_revenue', period_number: 1, amount_ore: 999_00 },
@@ -331,14 +362,14 @@ describe('S44: Budget service', () => {
     const fy1 = getBudgetVsActual(db, fyId)
     expect(fy1.success).toBe(true)
     if (!fy1.success) throw new Error(fy1.error)
-    const fy1Rev = fy1.data.lines.find(l => l.lineId === 'net_revenue')!
+    const fy1Rev = fy1.data.lines.find((l) => l.lineId === 'net_revenue')!
     expect(fy1Rev.periods[0].budgetOre).toBe(150000_00) // set in B3
 
     // Verify FY2 has its own budget
     const fy2 = getBudgetVsActual(db, secondFyId)
     expect(fy2.success).toBe(true)
     if (!fy2.success) throw new Error(fy2.error)
-    const fy2Rev = fy2.data.lines.find(l => l.lineId === 'net_revenue')!
+    const fy2Rev = fy2.data.lines.find((l) => l.lineId === 'net_revenue')!
     expect(fy2Rev.periods[0].budgetOre).toBe(999_00)
   })
 
@@ -352,7 +383,7 @@ describe('S44: Budget service', () => {
     if (!targets.success) throw new Error(targets.error)
 
     const dep3 = targets.data.find(
-      t => t.line_id === 'depreciation' && t.period_number === 3,
+      (t) => t.line_id === 'depreciation' && t.period_number === 3,
     )
     expect(dep3?.amount_ore).toBe(0)
   })

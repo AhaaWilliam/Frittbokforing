@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { DEPRECIATION_DEFAULTS, findDepreciationDefaults } from '../../../shared/depreciation-defaults'
+import {
+  DEPRECIATION_DEFAULTS,
+  findDepreciationDefaults,
+} from '../../../shared/depreciation-defaults'
 import { useCreateFixedAsset, useUpdateFixedAsset } from '../../lib/hooks'
 import type {
   CreateFixedAssetInput,
@@ -15,7 +18,12 @@ interface Props {
   initialAsset?: FixedAssetWithAccumulation
 }
 
-export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }: Props) {
+export function FixedAssetFormDialog({
+  open,
+  onOpenChange,
+  mode,
+  initialAsset,
+}: Props) {
   const createMutation = useCreateFixedAsset()
   const updateMutation = useUpdateFixedAsset()
 
@@ -38,7 +46,9 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
       : '0',
   )
   const [months, setMonths] = useState(() =>
-    mode === 'edit' && initialAsset ? String(initialAsset.useful_life_months) : '36',
+    mode === 'edit' && initialAsset
+      ? String(initialAsset.useful_life_months)
+      : '36',
   )
   const [method, setMethod] = useState<DepreciationMethod>(() =>
     mode === 'edit' && initialAsset ? initialAsset.method : 'linear',
@@ -52,10 +62,14 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
     mode === 'edit' && initialAsset ? initialAsset.account_asset : '1220',
   )
   const [accAccount, setAccAccount] = useState(() =>
-    mode === 'edit' && initialAsset ? initialAsset.account_accumulated_depreciation : '1229',
+    mode === 'edit' && initialAsset
+      ? initialAsset.account_accumulated_depreciation
+      : '1229',
   )
   const [expAccount, setExpAccount] = useState(() =>
-    mode === 'edit' && initialAsset ? initialAsset.account_depreciation_expense : '7832',
+    mode === 'edit' && initialAsset
+      ? initialAsset.account_depreciation_expense
+      : '7832',
   )
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -93,9 +107,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
     const monthsNum = parseInt(months, 10)
 
     if (!name.trim()) return setFormError('Namn krävs')
-    if (!Number.isFinite(costOre) || costOre < 0) return setFormError('Ange giltigt anskaffningsvärde')
-    if (residualOre > costOre) return setFormError('Restvärde kan inte överstiga anskaffningsvärde')
-    if (!Number.isFinite(monthsNum) || monthsNum < 1) return setFormError('Nyttjandeperiod måste vara minst 1 månad')
+    if (!Number.isFinite(costOre) || costOre < 0)
+      return setFormError('Ange giltigt anskaffningsvärde')
+    if (residualOre > costOre)
+      return setFormError('Restvärde kan inte överstiga anskaffningsvärde')
+    if (!Number.isFinite(monthsNum) || monthsNum < 1)
+      return setFormError('Nyttjandeperiod måste vara minst 1 månad')
 
     const payload: CreateFixedAssetInput = {
       name: name.trim(),
@@ -110,22 +127,31 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
     }
     if (method === 'declining') {
       const ratePct = parseFloat(decliningRatePct)
-      if (!Number.isFinite(ratePct) || ratePct <= 0) return setFormError('Ange giltig degressiv ränta')
+      if (!Number.isFinite(ratePct) || ratePct <= 0)
+        return setFormError('Ange giltig degressiv ränta')
       payload.declining_rate_bp = Math.round(ratePct * 100)
     }
 
     try {
       if (mode === 'edit' && initialAsset) {
-        const r = await updateMutation.mutateAsync({ id: initialAsset.id, input: payload })
-        toast.success(`Tillgång uppdaterad — ${r.scheduleCount} schema-rader regenererade`)
+        const r = await updateMutation.mutateAsync({
+          id: initialAsset.id,
+          input: payload,
+        })
+        toast.success(
+          `Tillgång uppdaterad — ${r.scheduleCount} schema-rader regenererade`,
+        )
       } else {
         const r = await createMutation.mutateAsync(payload)
-        toast.success(`Tillgång skapad — ${r.scheduleCount} schema-rader genererade`)
+        toast.success(
+          `Tillgång skapad — ${r.scheduleCount} schema-rader genererade`,
+        )
         resetForm()
       }
       onOpenChange(false)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Kunde inte spara tillgång'
+      const msg =
+        err instanceof Error ? err.message : 'Kunde inte spara tillgång'
       setFormError(msg)
     }
   }
@@ -134,10 +160,17 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
 
   const isEdit = mode === 'edit'
   const isPending = createMutation.isPending || updateMutation.isPending
-  const title = isEdit && initialAsset ? `Redigera ${initialAsset.name}` : 'Ny anläggningstillgång'
+  const title =
+    isEdit && initialAsset
+      ? `Redigera ${initialAsset.name}`
+      : 'Ny anläggningstillgång'
   const submitLabel = isPending
-    ? isEdit ? 'Sparar…' : 'Skapar…'
-    : isEdit ? 'Spara ändringar' : 'Skapa tillgång'
+    ? isEdit
+      ? 'Sparar…'
+      : 'Skapar…'
+    : isEdit
+      ? 'Spara ändringar'
+      : 'Skapa tillgång'
 
   return (
     <div
@@ -152,13 +185,18 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
         className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="fixed-asset-dialog-title" className="mb-4 text-lg font-semibold">
+        <h2
+          id="fixed-asset-dialog-title"
+          className="mb-4 text-lg font-semibold"
+        >
           {title}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="fa-name" className="mb-1 block text-sm font-medium">Namn</label>
+            <label htmlFor="fa-name" className="mb-1 block text-sm font-medium">
+              Namn
+            </label>
             <input
               id="fa-name"
               value={name}
@@ -171,7 +209,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="fa-date" className="mb-1 block text-sm font-medium">Anskaffningsdatum</label>
+              <label
+                htmlFor="fa-date"
+                className="mb-1 block text-sm font-medium"
+              >
+                Anskaffningsdatum
+              </label>
               <input
                 id="fa-date"
                 type="date"
@@ -182,7 +225,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
               />
             </div>
             <div>
-              <label htmlFor="fa-months" className="mb-1 block text-sm font-medium">Nyttjandeperiod (månader)</label>
+              <label
+                htmlFor="fa-months"
+                className="mb-1 block text-sm font-medium"
+              >
+                Nyttjandeperiod (månader)
+              </label>
               <input
                 id="fa-months"
                 type="number"
@@ -198,7 +246,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="fa-cost" className="mb-1 block text-sm font-medium">Anskaffningsvärde (kr)</label>
+              <label
+                htmlFor="fa-cost"
+                className="mb-1 block text-sm font-medium"
+              >
+                Anskaffningsvärde (kr)
+              </label>
               <input
                 id="fa-cost"
                 type="number"
@@ -212,7 +265,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
               />
             </div>
             <div>
-              <label htmlFor="fa-residual" className="mb-1 block text-sm font-medium">Restvärde (kr)</label>
+              <label
+                htmlFor="fa-residual"
+                className="mb-1 block text-sm font-medium"
+              >
+                Restvärde (kr)
+              </label>
               <input
                 id="fa-residual"
                 type="number"
@@ -226,7 +284,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
           </div>
 
           <div>
-            <label htmlFor="fa-method" className="mb-1 block text-sm font-medium">Avskrivningsmetod</label>
+            <label
+              htmlFor="fa-method"
+              className="mb-1 block text-sm font-medium"
+            >
+              Avskrivningsmetod
+            </label>
             <select
               id="fa-method"
               value={method}
@@ -240,7 +303,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
 
           {method === 'declining' && (
             <div>
-              <label htmlFor="fa-rate" className="mb-1 block text-sm font-medium">Avskrivningssats (% per år)</label>
+              <label
+                htmlFor="fa-rate"
+                className="mb-1 block text-sm font-medium"
+              >
+                Avskrivningssats (% per år)
+              </label>
               <input
                 id="fa-rate"
                 type="number"
@@ -255,7 +323,9 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
           )}
 
           <fieldset className="rounded-md border p-3">
-            <legend className="px-1 text-sm font-medium">Bokföringskonton</legend>
+            <legend className="px-1 text-sm font-medium">
+              Bokföringskonton
+            </legend>
             <p className="mb-2 text-xs text-muted-foreground">
               {isEdit
                 ? 'Att byta BAS-konto rekommenderas bara om ursprungligt konto blivit inaktivt.'
@@ -263,7 +333,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
             </p>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label htmlFor="fa-asset-account" className="mb-1 block text-xs font-medium">Anskaffning</label>
+                <label
+                  htmlFor="fa-asset-account"
+                  className="mb-1 block text-xs font-medium"
+                >
+                  Anskaffning
+                </label>
                 <input
                   id="fa-asset-account"
                   value={assetAccount}
@@ -273,12 +348,19 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
                 />
                 <datalist id="fa-asset-accounts">
                   {DEPRECIATION_DEFAULTS.map((d) => (
-                    <option key={d.asset} value={d.asset}>{d.label}</option>
+                    <option key={d.asset} value={d.asset}>
+                      {d.label}
+                    </option>
                   ))}
                 </datalist>
               </div>
               <div>
-                <label htmlFor="fa-acc-account" className="mb-1 block text-xs font-medium">Ack. avskrivningar</label>
+                <label
+                  htmlFor="fa-acc-account"
+                  className="mb-1 block text-xs font-medium"
+                >
+                  Ack. avskrivningar
+                </label>
                 <input
                   id="fa-acc-account"
                   value={accAccount}
@@ -287,7 +369,12 @@ export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }:
                 />
               </div>
               <div>
-                <label htmlFor="fa-exp-account" className="mb-1 block text-xs font-medium">Avskrivningskostnad</label>
+                <label
+                  htmlFor="fa-exp-account"
+                  className="mb-1 block text-xs font-medium"
+                >
+                  Avskrivningskostnad
+                </label>
                 <input
                   id="fa-exp-account"
                   value={expAccount}

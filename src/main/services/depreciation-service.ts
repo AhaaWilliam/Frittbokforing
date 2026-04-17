@@ -92,30 +92,74 @@ function validateFixedAssetInput(
   db: Database.Database,
 ): { success: false; code: ErrorCode; error: string; field?: string } | null {
   if (input.acquisition_cost_ore < 0) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Anskaffningsvärde får inte vara negativt', field: 'acquisition_cost_ore' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Anskaffningsvärde får inte vara negativt',
+      field: 'acquisition_cost_ore',
+    }
   }
   if (input.residual_value_ore < 0) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Restvärde får inte vara negativt', field: 'residual_value_ore' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Restvärde får inte vara negativt',
+      field: 'residual_value_ore',
+    }
   }
   if (input.residual_value_ore > input.acquisition_cost_ore) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Restvärde kan inte överstiga anskaffningsvärde', field: 'residual_value_ore' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Restvärde kan inte överstiga anskaffningsvärde',
+      field: 'residual_value_ore',
+    }
   }
   if (input.useful_life_months <= 0) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Nyttjandeperiod måste vara minst 1 månad', field: 'useful_life_months' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Nyttjandeperiod måste vara minst 1 månad',
+      field: 'useful_life_months',
+    }
   }
-  if (input.method === 'declining' && (input.declining_rate_bp == null || input.declining_rate_bp <= 0)) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Degressiv metod kräver avskrivningsränta (basis points > 0)', field: 'declining_rate_bp' }
+  if (
+    input.method === 'declining' &&
+    (input.declining_rate_bp == null || input.declining_rate_bp <= 0)
+  ) {
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Degressiv metod kräver avskrivningsränta (basis points > 0)',
+      field: 'declining_rate_bp',
+    }
   }
 
-  const accountFields: Array<{ value: string; field: keyof CreateFixedAssetInput }> = [
+  const accountFields: Array<{
+    value: string
+    field: keyof CreateFixedAssetInput
+  }> = [
     { value: input.account_asset, field: 'account_asset' },
-    { value: input.account_accumulated_depreciation, field: 'account_accumulated_depreciation' },
-    { value: input.account_depreciation_expense, field: 'account_depreciation_expense' },
+    {
+      value: input.account_accumulated_depreciation,
+      field: 'account_accumulated_depreciation',
+    },
+    {
+      value: input.account_depreciation_expense,
+      field: 'account_depreciation_expense',
+    },
   ]
   for (const { value, field } of accountFields) {
-    const exists = db.prepare('SELECT 1 FROM accounts WHERE account_number = ?').get(value)
+    const exists = db
+      .prepare('SELECT 1 FROM accounts WHERE account_number = ?')
+      .get(value)
     if (!exists) {
-      return { success: false, code: 'ACCOUNT_NOT_FOUND', error: `Konto ${value} finns inte`, field }
+      return {
+        success: false,
+        code: 'ACCOUNT_NOT_FOUND',
+        error: `Konto ${value} finns inte`,
+        field,
+      }
     }
   }
 
@@ -130,7 +174,11 @@ function validateFixedAssetInput(
       const e = err as { code: ErrorCode; error: string; field?: string }
       return { success: false, code: e.code, error: e.error, field: e.field }
     }
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Kontot kunde inte valideras' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Kontot kunde inte valideras',
+    }
   }
 
   return null
@@ -141,9 +189,15 @@ function validateAccountChange(
   accounts: string[],
 ): { success: false; code: ErrorCode; error: string; field?: string } | null {
   for (const value of accounts) {
-    const exists = db.prepare('SELECT 1 FROM accounts WHERE account_number = ?').get(value)
+    const exists = db
+      .prepare('SELECT 1 FROM accounts WHERE account_number = ?')
+      .get(value)
     if (!exists) {
-      return { success: false, code: 'ACCOUNT_NOT_FOUND', error: `Konto ${value} finns inte` }
+      return {
+        success: false,
+        code: 'ACCOUNT_NOT_FOUND',
+        error: `Konto ${value} finns inte`,
+      }
     }
   }
   try {
@@ -153,7 +207,11 @@ function validateAccountChange(
       const e = err as { code: ErrorCode; error: string; field?: string }
       return { success: false, code: e.code, error: e.error, field: e.field }
     }
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Kontot kunde inte valideras' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Kontot kunde inte valideras',
+    }
   }
   return null
 }
@@ -167,33 +225,45 @@ export function createFixedAsset(
 
   return db.transaction(() => {
     const now = todayLocalFromNow()
-    const companyId = (db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number } | undefined)?.id
+    const companyId = (
+      db.prepare('SELECT id FROM companies LIMIT 1').get() as
+        | { id: number }
+        | undefined
+    )?.id
     if (!companyId) {
-      return { success: false as const, code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
+      return {
+        success: false as const,
+        code: 'NOT_FOUND' as const,
+        error: 'Inget företag hittades',
+      }
     }
 
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT INTO fixed_assets (
         company_id, name, acquisition_date, acquisition_cost_ore,
         residual_value_ore, useful_life_months, method, declining_rate_bp,
         account_asset, account_accumulated_depreciation, account_depreciation_expense,
         status, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
-    `).run(
-      companyId,
-      input.name,
-      input.acquisition_date,
-      input.acquisition_cost_ore,
-      input.residual_value_ore,
-      input.useful_life_months,
-      input.method,
-      input.declining_rate_bp ?? null,
-      input.account_asset,
-      input.account_accumulated_depreciation,
-      input.account_depreciation_expense,
-      now,
-      now,
-    )
+    `,
+      )
+      .run(
+        companyId,
+        input.name,
+        input.acquisition_date,
+        input.acquisition_cost_ore,
+        input.residual_value_ore,
+        input.useful_life_months,
+        input.method,
+        input.declining_rate_bp ?? null,
+        input.account_asset,
+        input.account_accumulated_depreciation,
+        input.account_depreciation_expense,
+        now,
+        now,
+      )
 
     const assetId = Number(result.lastInsertRowid)
     const scheduleCount = insertSchedule(db, assetId, input)
@@ -221,9 +291,15 @@ export function updateFixedAsset(
   }
 
   return db.transaction(() => {
-    const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
+    const asset = db
+      .prepare('SELECT * FROM fixed_assets WHERE id = ?')
+      .get(id) as FixedAsset | undefined
     if (!asset) {
-      return { success: false as const, code: 'NOT_FOUND' as const, error: 'Anläggningstillgång hittades inte' }
+      return {
+        success: false as const,
+        code: 'NOT_FOUND' as const,
+        error: 'Anläggningstillgång hittades inte',
+      }
     }
 
     if (asset.status !== 'active') {
@@ -234,12 +310,14 @@ export function updateFixedAsset(
       }
     }
 
-    const nonPendingCount = (db
-      .prepare(
-        `SELECT COUNT(*) as n FROM depreciation_schedules
+    const nonPendingCount = (
+      db
+        .prepare(
+          `SELECT COUNT(*) as n FROM depreciation_schedules
          WHERE fixed_asset_id = ? AND status IN ('executed', 'skipped')`,
-      )
-      .get(id) as { n: number }).n
+        )
+        .get(id) as { n: number }
+    ).n
     if (nonPendingCount > 0) {
       return {
         success: false as const,
@@ -249,10 +327,16 @@ export function updateFixedAsset(
     }
 
     const changedAccounts: string[] = []
-    if (input.account_asset !== asset.account_asset) changedAccounts.push(input.account_asset)
-    if (input.account_accumulated_depreciation !== asset.account_accumulated_depreciation)
+    if (input.account_asset !== asset.account_asset)
+      changedAccounts.push(input.account_asset)
+    if (
+      input.account_accumulated_depreciation !==
+      asset.account_accumulated_depreciation
+    )
       changedAccounts.push(input.account_accumulated_depreciation)
-    if (input.account_depreciation_expense !== asset.account_depreciation_expense)
+    if (
+      input.account_depreciation_expense !== asset.account_depreciation_expense
+    )
       changedAccounts.push(input.account_depreciation_expense)
 
     if (changedAccounts.length > 0) {
@@ -260,9 +344,12 @@ export function updateFixedAsset(
       if (accountError) return accountError
     }
 
-    db.prepare('DELETE FROM depreciation_schedules WHERE fixed_asset_id = ?').run(id)
+    db.prepare(
+      'DELETE FROM depreciation_schedules WHERE fixed_asset_id = ?',
+    ).run(id)
 
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE fixed_assets SET
         name = ?, acquisition_date = ?, acquisition_cost_ore = ?,
         residual_value_ore = ?, useful_life_months = ?, method = ?,
@@ -270,7 +357,8 @@ export function updateFixedAsset(
         account_accumulated_depreciation = ?, account_depreciation_expense = ?,
         updated_at = ?
       WHERE id = ?
-    `).run(
+    `,
+    ).run(
       input.name,
       input.acquisition_date,
       input.acquisition_cost_ore,
@@ -294,11 +382,23 @@ export function updateFixedAsset(
 function insertSchedule(
   db: Database.Database,
   assetId: number,
-  input: Pick<CreateFixedAssetInput, 'acquisition_date' | 'acquisition_cost_ore' | 'residual_value_ore' | 'useful_life_months' | 'method' | 'declining_rate_bp'>,
+  input: Pick<
+    CreateFixedAssetInput,
+    | 'acquisition_date'
+    | 'acquisition_cost_ore'
+    | 'residual_value_ore'
+    | 'useful_life_months'
+    | 'method'
+    | 'declining_rate_bp'
+  >,
 ): number {
   const amounts =
     input.method === 'linear'
-      ? generateLinearSchedule(input.acquisition_cost_ore, input.residual_value_ore, input.useful_life_months)
+      ? generateLinearSchedule(
+          input.acquisition_cost_ore,
+          input.residual_value_ore,
+          input.useful_life_months,
+        )
       : generateDecliningSchedule(
           input.acquisition_cost_ore,
           input.residual_value_ore,
@@ -306,7 +406,10 @@ function insertSchedule(
           input.declining_rate_bp!,
         )
 
-  const periods = computePeriods(input.acquisition_date, input.useful_life_months)
+  const periods = computePeriods(
+    input.acquisition_date,
+    input.useful_life_months,
+  )
   const insert = db.prepare(`
     INSERT INTO depreciation_schedules (
       fixed_asset_id, period_number, period_start, period_end, amount_ore, status
@@ -323,10 +426,16 @@ export function listFixedAssets(
   fiscalYearId?: number,
 ): IpcResult<FixedAssetWithAccumulation[]> {
   const fyBounds = fiscalYearId
-    ? (db.prepare('SELECT start_date, end_date FROM fiscal_years WHERE id = ?').get(fiscalYearId) as { start_date: string; end_date: string } | undefined)
+    ? (db
+        .prepare('SELECT start_date, end_date FROM fiscal_years WHERE id = ?')
+        .get(fiscalYearId) as
+        | { start_date: string; end_date: string }
+        | undefined)
     : undefined
 
-  const rows = db.prepare(`SELECT * FROM fixed_assets ORDER BY acquisition_date, id`).all() as FixedAsset[]
+  const rows = db
+    .prepare(`SELECT * FROM fixed_assets ORDER BY acquisition_date, id`)
+    .all() as FixedAsset[]
 
   const accumulate = db.prepare(`
     SELECT
@@ -341,8 +450,12 @@ export function listFixedAssets(
 
   const result: FixedAssetWithAccumulation[] = rows.map((asset) => {
     const stats = fyBounds
-      ? (accumulate.get(fyBounds.end_date, asset.id) as { acc_ore: number; exec_count: number; total_count: number } | undefined)
-      : (accumulate.get(asset.id) as { acc_ore: number; exec_count: number; total_count: number } | undefined)
+      ? (accumulate.get(fyBounds.end_date, asset.id) as
+          | { acc_ore: number; exec_count: number; total_count: number }
+          | undefined)
+      : (accumulate.get(asset.id) as
+          | { acc_ore: number; exec_count: number; total_count: number }
+          | undefined)
     const accOre = stats?.acc_ore ?? 0
     return {
       ...asset,
@@ -360,15 +473,25 @@ export function getFixedAsset(
   db: Database.Database,
   id: number,
 ): IpcResult<FixedAssetWithSchedule> {
-  const asset = db.prepare(`SELECT * FROM fixed_assets WHERE id = ?`).get(id) as FixedAsset | undefined
+  const asset = db
+    .prepare(`SELECT * FROM fixed_assets WHERE id = ?`)
+    .get(id) as FixedAsset | undefined
   if (!asset) {
-    return { success: false, code: 'NOT_FOUND', error: 'Anläggningstillgång hittades inte' }
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Anläggningstillgång hittades inte',
+    }
   }
   const schedule = db
-    .prepare(`SELECT * FROM depreciation_schedules WHERE fixed_asset_id = ? ORDER BY period_number`)
+    .prepare(
+      `SELECT * FROM depreciation_schedules WHERE fixed_asset_id = ? ORDER BY period_number`,
+    )
     .all(id) as DepreciationSchedule[]
 
-  const accOre = schedule.filter((s) => s.status === 'executed').reduce((sum, s) => sum + s.amount_ore, 0)
+  const accOre = schedule
+    .filter((s) => s.status === 'executed')
+    .reduce((sum, s) => sum + s.amount_ore, 0)
   const execCount = schedule.filter((s) => s.status === 'executed').length
 
   return {
@@ -402,41 +525,82 @@ export function disposeFixedAsset(
   proceedsAccount: string | null = null,
 ): IpcResult<void> {
   return db.transaction(() => {
-    const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
-    if (!asset) return { success: false as const, code: 'NOT_FOUND' as const, error: 'Anläggningstillgång hittades inte' }
+    const asset = db
+      .prepare('SELECT * FROM fixed_assets WHERE id = ?')
+      .get(id) as FixedAsset | undefined
+    if (!asset)
+      return {
+        success: false as const,
+        code: 'NOT_FOUND' as const,
+        error: 'Anläggningstillgång hittades inte',
+      }
     if (asset.status === 'disposed') {
-      return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Tillgången är redan avyttrad' }
+      return {
+        success: false as const,
+        code: 'VALIDATION_ERROR' as const,
+        error: 'Tillgången är redan avyttrad',
+      }
     }
 
     let disposalJournalEntryId: number | null = null
 
     if (generateJournalEntry) {
-      const fy = db.prepare(`
+      const fy = db
+        .prepare(
+          `
         SELECT id, company_id FROM fiscal_years
         WHERE company_id = ?
           AND date(?) BETWEEN date(start_date) AND date(end_date)
           AND is_closed = 0
         LIMIT 1
-      `).get(asset.company_id, disposedDate) as { id: number; company_id: number } | undefined
+      `,
+        )
+        .get(asset.company_id, disposedDate) as
+        | { id: number; company_id: number }
+        | undefined
       if (!fy) {
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Avyttringsdatum ligger utanför ett öppet räkenskapsår' }
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error: 'Avyttringsdatum ligger utanför ett öppet räkenskapsår',
+        }
       }
 
-      const accRow = db.prepare(`
+      const accRow = db
+        .prepare(
+          `
         SELECT COALESCE(SUM(amount_ore), 0) AS total FROM depreciation_schedules
         WHERE fixed_asset_id = ? AND status = 'executed'
-      `).get(id) as { total: number }
+      `,
+        )
+        .get(id) as { total: number }
       const accumulated = accRow.total
       const bookValue = asset.acquisition_cost_ore - accumulated
 
       if (bookValue < 0) {
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Ack. avskrivning överstiger anskaffningsvärdet — disposal-verifikat kan inte genereras automatiskt' }
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error:
+            'Ack. avskrivning överstiger anskaffningsvärdet — disposal-verifikat kan inte genereras automatiskt',
+        }
       }
       if (salePriceOre < 0) {
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Försäljningspris kan inte vara negativt', field: 'sale_price_ore' }
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error: 'Försäljningspris kan inte vara negativt',
+          field: 'sale_price_ore',
+        }
       }
       if (salePriceOre > 0 && !proceedsAccount) {
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: 'Intäktskonto (t.ex. bankkonto 1930) krävs vid försäljningspris > 0', field: 'proceeds_account' }
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error:
+            'Intäktskonto (t.ex. bankkonto 1930) krävs vid försäljningspris > 0',
+          field: 'proceeds_account',
+        }
       }
 
       // Beräkna vinst/förlust
@@ -445,42 +609,62 @@ export function disposeFixedAsset(
       //   > 0 → vinst → K 3970
       //   < 0 → förlust → D 7970
       //   = 0 → ingen 3970/7970-rad
-      const gainOrLoss = salePriceOre > 0 ? salePriceOre - bookValue : -bookValue
+      const gainOrLoss =
+        salePriceOre > 0 ? salePriceOre - bookValue : -bookValue
       const isGain = gainOrLoss > 0
       const isLoss = gainOrLoss < 0
       const diffAmount = Math.abs(gainOrLoss)
 
       // Konton att verifiera
       const accountsToCheck = [asset.account_asset]
-      if (accumulated > 0) accountsToCheck.push(asset.account_accumulated_depreciation)
-      if (salePriceOre > 0 && proceedsAccount) accountsToCheck.push(proceedsAccount)
-      if (isLoss || (salePriceOre === 0 && bookValue > 0)) accountsToCheck.push(DISPOSAL_LOSS_ACCOUNT)
+      if (accumulated > 0)
+        accountsToCheck.push(asset.account_accumulated_depreciation)
+      if (salePriceOre > 0 && proceedsAccount)
+        accountsToCheck.push(proceedsAccount)
+      if (isLoss || (salePriceOre === 0 && bookValue > 0))
+        accountsToCheck.push(DISPOSAL_LOSS_ACCOUNT)
       if (isGain) accountsToCheck.push(DISPOSAL_GAIN_ACCOUNT)
 
       const placeholders = accountsToCheck.map(() => '?').join(',')
-      const existing = db.prepare(`SELECT account_number FROM accounts WHERE account_number IN (${placeholders})`).all(...accountsToCheck) as { account_number: string }[]
+      const existing = db
+        .prepare(
+          `SELECT account_number FROM accounts WHERE account_number IN (${placeholders})`,
+        )
+        .all(...accountsToCheck) as { account_number: string }[]
       if (existing.length !== accountsToCheck.length) {
         const found = new Set(existing.map((e) => e.account_number))
         const missing = accountsToCheck.filter((a) => !found.has(a))
-        return { success: false as const, code: 'VALIDATION_ERROR' as const, error: `Konto ${missing.join(', ')} saknas i kontoplanen` }
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error: `Konto ${missing.join(', ')} saknas i kontoplanen`,
+        }
       }
       validateAccountsActive(db, accountsToCheck)
 
       checkChronology(db, fy.id, 'E', disposedDate)
 
-      const nextVer = db.prepare(`
+      const nextVer = db
+        .prepare(
+          `
         SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
         FROM journal_entries
         WHERE fiscal_year_id = ? AND verification_series = 'E'
-      `).get(fy.id) as { next_ver: number }
+      `,
+        )
+        .get(fy.id) as { next_ver: number }
 
       const description = `Avyttring: ${asset.name}`
-      const jeResult = db.prepare(`
+      const jeResult = db
+        .prepare(
+          `
         INSERT INTO journal_entries (
           company_id, fiscal_year_id, verification_number, verification_series,
           journal_date, description, status, source_type
         ) VALUES (?, ?, ?, 'E', ?, ?, 'draft', 'auto_depreciation')
-      `).run(fy.company_id, fy.id, nextVer.next_ver, disposedDate, description)
+      `,
+        )
+        .run(fy.company_id, fy.id, nextVer.next_ver, disposedDate, description)
 
       disposalJournalEntryId = Number(jeResult.lastInsertRowid)
 
@@ -493,32 +677,78 @@ export function disposeFixedAsset(
       let lineNum = 1
       // D ack_dep
       if (accumulated > 0) {
-        insertLine.run(disposalJournalEntryId, lineNum++, asset.account_accumulated_depreciation, accumulated, 0, description)
+        insertLine.run(
+          disposalJournalEntryId,
+          lineNum++,
+          asset.account_accumulated_depreciation,
+          accumulated,
+          0,
+          description,
+        )
       }
       // K asset (anskaffningsvärdet bort)
-      insertLine.run(disposalJournalEntryId, lineNum++, asset.account_asset, 0, asset.acquisition_cost_ore, description)
+      insertLine.run(
+        disposalJournalEntryId,
+        lineNum++,
+        asset.account_asset,
+        0,
+        asset.acquisition_cost_ore,
+        description,
+      )
       // D proceeds (om försäljningspris > 0)
       if (salePriceOre > 0 && proceedsAccount) {
-        insertLine.run(disposalJournalEntryId, lineNum++, proceedsAccount, salePriceOre, 0, description)
+        insertLine.run(
+          disposalJournalEntryId,
+          lineNum++,
+          proceedsAccount,
+          salePriceOre,
+          0,
+          description,
+        )
       }
       // K 3970 (vinst) eller D 7970 (förlust)
       if (isGain) {
-        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_GAIN_ACCOUNT, 0, diffAmount, description)
+        insertLine.run(
+          disposalJournalEntryId,
+          lineNum++,
+          DISPOSAL_GAIN_ACCOUNT,
+          0,
+          diffAmount,
+          description,
+        )
       } else if (isLoss) {
-        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_LOSS_ACCOUNT, diffAmount, 0, description)
+        insertLine.run(
+          disposalJournalEntryId,
+          lineNum++,
+          DISPOSAL_LOSS_ACCOUNT,
+          diffAmount,
+          0,
+          description,
+        )
       } else if (salePriceOre === 0 && bookValue > 0) {
         // Baseline S54: sale_price=0, book_value>0 → full förlust
-        insertLine.run(disposalJournalEntryId, lineNum++, DISPOSAL_LOSS_ACCOUNT, bookValue, 0, description)
+        insertLine.run(
+          disposalJournalEntryId,
+          lineNum++,
+          DISPOSAL_LOSS_ACCOUNT,
+          bookValue,
+          0,
+          description,
+        )
       }
 
-      db.prepare(`UPDATE journal_entries SET status = 'booked' WHERE id = ?`).run(disposalJournalEntryId)
+      db.prepare(
+        `UPDATE journal_entries SET status = 'booked' WHERE id = ?`,
+      ).run(disposalJournalEntryId)
     }
 
-    db.prepare(`UPDATE fixed_assets SET status = 'disposed', disposed_date = ?, disposed_journal_entry_id = ?, updated_at = ? WHERE id = ?`)
-      .run(disposedDate, disposalJournalEntryId, todayLocalFromNow(), id)
+    db.prepare(
+      `UPDATE fixed_assets SET status = 'disposed', disposed_date = ?, disposed_journal_entry_id = ?, updated_at = ? WHERE id = ?`,
+    ).run(disposedDate, disposalJournalEntryId, todayLocalFromNow(), id)
 
-    db.prepare(`UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND status = 'pending'`)
-      .run(id)
+    db.prepare(
+      `UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND status = 'pending'`,
+    ).run(id)
 
     try {
       rebuildSearchIndex(db)
@@ -534,14 +764,33 @@ export function deleteFixedAsset(
   db: Database.Database,
   id: number,
 ): IpcResult<void> {
-  const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
-  if (!asset) return { success: false, code: 'NOT_FOUND', error: 'Anläggningstillgång hittades inte' }
+  const asset = db
+    .prepare('SELECT * FROM fixed_assets WHERE id = ?')
+    .get(id) as FixedAsset | undefined
+  if (!asset)
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Anläggningstillgång hittades inte',
+    }
   if (asset.status !== 'active') {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Endast aktiva tillgångar kan raderas' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Endast aktiva tillgångar kan raderas',
+    }
   }
-  const executed = db.prepare(`SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'executed'`).get(id) as { c: number }
+  const executed = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'executed'`,
+    )
+    .get(id) as { c: number }
   if (executed.c > 0) {
-    return { success: false, code: 'VALIDATION_ERROR', error: 'Kan inte radera tillgång med exekverade avskrivningar' }
+    return {
+      success: false,
+      code: 'VALIDATION_ERROR',
+      error: 'Kan inte radera tillgång med exekverade avskrivningar',
+    }
   }
   db.prepare('DELETE FROM fixed_assets WHERE id = ?').run(id)
   return { success: true, data: undefined }
@@ -562,12 +811,24 @@ export function executeDepreciationPeriod(
   const succeeded: ExecuteDepreciationPeriodResult['succeeded'] = []
   const failed: ExecuteDepreciationPeriodResult['failed'] = []
 
-  const fy = db.prepare('SELECT company_id, start_date, end_date FROM fiscal_years WHERE id = ?').get(fiscalYearId) as { company_id: number; start_date: string; end_date: string } | undefined
+  const fy = db
+    .prepare(
+      'SELECT company_id, start_date, end_date FROM fiscal_years WHERE id = ?',
+    )
+    .get(fiscalYearId) as
+    | { company_id: number; start_date: string; end_date: string }
+    | undefined
   if (!fy) {
-    return { success: false, code: 'NOT_FOUND', error: 'Räkenskapsår hittades inte' }
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Räkenskapsår hittades inte',
+    }
   }
 
-  const pending = db.prepare(`
+  const pending = db
+    .prepare(
+      `
     SELECT ds.id AS schedule_id, ds.fixed_asset_id, ds.period_number, ds.period_end,
            ds.amount_ore, fa.name AS asset_name,
            fa.account_accumulated_depreciation, fa.account_depreciation_expense
@@ -578,7 +839,9 @@ export function executeDepreciationPeriod(
       AND ds.period_end <= ?
       AND ds.period_end BETWEEN ? AND ?
     ORDER BY ds.period_end, ds.id
-  `).all(periodEndDate, fy.start_date, fy.end_date) as Array<{
+  `,
+    )
+    .all(periodEndDate, fy.start_date, fy.end_date) as Array<{
     schedule_id: number
     fixed_asset_id: number
     period_number: number
@@ -590,7 +853,10 @@ export function executeDepreciationPeriod(
   }>
 
   if (pending.length === 0) {
-    return { success: true, data: { succeeded, failed, batch_status: 'completed' } }
+    return {
+      success: true,
+      data: { succeeded, failed, batch_status: 'completed' },
+    }
   }
 
   const ROLLBACK_SENTINEL = '__CANCEL_ALL_FAILED__'
@@ -603,7 +869,9 @@ export function executeDepreciationPeriod(
             _executeScheduleTx(db, fiscalYearId, fy.company_id, p)
           })()
           const je = db
-            .prepare('SELECT journal_entry_id FROM depreciation_schedules WHERE id = ?')
+            .prepare(
+              'SELECT journal_entry_id FROM depreciation_schedules WHERE id = ?',
+            )
             .get(p.schedule_id) as { journal_entry_id: number | null }
           succeeded.push({
             asset_id: p.fixed_asset_id,
@@ -615,8 +883,16 @@ export function executeDepreciationPeriod(
           const e =
             err && typeof err === 'object' && 'code' in err && 'error' in err
               ? (err as { code: ErrorCode; error: string })
-              : { code: 'UNEXPECTED_ERROR' as ErrorCode, error: err instanceof Error ? err.message : 'Oväntat fel' }
-          failed.push({ asset_id: p.fixed_asset_id, schedule_id: p.schedule_id, error: e.error, code: e.code })
+              : {
+                  code: 'UNEXPECTED_ERROR' as ErrorCode,
+                  error: err instanceof Error ? err.message : 'Oväntat fel',
+                }
+          failed.push({
+            asset_id: p.fixed_asset_id,
+            schedule_id: p.schedule_id,
+            error: e.error,
+            code: e.code,
+          })
         }
       }
 
@@ -632,12 +908,18 @@ export function executeDepreciationPeriod(
     })()
   } catch (err: unknown) {
     if (err instanceof Error && err.message === ROLLBACK_SENTINEL) {
-      return { success: true, data: { succeeded: [], failed, batch_status: 'cancelled' } }
+      return {
+        success: true,
+        data: { succeeded: [], failed, batch_status: 'cancelled' },
+      }
     }
     return {
       success: false,
       code: 'UNEXPECTED_ERROR',
-      error: err instanceof Error ? err.message : 'Oväntat fel vid avskrivningsexekvering',
+      error:
+        err instanceof Error
+          ? err.message
+          : 'Oväntat fel vid avskrivningsexekvering',
     }
   }
 
@@ -664,26 +946,36 @@ function _executeScheduleTx(
 ): void {
   if (p.amount_ore === 0) {
     // Noll-avskrivning: markera som executed utan verifikat
-    db.prepare(`UPDATE depreciation_schedules SET status = 'executed' WHERE id = ?`).run(p.schedule_id)
+    db.prepare(
+      `UPDATE depreciation_schedules SET status = 'executed' WHERE id = ?`,
+    ).run(p.schedule_id)
     checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
     return
   }
 
   checkChronology(db, fiscalYearId, 'E', p.period_end)
 
-  const nextVer = db.prepare(`
+  const nextVer = db
+    .prepare(
+      `
     SELECT COALESCE(MAX(verification_number), 0) + 1 AS next_ver
     FROM journal_entries
     WHERE fiscal_year_id = ? AND verification_series = 'E'
-  `).get(fiscalYearId) as { next_ver: number }
+  `,
+    )
+    .get(fiscalYearId) as { next_ver: number }
 
   const description = `Avskrivning: ${p.asset_name} (period ${p.period_number})`
-  const jeResult = db.prepare(`
+  const jeResult = db
+    .prepare(
+      `
     INSERT INTO journal_entries (
       company_id, fiscal_year_id, verification_number, verification_series,
       journal_date, description, status, source_type
     ) VALUES (?, ?, ?, 'E', ?, ?, 'draft', 'auto_depreciation')
-  `).run(companyId, fiscalYearId, nextVer.next_ver, p.period_end, description)
+  `,
+    )
+    .run(companyId, fiscalYearId, nextVer.next_ver, p.period_end, description)
 
   const journalEntryId = Number(jeResult.lastInsertRowid)
 
@@ -693,24 +985,51 @@ function _executeScheduleTx(
       debit_ore, credit_ore, description
     ) VALUES (?, ?, ?, ?, ?, ?)
   `)
-  insertLine.run(journalEntryId, 1, p.account_depreciation_expense, p.amount_ore, 0, description)
-  insertLine.run(journalEntryId, 2, p.account_accumulated_depreciation, 0, p.amount_ore, description)
+  insertLine.run(
+    journalEntryId,
+    1,
+    p.account_depreciation_expense,
+    p.amount_ore,
+    0,
+    description,
+  )
+  insertLine.run(
+    journalEntryId,
+    2,
+    p.account_accumulated_depreciation,
+    0,
+    p.amount_ore,
+    description,
+  )
 
-  db.prepare(`UPDATE journal_entries SET status = 'booked' WHERE id = ?`).run(journalEntryId)
+  db.prepare(`UPDATE journal_entries SET status = 'booked' WHERE id = ?`).run(
+    journalEntryId,
+  )
 
-  db.prepare(`UPDATE depreciation_schedules SET status = 'executed', journal_entry_id = ? WHERE id = ?`)
-    .run(journalEntryId, p.schedule_id)
+  db.prepare(
+    `UPDATE depreciation_schedules SET status = 'executed', journal_entry_id = ? WHERE id = ?`,
+  ).run(journalEntryId, p.schedule_id)
 
   checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
 }
 
-function checkAndMarkFullyDepreciated(db: Database.Database, assetId: number): void {
-  const pending = db.prepare(`SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'pending'`).get(assetId) as { c: number }
+function checkAndMarkFullyDepreciated(
+  db: Database.Database,
+  assetId: number,
+): void {
+  const pending = db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM depreciation_schedules WHERE fixed_asset_id = ? AND status = 'pending'`,
+    )
+    .get(assetId) as { c: number }
   if (pending.c === 0) {
-    const asset = db.prepare('SELECT status FROM fixed_assets WHERE id = ?').get(assetId) as { status: string }
+    const asset = db
+      .prepare('SELECT status FROM fixed_assets WHERE id = ?')
+      .get(assetId) as { status: string }
     if (asset.status === 'active') {
-      db.prepare(`UPDATE fixed_assets SET status = 'fully_depreciated', updated_at = ? WHERE id = ?`)
-        .run(todayLocalFromNow(), assetId)
+      db.prepare(
+        `UPDATE fixed_assets SET status = 'fully_depreciated', updated_at = ? WHERE id = ?`,
+      ).run(todayLocalFromNow(), assetId)
     }
   }
 }

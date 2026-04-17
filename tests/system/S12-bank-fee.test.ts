@@ -6,7 +6,15 @@
  * VAT report, and interaction with öresutjämning.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest'
 import {
   type SystemTestContext,
   createTemplateDb,
@@ -16,13 +24,18 @@ import {
   seedAndFinalizeInvoice,
   seedAndFinalizeExpense,
 } from './helpers/system-test-context'
-import { PayInvoiceInputSchema, PayExpenseInputSchema } from '../../src/shared/ipc-schemas'
+import {
+  PayInvoiceInputSchema,
+  PayExpenseInputSchema,
+} from '../../src/shared/ipc-schemas'
 
 let ctx: SystemTestContext
 
 beforeAll(() => createTemplateDb())
 afterAll(() => destroyTemplateDb())
-beforeEach(() => { ctx = createSystemTestContext() })
+beforeEach(() => {
+  ctx = createSystemTestContext()
+})
 afterEach(() => destroyContext(ctx))
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -36,10 +49,10 @@ function getJournalLines(journalEntryId: number) {
        ORDER BY line_number`,
     )
     .all(journalEntryId) as {
-      account_number: string
-      debit_ore: number
-      credit_ore: number
-    }[]
+    account_number: string
+    debit_ore: number
+    credit_ore: number
+  }[]
 }
 
 function sumDebit(lines: { debit_ore: number }[]) {
@@ -143,9 +156,11 @@ describe('payInvoice with bank_fee_ore', () => {
           description: 'Tjänst',
           quantity: 1,
           unit_price_ore: 100000, // 1000 kr → 1250 kr with 25% VAT
-          vat_code_id: (ctx.db
-            .prepare("SELECT id FROM vat_codes WHERE code = 'MP1' LIMIT 1")
-            .get() as { id: number }).id,
+          vat_code_id: (
+            ctx.db
+              .prepare("SELECT id FROM vat_codes WHERE code = 'MP1' LIMIT 1")
+              .get() as { id: number }
+          ).id,
           account_number: '3002',
         },
       ],
@@ -470,7 +485,9 @@ describe('VAT report regression with bank fee', () => {
     )
 
     // VAT report should be identical — bank fees have no VAT impact
-    expect(vatAfter.yearTotal.vatOutTotalOre).toBe(vatBefore.yearTotal.vatOutTotalOre)
+    expect(vatAfter.yearTotal.vatOutTotalOre).toBe(
+      vatBefore.yearTotal.vatOutTotalOre,
+    )
   })
 })
 
@@ -494,52 +511,77 @@ describe('Zod schema: bank_fee_ore validation', () => {
   }
 
   it('invoice: accepts omitted bank_fee_ore', () => {
-    expect(PayInvoiceInputSchema.safeParse(validInvoicePayment).success).toBe(true)
+    expect(PayInvoiceInputSchema.safeParse(validInvoicePayment).success).toBe(
+      true,
+    )
   })
 
   it('invoice: accepts bank_fee_ore = 0', () => {
     expect(
-      PayInvoiceInputSchema.safeParse({ ...validInvoicePayment, bank_fee_ore: 0 }).success,
+      PayInvoiceInputSchema.safeParse({
+        ...validInvoicePayment,
+        bank_fee_ore: 0,
+      }).success,
     ).toBe(true)
   })
 
   it('invoice: accepts positive bank_fee_ore', () => {
     expect(
-      PayInvoiceInputSchema.safeParse({ ...validInvoicePayment, bank_fee_ore: 2500 }).success,
+      PayInvoiceInputSchema.safeParse({
+        ...validInvoicePayment,
+        bank_fee_ore: 2500,
+      }).success,
     ).toBe(true)
   })
 
   it('invoice: rejects negative bank_fee_ore', () => {
     expect(
-      PayInvoiceInputSchema.safeParse({ ...validInvoicePayment, bank_fee_ore: -1 }).success,
+      PayInvoiceInputSchema.safeParse({
+        ...validInvoicePayment,
+        bank_fee_ore: -1,
+      }).success,
     ).toBe(false)
   })
 
   it('invoice: rejects non-integer bank_fee_ore', () => {
     expect(
-      PayInvoiceInputSchema.safeParse({ ...validInvoicePayment, bank_fee_ore: 25.5 }).success,
+      PayInvoiceInputSchema.safeParse({
+        ...validInvoicePayment,
+        bank_fee_ore: 25.5,
+      }).success,
     ).toBe(false)
   })
 
   it('invoice: rejects string bank_fee_ore', () => {
     expect(
-      PayInvoiceInputSchema.safeParse({ ...validInvoicePayment, bank_fee_ore: '2500' }).success,
+      PayInvoiceInputSchema.safeParse({
+        ...validInvoicePayment,
+        bank_fee_ore: '2500',
+      }).success,
     ).toBe(false)
   })
 
   it('expense: accepts omitted bank_fee_ore', () => {
-    expect(PayExpenseInputSchema.safeParse(validExpensePayment).success).toBe(true)
+    expect(PayExpenseInputSchema.safeParse(validExpensePayment).success).toBe(
+      true,
+    )
   })
 
   it('expense: accepts positive bank_fee_ore', () => {
     expect(
-      PayExpenseInputSchema.safeParse({ ...validExpensePayment, bank_fee_ore: 2500 }).success,
+      PayExpenseInputSchema.safeParse({
+        ...validExpensePayment,
+        bank_fee_ore: 2500,
+      }).success,
     ).toBe(true)
   })
 
   it('expense: rejects negative bank_fee_ore', () => {
     expect(
-      PayExpenseInputSchema.safeParse({ ...validExpensePayment, bank_fee_ore: -1 }).success,
+      PayExpenseInputSchema.safeParse({
+        ...validExpensePayment,
+        bank_fee_ore: -1,
+      }).success,
     ).toBe(false)
   })
 })

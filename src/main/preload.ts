@@ -86,8 +86,10 @@ contextBridge.exposeInMainWorld('api', {
   getExpense: (data: { id: number }) => ipcRenderer.invoke('expense:get', data),
   listExpenses: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:list', data),
-  createExpenseCreditNoteDraft: (data: { original_expense_id: number; fiscal_year_id: number }) =>
-    ipcRenderer.invoke('expense:create-credit-note-draft', data),
+  createExpenseCreditNoteDraft: (data: {
+    original_expense_id: number
+    fiscal_year_id: number
+  }) => ipcRenderer.invoke('expense:create-credit-note-draft', data),
   // Stödjande
   listVatCodes: (data: { direction?: string }) =>
     ipcRenderer.invoke('vat-code:list', data),
@@ -145,17 +147,20 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('invoice:list-drafts', data),
   nextInvoiceNumber: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('invoice:next-number', data),
-  createCreditNoteDraft: (data: { original_invoice_id: number; fiscal_year_id: number }) =>
-    ipcRenderer.invoke('invoice:create-credit-note-draft', data),
+  createCreditNoteDraft: (data: {
+    original_invoice_id: number
+    fiscal_year_id: number
+  }) => ipcRenderer.invoke('invoice:create-credit-note-draft', data),
   // Invoice PDF
   generateInvoicePdf: (data: { invoiceId: number }) =>
     ipcRenderer.invoke('invoice:generate-pdf', data),
   saveInvoicePdf: (data: { data: string; defaultFileName: string }) =>
     ipcRenderer.invoke('invoice:save-pdf', data),
-  selectDirectory: () =>
-    ipcRenderer.invoke('invoice:select-directory', {}),
-  savePdfBatch: (data: { directory: string; invoices: Array<{ invoiceId: number; fileName: string }> }) =>
-    ipcRenderer.invoke('invoice:save-pdf-batch', data),
+  selectDirectory: () => ipcRenderer.invoke('invoice:select-directory', {}),
+  savePdfBatch: (data: {
+    directory: string
+    invoices: Array<{ invoiceId: number; fileName: string }>
+  }) => ipcRenderer.invoke('invoice:save-pdf-batch', data),
   // Dashboard
   getDashboardSummary: (data: { fiscalYearId: number }) =>
     ipcRenderer.invoke('dashboard:summary', data),
@@ -184,8 +189,10 @@ contextBridge.exposeInMainWorld('api', {
   finalizeManualEntry: (data: { id: number; fiscal_year_id: number }) =>
     ipcRenderer.invoke('manual-entry:finalize', data),
   // Journal Entry Corrections
-  correctJournalEntry: (data: { journal_entry_id: number; fiscal_year_id: number }) =>
-    ipcRenderer.invoke('journal-entry:correct', data),
+  correctJournalEntry: (data: {
+    journal_entry_id: number
+    fiscal_year_id: number
+  }) => ipcRenderer.invoke('journal-entry:correct', data),
   canCorrectJournalEntry: (data: { journal_entry_id: number }) =>
     ipcRenderer.invoke('journal-entry:can-correct', data),
   // Excel Export
@@ -213,16 +220,20 @@ contextBridge.exposeInMainWorld('api', {
   getTaxForecast: (data: { fiscalYearId: number }) =>
     ipcRenderer.invoke('tax:forecast', data),
   // Global Search
-  globalSearch: (data: { query: string; fiscal_year_id: number; limit?: number }) =>
-    ipcRenderer.invoke('search:global', data),
+  globalSearch: (data: {
+    query: string
+    fiscal_year_id: number
+    limit?: number
+  }) => ipcRenderer.invoke('search:global', data),
   // Aging Report
-  getAgingReceivables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
-    ipcRenderer.invoke('aging:receivables', data),
+  getAgingReceivables: (data: {
+    fiscal_year_id: number
+    as_of_date?: string
+  }) => ipcRenderer.invoke('aging:receivables', data),
   getAgingPayables: (data: { fiscal_year_id: number; as_of_date?: string }) =>
     ipcRenderer.invoke('aging:payables', data),
   // SIE4 Import
-  sie4SelectFile: () =>
-    ipcRenderer.invoke('import:sie4-select-file', {}),
+  sie4SelectFile: () => ipcRenderer.invoke('import:sie4-select-file', {}),
   sie4Validate: (data: { filePath: string }) =>
     ipcRenderer.invoke('import:sie4-validate', data),
   sie4Import: (data: {
@@ -237,27 +248,44 @@ contextBridge.exposeInMainWorld('api', {
   exportPain001: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:export-pain001', data),
   // Accruals
-  createAccrualSchedule: (data: { fiscal_year_id: number; description: string; accrual_type: string; balance_account: string; result_account: string; total_amount_ore: number; period_count: number; start_period: number }) =>
-    ipcRenderer.invoke('accrual:create', data),
+  createAccrualSchedule: (data: {
+    fiscal_year_id: number
+    description: string
+    accrual_type: string
+    balance_account: string
+    result_account: string
+    total_amount_ore: number
+    period_count: number
+    start_period: number
+  }) => ipcRenderer.invoke('accrual:create', data),
   getAccrualSchedules: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('accrual:list', data),
   executeAccrual: (data: { schedule_id: number; period_number: number }) =>
     ipcRenderer.invoke('accrual:execute', data),
-  executeAllAccruals: (data: { fiscal_year_id: number; period_number: number }) =>
-    ipcRenderer.invoke('accrual:execute-all', data),
+  executeAllAccruals: (data: {
+    fiscal_year_id: number
+    period_number: number
+  }) => ipcRenderer.invoke('accrual:execute-all', data),
   deactivateAccrual: (data: { schedule_id: number }) =>
     ipcRenderer.invoke('accrual:deactivate', data),
   // Budget
-  getBudgetLines: () =>
-    ipcRenderer.invoke('budget:lines', {}),
+  getBudgetLines: () => ipcRenderer.invoke('budget:lines', {}),
   getBudgetTargets: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('budget:get', data),
-  saveBudgetTargets: (data: { fiscal_year_id: number; targets: Array<{ line_id: string; period_number: number; amount_ore: number }> }) =>
-    ipcRenderer.invoke('budget:save', data),
+  saveBudgetTargets: (data: {
+    fiscal_year_id: number
+    targets: Array<{
+      line_id: string
+      period_number: number
+      amount_ore: number
+    }>
+  }) => ipcRenderer.invoke('budget:save', data),
   getBudgetVsActual: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('budget:variance', data),
-  copyBudgetFromPreviousFy: (data: { target_fiscal_year_id: number; source_fiscal_year_id: number }) =>
-    ipcRenderer.invoke('budget:copy-from-previous', data),
+  copyBudgetFromPreviousFy: (data: {
+    target_fiscal_year_id: number
+    source_fiscal_year_id: number
+  }) => ipcRenderer.invoke('budget:copy-from-previous', data),
   // Depreciation (Sprint 53 F62)
   createFixedAsset: (data: {
     name: string
@@ -299,14 +327,19 @@ contextBridge.exposeInMainWorld('api', {
   }) => ipcRenderer.invoke('depreciation:dispose', data),
   deleteFixedAsset: (data: { id: number }) =>
     ipcRenderer.invoke('depreciation:delete', data),
-  executeDepreciationPeriod: (data: { fiscal_year_id: number; period_end_date: string }) =>
-    ipcRenderer.invoke('depreciation:execute-period', data),
+  executeDepreciationPeriod: (data: {
+    fiscal_year_id: number
+    period_end_date: string
+  }) => ipcRenderer.invoke('depreciation:execute-period', data),
   // Cash Flow (Sprint 53 F65)
   getCashFlowStatement: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('report:cash-flow', data),
   // Bank statement / reconciliation (Sprint 55 F66-a)
-  importBankStatement: (data: { company_id: number; fiscal_year_id: number; xml_content: string }) =>
-    ipcRenderer.invoke('bank-statement:import', data),
+  importBankStatement: (data: {
+    company_id: number
+    fiscal_year_id: number
+    xml_content: string
+  }) => ipcRenderer.invoke('bank-statement:import', data),
   listBankStatements: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('bank-statement:list', data),
   getBankStatement: (data: { statement_id: number }) =>
@@ -337,19 +370,41 @@ contextBridge.exposeInMainWorld('api', {
 // Test-only API — separate from window.api, guarded by FRITT_TEST
 if (process.env.FRITT_TEST === '1') {
   contextBridge.exposeInMainWorld('__testApi', {
-    getJournalEntries: (fyId?: number) => ipcRenderer.invoke('__test:getJournalEntries', fyId),
-    getInvoicePayments: (invoiceId?: number) => ipcRenderer.invoke('__test:getInvoicePayments', invoiceId),
+    getJournalEntries: (fyId?: number) =>
+      ipcRenderer.invoke('__test:getJournalEntries', fyId),
+    getInvoicePayments: (invoiceId?: number) =>
+      ipcRenderer.invoke('__test:getInvoicePayments', invoiceId),
     getPaymentBatches: () => ipcRenderer.invoke('__test:getPaymentBatches'),
-    getInvoices: (fyId?: number) => ipcRenderer.invoke('__test:getInvoices', fyId),
-    getExpenses: (fyId?: number) => ipcRenderer.invoke('__test:getExpenses', fyId),
-    setInvoiceStatus: (invoiceId: number, status: string) => ipcRenderer.invoke('__test:setInvoiceStatus', invoiceId, status),
-    getCounterpartyById: (id: number) => ipcRenderer.invoke('__test:getCounterpartyById', id),
-    createFiscalYear: (opts: { companyId: number; startDate: string; endDate: string; yearLabel: string }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
-    freezeClock: (iso: string | null) => ipcRenderer.invoke('__test:freezeClock', iso),
-    forcePeriodState: (periodId: number, closed: boolean) => ipcRenderer.invoke('__test:forcePeriodState', periodId, closed),
+    getInvoices: (fyId?: number) =>
+      ipcRenderer.invoke('__test:getInvoices', fyId),
+    getExpenses: (fyId?: number) =>
+      ipcRenderer.invoke('__test:getExpenses', fyId),
+    setInvoiceStatus: (invoiceId: number, status: string) =>
+      ipcRenderer.invoke('__test:setInvoiceStatus', invoiceId, status),
+    getCounterpartyById: (id: number) =>
+      ipcRenderer.invoke('__test:getCounterpartyById', id),
+    createFiscalYear: (opts: {
+      companyId: number
+      startDate: string
+      endDate: string
+      yearLabel: string
+    }) => ipcRenderer.invoke('__test:createFiscalYear', opts),
+    freezeClock: (iso: string | null) =>
+      ipcRenderer.invoke('__test:freezeClock', iso),
+    forcePeriodState: (periodId: number, closed: boolean) =>
+      ipcRenderer.invoke('__test:forcePeriodState', periodId, closed),
     getReconciliationMatches: (stmtId?: number) =>
       ipcRenderer.invoke('__test:getReconciliationMatches', stmtId),
-    linkPaymentToBankTx: (paymentId: number, txId: number, entityType: 'invoice' | 'expense') =>
-      ipcRenderer.invoke('__test:linkPaymentToBankTx', paymentId, txId, entityType),
+    linkPaymentToBankTx: (
+      paymentId: number,
+      txId: number,
+      entityType: 'invoice' | 'expense',
+    ) =>
+      ipcRenderer.invoke(
+        '__test:linkPaymentToBankTx',
+        paymentId,
+        txId,
+        entityType,
+      ),
   })
 }

@@ -25,10 +25,7 @@ describe('resolveDbPath', () => {
   })
 
   it('ignores FRITT_DB_PATH without test env flag', () => {
-    const result = resolveDbPath(
-      { FRITT_DB_PATH: '/tmp/sneaky.db' },
-      DEFAULT,
-    )
+    const result = resolveDbPath({ FRITT_DB_PATH: '/tmp/sneaky.db' }, DEFAULT)
     expect(result).toBe(DEFAULT)
   })
 
@@ -41,16 +38,17 @@ describe('resolveDbPath', () => {
   })
 
   it('falls back to DB_PATH (legacy) regardless of env', () => {
-    const result = resolveDbPath(
-      { DB_PATH: '/tmp/legacy.db' },
-      DEFAULT,
-    )
+    const result = resolveDbPath({ DB_PATH: '/tmp/legacy.db' }, DEFAULT)
     expect(result).toBe('/tmp/legacy.db')
   })
 
   it('FRITT_DB_PATH takes priority over DB_PATH in test env', () => {
     const result = resolveDbPath(
-      { NODE_ENV: 'test', FRITT_DB_PATH: '/tmp/fritt.db', DB_PATH: '/tmp/legacy.db' },
+      {
+        NODE_ENV: 'test',
+        FRITT_DB_PATH: '/tmp/fritt.db',
+        DB_PATH: '/tmp/legacy.db',
+      },
       DEFAULT,
     )
     expect(result).toBe('/tmp/fritt.db')

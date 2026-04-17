@@ -44,12 +44,12 @@ export function detectAccountConflicts(
   parseResult: SieParseResult,
 ): AccountConflict[] {
   const existing = new Map(
-    (db
-      .prepare('SELECT account_number, name FROM accounts')
-      .all() as Array<{ account_number: string; name: string }>).map((a) => [
-      a.account_number,
-      a.name,
-    ]),
+    (
+      db.prepare('SELECT account_number, name FROM accounts').all() as Array<{
+        account_number: string
+        name: string
+      }>
+    ).map((a) => [a.account_number, a.name]),
   )
 
   const refCounts = new Map<string, number>()
@@ -74,7 +74,9 @@ export function detectAccountConflicts(
   return conflicts
 }
 
-export function validateSieParseResult(result: SieParseResult): SieValidationResult {
+export function validateSieParseResult(
+  result: SieParseResult,
+): SieValidationResult {
   const errors: SieValidationResult['errors'] = []
   const warnings: SieValidationResult['warnings'] = []
 

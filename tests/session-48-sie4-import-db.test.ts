@@ -47,13 +47,28 @@ function seedForExport(db: Database.Database): { fyId: number } {
   })
   db.prepare("UPDATE companies SET bankgiro = '1234-5678' WHERE id = 1").run()
 
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-  const customer = createCounterparty(db, { name: 'Kund AB', type: 'customer', org_number: '559999-0001' })
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
+  const customer = createCounterparty(db, {
+    name: 'Kund AB',
+    type: 'customer',
+    org_number: '559999-0001',
+  })
   if (!customer.success) throw new Error('Customer failed')
 
-  const vatCode = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-  const account = db.prepare("SELECT id FROM accounts WHERE account_number = '3002'").get() as { id: number }
-  const product = createProduct(db, { name: 'Produkt', default_price_ore: 10000, vat_code_id: vatCode.id, account_id: account.id })
+  const vatCode = db
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
+  const account = db
+    .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
+    .get() as { id: number }
+  const product = createProduct(db, {
+    name: 'Produkt',
+    default_price_ore: 10000,
+    vat_code_id: vatCode.id,
+    account_id: account.id,
+  })
   if (!product.success) throw new Error('Product failed')
 
   const draft = saveDraft(db, {
@@ -62,7 +77,16 @@ function seedForExport(db: Database.Database): { fyId: number } {
     invoice_date: '2025-03-15',
     due_date: '2025-04-14',
     payment_terms: 30,
-    lines: [{ product_id: product.data.id, description: 'Test', quantity: 1, unit_price_ore: 10000, vat_code_id: vatCode.id, sort_order: 0 }],
+    lines: [
+      {
+        product_id: product.data.id,
+        description: 'Test',
+        quantity: 1,
+        unit_price_ore: 10000,
+        vat_code_id: vatCode.id,
+        sort_order: 0,
+      },
+    ],
   })
   if (!draft.success) throw new Error('Draft failed')
   const fin = finalizeDraft(db, draft.data.id)
@@ -77,7 +101,9 @@ describe('S48: SIE4 import — new strategy', () => {
   beforeEach(() => {
     db = createTestDb()
   })
-  afterEach(() => { db.close() })
+  afterEach(() => {
+    db.close()
+  })
 
   it('N1: creates company, FY, and accounts from SIE4', () => {
     const buffer = buildSie4Buffer([
@@ -95,17 +121,25 @@ describe('S48: SIE4 import — new strategy', () => {
     if (!result.success) throw new Error(result.error)
 
     // Verify company
-    const company = db.prepare('SELECT name, org_number FROM companies').get() as { name: string; org_number: string }
+    const company = db
+      .prepare('SELECT name, org_number FROM companies')
+      .get() as { name: string; org_number: string }
     expect(company.name).toBe('Importerat AB')
     expect(company.org_number).toBe('556036-0793')
 
     // Verify fiscal year
-    const fy = db.prepare('SELECT start_date, end_date FROM fiscal_years').get() as { start_date: string; end_date: string }
+    const fy = db
+      .prepare('SELECT start_date, end_date FROM fiscal_years')
+      .get() as { start_date: string; end_date: string }
     expect(fy.start_date).toBe('2025-01-01')
     expect(fy.end_date).toBe('2025-12-31')
 
     // Verify accounts
-    const accounts = db.prepare("SELECT account_number FROM accounts WHERE account_number IN ('1930','3001')").all()
+    const accounts = db
+      .prepare(
+        "SELECT account_number FROM accounts WHERE account_number IN ('1930','3001')",
+      )
+      .all()
     expect(accounts).toHaveLength(2)
     expect(result.data.accountsAdded).toBeGreaterThanOrEqual(0) // may already exist in seed
   })
@@ -157,7 +191,11 @@ describe('S48: SIE4 import — new strategy', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const periods = db.prepare('SELECT COUNT(*) as cnt FROM accounting_periods WHERE fiscal_year_id = ?').get(result.data.fiscalYearId) as { cnt: number }
+    const periods = db
+      .prepare(
+        'SELECT COUNT(*) as cnt FROM accounting_periods WHERE fiscal_year_id = ?',
+      )
+      .get(result.data.fiscalYearId) as { cnt: number }
     expect(periods.cnt).toBe(12)
   })
 })
@@ -177,7 +215,9 @@ describe('S48: SIE4 import — merge strategy', () => {
       fiscal_year_end: '2025-12-31',
     })
   })
-  afterEach(() => { db.close() })
+  afterEach(() => {
+    db.close()
+  })
 
   it('M1: merges accounts by account_number', () => {
     const buffer = buildSie4Buffer([
@@ -193,7 +233,9 @@ describe('S48: SIE4 import — merge strategy', () => {
     if (!result.success) throw new Error(result.error)
     expect(result.data.accountsAdded).toBe(1)
 
-    const added = db.prepare("SELECT name FROM accounts WHERE account_number = '9999'").get() as { name: string }
+    const added = db
+      .prepare("SELECT name FROM accounts WHERE account_number = '9999'")
+      .get() as { name: string }
     expect(added.name).toBe('Nytt konto')
   })
 
@@ -230,7 +272,9 @@ describe('S48: SIE4 import — merge strategy', () => {
     if (!result.success) throw new Error(result.error)
     expect(result.data.accountsUpdated).toBe(1)
 
-    const updated = db.prepare("SELECT name FROM accounts WHERE account_number = '1930'").get() as { name: string }
+    const updated = db
+      .prepare("SELECT name FROM accounts WHERE account_number = '1930'")
+      .get() as { name: string }
     expect(updated.name).toBe('Omdöpt bankkonto')
   })
 })
@@ -241,7 +285,9 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
   beforeEach(() => {
     db = createTestDb()
   })
-  afterEach(() => { db.close() })
+  afterEach(() => {
+    db.close()
+  })
 
   it('V1: imports VER as I-series with correct D/K from signed amounts', () => {
     const buffer = buildSie4Buffer([
@@ -263,13 +309,30 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
     expect(result.data.linesImported).toBe(3)
 
     // Verify series is 'I'
-    const entry = db.prepare(`SELECT id, verification_series, status, source_type FROM journal_entries`).get() as { id: number; verification_series: string; status: string; source_type: string }
+    const entry = db
+      .prepare(
+        `SELECT id, verification_series, status, source_type FROM journal_entries`,
+      )
+      .get() as {
+      id: number
+      verification_series: string
+      status: string
+      source_type: string
+    }
     expect(entry.verification_series).toBe('I')
     expect(entry.status).toBe('booked')
     expect(entry.source_type).toBe('import')
 
     // Verify sign handling
-    const lines = db.prepare('SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number').all(entry.id) as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+    const lines = db
+      .prepare(
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+      )
+      .all(entry.id) as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
     expect(lines[0].account_number).toBe('1510')
     expect(lines[0].debit_ore).toBe(1250000) // 12500 kr
     expect(lines[0].credit_ore).toBe(0)
@@ -295,7 +358,9 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
     expect(result.data.entriesImported).toBe(0)
-    expect(result.data.warnings.some(w => w.includes('obalanserat'))).toBe(true)
+    expect(result.data.warnings.some((w) => w.includes('obalanserat'))).toBe(
+      true,
+    )
   })
 
   it('V3: rejects entry with unknown account', () => {
@@ -317,7 +382,9 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
     expect(result.error).toContain('99999')
 
     // Verify rollback: no entries, no company
-    const companies = db.prepare('SELECT COUNT(*) as c FROM companies').get() as { c: number }
+    const companies = db
+      .prepare('SELECT COUNT(*) as c FROM companies')
+      .get() as { c: number }
     expect(companies.c).toBe(0)
   })
 
@@ -331,7 +398,9 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
       fiscal_year_start: '2025-01-01',
       fiscal_year_end: '2025-12-31',
     })
-    const fyId = (db.prepare('SELECT id FROM fiscal_years').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years').get() as { id: number }
+    ).id
     // Pre-insert an I-series entry
     db.prepare(
       `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number, verification_series, journal_date, description, status, source_type)
@@ -353,9 +422,11 @@ describe('S48: SIE4 import — VER/TRANS + sign handling', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const newEntry = db.prepare(
-      `SELECT verification_number FROM journal_entries WHERE verification_series = 'I' AND description LIKE '%Ny import%'`,
-    ).get() as { verification_number: number }
+    const newEntry = db
+      .prepare(
+        `SELECT verification_number FROM journal_entries WHERE verification_series = 'I' AND description LIKE '%Ny import%'`,
+      )
+      .get() as { verification_number: number }
     expect(newEntry.verification_number).toBe(6)
   })
 })
@@ -367,9 +438,11 @@ describe('S48: SIE4 import — full roundtrip', () => {
     const { fyId: sourceFyId } = seedForExport(sourceDb)
     const exported = exportSie4(sourceDb, { fiscalYearId: sourceFyId })
 
-    const sourceEntries = sourceDb.prepare(
-      "SELECT COUNT(*) as c FROM journal_entries WHERE status = 'booked' AND fiscal_year_id = ?",
-    ).get(sourceFyId) as { c: number }
+    const sourceEntries = sourceDb
+      .prepare(
+        "SELECT COUNT(*) as c FROM journal_entries WHERE status = 'booked' AND fiscal_year_id = ?",
+      )
+      .get(sourceFyId) as { c: number }
 
     sourceDb.close()
 
@@ -380,9 +453,11 @@ describe('S48: SIE4 import — full roundtrip', () => {
     expect(result.success).toBe(true)
     if (!result.success) throw new Error(result.error)
 
-    const importedEntries = targetDb.prepare(
-      "SELECT COUNT(*) as c FROM journal_entries WHERE status = 'booked'",
-    ).get() as { c: number }
+    const importedEntries = targetDb
+      .prepare(
+        "SELECT COUNT(*) as c FROM journal_entries WHERE status = 'booked'",
+      )
+      .get() as { c: number }
 
     expect(importedEntries.c).toBe(sourceEntries.c)
 
@@ -394,11 +469,13 @@ describe('S48: SIE4 import — full roundtrip', () => {
     const { fyId } = seedForExport(sourceDb)
     const exported = exportSie4(sourceDb, { fiscalYearId: fyId })
 
-    const sourceTotal = sourceDb.prepare(
-      `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines jel
+    const sourceTotal = sourceDb
+      .prepare(
+        `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines jel
        JOIN journal_entries je ON jel.journal_entry_id = je.id
        WHERE je.status = 'booked' AND je.fiscal_year_id = ?`,
-    ).get(fyId) as { d: number; c: number }
+      )
+      .get(fyId) as { d: number; c: number }
 
     sourceDb.close()
 
@@ -407,11 +484,13 @@ describe('S48: SIE4 import — full roundtrip', () => {
     const result = importSie4(targetDb, parsed, { strategy: 'new' })
     expect(result.success).toBe(true)
 
-    const targetTotal = targetDb.prepare(
-      `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines jel
+    const targetTotal = targetDb
+      .prepare(
+        `SELECT SUM(debit_ore) as d, SUM(credit_ore) as c FROM journal_entry_lines jel
        JOIN journal_entries je ON jel.journal_entry_id = je.id
        WHERE je.status = 'booked'`,
-    ).get() as { d: number; c: number }
+      )
+      .get() as { d: number; c: number }
 
     expect(targetTotal.d).toBe(sourceTotal.d)
     expect(targetTotal.c).toBe(sourceTotal.c)

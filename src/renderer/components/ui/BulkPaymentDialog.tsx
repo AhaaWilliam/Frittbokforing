@@ -13,7 +13,13 @@ interface BulkPaymentDialogProps {
   onOpenChange: (open: boolean) => void
   title: string
   rows: BulkPaymentRow[]
-  onSubmit: (payments: Array<{ id: number; amount_ore: number }>, date: string, accountNumber: string, bankFeeOre: number | undefined, userNote: string | undefined) => void
+  onSubmit: (
+    payments: Array<{ id: number; amount_ore: number }>,
+    date: string,
+    accountNumber: string,
+    bankFeeOre: number | undefined,
+    userNote: string | undefined,
+  ) => void
   isLoading: boolean
 }
 
@@ -53,21 +59,36 @@ export function BulkPaymentDialog({
   }, 0)
 
   function handleSubmit() {
-    const payments = rows.map(r => ({
-      id: r.id,
-      amount_ore: kronorToOre(amounts[r.id] ?? '0'),
-    })).filter(p => p.amount_ore > 0)
+    const payments = rows
+      .map((r) => ({
+        id: r.id,
+        amount_ore: kronorToOre(amounts[r.id] ?? '0'),
+      }))
+      .filter((p) => p.amount_ore > 0)
 
     if (payments.length === 0) return
 
     const feeOre = bankFeeStr ? kronorToOre(bankFeeStr) : undefined
-    onSubmit(payments, paymentDate, accountNumber, feeOre || undefined, userNote || undefined)
+    onSubmit(
+      payments,
+      paymentDate,
+      accountNumber,
+      feeOre || undefined,
+      userNote || undefined,
+    )
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div role="dialog" aria-modal="true" aria-labelledby="bulk-payment-title" className="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-lg bg-background p-6 shadow-xl">
-        <h2 id="bulk-payment-title" className="mb-4 text-base font-semibold">{title}</h2>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-payment-title"
+        className="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-lg bg-background p-6 shadow-xl"
+      >
+        <h2 id="bulk-payment-title" className="mb-4 text-base font-semibold">
+          {title}
+        </h2>
 
         {/* Per-row amounts */}
         <div className="mb-4 rounded-md border">
@@ -81,17 +102,24 @@ export function BulkPaymentDialog({
               </tr>
             </thead>
             <tbody>
-              {rows.map(row => (
+              {rows.map((row) => (
                 <tr key={row.id} className="border-b last:border-b-0">
                   <td className="px-3 py-2">{row.label}</td>
                   <td className="px-3 py-2">{row.counterparty}</td>
-                  <td className="px-3 py-2 text-right">{formatKr(row.remaining)}</td>
+                  <td className="px-3 py-2 text-right">
+                    {formatKr(row.remaining)}
+                  </td>
                   <td className="px-3 py-2 text-right">
                     <input
                       type="number"
                       step="0.01"
                       value={amounts[row.id] ?? ''}
-                      onChange={e => setAmounts(prev => ({ ...prev, [row.id]: e.target.value }))}
+                      onChange={(e) =>
+                        setAmounts((prev) => ({
+                          ...prev,
+                          [row.id]: e.target.value,
+                        }))
+                      }
                       aria-label={`Betala ${row.label}`}
                       className="w-28 rounded-md border border-input bg-background px-2 py-1 text-right text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     />
@@ -109,45 +137,65 @@ export function BulkPaymentDialog({
         {/* Global fields */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="bulk-payment-date" className="mb-1 block text-sm font-medium">Betaldatum</label>
+            <label
+              htmlFor="bulk-payment-date"
+              className="mb-1 block text-sm font-medium"
+            >
+              Betaldatum
+            </label>
             <input
               id="bulk-payment-date"
               type="date"
               value={paymentDate}
-              onChange={e => setPaymentDate(e.target.value)}
+              onChange={(e) => setPaymentDate(e.target.value)}
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label htmlFor="bulk-bank-account" className="mb-1 block text-sm font-medium">Bankkonto</label>
+            <label
+              htmlFor="bulk-bank-account"
+              className="mb-1 block text-sm font-medium"
+            >
+              Bankkonto
+            </label>
             <input
               id="bulk-bank-account"
               type="text"
               value={accountNumber}
-              onChange={e => setAccountNumber(e.target.value)}
+              onChange={(e) => setAccountNumber(e.target.value)}
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label htmlFor="bulk-bank-fee" className="mb-1 block text-sm font-medium">Bankavgift (kr)</label>
+            <label
+              htmlFor="bulk-bank-fee"
+              className="mb-1 block text-sm font-medium"
+            >
+              Bankavgift (kr)
+            </label>
             <input
               id="bulk-bank-fee"
               type="number"
               step="0.01"
               min="0"
               value={bankFeeStr}
-              onChange={e => setBankFeeStr(e.target.value)}
+              onChange={(e) => setBankFeeStr(e.target.value)}
               placeholder="0.00"
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label htmlFor="bulk-user-note" className="mb-1 block text-sm font-medium">Notering</label>
+            <label
+              htmlFor="bulk-user-note"
+              className="mb-1 block text-sm font-medium"
+            >
+              Notering
+            </label>
             <input
               id="bulk-user-note"
               type="text"
               value={userNote}
-              onChange={e => setUserNote(e.target.value)}
+              onChange={(e) => setUserNote(e.target.value)}
               placeholder="Valfri notering"
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />

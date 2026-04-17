@@ -40,7 +40,8 @@ test('Pain.001 invoice-batch: bulk-pay kreditfaktura → XML fil på disk', asyn
         }
       ).api.updateCompany({ bankgiro: '5050-1055' })
     })) as { success: boolean; error?: string }
-    if (!updateResult.success) throw new Error(`updateCompany: ${updateResult.error}`)
+    if (!updateResult.success)
+      throw new Error(`updateCompany: ${updateResult.error}`)
 
     const fyResult = (await ctx.window.evaluate(async () => {
       return await (
@@ -60,7 +61,8 @@ test('Pain.001 invoice-batch: bulk-pay kreditfaktura → XML fil på disk', asyn
         }
       ).api.updateCounterparty({ id, bankgiro: '1234-5678' })
     }, customerId)) as { success: boolean; error?: string }
-    if (!updateCpResult.success) throw new Error(`updateCounterparty: ${updateCpResult.error}`)
+    if (!updateCpResult.success)
+      throw new Error(`updateCounterparty: ${updateCpResult.error}`)
 
     // Seed + finalize invoice (kreditfaktura/refund-scenario)
     const vatCodeId = await ctx.window.evaluate(async () => {
@@ -69,33 +71,39 @@ test('Pain.001 invoice-batch: bulk-pay kreditfaktura → XML fil på disk', asyn
           api: { listVatCodes: (d: { direction: string }) => Promise<unknown> }
         }
       ).api.listVatCodes({ direction: 'outgoing' })
-      const r = result as { success: boolean; data: Array<{ id: number; code: string }> }
+      const r = result as {
+        success: boolean
+        data: Array<{ id: number; code: string }>
+      }
       return r.data.find((c) => c.code === 'MP1')!.id
     })
 
-    const draftResult = (await ctx.window.evaluate(async (input) => {
-      return await (
-        window as unknown as {
-          api: { saveDraft: (d: unknown) => Promise<unknown> }
-        }
-      ).api.saveDraft(input)
-    }, {
-      counterparty_id: customerId,
-      fiscal_year_id: fyId,
-      invoice_date: '2026-03-15',
-      due_date: '2026-04-14',
-      lines: [
-        {
-          product_id: null,
-          description: 'Pain E2E test',
-          quantity: 1,
-          unit_price_ore: 10000,
-          vat_code_id: vatCodeId,
-          sort_order: 0,
-          account_number: '3002',
-        },
-      ],
-    })) as { success: boolean; data: { id: number }; error?: string }
+    const draftResult = (await ctx.window.evaluate(
+      async (input) => {
+        return await (
+          window as unknown as {
+            api: { saveDraft: (d: unknown) => Promise<unknown> }
+          }
+        ).api.saveDraft(input)
+      },
+      {
+        counterparty_id: customerId,
+        fiscal_year_id: fyId,
+        invoice_date: '2026-03-15',
+        due_date: '2026-04-14',
+        lines: [
+          {
+            product_id: null,
+            description: 'Pain E2E test',
+            quantity: 1,
+            unit_price_ore: 10000,
+            vat_code_id: vatCodeId,
+            sort_order: 0,
+            account_number: '3002',
+          },
+        ],
+      },
+    )) as { success: boolean; data: { id: number }; error?: string }
     if (!draftResult.success) throw new Error(`saveDraft: ${draftResult.error}`)
 
     const finalRes = (await ctx.window.evaluate(async (id) => {
@@ -108,23 +116,26 @@ test('Pain.001 invoice-batch: bulk-pay kreditfaktura → XML fil på disk', asyn
     if (!finalRes.success) throw new Error(`finalizeInvoice: ${finalRes.error}`)
 
     // Bulk-pay invoice → creates invoice-batch
-    const bulkRes = (await ctx.window.evaluate(async (input) => {
-      return await (
-        window as unknown as {
-          api: { payInvoicesBulk: (d: unknown) => Promise<unknown> }
-        }
-      ).api.payInvoicesBulk(input)
-    }, {
-      payments: [
-        {
-          invoice_id: draftResult.data.id,
-          amount_ore: 12500, // 100 + 25% moms
-        },
-      ],
-      payment_date: '2026-03-20',
-      account_number: '1930',
-      bank_fee_ore: 0,
-    })) as {
+    const bulkRes = (await ctx.window.evaluate(
+      async (input) => {
+        return await (
+          window as unknown as {
+            api: { payInvoicesBulk: (d: unknown) => Promise<unknown> }
+          }
+        ).api.payInvoicesBulk(input)
+      },
+      {
+        payments: [
+          {
+            invoice_id: draftResult.data.id,
+            amount_ore: 12500, // 100 + 25% moms
+          },
+        ],
+        payment_date: '2026-03-20',
+        account_number: '1930',
+        bank_fee_ore: 0,
+      },
+    )) as {
       success: boolean
       data: { batch_id: number | null; status: string }
       error?: string

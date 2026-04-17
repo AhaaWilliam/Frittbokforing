@@ -114,7 +114,10 @@ export function getAgingReceivables(
     .all({ asOfDate: date, fiscalYearId }) as RawRow[]
 
   const buckets = bucketize(rows)
-  const totalRemainingOre = buckets.reduce((sum, b) => sum + b.totalRemainingOre, 0)
+  const totalRemainingOre = buckets.reduce(
+    (sum, b) => sum + b.totalRemainingOre,
+    0,
+  )
 
   return { buckets, totalRemainingOre, asOfDate: date }
 }
@@ -167,7 +170,10 @@ export function getAgingPayables(
     .all({ fiscalYearId }) as NoDueDateRow[]
 
   const buckets = bucketize(rows)
-  const totalRemainingOre = buckets.reduce((sum, b) => sum + b.totalRemainingOre, 0)
+  const totalRemainingOre = buckets.reduce(
+    (sum, b) => sum + b.totalRemainingOre,
+    0,
+  )
 
   const itemsWithoutDueDate: AgingItem[] = noDueDateRows.map((r) => ({
     id: r.id,

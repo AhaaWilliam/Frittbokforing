@@ -10,9 +10,13 @@ test.describe('Skatteprognos', () => {
   test('sida renderar + IPC returnerar data efter bokning', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await expect(ctx.window.getByTestId('wizard')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('wizard')).toBeVisible({
+        timeout: 15_000,
+      })
       const { fiscalYearId } = await composeEmptyK2(ctx.window)
-      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
 
       const customerId = await seedCustomer(ctx.window, 'Skatt Kund')
       await seedAndFinalizeInvoice(ctx.window, {
@@ -25,13 +29,26 @@ test.describe('Skatteprognos', () => {
       })
 
       const taxResult = await ctx.window.evaluate(async (fy) => {
-        return (window as unknown as { api: { getTaxForecast: (d: { fiscalYearId: number }) => Promise<unknown> } }).api.getTaxForecast({ fiscalYearId: fy })
+        return (
+          window as unknown as {
+            api: {
+              getTaxForecast: (d: { fiscalYearId: number }) => Promise<unknown>
+            }
+          }
+        ).api.getTaxForecast({ fiscalYearId: fy })
       }, fiscalYearId)
-      const tax = taxResult as { success: boolean; data: Record<string, number> }
+      const tax = taxResult as {
+        success: boolean
+        data: Record<string, number>
+      }
       expect(tax.success).toBe(true)
 
-      await ctx.window.evaluate(() => { location.hash = '#/tax' })
-      await expect(ctx.window.getByTestId('page-tax')).toBeVisible({ timeout: 10_000 })
+      await ctx.window.evaluate(() => {
+        location.hash = '#/tax'
+      })
+      await expect(ctx.window.getByTestId('page-tax')).toBeVisible({
+        timeout: 10_000,
+      })
     } finally {
       await ctx.cleanup()
     }

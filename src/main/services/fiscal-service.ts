@@ -219,7 +219,11 @@ export function createNewFiscalYear(
       // GUARD: Verify result hasn't changed since dialog was opened
       const actualNetResult = calculateNetResult(db, previousFiscalYearId)
       if (actualNetResult !== bookResult.netResultOre) {
-        throw { code: 'STALE_DATA' as const, error: 'Årets resultat har ändrats sedan dialogen öppnades. Försök igen.' }
+        throw {
+          code: 'STALE_DATA' as const,
+          error:
+            'Årets resultat har ändrats sedan dialogen öppnades. Försök igen.',
+        }
       }
 
       // GUARD: Prevent double booking
@@ -229,7 +233,10 @@ export function createNewFiscalYear(
         )
         .get(previousFiscalYearId) as { cnt: number }
       if (existingBooking.cnt > 0) {
-        throw { code: 'ALREADY_FINALIZED' as const, error: 'Årets resultat är redan bokat.' }
+        throw {
+          code: 'ALREADY_FINALIZED' as const,
+          error: 'Årets resultat är redan bokat.',
+        }
       }
 
       bookYearEndResult(db, previousFiscalYearId, actualNetResult)
@@ -238,7 +245,11 @@ export function createNewFiscalYear(
     const prevFY = db
       .prepare('SELECT * FROM fiscal_years WHERE id = ?')
       .get(previousFiscalYearId) as FiscalYear
-    if (!prevFY) throw { code: 'NOT_FOUND' as const, error: 'Föregående räkenskapsår hittades inte.' }
+    if (!prevFY)
+      throw {
+        code: 'NOT_FOUND' as const,
+        error: 'Föregående räkenskapsår hittades inte.',
+      }
 
     const startDate = addOneDay(prevFY.end_date)
     const endDate = addMonthsMinusOneDay(startDate, 12)
@@ -250,7 +261,10 @@ export function createNewFiscalYear(
       )
       .get(companyId, startDate)
     if (existing) {
-      throw { code: 'DUPLICATE_FISCAL_YEAR' as const, error: 'Räkenskapsår för denna period finns redan.' }
+      throw {
+        code: 'DUPLICATE_FISCAL_YEAR' as const,
+        error: 'Räkenskapsår för denna period finns redan.',
+      }
     }
 
     const startYear = startDate.substring(0, 4)

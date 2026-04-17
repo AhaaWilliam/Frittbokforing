@@ -62,11 +62,13 @@ function BackupSection() {
         {isRestoring ? 'Återställer...' : 'Återställ från backup'}
       </button>
       {backupMessage && (
-        <div className={`mt-3 rounded-md border px-4 py-3 text-sm ${
-          backupMessage.startsWith('Säkerhetskopia sparad')
-            ? 'border-green-200 bg-green-50 text-green-700'
-            : 'border-red-200 bg-red-50 text-red-700'
-        }`}>
+        <div
+          className={`mt-3 rounded-md border px-4 py-3 text-sm ${
+            backupMessage.startsWith('Säkerhetskopia sparad')
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
           {backupMessage}
         </div>
       )}

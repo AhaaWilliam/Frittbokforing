@@ -94,7 +94,8 @@ export function getCompanyInfo(db: Database.Database): CompanyInfo {
   const row = db
     .prepare('SELECT org_number, name FROM companies LIMIT 1')
     .get() as CompanyInfo | undefined
-  if (!row) throw { code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
+  if (!row)
+    throw { code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
   return {
     org_number: row.org_number || '000000-0000',
     name: row.name,

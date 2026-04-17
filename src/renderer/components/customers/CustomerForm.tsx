@@ -8,7 +8,10 @@ import {
   transformCustomerForm,
   CUSTOMER_DEFAULTS,
 } from '../../lib/form-schemas/customer'
-import type { CustomerFormState, CustomerPayload } from '../../lib/form-schemas/customer'
+import type {
+  CustomerFormState,
+  CustomerPayload,
+} from '../../lib/form-schemas/customer'
 import { FormField } from '../ui/FormField'
 import { FormSelect } from '../ui/FormSelect'
 
@@ -105,11 +108,29 @@ export function CustomerForm({
         }}
         className="space-y-4"
       >
-        <FormField form={form} formName="customer" name="name" label="Namn" required />
+        <FormField
+          form={form}
+          formName="customer"
+          name="name"
+          label="Namn"
+          required
+        />
 
-        <FormSelect form={form} formName="customer" name="type" label="Typ" options={TYPE_OPTIONS} />
+        <FormSelect
+          form={form}
+          formName="customer"
+          name="type"
+          label="Typ"
+          options={TYPE_OPTIONS}
+        />
 
-        <FormField form={form} formName="customer" name="org_number" label="Organisationsnummer" placeholder="NNNNNN-NNNN" />
+        <FormField
+          form={form}
+          formName="customer"
+          name="org_number"
+          label="Organisationsnummer"
+          placeholder="NNNNNN-NNNN"
+        />
 
         <FormField
           form={form}
@@ -119,20 +140,52 @@ export function CustomerForm({
           hint={vatSuggestion ? `Förslag: ${vatSuggestion}` : undefined}
         />
 
-        <FormField form={form} formName="customer" name="address_line1" label="Adress" />
+        <FormField
+          form={form}
+          formName="customer"
+          name="address_line1"
+          label="Adress"
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField form={form} formName="customer" name="postal_code" label="Postnummer" />
+          <FormField
+            form={form}
+            formName="customer"
+            name="postal_code"
+            label="Postnummer"
+          />
           <FormField form={form} formName="customer" name="city" label="Stad" />
         </div>
 
-        <FormField form={form} formName="customer" name="country" label="Land" />
+        <FormField
+          form={form}
+          formName="customer"
+          name="country"
+          label="Land"
+        />
 
-        <FormField form={form} formName="customer" name="contact_person" label="Kontaktperson" />
+        <FormField
+          form={form}
+          formName="customer"
+          name="contact_person"
+          label="Kontaktperson"
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField form={form} formName="customer" name="email" label="E-post" type="email" />
-          <FormField form={form} formName="customer" name="phone" label="Telefon" type="tel" />
+          <FormField
+            form={form}
+            formName="customer"
+            name="email"
+            label="E-post"
+            type="email"
+          />
+          <FormField
+            form={form}
+            formName="customer"
+            name="phone"
+            label="Telefon"
+            type="tel"
+          />
         </div>
 
         <FormSelect
@@ -145,14 +198,38 @@ export function CustomerForm({
 
         {/* Betalningsuppgifter */}
         <div className="mt-2 border-t pt-4">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Betalningsuppgifter</h3>
+          <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+            Betalningsuppgifter
+          </h3>
           <div className="grid grid-cols-2 gap-4">
-            <FormField form={form} formName="customer" name="bankgiro" label="Bankgiro" placeholder="1234-5678" />
-            <FormField form={form} formName="customer" name="plusgiro" label="Plusgiro" />
+            <FormField
+              form={form}
+              formName="customer"
+              name="bankgiro"
+              label="Bankgiro"
+              placeholder="1234-5678"
+            />
+            <FormField
+              form={form}
+              formName="customer"
+              name="plusgiro"
+              label="Plusgiro"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField form={form} formName="customer" name="bank_account" label="Bankkonto" />
-            <FormField form={form} formName="customer" name="bank_clearing" label="Clearingnummer" placeholder="1234" />
+            <FormField
+              form={form}
+              formName="customer"
+              name="bank_account"
+              label="Bankkonto"
+            />
+            <FormField
+              form={form}
+              formName="customer"
+              name="bank_clearing"
+              label="Clearingnummer"
+              placeholder="1234"
+            />
           </div>
         </div>
 

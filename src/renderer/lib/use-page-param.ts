@@ -15,7 +15,9 @@ export function usePageParam(
     function onHashChange() {
       const raw = getHashParams().get(key)
       const parsed = raw ? parseInt(raw, 10) : defaultPage
-      setPageState(Number.isFinite(parsed) && parsed >= 0 ? parsed : defaultPage)
+      setPageState(
+        Number.isFinite(parsed) && parsed >= 0 ? parsed : defaultPage,
+      )
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)

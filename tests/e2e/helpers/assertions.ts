@@ -52,48 +52,98 @@ interface Invoice {
   [key: string]: unknown
 }
 
-export async function getJournalEntries(window: Page, fyId?: number): Promise<{
+export async function getJournalEntries(
+  window: Page,
+  fyId?: number,
+): Promise<{
   entries: JournalEntry[]
   lines: JournalEntryLine[]
 }> {
   return window.evaluate(
-    (fid) => (window as unknown as { __testApi: { getJournalEntries: (f?: number) => Promise<unknown> } }).__testApi.getJournalEntries(fid),
+    (fid) =>
+      (
+        window as unknown as {
+          __testApi: { getJournalEntries: (f?: number) => Promise<unknown> }
+        }
+      ).__testApi.getJournalEntries(fid),
     fyId,
   ) as Promise<{ entries: JournalEntry[]; lines: JournalEntryLine[] }>
 }
 
-export async function getInvoicePayments(window: Page, invoiceId?: number): Promise<InvoicePayment[]> {
+export async function getInvoicePayments(
+  window: Page,
+  invoiceId?: number,
+): Promise<InvoicePayment[]> {
   return window.evaluate(
-    (iid) => (window as unknown as { __testApi: { getInvoicePayments: (i?: number) => Promise<unknown> } }).__testApi.getInvoicePayments(iid),
+    (iid) =>
+      (
+        window as unknown as {
+          __testApi: { getInvoicePayments: (i?: number) => Promise<unknown> }
+        }
+      ).__testApi.getInvoicePayments(iid),
     invoiceId,
   ) as Promise<InvoicePayment[]>
 }
 
 export async function getPaymentBatches(window: Page): Promise<PaymentBatch[]> {
-  return window.evaluate(
-    () => (window as unknown as { __testApi: { getPaymentBatches: () => Promise<unknown> } }).__testApi.getPaymentBatches(),
+  return window.evaluate(() =>
+    (
+      window as unknown as {
+        __testApi: { getPaymentBatches: () => Promise<unknown> }
+      }
+    ).__testApi.getPaymentBatches(),
   ) as Promise<PaymentBatch[]>
 }
 
-export async function getInvoices(window: Page, fyId?: number): Promise<Invoice[]> {
+export async function getInvoices(
+  window: Page,
+  fyId?: number,
+): Promise<Invoice[]> {
   return window.evaluate(
-    (fid) => (window as unknown as { __testApi: { getInvoices: (f?: number) => Promise<unknown> } }).__testApi.getInvoices(fid),
+    (fid) =>
+      (
+        window as unknown as {
+          __testApi: { getInvoices: (f?: number) => Promise<unknown> }
+        }
+      ).__testApi.getInvoices(fid),
     fyId,
   ) as Promise<Invoice[]>
 }
 
-export async function setInvoiceStatus(window: Page, invoiceId: number, status: string): Promise<void> {
+export async function setInvoiceStatus(
+  window: Page,
+  invoiceId: number,
+  status: string,
+): Promise<void> {
   await window.evaluate(
-    ([iid, s]) => (window as unknown as { __testApi: { setInvoiceStatus: (i: number, s: string) => Promise<unknown> } }).__testApi.setInvoiceStatus(iid, s),
+    ([iid, s]) =>
+      (
+        window as unknown as {
+          __testApi: {
+            setInvoiceStatus: (i: number, s: string) => Promise<unknown>
+          }
+        }
+      ).__testApi.setInvoiceStatus(iid, s),
     [invoiceId, status] as [number, string],
   )
 }
 
-export async function createFiscalYear(window: Page, opts: {
-  companyId: number; startDate: string; endDate: string; yearLabel: string
-}): Promise<{ id: number }> {
+export async function createFiscalYear(
+  window: Page,
+  opts: {
+    companyId: number
+    startDate: string
+    endDate: string
+    yearLabel: string
+  },
+): Promise<{ id: number }> {
   return window.evaluate(
-    (o) => (window as unknown as { __testApi: { createFiscalYear: (o: unknown) => Promise<unknown> } }).__testApi.createFiscalYear(o),
+    (o) =>
+      (
+        window as unknown as {
+          __testApi: { createFiscalYear: (o: unknown) => Promise<unknown> }
+        }
+      ).__testApi.createFiscalYear(o),
     opts,
   ) as Promise<{ id: number }>
 }

@@ -36,11 +36,18 @@ function seed(db: Database.Database): Seeded {
     default_payment_terms: 30,
   })
   if (!cust.success) throw new Error(cust.error)
-  const vat25 = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
+  const vat25 = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
   return { companyId: 1, fyId: 1, custId: cust.data.id, vatOutId: vat25.id }
 }
 
-function createUnpaidInvoice(db: Database.Database, s: Seeded, netOre: number, date = '2026-03-15'): { id: number; totalOre: number } {
+function createUnpaidInvoice(
+  db: Database.Database,
+  s: Seeded,
+  netOre: number,
+  date = '2026-03-15',
+): { id: number; totalOre: number } {
   const draft = saveInvoiceDraft(db, {
     counterparty_id: s.custId,
     fiscal_year_id: s.fyId,
@@ -61,7 +68,9 @@ function createUnpaidInvoice(db: Database.Database, s: Seeded, netOre: number, d
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeInvoice(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
-  const row = db.prepare('SELECT total_amount_ore FROM invoices WHERE id=?').get(draft.data.id) as { total_amount_ore: number }
+  const row = db
+    .prepare('SELECT total_amount_ore FROM invoices WHERE id=?')
+    .get(draft.data.id) as { total_amount_ore: number }
   return { id: draft.data.id, totalOre: row.total_amount_ore }
 }
 

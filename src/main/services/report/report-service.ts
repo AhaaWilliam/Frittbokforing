@@ -125,7 +125,9 @@ export function getBalanceSheet(
     }
   }
 
-  bsBalances.sort((a, b) => compareAccountNumbers(a.account_number, b.account_number))
+  bsBalances.sort((a, b) =>
+    compareAccountNumbers(a.account_number, b.account_number),
+  )
 
   // 4. Build asset groups
   const assetGroups = buildGroups(BALANCE_SHEET_ASSETS_CONFIG, bsBalances)

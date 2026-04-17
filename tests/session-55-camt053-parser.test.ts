@@ -57,7 +57,10 @@ describe('S55 A2 — camt.053-parser', () => {
   })
 
   it('5. Non-SEK currency avvisas', () => {
-    const xml = fixture('camt053-happy.xml').replace(/<Ccy>SEK<\/Ccy>/, '<Ccy>EUR</Ccy>')
+    const xml = fixture('camt053-happy.xml').replace(
+      /<Ccy>SEK<\/Ccy>/,
+      '<Ccy>EUR</Ccy>',
+    )
     expect(() => parseCamt053(xml)).toThrow(Camt053ParseError)
     try {
       parseCamt053(xml)
@@ -69,10 +72,7 @@ describe('S55 A2 — camt.053-parser', () => {
   })
 
   it('6. Saknad IBAN ger VALIDATION_ERROR med field=bank_account_iban', () => {
-    const xml = fixture('camt053-happy.xml').replace(
-      /<IBAN>[^<]+<\/IBAN>/,
-      '',
-    )
+    const xml = fixture('camt053-happy.xml').replace(/<IBAN>[^<]+<\/IBAN>/, '')
     try {
       parseCamt053(xml)
       throw new Error('should have thrown')

@@ -12,7 +12,10 @@ describe('mock-ipc', () => {
   })
 
   it('returns default response for valid schema input', async () => {
-    const api = window.api as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>
+    const api = window.api as unknown as Record<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >
     // counterparty:create has a schema requiring { name, type, ... }
     const result = await api.createCounterparty({
       name: 'Test AB',
@@ -22,15 +25,21 @@ describe('mock-ipc', () => {
   })
 
   it('throws when input violates channel schema', async () => {
-    const api = window.api as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>
+    const api = window.api as unknown as Record<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >
     // counterparty:create requires name (string min 1) — passing empty violates
-    await expect(
-      api.createCounterparty({ name: '' }),
-    ).rejects.toThrow('Mock-IPC: input violates schema for channel')
+    await expect(api.createCounterparty({ name: '' })).rejects.toThrow(
+      'Mock-IPC: input violates schema for channel',
+    )
   })
 
   it('mockIpcResponse override works and is reset by afterEach', async () => {
-    const api = window.api as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>
+    const api = window.api as unknown as Record<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >
     const customResponse = { success: true, data: { id: 42, name: 'Override' } }
 
     mockIpcResponse('counterparty:create', customResponse)
@@ -46,7 +55,10 @@ describe('mock-ipc', () => {
   })
 
   it('mockIpcPending returns a promise that does not resolve within 50ms', async () => {
-    const api = window.api as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>
+    const api = window.api as unknown as Record<
+      string,
+      (...args: unknown[]) => Promise<unknown>
+    >
     mockIpcPending('fiscal-year:list')
 
     let resolved = false

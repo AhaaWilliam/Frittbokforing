@@ -38,14 +38,26 @@ const VALID_COMPANY = {
 
 function seed() {
   createCompany(db, VALID_COMPANY)
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   const supplier = createCounterparty(db, { name: 'Lev AB', type: 'supplier' })
   if (!supplier.success) throw new Error('seed failed')
-  const vatCode25 = db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }
-  return { fiscalYearId: fy.id, supplierId: supplier.data.id, vatCode25Id: vatCode25.id }
+  const vatCode25 = db
+    .prepare("SELECT id FROM vat_codes WHERE code = 'IP1'")
+    .get() as { id: number }
+  return {
+    fiscalYearId: fy.id,
+    supplierId: supplier.data.id,
+    vatCode25Id: vatCode25.id,
+  }
 }
 
-function makeExpense(s: ReturnType<typeof seed>, quantity: number, unitPriceOre: number) {
+function makeExpense(
+  s: ReturnType<typeof seed>,
+  quantity: number,
+  unitPriceOre: number,
+) {
   return saveExpenseDraft(db, {
     fiscal_year_id: s.fiscalYearId,
     counterparty_id: s.supplierId,
@@ -53,18 +65,24 @@ function makeExpense(s: ReturnType<typeof seed>, quantity: number, unitPriceOre:
     description: 'Test',
     payment_terms: 30,
     notes: '',
-    lines: [{
-      description: 'Rad',
-      account_number: '6110',
-      quantity,
-      unit_price_ore: unitPriceOre,
-      vat_code_id: s.vatCode25Id,
-    }],
+    lines: [
+      {
+        description: 'Rad',
+        account_number: '6110',
+        quantity,
+        unit_price_ore: unitPriceOre,
+        vat_code_id: s.vatCode25Id,
+      },
+    ],
   })
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { if (db) db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  if (db) db.close()
+})
 
 describe('F27 regression: expense quantity * unit_price computation', () => {
   it('1 styck × 1000 kr (100000 öre) → line_total = 100000 öre, total = 125000 öre', () => {
@@ -113,18 +131,26 @@ describe('F27 regression: expense quantity * unit_price computation', () => {
     const finalized = finalizeExpense(db, result.data.id)
     expect(finalized.success).toBe(true)
 
-    const expense = db.prepare('SELECT journal_entry_id FROM expenses WHERE id = ?').get(result.data.id) as { journal_entry_id: number }
-    const lines = db.prepare(
-      'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?'
-    ).all(expense.journal_entry_id) as { account_number: string; debit_ore: number; credit_ore: number }[]
+    const expense = db
+      .prepare('SELECT journal_entry_id FROM expenses WHERE id = ?')
+      .get(result.data.id) as { journal_entry_id: number }
+    const lines = db
+      .prepare(
+        'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
+      )
+      .all(expense.journal_entry_id) as {
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }[]
 
-    const d6110 = lines.find(l => l.account_number === '6110')
+    const d6110 = lines.find((l) => l.account_number === '6110')
     expect(d6110?.debit_ore).toBe(100000)
 
-    const d2640 = lines.find(l => l.account_number === '2640')
+    const d2640 = lines.find((l) => l.account_number === '2640')
     expect(d2640?.debit_ore).toBe(25000)
 
-    const c2440 = lines.find(l => l.account_number === '2440')
+    const c2440 = lines.find((l) => l.account_number === '2440')
     expect(c2440?.credit_ore).toBe(125000)
 
     const totalD = lines.reduce((s, l) => s + l.debit_ore, 0)

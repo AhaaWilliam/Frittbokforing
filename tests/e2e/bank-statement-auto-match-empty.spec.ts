@@ -45,11 +45,20 @@ test('S57 A5 empty: inga förslag → "Inga förslag hittades"', async () => {
       async (p) => {
         return await (
           window as unknown as {
-            api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> }
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
           }
         ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     expect(importResult.success).toBe(true)
     const stmtId = importResult.data!.statement_id
@@ -60,9 +69,9 @@ test('S57 A5 empty: inga förslag → "Inga förslag hittades"', async () => {
 
     await ctx.window.getByTestId('suggested-matches-panel').click()
 
-    await expect(
-      ctx.window.getByTestId('suggested-matches-empty'),
-    ).toBeVisible({ timeout: 10_000 })
+    await expect(ctx.window.getByTestId('suggested-matches-empty')).toBeVisible(
+      { timeout: 10_000 },
+    )
   } finally {
     await ctx.cleanup()
   }

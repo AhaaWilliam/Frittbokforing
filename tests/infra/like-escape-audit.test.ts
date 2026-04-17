@@ -18,10 +18,19 @@ describe('F8 architecture guard — LIKE escape audit', () => {
       const lines = content.split('\n')
       lines.forEach((line, i) => {
         // Match lines containing LIKE with a parameter placeholder
-        if (/LIKE\s/.test(line) && !line.includes('ESCAPE') && !line.includes('like-exempt')) {
+        if (
+          /LIKE\s/.test(line) &&
+          !line.includes('ESCAPE') &&
+          !line.includes('like-exempt')
+        ) {
           // Skip comments-only lines
           const trimmed = line.trim()
-          if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return
+          if (
+            trimmed.startsWith('//') ||
+            trimmed.startsWith('*') ||
+            trimmed.startsWith('/*')
+          )
+            return
           violations.push(`${filePath}:${i + 1}: ${trimmed}`)
         }
       })

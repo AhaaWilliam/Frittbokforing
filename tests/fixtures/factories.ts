@@ -259,9 +259,7 @@ export function makeInvoice(overrides?: Partial<Invoice>): Invoice {
   }) as Invoice
 }
 
-export function makeInvoiceLine(
-  overrides?: Partial<InvoiceLine>,
-): InvoiceLine {
+export function makeInvoiceLine(overrides?: Partial<InvoiceLine>): InvoiceLine {
   return InvoiceLineSchema.parse({
     id: autoId(),
     invoice_id: 1,
@@ -298,9 +296,7 @@ export function makeExpense(overrides?: Partial<Expense>): Expense {
   }) as Expense
 }
 
-export function makeExpenseLine(
-  overrides?: Partial<ExpenseLine>,
-): ExpenseLine {
+export function makeExpenseLine(overrides?: Partial<ExpenseLine>): ExpenseLine {
   return ExpenseLineSchema.parse({
     id: autoId(),
     expense_id: 1,

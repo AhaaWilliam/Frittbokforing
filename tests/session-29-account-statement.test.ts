@@ -3,10 +3,7 @@ import Database from 'better-sqlite3'
 import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
-import {
-  saveDraft,
-  finalizeDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
 import {
   saveExpenseDraft,
   finalizeExpense,
@@ -27,13 +24,22 @@ const VALID_COMPANY = {
 
 function seedBase(testDb: Database.Database) {
   createCompany(testDb, VALID_COMPANY)
-  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
   if (!cp.success) throw new Error('CP failed')
-  const supplierCp = createCounterparty(testDb, { name: 'Leverantör AB', type: 'supplier' })
+  const supplierCp = createCounterparty(testDb, {
+    name: 'Leverantör AB',
+    type: 'supplier',
+  })
   if (!supplierCp.success) throw new Error('Supplier CP failed')
-  const vatCode = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-  const inVatCode = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }
+  const vatCode = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
+  const inVatCode = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'IP1'")
+    .get() as { id: number }
   return {
     fiscalYearId: fy.id,
     cpId: cp.data.id,
@@ -43,21 +49,27 @@ function seedBase(testDb: Database.Database) {
   }
 }
 
-function bookInvoice(testDb: Database.Database, seed: ReturnType<typeof seedBase>, date: string) {
+function bookInvoice(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedBase>,
+  date: string,
+) {
   const draft = saveDraft(testDb, {
     counterparty_id: seed.cpId,
     fiscal_year_id: seed.fiscalYearId,
     invoice_date: date,
     due_date: date,
-    lines: [{
-      product_id: null,
-      description: 'Test',
-      account_number: '3001',
-      quantity: 1,
-      unit_price_ore: 10000,
-      vat_code_id: seed.vatCodeId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        product_id: null,
+        description: 'Test',
+        account_number: '3001',
+        quantity: 1,
+        unit_price_ore: 10000,
+        vat_code_id: seed.vatCodeId,
+        sort_order: 0,
+      },
+    ],
   })
   if (!draft.success) throw new Error('Draft failed: ' + JSON.stringify(draft))
   const fin = finalizeDraft(testDb, draft.data.id)
@@ -65,29 +77,40 @@ function bookInvoice(testDb: Database.Database, seed: ReturnType<typeof seedBase
   return fin.data
 }
 
-function bookExpense(testDb: Database.Database, seed: ReturnType<typeof seedBase>, date: string) {
+function bookExpense(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedBase>,
+  date: string,
+) {
   const draft = saveExpenseDraft(testDb, {
     counterparty_id: seed.supplierCpId,
     fiscal_year_id: seed.fiscalYearId,
     expense_date: date,
     description: 'Kostnad',
-    lines: [{
-      description: 'Test',
-      account_number: '5410',
-      quantity: 1,
-      unit_price_ore: 5000,
-      vat_code_id: seed.inVatCodeId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        description: 'Test',
+        account_number: '5410',
+        quantity: 1,
+        unit_price_ore: 5000,
+        vat_code_id: seed.inVatCodeId,
+        sort_order: 0,
+      },
+    ],
   })
-  if (!draft.success) throw new Error('Expense draft failed: ' + JSON.stringify(draft))
+  if (!draft.success)
+    throw new Error('Expense draft failed: ' + JSON.stringify(draft))
   const fin = finalizeExpense(testDb, draft.data.id)
   if (!fin.success) throw new Error('Expense finalize failed: ' + fin.error)
   return fin.data
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  db.close()
+})
 
 describe('B2: Account Statement Service', () => {
   it('returns empty lines for account with no transactions', () => {
@@ -158,15 +181,17 @@ describe('B2: Account Statement Service', () => {
       fiscal_year_id: seed.fiscalYearId,
       invoice_date: '2026-03-15',
       due_date: '2026-04-14',
-      lines: [{
-        product_id: null,
-        description: 'Draft only',
-        account_number: '3001',
-        quantity: 1,
-        unit_price_ore: 10000,
-        vat_code_id: seed.vatCodeId,
-        sort_order: 0,
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: 'Draft only',
+          account_number: '3001',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: seed.vatCodeId,
+          sort_order: 0,
+        },
+      ],
     })
     expect(draft.success).toBe(true)
 

@@ -49,8 +49,24 @@ describe('transformExpenseForm — struktur', () => {
   it('A1.2: sort_order sätts per index', () => {
     const form = makeForm({
       lines: [
-        { temp_id: 'a', description: 'Rad A', account_number: '5410', quantity: 1, unit_price_kr: 100, vat_code_id: 1, vat_rate: 0.25 },
-        { temp_id: 'b', description: 'Rad B', account_number: '5420', quantity: 2, unit_price_kr: 200, vat_code_id: 1, vat_rate: 0.25 },
+        {
+          temp_id: 'a',
+          description: 'Rad A',
+          account_number: '5410',
+          quantity: 1,
+          unit_price_kr: 100,
+          vat_code_id: 1,
+          vat_rate: 0.25,
+        },
+        {
+          temp_id: 'b',
+          description: 'Rad B',
+          account_number: '5420',
+          quantity: 2,
+          unit_price_kr: 200,
+          vat_code_id: 1,
+          vat_rate: 0.25,
+        },
       ],
     })
     const payload = transformExpenseForm(form, 1)
@@ -79,7 +95,17 @@ describe('transformExpenseForm — struktur', () => {
 describe('transformExpenseForm — toOre-precondition', () => {
   it('A2.1: jämn 1250 kr → 125000 öre', () => {
     const form = makeForm({
-      lines: [{ temp_id: 'a', description: 'X', account_number: '5410', quantity: 1, unit_price_kr: 1250, vat_code_id: 1, vat_rate: 0.25 }],
+      lines: [
+        {
+          temp_id: 'a',
+          description: 'X',
+          account_number: '5410',
+          quantity: 1,
+          unit_price_kr: 1250,
+          vat_code_id: 1,
+          vat_rate: 0.25,
+        },
+      ],
     })
     const payload = transformExpenseForm(form, 1)
 
@@ -88,7 +114,17 @@ describe('transformExpenseForm — toOre-precondition', () => {
 
   it('A2.2: decimal 123.45 kr → 12345 öre', () => {
     const form = makeForm({
-      lines: [{ temp_id: 'a', description: 'X', account_number: '5410', quantity: 1, unit_price_kr: 123.45, vat_code_id: 1, vat_rate: 0.25 }],
+      lines: [
+        {
+          temp_id: 'a',
+          description: 'X',
+          account_number: '5410',
+          quantity: 1,
+          unit_price_kr: 123.45,
+          vat_code_id: 1,
+          vat_rate: 0.25,
+        },
+      ],
     })
     const payload = transformExpenseForm(form, 1)
 
@@ -97,7 +133,17 @@ describe('transformExpenseForm — toOre-precondition', () => {
 
   it('A2.3: edge 0.99 kr → 99 öre', () => {
     const form = makeForm({
-      lines: [{ temp_id: 'a', description: 'X', account_number: '5410', quantity: 1, unit_price_kr: 0.99, vat_code_id: 1, vat_rate: 0.25 }],
+      lines: [
+        {
+          temp_id: 'a',
+          description: 'X',
+          account_number: '5410',
+          quantity: 1,
+          unit_price_kr: 0.99,
+          vat_code_id: 1,
+          vat_rate: 0.25,
+        },
+      ],
     })
     const payload = transformExpenseForm(form, 1)
 
@@ -116,7 +162,9 @@ describe('transformExpenseForm — defensiv', () => {
   })
 
   it('A3.2: _supplier: null → TypeError vid .id-access', () => {
-    const form = makeForm({ _supplier: null as unknown as ExpenseFormState['_supplier'] })
+    const form = makeForm({
+      _supplier: null as unknown as ExpenseFormState['_supplier'],
+    })
 
     expect(() => transformExpenseForm(form, 1)).toThrow(TypeError)
   })
@@ -130,7 +178,9 @@ describe('transformExpenseForm — defensiv', () => {
 
     expect(result.success).toBe(false)
     if (!result.success) {
-      const descErr = result.error.issues.find((i) => i.path[0] === 'description')
+      const descErr = result.error.issues.find(
+        (i) => i.path[0] === 'description',
+      )
       expect(descErr).toBeDefined()
     }
   })

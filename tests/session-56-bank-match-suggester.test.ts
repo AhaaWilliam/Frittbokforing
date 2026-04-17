@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { createTestDb } from './helpers/create-test-db'
-import { createCounterparty, updateCounterparty } from '../src/main/services/counterparty-service'
+import {
+  createCounterparty,
+  updateCounterparty,
+} from '../src/main/services/counterparty-service'
 import {
   saveDraft as saveInvoiceDraft,
   finalizeDraft as finalizeInvoice,
@@ -32,7 +35,10 @@ interface Seeded {
 const IBAN_A = 'SE45 5000 0000 0583 9825 7466'
 const IBAN_A_NORM = 'SE4550000000058398257466'
 
-function seed(db: Database.Database, opts?: { withCustIban?: boolean }): Seeded {
+function seed(
+  db: Database.Database,
+  opts?: { withCustIban?: boolean },
+): Seeded {
   db.exec(`
     INSERT INTO companies (id, org_number, name, fiscal_rule)
       VALUES (1, '559000-1234', 'Suggester AB', 'K2');
@@ -55,7 +61,10 @@ function seed(db: Database.Database, opts?: { withCustIban?: boolean }): Seeded 
   })
   if (!cust.success) throw new Error(cust.error)
   if (opts?.withCustIban !== false) {
-    const upd = updateCounterparty(db, { id: cust.data.id, bank_account: IBAN_A })
+    const upd = updateCounterparty(db, {
+      id: cust.data.id,
+      bank_account: IBAN_A,
+    })
     if (!upd.success) throw new Error(upd.error)
   }
   const supp = createCounterparty(db, {
@@ -65,8 +74,12 @@ function seed(db: Database.Database, opts?: { withCustIban?: boolean }): Seeded 
     default_payment_terms: 30,
   })
   if (!supp.success) throw new Error(supp.error)
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
-  const vatIn = db.prepare("SELECT id FROM vat_codes WHERE code='IP1'").get() as { id: number }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
+  const vatIn = db
+    .prepare("SELECT id FROM vat_codes WHERE code='IP1'")
+    .get() as { id: number }
   return {
     companyId: 1,
     fyId: 1,
@@ -105,8 +118,14 @@ function createInvoice(
   const fin = finalizeInvoice(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
   const row = db
-    .prepare('SELECT id, invoice_number, total_amount_ore FROM invoices WHERE id=?')
-    .get(draft.data.id) as { id: number; invoice_number: string; total_amount_ore: number }
+    .prepare(
+      'SELECT id, invoice_number, total_amount_ore FROM invoices WHERE id=?',
+    )
+    .get(draft.data.id) as {
+    id: number
+    invoice_number: string
+    total_amount_ore: number
+  }
   return row
 }
 
@@ -210,7 +229,10 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     const s = seed(db, { withCustIban: false })
     const inv = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-15' })
     const stmtId = insertStatement(db, s)
-    insertTx(db, stmtId, { amountOre: inv.total_amount_ore, valueDate: '2026-03-15' })
+    insertTx(db, stmtId, {
+      amountOre: inv.total_amount_ore,
+      valueDate: '2026-03-15',
+    })
     const r = suggestMatchesForStatement(db, stmtId)
     expect(r.success).toBe(true)
     if (!r.success) return
@@ -224,7 +246,10 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     const s = seed(db, { withCustIban: false })
     const inv = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-13' })
     const stmtId = insertStatement(db, s)
-    insertTx(db, stmtId, { amountOre: inv.total_amount_ore, valueDate: '2026-03-15' })
+    insertTx(db, stmtId, {
+      amountOre: inv.total_amount_ore,
+      valueDate: '2026-03-15',
+    })
     const r = suggestMatchesForStatement(db, stmtId)
     expect(r.success).toBe(true)
     if (!r.success) return
@@ -237,7 +262,10 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     const s = seed(db, { withCustIban: false })
     const inv = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-09' })
     const stmtId = insertStatement(db, s)
-    insertTx(db, stmtId, { amountOre: inv.total_amount_ore, valueDate: '2026-03-15' })
+    insertTx(db, stmtId, {
+      amountOre: inv.total_amount_ore,
+      valueDate: '2026-03-15',
+    })
     const r = suggestMatchesForStatement(db, stmtId)
     expect(r.success).toBe(true)
     if (!r.success) return
@@ -303,7 +331,10 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     const s = seed(db, { withCustIban: false })
     const exp = createExpense(db, s, { netOre: 10_000, date: '2026-03-15' })
     const stmtId = insertStatement(db, s)
-    insertTx(db, stmtId, { amountOre: -exp.total_amount_ore, valueDate: '2026-03-15' })
+    insertTx(db, stmtId, {
+      amountOre: -exp.total_amount_ore,
+      valueDate: '2026-03-15',
+    })
     const r = suggestMatchesForStatement(db, stmtId)
     expect(r.success).toBe(true)
     if (!r.success) return
@@ -333,7 +364,9 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     const inv = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-15' })
     const stmtId = insertStatement(db, s)
     const txId = insertTx(db, stmtId, { amountOre: inv.total_amount_ore })
-    db.prepare("UPDATE bank_transactions SET reconciliation_status='matched' WHERE id=?").run(txId)
+    db.prepare(
+      "UPDATE bank_transactions SET reconciliation_status='matched' WHERE id=?",
+    ).run(txId)
     const r = suggestMatchesForStatement(db, stmtId)
     expect(r.success).toBe(true)
     if (!r.success) return
@@ -343,7 +376,9 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
   it('12. OCR-match i remittance_info (+40)', () => {
     const s = seed(db, { withCustIban: false })
     const inv = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-15' })
-    db.prepare("UPDATE invoices SET ocr_number='OCR-987654' WHERE id=?").run(inv.id)
+    db.prepare("UPDATE invoices SET ocr_number='OCR-987654' WHERE id=?").run(
+      inv.id,
+    )
     const stmtId = insertStatement(db, s)
     insertTx(db, stmtId, {
       amountOre: inv.total_amount_ore,
@@ -361,8 +396,16 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
 
   it('13. K5 tie-break: 2 invoices identiska → båda MEDIUM, äldst due_date först', () => {
     const s = seed(db)
-    const invA = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-15', due: '2026-04-30' })
-    const invB = createInvoice(db, s, { totalOre: 12_500, date: '2026-03-15', due: '2026-04-15' })
+    const invA = createInvoice(db, s, {
+      totalOre: 12_500,
+      date: '2026-03-15',
+      due: '2026-04-30',
+    })
+    const invB = createInvoice(db, s, {
+      totalOre: 12_500,
+      date: '2026-03-15',
+      due: '2026-04-15',
+    })
     const stmtId = insertStatement(db, s)
     insertTx(db, stmtId, {
       amountOre: invA.total_amount_ore,
@@ -382,7 +425,8 @@ describe('S56 A2 — bank-match-suggester scoring', () => {
     // Äldst due_date först → invB (2026-04-15) före invA (2026-04-30)
     const c0 = c[0]
     const c1 = c[1]
-    if (c0.entity_type !== 'invoice' || c1.entity_type !== 'invoice') throw new Error('förväntade invoice-candidates')
+    if (c0.entity_type !== 'invoice' || c1.entity_type !== 'invoice')
+      throw new Error('förväntade invoice-candidates')
     expect(c0.entity_id).toBe(invB.id)
     expect(c1.entity_id).toBe(invA.id)
   })
@@ -465,7 +509,9 @@ describe('S56 A2 — match_method CHECK enforcement', () => {
     // Här testar vi att CHECK-klausulen accepterar alla 5 värden via simpel enum-test:
     const checkSql = (
       db
-        .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+        .prepare(
+          "SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'",
+        )
         .get() as { sql: string }
     ).sql
     expect(checkSql).toContain("'manual'")

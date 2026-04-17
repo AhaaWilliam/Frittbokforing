@@ -39,15 +39,26 @@ function seedBase() {
     fiscal_year_start: '2026-01-01',
     fiscal_year_end: '2026-12-31',
   })
-  fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
-  vatCodeOutId = (db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }).id
-  vatCodeInId = (db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }).id
+  fyId = (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
+  vatCodeOutId = (
+    db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as {
+      id: number
+    }
+  ).id
+  vatCodeInId = (
+    db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as {
+      id: number
+    }
+  ).id
   const cpResult = createCounterparty(db, {
     name: 'Kund AB',
     type: 'both',
     default_payment_terms: 30,
   }) as IpcResult<{ id: number }>
-  if (!cpResult.success) throw new Error(`createCounterparty failed: ${JSON.stringify(cpResult)}`)
+  if (!cpResult.success)
+    throw new Error(`createCounterparty failed: ${JSON.stringify(cpResult)}`)
   cpId = cpResult.data.id
 }
 
@@ -62,17 +73,20 @@ function createInvoice(opts: {
     invoice_date: opts.date,
     due_date: opts.dueDate,
     payment_terms: 30,
-    lines: [{
-      product_id: null,
-      description: 'Test',
-      quantity: 1,
-      unit_price_ore: opts.amount,
-      vat_code_id: vatCodeOutId,
-      sort_order: 0,
-      account_number: '3002',
-    }],
+    lines: [
+      {
+        product_id: null,
+        description: 'Test',
+        quantity: 1,
+        unit_price_ore: opts.amount,
+        vat_code_id: vatCodeOutId,
+        sort_order: 0,
+        account_number: '3002',
+      },
+    ],
   }) as IpcResult<{ id: number }>
-  if (!draft.success) throw new Error(`saveDraft failed: ${JSON.stringify(draft)}`)
+  if (!draft.success)
+    throw new Error(`saveDraft failed: ${JSON.stringify(draft)}`)
   const id = draft.data.id
   finalizeDraft(db, id)
   return id
@@ -89,14 +103,16 @@ function createExpense(opts: {
     expense_date: opts.date,
     due_date: opts.dueDate,
     description: 'Test expense',
-    lines: [{
-      description: 'Test line',
-      account_number: '5010',
-      quantity: 1,
-      unit_price_ore: opts.amount,
-      vat_code_id: vatCodeInId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        description: 'Test line',
+        account_number: '5010',
+        quantity: 1,
+        unit_price_ore: opts.amount,
+        vat_code_id: vatCodeInId,
+        sort_order: 0,
+      },
+    ],
   }) as IpcResult<{ id: number }>
   const id = draft.success ? draft.data.id : 0
   finalizeExpense(db, id)
@@ -154,7 +170,11 @@ describe('Aging receivables', () => {
   })
 
   it('partial payment reduces remaining', () => {
-    const invId = createInvoice({ date: '2026-05-01', dueDate: '2026-05-15', amount: 100_00 })
+    const invId = createInvoice({
+      date: '2026-05-01',
+      dueDate: '2026-05-15',
+      amount: 100_00,
+    })
     payInvoice(db, {
       invoice_id: invId,
       amount_ore: 60_00,
@@ -163,16 +183,24 @@ describe('Aging receivables', () => {
       account_number: '1930',
     })
     const report = getAgingReceivables(db, fyId, '2026-06-15')
-    const item = report.buckets.flatMap((b) => b.items).find((i) => i.id === invId)
+    const item = report.buckets
+      .flatMap((b) => b.items)
+      .find((i) => i.id === invId)
     expect(item).toBeDefined()
     // total_amount_ore includes VAT (125% of 100_00 = 125_00)
     expect(item!.remainingOre).toBe(item!.totalAmountOre - 60_00)
   })
 
   it('paid invoices excluded', () => {
-    const invId = createInvoice({ date: '2026-05-01', dueDate: '2026-05-15', amount: 100_00 })
+    const invId = createInvoice({
+      date: '2026-05-01',
+      dueDate: '2026-05-15',
+      amount: 100_00,
+    })
     // Get total to pay full amount
-    const inv = db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(invId) as { total_amount_ore: number }
+    const inv = db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(invId) as { total_amount_ore: number }
     payInvoice(db, {
       invoice_id: invId,
       amount_ore: inv.total_amount_ore,
@@ -185,8 +213,15 @@ describe('Aging receivables', () => {
   })
 
   it('credit notes excluded', () => {
-    const invId = createInvoice({ date: '2026-05-01', dueDate: '2026-05-15', amount: 100_00 })
-    createCreditNoteDraft(db, { original_invoice_id: invId, fiscal_year_id: fyId })
+    const invId = createInvoice({
+      date: '2026-05-01',
+      dueDate: '2026-05-15',
+      amount: 100_00,
+    })
+    createCreditNoteDraft(db, {
+      original_invoice_id: invId,
+      fiscal_year_id: fyId,
+    })
     const report = getAgingReceivables(db, fyId, '2026-06-15')
     // Only the original invoice, not the credit note
     const allItems = report.buckets.flatMap((b) => b.items)
@@ -209,7 +244,10 @@ describe('Aging receivables', () => {
     createInvoice({ date: '2026-05-01', dueDate: '2026-06-20', amount: 100_00 })
     createInvoice({ date: '2026-04-01', dueDate: '2026-05-01', amount: 200_00 })
     const report = getAgingReceivables(db, fyId, '2026-06-15')
-    const bucketsTotal = report.buckets.reduce((s, b) => s + b.totalRemainingOre, 0)
+    const bucketsTotal = report.buckets.reduce(
+      (s, b) => s + b.totalRemainingOre,
+      0,
+    )
     expect(report.totalRemainingOre).toBe(bucketsTotal)
     expect(report.totalRemainingOre).toBeGreaterThan(0)
   })
@@ -238,7 +276,11 @@ describe('Aging payables', () => {
   it('expenses without due_date in itemsWithoutDueDate', () => {
     // Service always auto-fills due_date, so insert directly to simulate
     // legacy data or external import with null due_date
-    const expId = createExpense({ date: '2026-05-01', dueDate: '2026-06-01', amount: 100_00 })
+    const expId = createExpense({
+      date: '2026-05-01',
+      dueDate: '2026-06-01',
+      amount: 100_00,
+    })
     // Set due_date to NULL and status to unpaid directly
     db.prepare('UPDATE expenses SET due_date = NULL WHERE id = ?').run(expId)
     const report = getAgingPayables(db, fyId, '2026-06-15')
@@ -249,8 +291,14 @@ describe('Aging payables', () => {
   })
 
   it('paid expenses excluded', () => {
-    const expId = createExpense({ date: '2026-05-01', dueDate: '2026-05-15', amount: 100_00 })
-    const exp = db.prepare('SELECT total_amount_ore FROM expenses WHERE id = ?').get(expId) as { total_amount_ore: number }
+    const expId = createExpense({
+      date: '2026-05-01',
+      dueDate: '2026-05-15',
+      amount: 100_00,
+    })
+    const exp = db
+      .prepare('SELECT total_amount_ore FROM expenses WHERE id = ?')
+      .get(expId) as { total_amount_ore: number }
     payExpense(db, {
       expense_id: expId,
       amount_ore: exp.total_amount_ore,
@@ -296,13 +344,19 @@ describe('IPC contract', () => {
     const { AgingInputSchema } = await import('../src/shared/ipc-schemas')
     const r1 = AgingInputSchema.safeParse({ fiscal_year_id: 1 })
     expect(r1.success).toBe(true)
-    const r2 = AgingInputSchema.safeParse({ fiscal_year_id: 1, as_of_date: '2026-06-15' })
+    const r2 = AgingInputSchema.safeParse({
+      fiscal_year_id: 1,
+      as_of_date: '2026-06-15',
+    })
     expect(r2.success).toBe(true)
   })
 
   it('schema rejects invalid as_of_date', async () => {
     const { AgingInputSchema } = await import('../src/shared/ipc-schemas')
-    const r = AgingInputSchema.safeParse({ fiscal_year_id: 1, as_of_date: 'not-a-date' })
+    const r = AgingInputSchema.safeParse({
+      fiscal_year_id: 1,
+      as_of_date: 'not-a-date',
+    })
     expect(r.success).toBe(false)
   })
 })

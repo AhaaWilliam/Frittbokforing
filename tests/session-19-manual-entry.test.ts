@@ -46,8 +46,9 @@ describe('Migration 011', () => {
   })
 
   it('manual_entries-tabell skapas', () => {
-    const cols = (db.pragma('table_info(manual_entries)') as { name: string }[])
-      .map((c) => c.name)
+    const cols = (
+      db.pragma('table_info(manual_entries)') as { name: string }[]
+    ).map((c) => c.name)
     expect(cols).toContain('id')
     expect(cols).toContain('fiscal_year_id')
     expect(cols).toContain('entry_date')
@@ -57,8 +58,9 @@ describe('Migration 011', () => {
   })
 
   it('manual_entry_lines-tabell skapas med UNIQUE constraint', () => {
-    const cols = (db.pragma('table_info(manual_entry_lines)') as { name: string }[])
-      .map((c) => c.name)
+    const cols = (
+      db.pragma('table_info(manual_entry_lines)') as { name: string }[]
+    ).map((c) => c.name)
     expect(cols).toContain('manual_entry_id')
     expect(cols).toContain('line_number')
     expect(cols).toContain('account_number')

@@ -4,7 +4,10 @@ import {
   CreateCompanyInputSchema,
   UpdateCompanyInputSchema,
 } from '../ipc-schemas'
-import { mapUniqueConstraintError, COMPANY_UNIQUE_MAPPINGS } from './error-helpers'
+import {
+  mapUniqueConstraintError,
+  COMPANY_UNIQUE_MAPPINGS,
+} from './error-helpers'
 import log from 'electron-log'
 
 export interface GeneratedPeriod {

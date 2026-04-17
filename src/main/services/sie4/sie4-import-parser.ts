@@ -120,7 +120,8 @@ function parseFields(line: string): string[] {
 
 /** Convert SIE4 date (YYYYMMDD) to ISO (YYYY-MM-DD). */
 function sieDate(d: string): string {
-  if (d.length === 8) return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
+  if (d.length === 8)
+    return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
   return d
 }
 
@@ -131,14 +132,27 @@ export function parseSie4(buffer: Buffer): SieParseResult {
   const content = iconv.decode(buffer, 'cp437')
 
   // Normalize line endings
-  const rawLines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+  const rawLines = content
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n')
 
   const header: SieHeader = {
-    flagga: null, program: null, programVersion: null,
-    format: null, genDate: null, genSign: null,
-    sieType: null, prosa: null, companyType: null,
-    fileNumber: null, orgNumber: null, companyName: null,
-    chartOfAccountsType: null, currency: null, fiscalYears: [],
+    flagga: null,
+    program: null,
+    programVersion: null,
+    format: null,
+    genDate: null,
+    genSign: null,
+    sieType: null,
+    prosa: null,
+    companyType: null,
+    fileNumber: null,
+    orgNumber: null,
+    companyName: null,
+    chartOfAccountsType: null,
+    currency: null,
+    fiscalYears: [],
   }
 
   const accounts: SieAccount[] = []
@@ -169,7 +183,9 @@ export function parseSie4(buffer: Buffer): SieParseResult {
         const fields = parseFields(line.substring(6))
         currentEntry.transactions.push({
           accountNumber: fields[0] ?? '',
-          amountOre: sie4AmountToOre(fields[1] === '{}' ? fields[2] ?? '0' : fields[1] ?? '0'),
+          amountOre: sie4AmountToOre(
+            fields[1] === '{}' ? (fields[2] ?? '0') : (fields[1] ?? '0'),
+          ),
           date: fields[3] ? sieDate(fields[3]) : null,
           text: fields[4] ?? null,
         })
@@ -233,7 +249,11 @@ export function parseSie4(buffer: Buffer): SieParseResult {
           header.currency = fields[0] ?? null
           break
         case '#KONTO':
-          accounts.push({ number: fields[0] ?? '', name: fields[1] ?? '', type: null })
+          accounts.push({
+            number: fields[0] ?? '',
+            name: fields[1] ?? '',
+            type: null,
+          })
           break
         case '#KTYP':
           accountTypes.set(fields[0] ?? '', fields[1] ?? '')
@@ -264,7 +284,8 @@ export function parseSie4(buffer: Buffer): SieParseResult {
           const period = fields[1] ?? ''
           const acct = fields[2] ?? ''
           // fields[3] is {} (dimensioner), fields[4] is amount
-          const amt = fields[3] === '{}' ? fields[4] ?? '0' : fields[3] ?? '0'
+          const amt =
+            fields[3] === '{}' ? (fields[4] ?? '0') : (fields[3] ?? '0')
           periodBalances.push({
             yearIndex: yi,
             period,
@@ -279,7 +300,14 @@ export function parseSie4(buffer: Buffer): SieParseResult {
           const date = fields[2] ? sieDate(fields[2]) : ''
           const desc = fields[3] ?? ''
           const regDate = fields[4] ? sieDate(fields[4]) : null
-          currentEntry = { series, number: num, date, description: desc, regDate, transactions: [] }
+          currentEntry = {
+            series,
+            number: num,
+            date,
+            description: desc,
+            regDate,
+            transactions: [],
+          }
           // Skip '{' on next line or same line
           break
         }
@@ -305,7 +333,8 @@ export function parseSie4(buffer: Buffer): SieParseResult {
   const contentForChecksum = buildChecksumContent(content)
   const computedKsumma = calculateKsumma(contentForChecksum)
 
-  const checksumValid = ksummaValue === null ? true : ksummaValue === computedKsumma
+  const checksumValid =
+    ksummaValue === null ? true : ksummaValue === computedKsumma
 
   return {
     header,

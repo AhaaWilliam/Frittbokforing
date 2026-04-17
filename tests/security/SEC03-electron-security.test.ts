@@ -166,7 +166,8 @@ describe('SEC03: Electron-säkerhet', () => {
 
       // Simulera IPC-handler sanitering (M100 mönster)
       const sanitized =
-        e.error ?? (caughtError instanceof Error ? caughtError.message : 'Ett fel uppstod')
+        e.error ??
+        (caughtError instanceof Error ? caughtError.message : 'Ett fel uppstod')
 
       // Saniterat meddelande ska INTE innehålla stack traces eller filvägar
       expect(sanitized).not.toMatch(/at\s+\w+\s+\(/) // stack trace frames

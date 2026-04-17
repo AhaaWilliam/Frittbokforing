@@ -48,7 +48,9 @@ beforeAll(() => {
   })
   db.prepare("UPDATE companies SET bankgiro = '1234-5678' WHERE id = 1").run()
 
-  fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+  fyId = (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
 
   const customer = createCounterparty(db, {
     name: 'Kund AB',
@@ -64,21 +66,27 @@ beforeAll(() => {
     `INSERT INTO invoices (counterparty_id, fiscal_year_id, invoice_number, invoice_date, due_date, status, invoice_type, net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount_ore)
      VALUES (?, ?, 'FAKT-100', '2025-02-01', '2025-03-01', 'paid', 'credit_note', 10000, 2500, 12500, 12500)`,
   ).run(customerId, fyId)
-  const invoiceId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  const invoiceId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Journal entry for invoice (A-series)
   db.prepare(
     `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number, verification_series, journal_date, description, status, source_type)
      VALUES (1, ?, 1, 'A', '2025-02-01', 'Test kreditfaktura', 'booked', 'auto_payment')`,
   ).run(fyId)
-  const jeId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  const jeId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Invoice batch
   db.prepare(
     `INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number, status)
      VALUES (?, 'invoice', '2025-02-15', '1930', 'completed')`,
   ).run(fyId)
-  batchId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  batchId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Invoice payment linked to batch
   db.prepare(
@@ -112,19 +120,25 @@ describe('S50: pain.001 export för invoice-batch', () => {
       `INSERT INTO invoices (counterparty_id, fiscal_year_id, invoice_number, invoice_date, due_date, status, invoice_type, net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount_ore)
        VALUES (?, ?, 'FAKT-101', '2025-02-01', '2025-03-01', 'paid', 'credit_note', 4000, 1000, 5000, 5000)`,
     ).run(bad.data.id, fyId)
-    const invId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+    const invId = (
+      db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+    ).id
 
     db.prepare(
       `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number, verification_series, journal_date, description, status, source_type)
        VALUES (1, ?, 2, 'A', '2025-02-01', 'test', 'booked', 'auto_payment')`,
     ).run(fyId)
-    const jeId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+    const jeId = (
+      db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+    ).id
 
     db.prepare(
       `INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number, status)
        VALUES (?, 'invoice', '2025-02-16', '1930', 'completed')`,
     ).run(fyId)
-    const badBatchId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+    const badBatchId = (
+      db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+    ).id
 
     db.prepare(
       `INSERT INTO invoice_payments (invoice_id, amount_ore, payment_date, payment_method, account_number, journal_entry_id, payment_batch_id)

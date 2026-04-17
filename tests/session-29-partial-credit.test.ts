@@ -26,14 +26,20 @@ const VALID_COMPANY = {
 
 function seedAll(testDb: Database.Database) {
   createCompany(testDb, VALID_COMPANY)
-  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
   if (!cp.success) throw new Error('CP failed')
 
   // 25% VAT
-  const vat25 = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
+  const vat25 = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
   // 12% VAT
-  const vat12 = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'MP2'").get() as { id: number }
+  const vat12 = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP2'")
+    .get() as { id: number }
 
   return {
     fiscalYearId: fy.id,
@@ -77,14 +83,19 @@ function createTwoLineInvoice(
       },
     ],
   })
-  if (!result.success) throw new Error('Draft failed: ' + JSON.stringify(result))
+  if (!result.success)
+    throw new Error('Draft failed: ' + JSON.stringify(result))
   const fResult = finalizeDraft(testDb, result.data.id)
   if (!fResult.success) throw new Error('Finalize failed: ' + fResult.error)
   return fResult.data
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  db.close()
+})
 
 describe('B1: Partiell kreditering', () => {
   it('1: justerad qty → verifikat har korrekt netto + moms', () => {
@@ -132,7 +143,11 @@ describe('B1: Partiell kreditering', () => {
       .prepare(
         'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
-      .all(jeId) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      .all(jeId) as {
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }[]
 
     // Rad 1: 0.5 × 100kr = 50kr netto. Rad 2: 1 × 200kr = 200kr netto. Total: 250kr
     // Moms (25%): 50kr × 0.25 = 12.50kr → 1250 öre. 200kr × 0.25 = 50kr → 5000 öre.
@@ -296,7 +311,11 @@ describe('B1: Partiell kreditering', () => {
       .prepare(
         'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
-      .all(jeId) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      .all(jeId) as {
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }[]
 
     // Momskonto 2611 — debet vid kreditfaktura
     const vatRow = lines.find((l) => l.account_number === '2610')
@@ -347,7 +366,11 @@ describe('B1: Partiell kreditering', () => {
       .prepare(
         'SELECT account_number, debit_ore, credit_ore FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
-      .all(jeId) as { account_number: string; debit_ore: number; credit_ore: number }[]
+      .all(jeId) as {
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }[]
 
     // 25% moms: 0.5 × 100kr = 50kr → moms 12.50kr = 1250 öre
     const vat25Row = lines.find((l) => l.account_number === '2610')

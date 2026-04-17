@@ -17,9 +17,7 @@ export class IpcError extends Error {
  * Throws on success: false so React Query enters error state.
  * Returns only the data on success.
  */
-export async function ipcCall<T>(
-  fn: () => Promise<IpcResult<T>>,
-): Promise<T> {
+export async function ipcCall<T>(fn: () => Promise<IpcResult<T>>): Promise<T> {
   const result = await fn()
   if (!result.success) {
     throw new IpcError(result.error, result.code, result.field)

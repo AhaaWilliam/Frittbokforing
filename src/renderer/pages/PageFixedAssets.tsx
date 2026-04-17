@@ -1,5 +1,13 @@
 import { Fragment, useState } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Plus, Play, Trash2, XCircle } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Play,
+  Trash2,
+  XCircle,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import {
@@ -22,14 +30,21 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 function fmtKr(ore: number): string {
-  return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(ore / 100)
+  return new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+  }).format(ore / 100)
 }
 
 export function PageFixedAssets() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [showCreate, setShowCreate] = useState(false)
-  const [editingAsset, setEditingAsset] = useState<FixedAssetWithAccumulation | null>(null)
-  const [disposingAsset, setDisposingAsset] = useState<{ id: number; name: string } | null>(null)
+  const [editingAsset, setEditingAsset] =
+    useState<FixedAssetWithAccumulation | null>(null)
+  const [disposingAsset, setDisposingAsset] = useState<{
+    id: number
+    name: string
+  } | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
   const executeMutation = useExecuteDepreciationPeriod()
@@ -47,8 +62,14 @@ export function PageFixedAssets() {
   async function handleExecutePeriod() {
     if (!activeFiscalYear) return
     const today = new Date().toISOString().slice(0, 10)
-    const periodEnd = today > activeFiscalYear.end_date ? activeFiscalYear.end_date : today
-    if (!confirm(`Kör avskrivningar till och med ${periodEnd}? Skapar E-serie-verifikat per tillgång.`)) return
+    const periodEnd =
+      today > activeFiscalYear.end_date ? activeFiscalYear.end_date : today
+    if (
+      !confirm(
+        `Kör avskrivningar till och med ${periodEnd}? Skapar E-serie-verifikat per tillgång.`,
+      )
+    )
+      return
     try {
       const r = await executeMutation.mutateAsync({
         fiscal_year_id: activeFiscalYear.id,
@@ -57,12 +78,16 @@ export function PageFixedAssets() {
       if (r.batch_status === 'completed') {
         toast.success(`${r.succeeded.length} avskrivningar bokförda`)
       } else if (r.batch_status === 'partial') {
-        toast.warning(`${r.succeeded.length} lyckades, ${r.failed.length} misslyckades`)
+        toast.warning(
+          `${r.succeeded.length} lyckades, ${r.failed.length} misslyckades`,
+        )
       } else {
         toast.error('Alla avskrivningar misslyckades — batch rullades tillbaka')
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte köra avskrivningar')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte köra avskrivningar',
+      )
     }
   }
 
@@ -92,7 +117,12 @@ export function PageFixedAssets() {
   }
 
   async function handleDelete(id: number, name: string) {
-    if (!confirm(`Radera "${name}" permanent? Kan bara raderas om inga avskrivningar bokförts.`)) return
+    if (
+      !confirm(
+        `Radera "${name}" permanent? Kan bara raderas om inga avskrivningar bokförts.`,
+      )
+    )
+      return
     try {
       await deleteMutation.mutateAsync({ id })
       toast.success(`${name} raderad`)
@@ -156,94 +186,108 @@ export function PageFixedAssets() {
               {assets.map((a) => {
                 const isExpanded = expandedId === a.id
                 return (
-                <Fragment key={a.id}>
-                <tr className="border-b" data-testid={`fa-row-${a.id}`}>
-                  <td className="py-2">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedId(isExpanded ? null : a.id)}
-                      aria-label={isExpanded ? 'Dölj detaljer' : 'Visa detaljer'}
-                      aria-expanded={isExpanded}
-                      data-testid={`fa-toggle-${a.id}`}
-                      className="flex h-5 w-5 items-center justify-center rounded hover:bg-muted"
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </td>
-                  <td className="py-2 pr-4 font-medium">{a.name}</td>
-                  <td className="py-2 pr-4 text-muted-foreground">{a.acquisition_date}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.acquisition_cost_ore)}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.accumulated_depreciation_ore)}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums">{fmtKr(a.book_value_ore)}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums">
-                    {a.schedules_executed}/{a.schedules_generated}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={
-                        a.status === 'disposed'
-                          ? 'inline-flex rounded-full bg-muted px-2 py-0.5 text-xs'
-                          : a.status === 'fully_depreciated'
-                            ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800'
-                            : 'inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800'
-                      }
-                    >
-                      {STATUS_LABELS[a.status] ?? a.status}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4 text-right">
-                    {a.status === 'active' && a.schedules_executed === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setEditingAsset(a)}
-                        aria-label={`Redigera ${a.name}`}
-                        title="Redigera"
-                        data-testid={`fa-edit-${a.id}`}
-                        className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
+                  <Fragment key={a.id}>
+                    <tr className="border-b" data-testid={`fa-row-${a.id}`}>
+                      <td className="py-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedId(isExpanded ? null : a.id)
+                          }
+                          aria-label={
+                            isExpanded ? 'Dölj detaljer' : 'Visa detaljer'
+                          }
+                          aria-expanded={isExpanded}
+                          data-testid={`fa-toggle-${a.id}`}
+                          className="flex h-5 w-5 items-center justify-center rounded hover:bg-muted"
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="py-2 pr-4 font-medium">{a.name}</td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {a.acquisition_date}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums">
+                        {fmtKr(a.acquisition_cost_ore)}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums">
+                        {fmtKr(a.accumulated_depreciation_ore)}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums">
+                        {fmtKr(a.book_value_ore)}
+                      </td>
+                      <td className="py-2 pr-4 text-right tabular-nums">
+                        {a.schedules_executed}/{a.schedules_generated}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span
+                          className={
+                            a.status === 'disposed'
+                              ? 'inline-flex rounded-full bg-muted px-2 py-0.5 text-xs'
+                              : a.status === 'fully_depreciated'
+                                ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800'
+                                : 'inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800'
+                          }
+                        >
+                          {STATUS_LABELS[a.status] ?? a.status}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-right">
+                        {a.status === 'active' &&
+                          a.schedules_executed === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingAsset(a)}
+                              aria-label={`Redigera ${a.name}`}
+                              title="Redigera"
+                              data-testid={`fa-edit-${a.id}`}
+                              className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        {a.status === 'active' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDispose(a.id, a.name)}
+                            disabled={disposeMutation.isPending}
+                            className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                            aria-label={`Avyttra ${a.name}`}
+                            title="Avyttra"
+                            data-testid={`fa-dispose-${a.id}`}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {a.status === 'active' &&
+                          a.schedules_executed === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(a.id, a.name)}
+                              disabled={deleteMutation.isPending}
+                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                              aria-label={`Radera ${a.name}`}
+                              title="Radera"
+                              data-testid={`fa-delete-${a.id}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr data-testid={`fa-detail-row-${a.id}`}>
+                        <td colSpan={9} className="p-0">
+                          <FixedAssetDetailPanel assetId={a.id} />
+                        </td>
+                      </tr>
                     )}
-                    {a.status === 'active' && (
-                      <button
-                        type="button"
-                        onClick={() => handleDispose(a.id, a.name)}
-                        disabled={disposeMutation.isPending}
-                        className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-                        aria-label={`Avyttra ${a.name}`}
-                        title="Avyttra"
-                        data-testid={`fa-dispose-${a.id}`}
-                      >
-                        <XCircle className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    {a.status === 'active' && a.schedules_executed === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(a.id, a.name)}
-                        disabled={deleteMutation.isPending}
-                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
-                        aria-label={`Radera ${a.name}`}
-                        title="Radera"
-                        data-testid={`fa-delete-${a.id}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-                {isExpanded && (
-                  <tr data-testid={`fa-detail-row-${a.id}`}>
-                    <td colSpan={9} className="p-0">
-                      <FixedAssetDetailPanel assetId={a.id} />
-                    </td>
-                  </tr>
-                )}
-                </Fragment>
+                  </Fragment>
                 )
               })}
             </tbody>

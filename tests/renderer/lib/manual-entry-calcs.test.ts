@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { calculateManualEntryTotals, formatDiffLabel } from '../../../src/renderer/lib/manual-entry-calcs'
+import {
+  calculateManualEntryTotals,
+  formatDiffLabel,
+} from '../../../src/renderer/lib/manual-entry-calcs'
 import type { ManualEntryLineForm } from '../../../src/renderer/lib/form-schemas/manual-entry'
 
 function makeLine(debitKr: string, creditKr: string): ManualEntryLineForm {
@@ -39,10 +42,16 @@ describe('formatDiffLabel', () => {
   })
 
   it('diff > 0 → debet > kredit', () => {
-    expect(formatDiffLabel(50000)).toEqual({ text: 'debet > kredit', balanced: false })
+    expect(formatDiffLabel(50000)).toEqual({
+      text: 'debet > kredit',
+      balanced: false,
+    })
   })
 
   it('diff < 0 → kredit > debet', () => {
-    expect(formatDiffLabel(-50000)).toEqual({ text: 'kredit > debet', balanced: false })
+    expect(formatDiffLabel(-50000)).toEqual({
+      text: 'kredit > debet',
+      balanced: false,
+    })
   })
 })

@@ -40,7 +40,8 @@ export function BatchPdfExportDialog({
         {result && (
           <>
             <p className="mb-4 text-sm text-muted-foreground">
-              {result.succeeded} av {result.succeeded + result.failed.length} exporterade
+              {result.succeeded} av {result.succeeded + result.failed.length}{' '}
+              exporterade
             </p>
 
             {result.failed.length > 0 && (

@@ -31,7 +31,9 @@ export function PageImport() {
       setFilePath(selectedPath)
       setPhase('validating')
 
-      const valResult = await window.api.sie4Validate({ filePath: selectedPath })
+      const valResult = await window.api.sie4Validate({
+        filePath: selectedPath,
+      })
       if (!valResult.success) {
         toast.error(valResult.error)
         setPhase('select')
@@ -89,7 +91,9 @@ export function PageImport() {
         {phase === 'validating' && (
           <div className="py-16 text-center">
             <LoadingSpinner />
-            <p className="mt-2 text-sm text-muted-foreground">Validerar SIE4-fil...</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Validerar SIE4-fil...
+            </p>
           </div>
         )}
         {phase === 'preview' && validation && (
@@ -108,7 +112,9 @@ export function PageImport() {
         {phase === 'importing' && (
           <div className="py-16 text-center">
             <LoadingSpinner />
-            <p className="mt-2 text-sm text-muted-foreground">Importerar till databasen...</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Importerar till databasen...
+            </p>
           </div>
         )}
         {phase === 'done' && importResult && (

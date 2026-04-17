@@ -81,14 +81,11 @@ interface Props {
 export function SuggestedMatchesPanel({ statementId }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [pending, setPending] = useState(false)
-  const [results, setResults] = useState<
-    | {
-        ok: number
-        total: number
-        failed: Array<{ txId: number; reason: string }>
-      }
-    | null
-  >(null)
+  const [results, setResults] = useState<{
+    ok: number
+    total: number
+    failed: Array<{ txId: number; reason: string }>
+  } | null>(null)
 
   // Beslut 2: query pausad under bulk-pending (undviker mid-loop refetch)
   const query = useSuggestBankMatches(statementId, expanded && !pending)
@@ -130,9 +127,7 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
         )
       }
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Matchning misslyckades',
-      )
+      toast.error(err instanceof Error ? err.message : 'Matchning misslyckades')
     }
   }
 
@@ -280,13 +275,19 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
                       </div>
                       {s.candidates.map((c, idx) => (
                         <div
-                          key={isFee(c) ? `fee-${c.entity_type}-${idx}` : `${c.entity_type}-${c.entity_id}`}
+                          key={
+                            isFee(c)
+                              ? `fee-${c.entity_type}-${idx}`
+                              : `${c.entity_type}-${c.entity_id}`
+                          }
                           className="flex items-center justify-between gap-2 py-1"
                         >
                           <div className="flex-1 text-xs">
                             {isFee(c) ? (
                               <>
-                                <span className="font-medium">{feeLabel(c)}</span>
+                                <span className="font-medium">
+                                  {feeLabel(c)}
+                                </span>
                                 {' · konto '}
                                 {c.account}
                                 {' · '}
@@ -343,7 +344,8 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
               data-testid="suggested-matches-failures"
             >
               <div className="mb-1 font-medium">
-                {results.ok} av {results.total} accepterade — {results.failed.length} misslyckades:
+                {results.ok} av {results.total} accepterade —{' '}
+                {results.failed.length} misslyckades:
               </div>
               <ul className="ml-4 list-disc">
                 {results.failed.map((f) => (

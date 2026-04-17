@@ -20,7 +20,15 @@
  * pre-flight-checken fångar YEAR_IS_CLOSED innan INSERT sker.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'vitest'
 import {
   type SystemTestContext,
   createTemplateDb,
@@ -36,19 +44,23 @@ let ctx: SystemTestContext
 
 beforeAll(() => createTemplateDb())
 afterAll(() => destroyTemplateDb())
-beforeEach(() => { ctx = createSystemTestContext() })
+beforeEach(() => {
+  ctx = createSystemTestContext()
+})
 afterEach(() => destroyContext(ctx))
 
 function seedInvoiceNoVat(amount_ore: number) {
   return seedAndFinalizeInvoice(ctx, {
-    lines: [{
-      product_id: null,
-      description: 'Test',
-      quantity: 1,
-      unit_price_ore: amount_ore,
-      vat_code_id: 4, // MF (momsfri)
-      account_number: '3002',
-    }],
+    lines: [
+      {
+        product_id: null,
+        description: 'Test',
+        quantity: 1,
+        unit_price_ore: amount_ore,
+        vat_code_id: 4, // MF (momsfri)
+        account_number: '3002',
+      },
+    ],
   })
 }
 
@@ -59,11 +71,15 @@ describe('PARTIAL1 — period-stängning ger pre-flight fail, inte INSERT-fail',
     const i3 = seedInvoiceNoVat(300_00)
 
     // Stäng mars-perioden (betalningsdatum = 2026-03-15)
-    const fy = ctx.db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-    ctx.db.prepare(
-      `UPDATE accounting_periods SET is_closed = 1
+    const fy = ctx.db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    ctx.db
+      .prepare(
+        `UPDATE accounting_periods SET is_closed = 1
        WHERE fiscal_year_id = ? AND '2026-03-15' BETWEEN start_date AND end_date`,
-    ).run(fy.id)
+      )
+      .run(fy.id)
 
     // Bulk-betala med datum i stängd period
     const result = payInvoicesBulk(ctx.db, {
@@ -98,25 +114,34 @@ describe('PARTIAL1 — period-stängning ger pre-flight fail, inte INSERT-fail',
     const i3 = seedInvoiceNoVat(300_00)
 
     // Stäng mars-period
-    const fy = ctx.db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-    ctx.db.prepare(
-      `UPDATE accounting_periods SET is_closed = 1
+    const fy = ctx.db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    ctx.db
+      .prepare(
+        `UPDATE accounting_periods SET is_closed = 1
        WHERE fiscal_year_id = ? AND '2026-03-15' BETWEEN start_date AND end_date`,
-    ).run(fy.id)
+      )
+      .run(fy.id)
 
     // Öppna april
     // i1, i3 betalas med datum i april (öppen), i2 betalas med mars (stängd)
     // Men bulk har gemensamt payment_date — kan inte ha mixed dates.
     // Istället: betala i1 separat i mars (före stängning) → already_paid
-    ctx.db.prepare(
-      `UPDATE accounting_periods SET is_closed = 0
+    ctx.db
+      .prepare(
+        `UPDATE accounting_periods SET is_closed = 0
        WHERE fiscal_year_id = ? AND '2026-03-15' BETWEEN start_date AND end_date`,
-    ).run(fy.id)
+      )
+      .run(fy.id)
 
     // Pay i2 to cause ALREADY_PAID fail
     ctx.invoiceService.payInvoice(ctx.db, {
-      invoice_id: i2.invoiceId, amount_ore: 200_00, payment_date: '2026-03-15',
-      payment_method: 'bankgiro', account_number: '1930',
+      invoice_id: i2.invoiceId,
+      amount_ore: 200_00,
+      payment_date: '2026-03-15',
+      payment_method: 'bankgiro',
+      account_number: '1930',
     })
 
     const result = payInvoicesBulk(ctx.db, {

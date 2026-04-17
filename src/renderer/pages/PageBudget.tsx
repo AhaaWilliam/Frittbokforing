@@ -12,7 +12,11 @@ type Tab = 'budget' | 'variance'
 export function PageBudget() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [activeTab, setActiveTab] = useState<Tab>('budget')
-  const { data: lines, isLoading: linesLoading, error: linesError } = useBudgetLines()
+  const {
+    data: lines,
+    isLoading: linesLoading,
+    error: linesError,
+  } = useBudgetLines()
 
   if (!activeFiscalYear) {
     return (
@@ -71,14 +75,13 @@ export function PageBudget() {
 
       <div className="flex-1 overflow-auto px-6 pb-6">
         {linesError ? (
-          <div className="p-4 text-sm text-red-600">Kunde inte ladda budgetrader.</div>
+          <div className="p-4 text-sm text-red-600">
+            Kunde inte ladda budgetrader.
+          </div>
         ) : linesLoading ? (
           <LoadingSpinner />
         ) : !lines ? null : activeTab === 'budget' ? (
-          <BudgetInputGrid
-            lines={lines}
-            fiscalYearId={activeFiscalYear.id}
-          />
+          <BudgetInputGrid lines={lines} fiscalYearId={activeFiscalYear.id} />
         ) : (
           <VarianceGrid fiscalYearId={activeFiscalYear.id} />
         )}

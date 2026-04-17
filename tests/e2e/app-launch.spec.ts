@@ -26,15 +26,25 @@ test('hash-router navigation från Playwright fungerar', async () => {
 
     // Reload to pick up the new company
     await window.reload()
-    await expect(window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
+    await expect(window.getByTestId('app-ready')).toBeVisible({
+      timeout: 15_000,
+    })
 
     // Navigate via hash
-    await window.evaluate(() => { location.hash = '#/income' })
-    await expect(window.getByTestId('page-income')).toBeVisible({ timeout: 10_000 })
+    await window.evaluate(() => {
+      location.hash = '#/income'
+    })
+    await expect(window.getByTestId('page-income')).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Navigate to another page
-    await window.evaluate(() => { location.hash = '#/expenses' })
-    await expect(window.getByTestId('page-expenses')).toBeVisible({ timeout: 10_000 })
+    await window.evaluate(() => {
+      location.hash = '#/expenses'
+    })
+    await expect(window.getByTestId('page-expenses')).toBeVisible({
+      timeout: 10_000,
+    })
   } finally {
     await cleanup()
   }

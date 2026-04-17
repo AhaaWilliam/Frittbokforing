@@ -18,7 +18,13 @@ test('S55 A7b: duplicate camt.053 avvisas med tydligt fel', async () => {
 
     const first = await ctx.window.evaluate(
       async (p) => {
-        return await (window as unknown as { api: { importBankStatement: (d: unknown) => Promise<{ success: boolean }> } }).api.importBankStatement(p)
+        return await (
+          window as unknown as {
+            api: {
+              importBankStatement: (d: unknown) => Promise<{ success: boolean }>
+            }
+          }
+        ).api.importBankStatement(p)
       },
       { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: xml },
     )
@@ -26,7 +32,15 @@ test('S55 A7b: duplicate camt.053 avvisas med tydligt fel', async () => {
 
     const second = await ctx.window.evaluate(
       async (p) => {
-        return await (window as unknown as { api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; error?: string; code?: string }> } }).api.importBankStatement(p)
+        return await (
+          window as unknown as {
+            api: {
+              importBankStatement: (
+                d: unknown,
+              ) => Promise<{ success: boolean; error?: string; code?: string }>
+            }
+          }
+        ).api.importBankStatement(p)
       },
       { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: xml },
     )

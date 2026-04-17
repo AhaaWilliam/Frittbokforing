@@ -20,7 +20,9 @@ describe('Sie4SelectFileSchema', () => {
 
 describe('Sie4ValidateSchema', () => {
   it('accepts valid filePath', () => {
-    expect(Sie4ValidateSchema.safeParse({ filePath: '/tmp/test.se' }).success).toBe(true)
+    expect(
+      Sie4ValidateSchema.safeParse({ filePath: '/tmp/test.se' }).success,
+    ).toBe(true)
   })
 
   it('rejects empty filePath', () => {
@@ -38,7 +40,11 @@ describe('Sie4ImportSchema conflict_resolutions (S57 B3a)', () => {
     const res = Sie4ImportSchema.safeParse({
       filePath: '/tmp/test.se',
       strategy: 'merge',
-      conflict_resolutions: { '1930': 'overwrite', '1240': 'keep', '2081': 'skip' },
+      conflict_resolutions: {
+        '1930': 'overwrite',
+        '1240': 'keep',
+        '2081': 'skip',
+      },
     })
     expect(res.success).toBe(true)
   })

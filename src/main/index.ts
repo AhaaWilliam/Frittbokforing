@@ -45,8 +45,7 @@ function setupAutoUpdater(): void {
       createPreUpdateBackup()
     } catch (err) {
       // Avbryt uppdateringen — datasäkerhet går före att få in ny version
-      const message =
-        err instanceof Error ? err.message : String(err)
+      const message = err instanceof Error ? err.message : String(err)
       log.error('Pre-update backup misslyckades, avbryter uppdatering:', err)
       dialog.showErrorBox(
         'Uppdateringen avbröts',

@@ -67,7 +67,7 @@ describe('F46 — Invoice form max-qty', () => {
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue).toBeDefined()
       expect(qtyIssue!.message).toBe(ERR_MSG_MAX_QTY_INVOICE)
       expect(qtyIssue!.code).toBe('too_big')
@@ -81,7 +81,7 @@ describe('F46 — Invoice form max-qty', () => {
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue!.code).toBe('too_big')
     }
   })
@@ -93,7 +93,7 @@ describe('F46 — Invoice form max-qty', () => {
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue!.code).toBe('too_small')
     }
   })
@@ -115,7 +115,7 @@ describe('F46 — Expense form max-qty', () => {
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue!.message).toBe(ERR_MSG_MAX_QTY_EXPENSE)
       expect(qtyIssue!.code).toBe('too_big')
     }
@@ -130,7 +130,7 @@ describe('F46 — IPC-schema DRY-gate (testar schemat direkt, inte pipeline)', (
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue!.code).toBe('too_big')
     }
   })
@@ -142,7 +142,7 @@ describe('F46 — IPC-schema DRY-gate (testar schemat direkt, inte pipeline)', (
     })
     expect(r.success).toBe(false)
     if (!r.success) {
-      const qtyIssue = r.error.issues.find(i => i.path.includes('quantity'))
+      const qtyIssue = r.error.issues.find((i) => i.path.includes('quantity'))
       expect(qtyIssue!.code).toBe('too_big')
     }
   })

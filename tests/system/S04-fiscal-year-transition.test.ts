@@ -93,10 +93,7 @@ describe('Räkenskapsårsövergång', () => {
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
       .all(ibEntries[0].id) as any[]
     const ibDebit = ibLines.reduce((s: number, l: any) => s + l.debit_ore, 0)
-    const ibCredit = ibLines.reduce(
-      (s: number, l: any) => s + l.credit_ore,
-      0,
-    )
+    const ibCredit = ibLines.reduce((s: number, l: any) => s + l.credit_ore, 0)
     expect(ibDebit).toBe(ibCredit)
 
     // PL-konton (3xxx-8xxx) ska ha IB = 0

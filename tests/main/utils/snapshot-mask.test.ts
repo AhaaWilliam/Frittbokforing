@@ -41,7 +41,8 @@ describe('maskSie4', () => {
 
 describe('maskSie5', () => {
   it('maskerar Date-attribut och ISO-timestamps', () => {
-    const xml = '<Sie Date="2025-06-15T12:00:00Z"><FileCreated="2025-06-15T12:00:00Z"/></Sie>'
+    const xml =
+      '<Sie Date="2025-06-15T12:00:00Z"><FileCreated="2025-06-15T12:00:00Z"/></Sie>'
     const out = maskSie5(xml)
     expect(out).toContain('Date="<DATE>"')
     expect(out).not.toContain('2025-06-15')
@@ -60,7 +61,8 @@ describe('maskPain001', () => {
 
 describe('maskGeneric', () => {
   it('maskerar ISO datetimes och UUID:er', () => {
-    const input = 'At 2025-06-15T12:00:00.123Z user 550e8400-e29b-41d4-a716-446655440000 did X'
+    const input =
+      'At 2025-06-15T12:00:00.123Z user 550e8400-e29b-41d4-a716-446655440000 did X'
     const out = maskGeneric(input)
     expect(out).toBe('At <DATETIME> user <UUID> did X')
   })

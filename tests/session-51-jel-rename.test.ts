@@ -45,14 +45,16 @@ afterEach(() => {
 
 describe('Migration 018 — journal_entry_lines rename', () => {
   it('user_version = 18 after all migrations', () => {
-    const uv = db.prepare('PRAGMA user_version').get() as { user_version: number }
+    const uv = db.prepare('PRAGMA user_version').get() as {
+      user_version: number
+    }
     expect(uv.user_version).toBe(41)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {
-    const cols = db
-      .prepare('PRAGMA table_info(journal_entry_lines)')
-      .all() as { name: string }[]
+    const cols = db.prepare('PRAGMA table_info(journal_entry_lines)').all() as {
+      name: string
+    }[]
     const colNames = cols.map((c) => c.name)
     expect(colNames).toContain('debit_ore')
     expect(colNames).toContain('credit_ore')
@@ -209,7 +211,10 @@ describe('E2E smoke: invoice lifecycle with renamed columns', () => {
 describe('M92 export format — no _ore leak', () => {
   function seedWithBookedEntry(testDb: Database.Database) {
     const seed = seedBase(testDb)
-    const cp = createCounterparty(testDb, { name: 'Export Kund', type: 'customer' })
+    const cp = createCounterparty(testDb, {
+      name: 'Export Kund',
+      type: 'customer',
+    })
     if (!cp.success) throw new Error(cp.error)
 
     const vatCode = testDb

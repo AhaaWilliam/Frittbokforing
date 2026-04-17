@@ -14,9 +14,7 @@ import {
   finalizeExpense,
   payExpense,
 } from '../src/main/services/expense-service'
-import {
-  validateAccountsActive,
-} from '../src/main/services/account-service'
+import { validateAccountsActive } from '../src/main/services/account-service'
 import {
   saveManualEntryDraft,
   finalizeManualEntry,
@@ -320,9 +318,9 @@ describe('F3: invoice rounding with small remaining', () => {
       expect(lines.find((l) => l.account_number === '1930')?.debit_ore).toBe(
         501,
       )
-      expect(
-        lines.find((l) => l.account_number === '1510')?.credit_ore,
-      ).toBe(500)
+      expect(lines.find((l) => l.account_number === '1510')?.credit_ore).toBe(
+        500,
+      )
       const rounding = lines.find((l) => l.account_number === '3740')
       expect(rounding).toBeDefined()
       expect(rounding!.credit_ore).toBe(1)
@@ -362,15 +360,11 @@ describe('F3: expense rounding with small remaining', () => {
         credit_ore: number
       }[]
       // Payables debit = 99, rounding debit = 1, bank credit = 100
-      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(
-        99,
+      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(99)
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(1)
+      expect(lines.find((l) => l.account_number === '1930')?.credit_ore).toBe(
+        100,
       )
-      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
-        1,
-      )
-      expect(
-        lines.find((l) => l.account_number === '1930')?.credit_ore,
-      ).toBe(100)
 
       // Balance check
       const totalDebit = lines.reduce((s, l) => s + l.debit_ore, 0)
@@ -417,12 +411,8 @@ describe('F3: expense rounding with small remaining', () => {
           'SELECT account_number, debit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
         .all(jeId) as { account_number: string; debit_ore: number }[]
-      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(
-        50,
-      )
-      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
-        50,
-      )
+      expect(lines.find((l) => l.account_number === '2440')?.debit_ore).toBe(50)
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(50)
     }
 
     const updated = db
@@ -483,9 +473,7 @@ describe('F3: expense rounding with small remaining', () => {
           'SELECT account_number, debit_ore FROM journal_entry_lines WHERE journal_entry_id = ?',
         )
         .all(jeId) as { account_number: string; debit_ore: number }[]
-      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(
-        1,
-      )
+      expect(lines.find((l) => l.account_number === '3740')?.debit_ore).toBe(1)
     }
   })
 })

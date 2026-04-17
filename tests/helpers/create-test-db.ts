@@ -8,7 +8,9 @@ import { registerCustomFunctions } from '../../src/main/db-functions'
 // CHECK-rebuild) — baseline test helper omitted it and tests have adapted.
 // Index 37 = migration 038 (Sprint 53 F62: journal_entries verification_series
 // CHECK-rebuild + fixed_assets + depreciation_schedules).
-export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([21, 22, 37])
+export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([
+  21, 22, 37,
+])
 
 /**
  * Creates a fresh in-memory DB with all migrations applied.
@@ -38,7 +40,9 @@ export function createTestDb(): Database.Database {
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }

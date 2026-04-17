@@ -5,7 +5,16 @@
  * Canary-tester som speglar InvoiceTotals B2.4 och B2.5 — samma
  * divergens-fall men i bokföringsgenerering (main process), inte UI.
  */
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+  vi,
+} from 'vitest'
 import {
   createTemplateDb,
   createSystemTestContext,
@@ -47,19 +56,21 @@ describe('invoice processLines — M131 heltalsaritmetik', () => {
     // Alt B: Math.round(Math.round(150) * 9999 / 100) = Math.round(14998.5) = 14999
     const vatCode = getVatCode25Out(ctx)
     const { invoiceId } = seedAndFinalizeInvoice(ctx, {
-      lines: [{
-        product_id: null,
-        description: 'F47 canary 1',
-        quantity: 1.5,
-        unit_price_ore: 9999,
-        vat_code_id: vatCode.id,
-        account_number: '3001',
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: 'F47 canary 1',
+          quantity: 1.5,
+          unit_price_ore: 9999,
+          vat_code_id: vatCode.id,
+          account_number: '3001',
+        },
+      ],
     })
 
-    const invoice = ctx.db.prepare(
-      'SELECT net_amount_ore FROM invoices WHERE id = ?',
-    ).get(invoiceId) as { net_amount_ore: number }
+    const invoice = ctx.db
+      .prepare('SELECT net_amount_ore FROM invoices WHERE id = ?')
+      .get(invoiceId) as { net_amount_ore: number }
 
     expect(invoice.net_amount_ore).toBe(14999)
   })
@@ -73,19 +84,21 @@ describe('invoice processLines — M131 heltalsaritmetik', () => {
     // regressioner om formeln ändras tillbaka.
     const vatCode = getVatCode25Out(ctx)
     const { invoiceId } = seedAndFinalizeInvoice(ctx, {
-      lines: [{
-        product_id: null,
-        description: 'F47 canary 2',
-        quantity: 0.5,
-        unit_price_ore: 6499,
-        vat_code_id: vatCode.id,
-        account_number: '3001',
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: 'F47 canary 2',
+          quantity: 0.5,
+          unit_price_ore: 6499,
+          vat_code_id: vatCode.id,
+          account_number: '3001',
+        },
+      ],
     })
 
-    const invoice = ctx.db.prepare(
-      'SELECT net_amount_ore FROM invoices WHERE id = ?',
-    ).get(invoiceId) as { net_amount_ore: number }
+    const invoice = ctx.db
+      .prepare('SELECT net_amount_ore FROM invoices WHERE id = ?')
+      .get(invoiceId) as { net_amount_ore: number }
 
     expect(invoice.net_amount_ore).toBe(3250)
   })

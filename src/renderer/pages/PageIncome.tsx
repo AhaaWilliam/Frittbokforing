@@ -5,7 +5,10 @@ import { useIpcMutation } from '../lib/use-ipc-mutation'
 import { InvoiceList } from '../components/invoices/InvoiceList'
 import { InvoiceForm } from '../components/invoices/InvoiceForm'
 import { PageHeader } from '../components/layout/PageHeader'
-import { EntityListPage, type SubViewNav } from '../components/layout/EntityListPage'
+import {
+  EntityListPage,
+  type SubViewNav,
+} from '../components/layout/EntityListPage'
 import { useSubViewNavigation } from '../lib/use-route-navigation'
 
 function EditView({
@@ -38,21 +41,32 @@ function EditView({
   return <InvoiceForm draft={draft} onSave={onSave} onCancel={onCancel} />
 }
 
-function ViewInvoiceWrapper({ id, onBack }: { id: number; onBack: () => void }) {
+function ViewInvoiceWrapper({
+  id,
+  onBack,
+}: {
+  id: number
+  onBack: () => void
+}) {
   const { data: invoice, isLoading } = useDraftInvoice(id)
-  const generatePdfMutation = useIpcMutation(
-    (data: { invoiceId: number }) => window.api.generateInvoicePdf(data),
+  const generatePdfMutation = useIpcMutation((data: { invoiceId: number }) =>
+    window.api.generateInvoicePdf(data),
   )
 
   async function handleDownloadPdf() {
     if (!invoice) return
     try {
-      const pdfData = await generatePdfMutation.mutateAsync({ invoiceId: invoice.id })
+      const pdfData = await generatePdfMutation.mutateAsync({
+        invoiceId: invoice.id,
+      })
       const customerPart = invoice.counterparty_name
         ? `_${invoice.counterparty_name.replace(/[^a-zA-ZåäöÅÄÖ0-9]/g, '_')}`
         : ''
       const fileName = `Faktura_${invoice.invoice_number}${customerPart}.pdf`
-      await window.api.saveInvoicePdf({ data: pdfData.data, defaultFileName: fileName })
+      await window.api.saveInvoicePdf({
+        data: pdfData.data,
+        defaultFileName: fileName,
+      })
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Kunde inte generera PDF',
@@ -92,7 +106,9 @@ function ViewInvoiceWrapper({ id, onBack }: { id: number; onBack: () => void }) 
                 className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
               >
                 <FileDown className="h-4 w-4" />
-                {generatePdfMutation.isPending ? 'Genererar...' : 'Ladda ner PDF'}
+                {generatePdfMutation.isPending
+                  ? 'Genererar...'
+                  : 'Ladda ner PDF'}
               </button>
             )}
             <button
@@ -129,18 +145,14 @@ export function PageIncome() {
       createTitle="Ny faktura (utkast)"
       navigation={navigation}
       subViews={{
-        list: (nav) => (
-          <InvoiceList onNavigate={navToNavigate(nav)} />
-        ),
+        list: (nav) => <InvoiceList onNavigate={navToNavigate(nav)} />,
         create: (nav) => (
           <InvoiceForm onSave={nav.goToList} onCancel={nav.goToList} />
         ),
         edit: (id, nav) => (
           <EditView id={id} onSave={nav.goToList} onCancel={nav.goToList} />
         ),
-        view: (id, nav) => (
-          <ViewInvoiceWrapper id={id} onBack={nav.goToList} />
-        ),
+        view: (id, nav) => <ViewInvoiceWrapper id={id} onBack={nav.goToList} />,
       }}
     />
   )

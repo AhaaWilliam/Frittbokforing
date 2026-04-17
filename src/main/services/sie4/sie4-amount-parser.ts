@@ -17,7 +17,10 @@ export function sie4AmountToOre(amount: string): number {
     ore = parseInt(abs, 10) * 100
   } else {
     const krPart = abs.slice(0, dotIdx)
-    const decPart = abs.slice(dotIdx + 1).padEnd(2, '0').slice(0, 2)
+    const decPart = abs
+      .slice(dotIdx + 1)
+      .padEnd(2, '0')
+      .slice(0, 2)
     ore = parseInt(krPart || '0', 10) * 100 + parseInt(decPart, 10)
   }
 

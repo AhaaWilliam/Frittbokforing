@@ -32,7 +32,10 @@ export interface VatScenario {
  * Duplicated here so parity tests can compute renderer-side values
  * without importing React components or jsdom.
  */
-export function rendererNettoOre(quantity: number, unitPriceKr: number): number {
+export function rendererNettoOre(
+  quantity: number,
+  unitPriceKr: number,
+): number {
   return Math.round(
     (Math.round(quantity * 100) * Math.round(unitPriceKr * 100)) / 100,
   )

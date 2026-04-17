@@ -84,7 +84,8 @@ export function matchBankTransaction(
         return {
           success: false as const,
           code: 'VALIDATION_ERROR' as const,
-          error: 'Utgående betalning kan endast matchas mot en leverantörsfaktura.',
+          error:
+            'Utgående betalning kan endast matchas mot en leverantörsfaktura.',
           field: 'matched_entity_type',
         }
       }

@@ -11,9 +11,13 @@ test.describe('Rapporter', () => {
   test('RR + BR — årets resultat identiskt i båda (M134)', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await expect(ctx.window.getByTestId('wizard')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('wizard')).toBeVisible({
+        timeout: 15_000,
+      })
       const { fiscalYearId } = await composeEmptyK2(ctx.window)
-      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
 
       const customerId = await seedCustomer(ctx.window, 'Rapport Kund')
       await seedAndFinalizeInvoice(ctx.window, {
@@ -25,14 +29,24 @@ test.describe('Rapporter', () => {
         quantity: 1,
       })
 
-      await ctx.window.evaluate(() => { location.hash = '#/reports' })
-      await expect(ctx.window.getByTestId('page-reports')).toBeVisible({ timeout: 10_000 })
+      await ctx.window.evaluate(() => {
+        location.hash = '#/reports'
+      })
+      await expect(ctx.window.getByTestId('page-reports')).toBeVisible({
+        timeout: 10_000,
+      })
 
       // RR och BR renderas samtidigt (tabs) — båda testids kan finnas
       await ctx.window.waitForTimeout(1500)
 
-      const rrValue = await ctx.window.locator('[data-testid="arets-resultat-value"]').first().getAttribute('data-raw-ore')
-      const brValue = await ctx.window.locator('[data-testid="arets-resultat-br-value"]').first().getAttribute('data-raw-ore')
+      const rrValue = await ctx.window
+        .locator('[data-testid="arets-resultat-value"]')
+        .first()
+        .getAttribute('data-raw-ore')
+      const brValue = await ctx.window
+        .locator('[data-testid="arets-resultat-br-value"]')
+        .first()
+        .getAttribute('data-raw-ore')
 
       // Minst en ska vara satt; om båda satta ska de vara identiska (M134)
       if (rrValue !== null && brValue !== null) {

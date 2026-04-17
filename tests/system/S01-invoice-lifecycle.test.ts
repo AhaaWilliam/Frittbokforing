@@ -189,14 +189,10 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     // Debit 1930 (bank), Credit 1510 (kundfordran)
     expect(
-      payJels.some(
-        (l: any) => l.account_number === '1930' && l.debit_ore > 0,
-      ),
+      payJels.some((l: any) => l.account_number === '1930' && l.debit_ore > 0),
     ).toBe(true)
     expect(
-      payJels.some(
-        (l: any) => l.account_number === '1510' && l.credit_ore > 0,
-      ),
+      payJels.some((l: any) => l.account_number === '1510' && l.credit_ore > 0),
     ).toBe(true)
 
     // 7. Dashboard

@@ -1,8 +1,5 @@
 import type Database from 'better-sqlite3'
-import {
-  INCOME_STATEMENT_CONFIG,
-  matchesRanges,
-} from './report/k2-mapping'
+import { INCOME_STATEMENT_CONFIG, matchesRanges } from './report/k2-mapping'
 import type {
   BudgetTarget,
   SaveBudgetTargetItem,
@@ -132,10 +129,7 @@ export function getBudgetVsActual(
           if (!actualMap.has(line.id)) actualMap.set(line.id, new Map())
           const periodMap = actualMap.get(line.id)!
           const prev = periodMap.get(row.period_number) ?? 0
-          periodMap.set(
-            row.period_number,
-            prev + row.net * line.signMultiplier,
-          )
+          periodMap.set(row.period_number, prev + row.net * line.signMultiplier)
           break // account matches at most one line
         }
       }
@@ -181,9 +175,8 @@ export function getBudgetVsActual(
       totalVarianceOre,
       totalVariancePercent:
         totalBudgetOre !== 0
-          ? Math.round(
-              (totalVarianceOre / Math.abs(totalBudgetOre)) * 10000,
-            ) / 100
+          ? Math.round((totalVarianceOre / Math.abs(totalBudgetOre)) * 10000) /
+            100
           : null,
     }
   })

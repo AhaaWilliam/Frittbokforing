@@ -54,7 +54,8 @@ function buildInitialData(
         vat_code_id: l.vat_code_id,
         vat_rate: vc ? vc.rate_percent / 100 : 0.25,
         unit: 'styck',
-        account_number: (l as { account_number?: string | null }).account_number ?? null,
+        account_number:
+          (l as { account_number?: string | null }).account_number ?? null,
       }
     }),
   }
@@ -86,7 +87,8 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   const form = useEntityForm<InvoiceFormState, InvoiceSavePayload>({
     formSchema: InvoiceFormStateSchema,
     payloadSchema: InvoiceSavePayloadSchema,
-    transform: (formData) => transformInvoiceForm(formData, activeFiscalYear!.id),
+    transform: (formData) =>
+      transformInvoiceForm(formData, activeFiscalYear!.id),
     defaults: {
       ...INVOICE_DEFAULTS,
       invoiceDate: todayLocal(),
@@ -117,33 +119,77 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   }, [vatCodes])
 
   const addLine = useCallback(() => {
-    form.setField('lines', [...linesRef.current, makeEmptyInvoiceLine(defaultVcId)] as InvoiceFormState['lines'])
+    form.setField('lines', [
+      ...linesRef.current,
+      makeEmptyInvoiceLine(defaultVcId),
+    ] as InvoiceFormState['lines'])
   }, [defaultVcId, form.setField])
 
-  const removeLine = useCallback((index: number) => {
-    form.setField('lines', linesRef.current.filter((_, i) => i !== index) as InvoiceFormState['lines'])
-  }, [form.setField])
+  const removeLine = useCallback(
+    (index: number) => {
+      form.setField(
+        'lines',
+        linesRef.current.filter(
+          (_, i) => i !== index,
+        ) as InvoiceFormState['lines'],
+      )
+    },
+    [form.setField],
+  )
 
-  const updateLine = useCallback((index: number, updates: Partial<InvoiceLineForm>) => {
-    form.setField('lines', linesRef.current.map((l, i) => i === index ? { ...l, ...updates } : l) as InvoiceFormState['lines'])
-  }, [form.setField])
+  const updateLine = useCallback(
+    (index: number, updates: Partial<InvoiceLineForm>) => {
+      form.setField(
+        'lines',
+        linesRef.current.map((l, i) =>
+          i === index ? { ...l, ...updates } : l,
+        ) as InvoiceFormState['lines'],
+      )
+    },
+    [form.setField],
+  )
 
   // Derived dueDate wrappers
   function handleDateChange(date: string) {
     form.setField('invoiceDate', date as InvoiceFormState['invoiceDate'])
-    form.setField('dueDate', addDaysLocal(date, form.getField('paymentTerms') as number) as InvoiceFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        date,
+        form.getField('paymentTerms') as number,
+      ) as InvoiceFormState['dueDate'],
+    )
   }
 
   function handlePaymentTermsChange(terms: number) {
     form.setField('paymentTerms', terms as InvoiceFormState['paymentTerms'])
-    form.setField('dueDate', addDaysLocal(form.getField('invoiceDate') as string, terms) as InvoiceFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        form.getField('invoiceDate') as string,
+        terms,
+      ) as InvoiceFormState['dueDate'],
+    )
   }
 
-  function handleCustomerChange(c: { id: number; name: string; default_payment_terms: number }) {
-    form.setField('_customer', { id: c.id, name: c.name } as InvoiceFormState['_customer'])
+  function handleCustomerChange(c: {
+    id: number
+    name: string
+    default_payment_terms: number
+  }) {
+    form.setField('_customer', {
+      id: c.id,
+      name: c.name,
+    } as InvoiceFormState['_customer'])
     const terms = c.default_payment_terms
     form.setField('paymentTerms', terms as InvoiceFormState['paymentTerms'])
-    form.setField('dueDate', addDaysLocal(form.getField('invoiceDate') as string, terms) as InvoiceFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        form.getField('invoiceDate') as string,
+        terms,
+      ) as InvoiceFormState['dueDate'],
+    )
   }
 
   // F49: Focus-management on submit failure
@@ -158,7 +204,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   useEffect(() => {
     if (submitCountRef.current === 0) return
     if (Object.keys(form.errors).length === 0) return
-    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    )
     firstInvalid?.focus()
   }, [form.errors])
 
@@ -169,7 +217,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
       await deleteDraft.mutateAsync({ id: draft.id })
       onSave()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte ta bort utkastet')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte ta bort utkastet',
+      )
     }
   }
 
@@ -177,7 +227,10 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
       <div className="space-y-6 px-8 py-6">
         {form.submitError && (
-          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
             {form.submitError}
           </div>
         )}
@@ -199,17 +252,28 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             value={form.getField('_customer') as InvoiceFormState['_customer']}
             onChange={handleCustomerChange}
             aria-invalid={!!form.errors._customer}
-            aria-describedby={form.errors._customer ? errorIdFor('invoice-customer') : undefined}
+            aria-describedby={
+              form.errors._customer ? errorIdFor('invoice-customer') : undefined
+            }
           />
           {form.errors._customer && (
-            <p role="alert" id={errorIdFor('invoice-customer')} className="mt-1 text-xs text-red-600">{form.errors._customer}</p>
+            <p
+              role="alert"
+              id={errorIdFor('invoice-customer')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors._customer}
+            </p>
           )}
         </div>
 
         {/* Invoice details */}
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label htmlFor="invoice-number" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="invoice-number"
+              className="mb-1 block text-sm font-medium"
+            >
               Fakturanummer
             </label>
             <input
@@ -227,7 +291,10 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             />
           </div>
           <div>
-            <label htmlFor="invoice-date" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="invoice-date"
+              className="mb-1 block text-sm font-medium"
+            >
               Fakturadatum
             </label>
             <input
@@ -236,15 +303,27 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
               value={form.getField('invoiceDate') as string}
               onChange={(e) => handleDateChange(e.target.value)}
               aria-invalid={!!form.errors.invoiceDate}
-              aria-describedby={form.errors.invoiceDate ? 'invoice-date-error' : undefined}
+              aria-describedby={
+                form.errors.invoiceDate ? 'invoice-date-error' : undefined
+              }
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
             {form.errors.invoiceDate && (
-              <p id="invoice-date-error" role="alert" data-testid="invoice-date-error" className="mt-1 text-xs text-red-600">{form.errors.invoiceDate}</p>
+              <p
+                id="invoice-date-error"
+                role="alert"
+                data-testid="invoice-date-error"
+                className="mt-1 text-xs text-red-600"
+              >
+                {form.errors.invoiceDate}
+              </p>
             )}
           </div>
           <div>
-            <label htmlFor="invoice-payment-terms" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="invoice-payment-terms"
+              className="mb-1 block text-sm font-medium"
+            >
               Betalningsvillkor
             </label>
             <select
@@ -263,7 +342,10 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             </select>
           </div>
           <div>
-            <label htmlFor="invoice-due-date" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="invoice-due-date"
+              className="mb-1 block text-sm font-medium"
+            >
               F&ouml;rfallodatum
             </label>
             <input
@@ -278,12 +360,20 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
 
         {/* Notes */}
         <div>
-          <label htmlFor="invoice-notes" className="mb-1 block text-sm font-medium">Anteckningar</label>
+          <label
+            htmlFor="invoice-notes"
+            className="mb-1 block text-sm font-medium"
+          >
+            Anteckningar
+          </label>
           <textarea
             id="invoice-notes"
             value={form.getField('notes') as string}
             onChange={(e) =>
-              form.setField('notes', e.target.value as InvoiceFormState['notes'])
+              form.setField(
+                'notes',
+                e.target.value as InvoiceFormState['notes'],
+              )
             }
             rows={2}
             className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -301,7 +391,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
                 <th className="px-2 py-2 w-24">Pris (kr)</th>
                 <th className="px-2 py-2 w-28">Moms</th>
                 <th className="px-2 py-2 w-24 text-right">Summa</th>
-                <th className="px-2 py-2 w-10"><span className="sr-only">Åtgärd</span></th>
+                <th className="px-2 py-2 w-10">
+                  <span className="sr-only">Åtgärd</span>
+                </th>
               </tr>
             </thead>
             <tbody aria-live="polite">
@@ -310,7 +402,13 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
                   key={line.temp_id}
                   line={line}
                   index={i}
-                  counterpartyId={(form.getField('_customer') as InvoiceFormState['_customer'])?.id ?? null}
+                  counterpartyId={
+                    (
+                      form.getField(
+                        '_customer',
+                      ) as InvoiceFormState['_customer']
+                    )?.id ?? null
+                  }
                   onUpdate={updateLine}
                   onRemove={removeLine}
                 />
@@ -325,7 +423,13 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
             L&auml;gg till rad
           </button>
           {form.errors.lines && (
-            <p role="alert" id={errorIdFor('invoice-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+            <p
+              role="alert"
+              id={errorIdFor('invoice-lines')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors.lines}
+            </p>
           )}
         </div>
 

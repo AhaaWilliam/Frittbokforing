@@ -141,17 +141,13 @@ describe('S47: SIE4 parser', () => {
   })
 
   it('P5: handles escape sequences in quoted strings', () => {
-    const buffer = buildSie4Buffer([
-      '#FNAMN "Test \\"AB\\" & Co"',
-    ])
+    const buffer = buildSie4Buffer(['#FNAMN "Test \\"AB\\" & Co"'])
     const result = parseSie4(buffer)
     expect(result.header.companyName).toBe('Test "AB" & Co')
   })
 
   it('P6: handles Swedish characters (CP437 åäö)', () => {
-    const buffer = buildSie4Buffer([
-      '#FNAMN "Företag ÅÄÖ"',
-    ])
+    const buffer = buildSie4Buffer(['#FNAMN "Företag ÅÄÖ"'])
     const result = parseSie4(buffer)
     expect(result.header.companyName).toContain('ÅÄÖ')
   })
@@ -179,20 +175,14 @@ describe('S47: SIE4 parser', () => {
   })
 
   it('P9: negative balances in IB/UB parsed correctly', () => {
-    const buffer = buildSie4Buffer([
-      '#IB 0 2440 -50000',
-      '#UB 0 2440 -30000',
-    ])
+    const buffer = buildSie4Buffer(['#IB 0 2440 -50000', '#UB 0 2440 -30000'])
     const result = parseSie4(buffer)
     expect(result.openingBalances[0].amountOre).toBe(-5000000)
     expect(result.closingBalances[0].amountOre).toBe(-3000000)
   })
 
   it('P10: RES records parsed', () => {
-    const buffer = buildSie4Buffer([
-      '#RES 0 3001 -100000',
-      '#RES 0 5010 50000',
-    ])
+    const buffer = buildSie4Buffer(['#RES 0 3001 -100000', '#RES 0 5010 50000'])
     const result = parseSie4(buffer)
     expect(result.results).toHaveLength(2)
     expect(result.results[0].amountOre).toBe(-10000000)
@@ -227,7 +217,7 @@ describe('S47: SIE4 validator', () => {
     ])
     const result = validateSieParseResult(parseSie4(buffer))
     expect(result.valid).toBe(false)
-    expect(result.errors.some(e => e.code === 'E1')).toBe(true)
+    expect(result.errors.some((e) => e.code === 'E1')).toBe(true)
   })
 
   it('V3: voucher with < 2 TRANS → error E2', () => {
@@ -239,7 +229,7 @@ describe('S47: SIE4 validator', () => {
       '}',
     ])
     const result = validateSieParseResult(parseSie4(buffer))
-    expect(result.errors.some(e => e.code === 'E2')).toBe(true)
+    expect(result.errors.some((e) => e.code === 'E2')).toBe(true)
   })
 
   it('V4: duplicate accounts → error E3', () => {
@@ -249,25 +239,20 @@ describe('S47: SIE4 validator', () => {
       '#KONTO 1910 "Kassa duplicate"',
     ])
     const result = validateSieParseResult(parseSie4(buffer))
-    expect(result.errors.some(e => e.code === 'E3')).toBe(true)
+    expect(result.errors.some((e) => e.code === 'E3')).toBe(true)
   })
 
   it('V5: missing RAR → error E5', () => {
-    const buffer = buildSie4Buffer([
-      '#FNAMN "Test"',
-    ])
+    const buffer = buildSie4Buffer(['#FNAMN "Test"'])
     const result = validateSieParseResult(parseSie4(buffer))
-    expect(result.errors.some(e => e.code === 'E5')).toBe(true)
+    expect(result.errors.some((e) => e.code === 'E5')).toBe(true)
   })
 
   it('V6: SIETYP < 4 with no VER → warning W3', () => {
-    const buffer = buildSie4Buffer([
-      '#SIETYP 2',
-      '#RAR 0 20250101 20251231',
-    ])
+    const buffer = buildSie4Buffer(['#SIETYP 2', '#RAR 0 20250101 20251231'])
     const result = validateSieParseResult(parseSie4(buffer))
     expect(result.valid).toBe(true) // Warnings don't block
-    expect(result.warnings.some(w => w.code === 'W3')).toBe(true)
+    expect(result.warnings.some((w) => w.code === 'W3')).toBe(true)
   })
 
   it('V7: summary contains correct counts', () => {
@@ -311,13 +296,28 @@ describe('S47: Roundtrip (export → parse)', () => {
     })
     db.prepare("UPDATE companies SET bankgiro = '1234-5678' WHERE id = 1").run()
 
-    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-    const customer = createCounterparty(db, { name: 'RT Kund', type: 'customer', org_number: '559999-0001' })
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    const customer = createCounterparty(db, {
+      name: 'RT Kund',
+      type: 'customer',
+      org_number: '559999-0001',
+    })
     if (!customer.success) throw new Error('Customer failed')
 
-    const vatCode = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-    const account = db.prepare("SELECT id FROM accounts WHERE account_number = '3002'").get() as { id: number }
-    const product = createProduct(db, { name: 'RT Produkt', default_price_ore: 10000, vat_code_id: vatCode.id, account_id: account.id })
+    const vatCode = db
+      .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+      .get() as { id: number }
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
+      .get() as { id: number }
+    const product = createProduct(db, {
+      name: 'RT Produkt',
+      default_price_ore: 10000,
+      vat_code_id: vatCode.id,
+      account_id: account.id,
+    })
     if (!product.success) throw new Error('Product failed')
 
     const draft = saveDraft(db, {
@@ -326,7 +326,16 @@ describe('S47: Roundtrip (export → parse)', () => {
       invoice_date: '2025-03-15',
       due_date: '2025-04-14',
       payment_terms: 30,
-      lines: [{ product_id: product.data.id, description: 'Test', quantity: 1, unit_price_ore: 10000, vat_code_id: vatCode.id, sort_order: 0 }],
+      lines: [
+        {
+          product_id: product.data.id,
+          description: 'Test',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: vatCode.id,
+          sort_order: 0,
+        },
+      ],
     })
     if (!draft.success) throw new Error('Draft failed')
     const fin = finalizeDraft(db, draft.data.id)
@@ -338,7 +347,9 @@ describe('S47: Roundtrip (export → parse)', () => {
   })
 
   it('RT1: export → parse → same number of accounts', () => {
-    const fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    ).id
     const exported = exportSie4(db, { fiscalYearId: fyId })
     const parsed = parseSie4(exported.content)
     expect(parsed.accounts.length).toBeGreaterThan(0)
@@ -350,7 +361,9 @@ describe('S47: Roundtrip (export → parse)', () => {
   })
 
   it('RT2: export → parse → same number of VER entries', () => {
-    const fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    ).id
     const exported = exportSie4(db, { fiscalYearId: fyId })
     const parsed = parseSie4(exported.content)
     const exportedText = iconv.decode(exported.content, 'cp437')
@@ -359,7 +372,9 @@ describe('S47: Roundtrip (export → parse)', () => {
   })
 
   it('RT3: export → parse → KSUMMA valid', () => {
-    const fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    ).id
     const exported = exportSie4(db, { fiscalYearId: fyId })
     const parsed = parseSie4(exported.content)
     expect(parsed.checksum.expected).not.toBeNull()
@@ -367,7 +382,9 @@ describe('S47: Roundtrip (export → parse)', () => {
   })
 
   it('RT4: export → parse → validate → valid (no errors)', () => {
-    const fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    ).id
     const exported = exportSie4(db, { fiscalYearId: fyId })
     const parsed = parseSie4(exported.content)
     const validation = validateSieParseResult(parsed)
@@ -376,11 +393,17 @@ describe('S47: Roundtrip (export → parse)', () => {
   })
 
   it('RT5: IB amounts match between export and parse', () => {
-    const fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+    const fyId = (
+      db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    ).id
     const exported = exportSie4(db, { fiscalYearId: fyId })
     const parsed = parseSie4(exported.content)
     const exportedText = iconv.decode(exported.content, 'cp437')
-    const ibLines = exportedText.split('\r\n').filter(l => l.startsWith('#IB 0 '))
-    expect(parsed.openingBalances.filter(b => b.yearIndex === 0).length).toBe(ibLines.length)
+    const ibLines = exportedText
+      .split('\r\n')
+      .filter((l) => l.startsWith('#IB 0 '))
+    expect(parsed.openingBalances.filter((b) => b.yearIndex === 0).length).toBe(
+      ibLines.length,
+    )
   })
 })

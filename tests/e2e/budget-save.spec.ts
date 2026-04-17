@@ -73,13 +73,12 @@ test('Budget save persists and reload shows values', async () => {
     await expect(ctx.window.getByTestId('page-budget')).toBeVisible({
       timeout: 15_000,
     })
-    await expect(ctx.window.getByLabel('Nettoomsättning P1', { exact: true })).toHaveValue(
-      '10000',
-      { timeout: 10_000 },
-    )
-    await expect(ctx.window.getByLabel('Nettoomsättning P2', { exact: true })).toHaveValue(
-      '15000',
-    )
+    await expect(
+      ctx.window.getByLabel('Nettoomsättning P1', { exact: true }),
+    ).toHaveValue('10000', { timeout: 10_000 })
+    await expect(
+      ctx.window.getByLabel('Nettoomsättning P2', { exact: true }),
+    ).toHaveValue('15000')
   } finally {
     await ctx.cleanup()
   }

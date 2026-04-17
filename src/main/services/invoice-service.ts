@@ -65,7 +65,9 @@ function processLines(
   let vatAmount = 0
   const processed = lines.map((line) => {
     // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F47/F44)
-    const lineTotal = Math.round(Math.round(line.quantity * 100) * line.unit_price_ore / 100)
+    const lineTotal = Math.round(
+      (Math.round(line.quantity * 100) * line.unit_price_ore) / 100,
+    )
     const rate = vatRateMap.get(line.vat_code_id) ?? 0
     // rate_percent is stored as 25, 12, 6, 0 — convert to decimal
     const effectiveRate = rate / 100
@@ -102,12 +104,20 @@ export function saveDraft(
       if (invoiceType === 'credit_note' && data.credits_invoice_id) {
         const original = db
           .prepare('SELECT id, status FROM invoices WHERE id = ?')
-          .get(data.credits_invoice_id) as { id: number; status: string } | undefined
+          .get(data.credits_invoice_id) as
+          | { id: number; status: string }
+          | undefined
         if (!original) {
-          throw { code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const, error: 'Originalfakturan hittades inte.' }
+          throw {
+            code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const,
+            error: 'Originalfakturan hittades inte.',
+          }
         }
         if (original.status === 'draft') {
-          throw { code: 'VALIDATION_ERROR' as const, error: 'Kan inte kreditera ett utkast.' }
+          throw {
+            code: 'VALIDATION_ERROR' as const,
+            error: 'Kan inte kreditera ett utkast.',
+          }
         }
       }
 
@@ -419,7 +429,10 @@ function buildJournalLines(
     total_vat: number
   }[]
 
-  const totalRevenue = revenueRows.reduce((sum, r) => sum + r.total_amount_ore, 0)
+  const totalRevenue = revenueRows.reduce(
+    (sum, r) => sum + r.total_amount_ore,
+    0,
+  )
   const totalVat = vatRows.reduce((sum, r) => sum + r.total_vat, 0)
   const totalInclVat = totalRevenue + totalVat
 
@@ -594,10 +607,15 @@ export function finalizeDraft(
       // 9. INSERT journal_entry (status='draft' first, then book)
       // Bygg beskrivning — inkludera referens till originalfaktura för kreditnotor (SIE-synligt)
       let journalDesc = `${invoice.invoice_type === 'credit_note' ? 'Kreditfaktura' : 'Kundfaktura'} #${invoiceNumber} — ${counterparty.name}`
-      if (invoice.invoice_type === 'credit_note' && invoice.credits_invoice_id) {
+      if (
+        invoice.invoice_type === 'credit_note' &&
+        invoice.credits_invoice_id
+      ) {
         const orig = db
           .prepare('SELECT invoice_number FROM invoices WHERE id = ?')
-          .get(invoice.credits_invoice_id) as { invoice_number: string } | undefined
+          .get(invoice.credits_invoice_id) as
+          | { invoice_number: string }
+          | undefined
         if (orig) {
           journalDesc += ` (avser faktura #${orig.invoice_number})`
         }
@@ -656,15 +674,28 @@ export function finalizeDraft(
       return { invoiceNumber, verificationNumber, journalEntryId }
     })()
 
-    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* rebuild failure non-fatal */
+    }
     return { success: true, data: getDraftInternal(db, id)! }
   } catch (err: unknown) {
-    const e = err as { code?: string; error?: string; field?: string; message?: string }
+    const e = err as {
+      code?: string
+      error?: string
+      field?: string
+      message?: string
+    }
     // SQLite trigger: M123 NOT NULL check for freeform invoice lines
-    if (e.code === 'SQLITE_CONSTRAINT_TRIGGER' && e.message?.includes('kontonummer innan fakturan')) {
+    if (
+      e.code === 'SQLITE_CONSTRAINT_TRIGGER' &&
+      e.message?.includes('kontonummer innan fakturan')
+    ) {
       return {
         success: false,
-        error: 'Alla fakturarader måste ha kontonummer innan fakturan slutförs.',
+        error:
+          'Alla fakturarader måste ha kontonummer innan fakturan slutförs.',
         code: 'MISSING_ACCOUNT_NUMBER',
       }
     }
@@ -788,7 +819,11 @@ export function listInvoices(
     limit?: number
     offset?: number
   },
-): { items: InvoiceListItem[]; counts: InvoiceStatusCounts; total_items: number } {
+): {
+  items: InvoiceListItem[]
+  counts: InvoiceStatusCounts
+  total_items: number
+} {
   refreshInvoiceStatuses(db)
 
   // Status counts
@@ -957,7 +992,8 @@ export function _payInvoiceTx(
     if (bankFeeOre >= effectivePayment) {
       throw {
         code: 'VALIDATION_ERROR',
-        error: 'Bankavgiften kan inte vara lika med eller överstiga betalningsbeloppet.',
+        error:
+          'Bankavgiften kan inte vara lika med eller överstiga betalningsbeloppet.',
         field: 'bank_fee_ore',
       }
     }
@@ -969,9 +1005,7 @@ export function _payInvoiceTx(
     .prepare(
       'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
     )
-    .get(input.payment_date, input.payment_date) as
-    | { id: number }
-    | undefined
+    .get(input.payment_date, input.payment_date) as { id: number } | undefined
   if (!paymentYear) {
     throw {
       code: 'VALIDATION_ERROR',
@@ -1099,9 +1133,9 @@ export function _payInvoiceTx(
   }
 
   // 11. Book journal entry (triggers validate balance)
-  db.prepare(
-    "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
-  ).run(journalEntryId)
+  db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(
+    journalEntryId,
+  )
 
   // 12. INSERT invoice_payment (amount = actual receivables credit)
   const paymentResult = db
@@ -1170,9 +1204,16 @@ export function payInvoice(
 
   try {
     const result = db.transaction(() => _payInvoiceTx(db, input))()
-    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* rebuild failure non-fatal */
+    }
     // Strip journalEntryId from public contract
-    return { success: true, data: { invoice: result.invoice, payment: result.payment } }
+    return {
+      success: true,
+      data: { invoice: result.invoice, payment: result.payment },
+    }
   } catch (err: unknown) {
     const e = err as {
       code?: string
@@ -1216,40 +1257,71 @@ export function payInvoicesBulk(
 ): IpcResult<BulkPaymentResult> {
   // Pre-flight validations (outside transaction)
   if (input.payments.length < 1) {
-    return { success: false, error: 'Minst en betalning krävs.', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Minst en betalning krävs.',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
   // Unique invoice_ids
-  const ids = input.payments.map(p => p.invoice_id)
+  const ids = input.payments.map((p) => p.invoice_id)
   if (new Set(ids).size !== ids.length) {
-    return { success: false, error: 'Dubbletter av faktura-id.', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Dubbletter av faktura-id.',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
   // Block future dates
   const today = todayLocalFromNow()
   if (input.payment_date > today) {
-    return { success: false, error: 'Betalningsdatum kan inte vara i framtiden.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+    return {
+      success: false,
+      error: 'Betalningsdatum kan inte vara i framtiden.',
+      code: 'VALIDATION_ERROR',
+      field: 'payment_date',
+    }
   }
 
   // Find fiscal year for payment_date
   const paymentYear = db
-    .prepare('SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?')
+    .prepare(
+      'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
+    )
     .get(input.payment_date, input.payment_date) as { id: number } | undefined
   if (!paymentYear) {
-    return { success: false, error: 'Betalningsdatum faller inte i något räkenskapsår.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+    return {
+      success: false,
+      error: 'Betalningsdatum faller inte i något räkenskapsår.',
+      code: 'VALIDATION_ERROR',
+      field: 'payment_date',
+    }
   }
 
   const bankFeeOre = input.bank_fee_ore ?? 0
   if (bankFeeOre > 0) {
-    const totalPayments = input.payments.reduce((sum, p) => sum + p.amount_ore, 0)
+    const totalPayments = input.payments.reduce(
+      (sum, p) => sum + p.amount_ore,
+      0,
+    )
     if (bankFeeOre >= totalPayments) {
-      return { success: false, error: 'Bankavgiften kan inte vara lika med eller överstiga summan av alla betalningar.', code: 'VALIDATION_ERROR', field: 'bank_fee_ore' }
+      return {
+        success: false,
+        error:
+          'Bankavgiften kan inte vara lika med eller överstiga summan av alla betalningar.',
+        code: 'VALIDATION_ERROR',
+        field: 'bank_fee_ore',
+      }
     }
   }
 
   // Batch-level M6 chronology check — A-serie
   const batchChronoYear = db
-    .prepare('SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?')
+    .prepare(
+      'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
+    )
     .get(input.payment_date, input.payment_date) as { id: number } | undefined
   if (batchChronoYear) {
     const lastEntry = db
@@ -1271,21 +1343,29 @@ export function payInvoicesBulk(
 
   try {
     const result = db.transaction(() => {
-      const succeeded: Array<{ id: number; payment_id: number; journal_entry_id: number }> = []
+      const succeeded: Array<{
+        id: number
+        payment_id: number
+        journal_entry_id: number
+      }> = []
       const failed: Array<{ id: number; error: string; code: string }> = []
 
       // Per-payment savepoints
       for (const p of input.payments) {
         try {
           db.transaction(() => {
-            const txResult = _payInvoiceTx(db, {
-              invoice_id: p.invoice_id,
-              amount_ore: p.amount_ore,
-              payment_date: input.payment_date,
-              payment_method: 'bank',
-              account_number: input.account_number,
-              bank_fee_ore: 0, // Bank fee handled at batch level
-            }, true) // skipChronologyCheck — validated at batch level
+            const txResult = _payInvoiceTx(
+              db,
+              {
+                invoice_id: p.invoice_id,
+                amount_ore: p.amount_ore,
+                payment_date: input.payment_date,
+                payment_method: 'bank',
+                account_number: input.account_number,
+                bank_fee_ore: 0, // Bank fee handled at batch level
+              },
+              true,
+            ) // skipChronologyCheck — validated at batch level
             succeeded.push({
               id: p.invoice_id,
               payment_id: txResult.payment.id,
@@ -1314,7 +1394,8 @@ export function payInvoicesBulk(
       }
 
       // Create batch
-      const batchStatus: 'completed' | 'partial' = failed.length === 0 ? 'completed' : 'partial'
+      const batchStatus: 'completed' | 'partial' =
+        failed.length === 0 ? 'completed' : 'partial'
       const batchResult = db
         .prepare(
           `INSERT INTO payment_batches (
@@ -1379,14 +1460,32 @@ export function payInvoicesBulk(
             debit_ore, credit_ore, description
           ) VALUES (?, ?, ?, ?, ?, ?)`,
         )
-        insertLine.run(bankFeeJournalEntryId, 1, '6570', bankFeeOre, 0, description)
-        insertLine.run(bankFeeJournalEntryId, 2, input.account_number, 0, bankFeeOre, description)
+        insertLine.run(
+          bankFeeJournalEntryId,
+          1,
+          '6570',
+          bankFeeOre,
+          0,
+          description,
+        )
+        insertLine.run(
+          bankFeeJournalEntryId,
+          2,
+          input.account_number,
+          0,
+          bankFeeOre,
+          description,
+        )
 
         // Book (triggers validate balance)
-        db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(bankFeeJournalEntryId)
+        db.prepare(
+          "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
+        ).run(bankFeeJournalEntryId)
 
         // Link bank fee to batch
-        db.prepare('UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?').run(bankFeeJournalEntryId, batchId)
+        db.prepare(
+          'UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?',
+        ).run(bankFeeJournalEntryId, batchId)
       }
 
       return {
@@ -1402,10 +1501,19 @@ export function payInvoicesBulk(
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string }
     if (e.code) {
-      return { success: false, error: e.error ?? 'Bulk-betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
+      return {
+        success: false,
+        error: e.error ?? 'Bulk-betalning misslyckades.',
+        code: e.code as ErrorCode,
+        field: e.field,
+      }
     }
     log.error('[invoice-service] payInvoicesBulk failed:', err)
-    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
+    return {
+      success: false,
+      error: 'Bulk-betalning misslyckades.',
+      code: 'UNEXPECTED_ERROR',
+    }
   }
 }
 
@@ -1444,7 +1552,11 @@ export function getFinalized(
     )
     .get(invoiceId) as (Invoice & Record<string, unknown>) | undefined
 
-  if (!invoice) throw { code: 'INVOICE_NOT_FOUND' as const, error: `Finalized invoice ${invoiceId} not found` }
+  if (!invoice)
+    throw {
+      code: 'INVOICE_NOT_FOUND' as const,
+      error: `Finalized invoice ${invoiceId} not found`,
+    }
 
   const lines = db
     .prepare(
@@ -1472,7 +1584,8 @@ export function createCreditNoteDraft(
     if (!original) {
       return {
         success: false,
-        error: 'Originalfakturan hittades inte eller är fortfarande ett utkast.',
+        error:
+          'Originalfakturan hittades inte eller är fortfarande ett utkast.',
         code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND',
       }
     }
@@ -1500,7 +1613,9 @@ export function createCreditNoteDraft(
 
     // Hämta originalfakturans rader
     const originalLines = db
-      .prepare('SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY sort_order')
+      .prepare(
+        'SELECT * FROM invoice_lines WHERE invoice_id = ? ORDER BY sort_order',
+      )
       .all(input.original_invoice_id) as InvoiceLine[]
 
     if (originalLines.length === 0) {

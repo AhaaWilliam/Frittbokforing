@@ -56,8 +56,16 @@ export async function launchAppWithFreshDb(): Promise<AppContext> {
   const window = await app.firstWindow({ timeout: 30_000 })
 
   const cleanup = async () => {
-    try { await app.close() } catch { /* already closed */ }
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* best effort */ }
+    try {
+      await app.close()
+    } catch {
+      /* already closed */
+    }
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+    } catch {
+      /* best effort */
+    }
   }
 
   return { app, window, dbPath, downloadDir, cleanup }
@@ -89,21 +97,38 @@ export async function seedCompanyViaIPC(
 
   // Step 1: Create company via IPC
   const companyResult = await window.evaluate(async (data) => {
-    return await (window as unknown as { api: { createCompany: (d: unknown) => Promise<unknown> } }).api.createCompany(data)
+    return await (
+      window as unknown as {
+        api: { createCompany: (d: unknown) => Promise<unknown> }
+      }
+    ).api.createCompany(data)
   }, input)
 
-  const cr = companyResult as { success: boolean; data: { id: number }; error?: string }
-  if (!cr.success) throw new Error(`seedCompanyViaIPC createCompany failed: ${cr.error}`)
+  const cr = companyResult as {
+    success: boolean
+    data: { id: number }
+    error?: string
+  }
+  if (!cr.success)
+    throw new Error(`seedCompanyViaIPC createCompany failed: ${cr.error}`)
 
   // Step 2: Get fiscal years via IPC (M144: wrapped IpcResult since Sprint 38)
   const fyResult = await window.evaluate(async () => {
-    return await (window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }).api.listFiscalYears()
+    return await (
+      window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }
+    ).api.listFiscalYears()
   })
 
-  const fyr = fyResult as { success: boolean; data: Array<{ id: number }>; error?: string }
-  if (!fyr.success) throw new Error(`seedCompanyViaIPC listFiscalYears failed: ${fyr.error}`)
+  const fyr = fyResult as {
+    success: boolean
+    data: Array<{ id: number }>
+    error?: string
+  }
+  if (!fyr.success)
+    throw new Error(`seedCompanyViaIPC listFiscalYears failed: ${fyr.error}`)
   const fys = fyr.data
-  if (!fys || fys.length === 0) throw new Error('seedCompanyViaIPC: no fiscal years found')
+  if (!fys || fys.length === 0)
+    throw new Error('seedCompanyViaIPC: no fiscal years found')
 
   return {
     companyId: cr.data.id,

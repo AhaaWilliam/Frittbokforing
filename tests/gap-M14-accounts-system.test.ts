@@ -86,14 +86,18 @@ describe('GAP M14-1: Systemkonton skyddade', () => {
 
   it('totalt antal systemkonton i DB >= 14', () => {
     const count = db
-      .prepare('SELECT COUNT(*) AS cnt FROM accounts WHERE is_system_account = 1')
+      .prepare(
+        'SELECT COUNT(*) AS cnt FROM accounts WHERE is_system_account = 1',
+      )
       .get() as { cnt: number }
     expect(count.cnt).toBeGreaterThanOrEqual(14)
   })
 
   it('icke-systemkonton (t.ex. 1510) finns men saknar systemflagga', () => {
     const row = db
-      .prepare('SELECT is_system_account FROM accounts WHERE account_number = ?')
+      .prepare(
+        'SELECT is_system_account FROM accounts WHERE account_number = ?',
+      )
       .get('1510') as { is_system_account: number } | undefined
     if (row) {
       expect(row.is_system_account).toBe(0)
@@ -111,7 +115,9 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     })
     expect(result.success).toBe(true)
     const row = db
-      .prepare("SELECT account_type FROM accounts WHERE account_number = '1999'")
+      .prepare(
+        "SELECT account_type FROM accounts WHERE account_number = '1999'",
+      )
       .get() as { account_type: string }
     expect(row.account_type).toBe('asset')
   })
@@ -125,7 +131,9 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     })
     expect(result.success).toBe(true)
     const row = db
-      .prepare("SELECT account_type FROM accounts WHERE account_number = '2999'")
+      .prepare(
+        "SELECT account_type FROM accounts WHERE account_number = '2999'",
+      )
       .get() as { account_type: string }
     expect(row.account_type).toBe('liability')
   })
@@ -139,7 +147,9 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     })
     expect(result.success).toBe(true)
     const row = db
-      .prepare("SELECT account_type FROM accounts WHERE account_number = '3999'")
+      .prepare(
+        "SELECT account_type FROM accounts WHERE account_number = '3999'",
+      )
       .get() as { account_type: string }
     expect(row.account_type).toBe('revenue')
   })
@@ -153,7 +163,9 @@ describe('GAP M14-2: Nytt konto — klass härleds', () => {
     })
     expect(result.success).toBe(true)
     const row = db
-      .prepare("SELECT account_type FROM accounts WHERE account_number = '5999'")
+      .prepare(
+        "SELECT account_type FROM accounts WHERE account_number = '5999'",
+      )
       .get() as { account_type: string }
     expect(row.account_type).toBe('expense')
   })

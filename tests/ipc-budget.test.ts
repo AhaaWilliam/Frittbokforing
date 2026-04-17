@@ -45,7 +45,9 @@ describe('BudgetSaveSchema', () => {
   it('allows negative amount_ore', () => {
     const result = BudgetSaveSchema.safeParse({
       fiscal_year_id: 1,
-      targets: [{ line_id: 'materials', period_number: 1, amount_ore: -999999 }],
+      targets: [
+        { line_id: 'materials', period_number: 1, amount_ore: -999999 },
+      ],
     })
     expect(result.success).toBe(true)
   })
@@ -60,7 +62,9 @@ describe('BudgetSaveSchema', () => {
     expect(
       BudgetSaveSchema.safeParse({
         fiscal_year_id: 1,
-        targets: [{ line_id: 'net_revenue', period_number: 13, amount_ore: 100 }],
+        targets: [
+          { line_id: 'net_revenue', period_number: 13, amount_ore: 100 },
+        ],
       }).success,
     ).toBe(false)
   })
@@ -69,7 +73,9 @@ describe('BudgetSaveSchema', () => {
     expect(
       BudgetSaveSchema.safeParse({
         fiscal_year_id: 1,
-        targets: [{ line_id: 'net_revenue', period_number: 0, amount_ore: 100 }],
+        targets: [
+          { line_id: 'net_revenue', period_number: 0, amount_ore: 100 },
+        ],
       }).success,
     ).toBe(false)
   })
@@ -78,7 +84,9 @@ describe('BudgetSaveSchema', () => {
     expect(
       BudgetSaveSchema.safeParse({
         fiscal_year_id: 1,
-        targets: [{ line_id: 'net_revenue', period_number: 1, amount_ore: 100.5 }],
+        targets: [
+          { line_id: 'net_revenue', period_number: 1, amount_ore: 100.5 },
+        ],
       }).success,
     ).toBe(false)
   })
@@ -86,7 +94,9 @@ describe('BudgetSaveSchema', () => {
 
 describe('BudgetVarianceSchema', () => {
   it('accepts valid input', () => {
-    expect(BudgetVarianceSchema.safeParse({ fiscal_year_id: 1 }).success).toBe(true)
+    expect(BudgetVarianceSchema.safeParse({ fiscal_year_id: 1 }).success).toBe(
+      true,
+    )
   })
 })
 

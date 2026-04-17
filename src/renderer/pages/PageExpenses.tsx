@@ -5,7 +5,10 @@ import { formatKr } from '../lib/format'
 import { ExpenseList } from '../components/expenses/ExpenseList'
 import { ExpenseForm } from '../components/expenses/ExpenseForm'
 import { PayExpenseDialog } from '../components/expenses/PayExpenseDialog'
-import { EntityListPage, type SubViewNav } from '../components/layout/EntityListPage'
+import {
+  EntityListPage,
+  type SubViewNav,
+} from '../components/layout/EntityListPage'
 import { useSubViewNavigation } from '../lib/use-route-navigation'
 import type { ExpenseDetail, ExpensePayment } from '../../shared/types'
 
@@ -281,9 +284,7 @@ export function PageExpenses() {
         createTitle="Ny kostnad (utkast)"
         navigation={navigation}
         subViews={{
-          list: (nav) => (
-            <ExpenseList onNavigate={navToNavigate(nav)} />
-          ),
+          list: (nav) => <ExpenseList onNavigate={navToNavigate(nav)} />,
           create: (nav) => (
             <ExpenseForm onSave={nav.goToList} onCancel={nav.goToList} />
           ),

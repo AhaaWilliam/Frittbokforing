@@ -50,8 +50,12 @@ function seed(db: Database.Database): Seeded {
     default_payment_terms: 30,
   })
   if (!supp.success) throw new Error(supp.error)
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
-  const vatIn = db.prepare("SELECT id FROM vat_codes WHERE code='IP1'").get() as { id: number }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
+  const vatIn = db
+    .prepare("SELECT id FROM vat_codes WHERE code='IP1'")
+    .get() as { id: number }
   return {
     companyId: 1,
     fyId: 1,
@@ -62,7 +66,11 @@ function seed(db: Database.Database): Seeded {
   }
 }
 
-function createUnpaidInvoice(db: Database.Database, s: Seeded, totalOre: number): { invoiceId: number; totalOre: number } {
+function createUnpaidInvoice(
+  db: Database.Database,
+  s: Seeded,
+  totalOre: number,
+): { invoiceId: number; totalOre: number } {
   // unit_price_ore = totalOre / 1.25 (exkl moms 25%); use unit_price_ore s.t. TOTAL matches
   // Använd netto så 25% moms ger rätt total
   const netOre = Math.round(totalOre / 1.25)
@@ -86,38 +94,62 @@ function createUnpaidInvoice(db: Database.Database, s: Seeded, totalOre: number)
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeInvoice(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
-  const row = db.prepare('SELECT total_amount_ore FROM invoices WHERE id=?').get(draft.data.id) as { total_amount_ore: number }
+  const row = db
+    .prepare('SELECT total_amount_ore FROM invoices WHERE id=?')
+    .get(draft.data.id) as { total_amount_ore: number }
   return { invoiceId: draft.data.id, totalOre: row.total_amount_ore }
 }
 
-function createUnpaidExpense(db: Database.Database, s: Seeded): { expenseId: number; totalOre: number } {
+function createUnpaidExpense(
+  db: Database.Database,
+  s: Seeded,
+): { expenseId: number; totalOre: number } {
   const draft = saveExpenseDraft(db, {
     fiscal_year_id: s.fyId,
     counterparty_id: s.suppId,
     expense_date: '2026-03-05',
     due_date: '2026-04-05',
     description: 'Kontor',
-    lines: [{ description: 'Pennor', account_number: '6110', quantity: 1, unit_price_ore: 100_00, vat_code_id: s.vatInId }],
+    lines: [
+      {
+        description: 'Pennor',
+        account_number: '6110',
+        quantity: 1,
+        unit_price_ore: 100_00,
+        vat_code_id: s.vatInId,
+      },
+    ],
   })
   if (!draft.success) throw new Error(draft.error)
   const fin = finalizeExpense(db, draft.data.id)
   if (!fin.success) throw new Error(fin.error)
-  const row = db.prepare('SELECT total_amount_ore FROM expenses WHERE id=?').get(draft.data.id) as { total_amount_ore: number }
+  const row = db
+    .prepare('SELECT total_amount_ore FROM expenses WHERE id=?')
+    .get(draft.data.id) as { total_amount_ore: number }
   return { expenseId: draft.data.id, totalOre: row.total_amount_ore }
 }
 
-function insertBankTx(db: Database.Database, s: Seeded, amountOre: number, valueDate = '2026-03-15'): number {
+function insertBankTx(
+  db: Database.Database,
+  s: Seeded,
+  amountOre: number,
+  valueDate = '2026-03-15',
+): number {
   // Create a minimal statement (balance-neutral bypass not needed — we bypass bank-statement-service)
-  const stmtRes = db.prepare(
-    `INSERT INTO bank_statements (company_id, fiscal_year_id, statement_number, bank_account_iban,
+  const stmtRes = db
+    .prepare(
+      `INSERT INTO bank_statements (company_id, fiscal_year_id, statement_number, bank_account_iban,
        statement_date, opening_balance_ore, closing_balance_ore, source_format, import_file_hash)
      VALUES (?, ?, 'STMT', 'SE4550000000058398257466', ?, 0, ?, 'camt.053', ?)`,
-  ).run(s.companyId, s.fyId, valueDate, amountOre, `h-${Math.random()}`)
+    )
+    .run(s.companyId, s.fyId, valueDate, amountOre, `h-${Math.random()}`)
   const statementId = Number(stmtRes.lastInsertRowid)
-  const txRes = db.prepare(
-    `INSERT INTO bank_transactions (bank_statement_id, booking_date, value_date, amount_ore)
+  const txRes = db
+    .prepare(
+      `INSERT INTO bank_transactions (bank_statement_id, booking_date, value_date, amount_ore)
      VALUES (?, ?, ?, ?)`,
-  ).run(statementId, valueDate, valueDate, amountOre)
+    )
+    .run(statementId, valueDate, valueDate, amountOre)
   return Number(txRes.lastInsertRowid)
 }
 
@@ -142,9 +174,19 @@ describe('S55 A4 — matchBankTransaction', () => {
     if (!result.success) return
     expect(result.data.payment_id).toBeGreaterThan(0)
     expect(result.data.journal_entry_id).toBeGreaterThan(0)
-    const tx = db.prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?').get(txId) as { reconciliation_status: string }
+    const tx = db
+      .prepare('SELECT reconciliation_status FROM bank_transactions WHERE id=?')
+      .get(txId) as { reconciliation_status: string }
     expect(tx.reconciliation_status).toBe('matched')
-    const matchRow = db.prepare('SELECT * FROM bank_reconciliation_matches WHERE bank_transaction_id=?').get(txId) as { invoice_payment_id: number | null; expense_payment_id: number | null; match_method: string }
+    const matchRow = db
+      .prepare(
+        'SELECT * FROM bank_reconciliation_matches WHERE bank_transaction_id=?',
+      )
+      .get(txId) as {
+      invoice_payment_id: number | null
+      expense_payment_id: number | null
+      match_method: string
+    }
     expect(matchRow.invoice_payment_id).toBe(result.data.payment_id)
     expect(matchRow.expense_payment_id).toBeNull()
     expect(matchRow.match_method).toBe('manual')
@@ -161,7 +203,9 @@ describe('S55 A4 — matchBankTransaction', () => {
       payment_account: '1930',
     })
     expect(result.success).toBe(true)
-    const status = db.prepare('SELECT status FROM invoices WHERE id=?').get(inv.invoiceId) as { status: string }
+    const status = db
+      .prepare('SELECT status FROM invoices WHERE id=?')
+      .get(inv.invoiceId) as { status: string }
     expect(status.status).toBe('partial')
   })
 
@@ -179,9 +223,11 @@ describe('S55 A4 — matchBankTransaction', () => {
     expect(result.success).toBe(true)
     // 3740 (öresutjämning) ska finnas i verifikatet
     if (!result.success) return
-    const rounding = db.prepare(
-      "SELECT COUNT(*) as c FROM journal_entry_lines WHERE journal_entry_id=? AND account_number='3740'",
-    ).get(result.data.journal_entry_id) as { c: number }
+    const rounding = db
+      .prepare(
+        "SELECT COUNT(*) as c FROM journal_entry_lines WHERE journal_entry_id=? AND account_number='3740'",
+      )
+      .get(result.data.journal_entry_id) as { c: number }
     expect(rounding.c).toBeGreaterThan(0)
   })
 
@@ -197,7 +243,14 @@ describe('S55 A4 — matchBankTransaction', () => {
     })
     expect(result.success).toBe(true)
     if (!result.success) return
-    const matchRow = db.prepare('SELECT * FROM bank_reconciliation_matches WHERE bank_transaction_id=?').get(txId) as { expense_payment_id: number | null; invoice_payment_id: number | null }
+    const matchRow = db
+      .prepare(
+        'SELECT * FROM bank_reconciliation_matches WHERE bank_transaction_id=?',
+      )
+      .get(txId) as {
+      expense_payment_id: number | null
+      invoice_payment_id: number | null
+    }
     expect(matchRow.expense_payment_id).toBe(result.data.payment_id)
     expect(matchRow.invoice_payment_id).toBeNull()
   })

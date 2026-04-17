@@ -180,7 +180,9 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
         confirmBookResult: true,
         netResultOre: 10_000_000,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 
@@ -207,7 +209,9 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
         confirmBookResult: true,
         netResultOre: 99999,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('STALE_DATA')
 
@@ -246,7 +250,9 @@ describe('createNewFiscalYear with bookResult (K1)', () => {
         confirmBookResult: true,
         netResultOre: 10_000_000,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBeDefined()
   })
@@ -307,7 +313,9 @@ describe('F2: createNewFiscalYear stänger föregående FY atomärt', () => {
         confirmBookResult: false,
         netResultOre: 0,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 

@@ -45,7 +45,8 @@ test('Pain.001 export: batch → XML fil på disk', async () => {
         }
       ).api.updateCompany({ bankgiro: '5050-1055' })
     })) as { success: boolean; error?: string }
-    if (!updateResult.success) throw new Error(`updateCompany: ${updateResult.error}`)
+    if (!updateResult.success)
+      throw new Error(`updateCompany: ${updateResult.error}`)
 
     const fyResult = (await ctx.window.evaluate(async () => {
       return await (
@@ -80,35 +81,42 @@ test('Pain.001 export: batch → XML fil på disk', async () => {
           api: { listVatCodes: (d: { direction: string }) => Promise<unknown> }
         }
       ).api.listVatCodes({ direction: 'incoming' })
-      const r = result as { success: boolean; data: Array<{ id: number; code: string }> }
+      const r = result as {
+        success: boolean
+        data: Array<{ id: number; code: string }>
+      }
       return r.data[0].id
     })
 
     // Seed + finalize expense via IPC
-    const expenseDraft = (await ctx.window.evaluate(async (input) => {
-      return await (
-        window as unknown as {
-          api: { saveExpenseDraft: (d: unknown) => Promise<unknown> }
-        }
-      ).api.saveExpenseDraft(input)
-    }, {
-      counterparty_id: supplierId,
-      fiscal_year_id: fyId,
-      expense_date: '2026-03-15',
-      due_date: '2026-04-14',
-      description: 'E2E pain fakturanr 1',
-      lines: [
-        {
-          description: 'E2E pain test',
-          quantity: 1,
-          unit_price_ore: 50000,
-          vat_code_id: vatCodeId,
-          account_number: '6110',
-          sort_order: 0,
-        },
-      ],
-    })) as { success: boolean; data: { id: number }; error?: string }
-    if (!expenseDraft.success) throw new Error(`saveExpenseDraft: ${expenseDraft.error}`)
+    const expenseDraft = (await ctx.window.evaluate(
+      async (input) => {
+        return await (
+          window as unknown as {
+            api: { saveExpenseDraft: (d: unknown) => Promise<unknown> }
+          }
+        ).api.saveExpenseDraft(input)
+      },
+      {
+        counterparty_id: supplierId,
+        fiscal_year_id: fyId,
+        expense_date: '2026-03-15',
+        due_date: '2026-04-14',
+        description: 'E2E pain fakturanr 1',
+        lines: [
+          {
+            description: 'E2E pain test',
+            quantity: 1,
+            unit_price_ore: 50000,
+            vat_code_id: vatCodeId,
+            account_number: '6110',
+            sort_order: 0,
+          },
+        ],
+      },
+    )) as { success: boolean; data: { id: number }; error?: string }
+    if (!expenseDraft.success)
+      throw new Error(`saveExpenseDraft: ${expenseDraft.error}`)
 
     const finalRes = (await ctx.window.evaluate(async (id) => {
       return await (
@@ -120,23 +128,26 @@ test('Pain.001 export: batch → XML fil på disk', async () => {
     expect(finalRes.success).toBe(true)
 
     // Bulk-pay expense to create batch
-    const bulkRes = (await ctx.window.evaluate(async (input) => {
-      return await (
-        window as unknown as {
-          api: { payExpensesBulk: (d: unknown) => Promise<unknown> }
-        }
-      ).api.payExpensesBulk(input)
-    }, {
-      payments: [
-        {
-          expense_id: expenseDraft.data.id,
-          amount_ore: 62500, // 500 kr + 25% moms
-        },
-      ],
-      payment_date: '2026-03-20',
-      account_number: '1930',
-      bank_fee_ore: 0,
-    })) as {
+    const bulkRes = (await ctx.window.evaluate(
+      async (input) => {
+        return await (
+          window as unknown as {
+            api: { payExpensesBulk: (d: unknown) => Promise<unknown> }
+          }
+        ).api.payExpensesBulk(input)
+      },
+      {
+        payments: [
+          {
+            expense_id: expenseDraft.data.id,
+            amount_ore: 62500, // 500 kr + 25% moms
+          },
+        ],
+        payment_date: '2026-03-20',
+        account_number: '1930',
+        bank_fee_ore: 0,
+      },
+    )) as {
       success: boolean
       data: { batch_id: number | null; status: string }
       error?: string
@@ -149,9 +160,7 @@ test('Pain.001 export: batch → XML fil på disk', async () => {
       return await (
         window as unknown as {
           api: {
-            exportPain001: (d: {
-              batch_id: number
-            }) => Promise<unknown>
+            exportPain001: (d: { batch_id: number }) => Promise<unknown>
           }
         }
       ).api.exportPain001({ batch_id: batchId })

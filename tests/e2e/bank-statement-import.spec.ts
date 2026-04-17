@@ -40,17 +40,25 @@ test('S55 A7a: camt.053 import happy-path — lista + detail', async () => {
     await ctx.window.evaluate(() => {
       location.hash = '#/bank-statements'
     })
-    await expect(ctx.window.getByTestId('page-bank-statements')).toBeVisible({ timeout: 10_000 })
+    await expect(ctx.window.getByTestId('page-bank-statements')).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Lista: ska visa importerat statement
     const listRow = ctx.window.locator('text=STMT-2026-04')
     await expect(listRow).toBeVisible()
 
     // Öppna detail
-    await ctx.window.getByTestId(`bank-statement-${importResult.data!.statement_id}-open`).click()
-    await expect(ctx.window.locator('text=2026-04-05').first()).toBeVisible({ timeout: 5_000 })
+    await ctx.window
+      .getByTestId(`bank-statement-${importResult.data!.statement_id}-open`)
+      .click()
+    await expect(ctx.window.locator('text=2026-04-05').first()).toBeVisible({
+      timeout: 5_000,
+    })
     // 3 transaktioner visas med match-knappar (alla unmatched)
-    await expect(ctx.window.getByTestId(/^bank-match-\d+$/).first()).toBeVisible()
+    await expect(
+      ctx.window.getByTestId(/^bank-match-\d+$/).first(),
+    ).toBeVisible()
   } finally {
     await ctx.cleanup()
   }

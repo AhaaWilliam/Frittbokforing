@@ -39,7 +39,9 @@ export interface OverdueFixture extends EmptyCompanyFixture {
  * K2-bolag med tomt räkenskapsår 2026-01-01 – 2026-12-31.
  * Reloadar fönstret så renderer plockar upp det nya bolaget och lämnar wizard.
  */
-export async function composeEmptyK2(window: Page): Promise<EmptyCompanyFixture> {
+export async function composeEmptyK2(
+  window: Page,
+): Promise<EmptyCompanyFixture> {
   const result = await seedCompanyViaIPC(window, { fiscalRule: 'K2' })
   await window.reload()
   return result
@@ -48,7 +50,9 @@ export async function composeEmptyK2(window: Page): Promise<EmptyCompanyFixture>
 /**
  * K3-variant av composeEmptyK2. Reloadar också fönstret.
  */
-export async function composeEmptyK3(window: Page): Promise<EmptyCompanyFixture> {
+export async function composeEmptyK3(
+  window: Page,
+): Promise<EmptyCompanyFixture> {
   const result = await seedCompanyViaIPC(window, {
     fiscalRule: 'K3',
     name: 'E2E K3 Testföretag AB',

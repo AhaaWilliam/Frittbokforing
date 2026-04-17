@@ -46,7 +46,9 @@ export function ImportPreviewPhase({
           {valid ? (
             <>
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <span className="font-medium text-green-700">Filen är giltig</span>
+              <span className="font-medium text-green-700">
+                Filen är giltig
+              </span>
             </>
           ) : (
             <>
@@ -78,7 +80,9 @@ export function ImportPreviewPhase({
 
       {errors.length > 0 && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-red-700">Blockerande fel</h3>
+          <h3 className="mb-2 text-sm font-medium text-red-700">
+            Blockerande fel
+          </h3>
           <ul className="space-y-1 text-xs text-red-600">
             {errors.map((e, i) => (
               <li key={i}>
@@ -121,8 +125,8 @@ export function ImportPreviewPhase({
               <div>
                 <div className="text-sm font-medium">Ny databas</div>
                 <div className="text-xs text-muted-foreground">
-                  Skapa företag, räkenskapsår, kontoplan och verifikationer från filen.
-                  Kräver att databasen är tom.
+                  Skapa företag, räkenskapsår, kontoplan och verifikationer från
+                  filen. Kräver att databasen är tom.
                 </div>
               </div>
             </label>
@@ -138,8 +142,8 @@ export function ImportPreviewPhase({
               <div>
                 <div className="text-sm font-medium">Slå samman (merge)</div>
                 <div className="text-xs text-muted-foreground">
-                  Matchar befintligt företag via orgNr, lägger till saknade konton,
-                  importerar verifikationer i ny serie ("I" för Import).
+                  Matchar befintligt företag via orgNr, lägger till saknade
+                  konton, importerar verifikationer i ny serie ("I" för Import).
                 </div>
               </div>
             </label>
@@ -151,12 +155,24 @@ export function ImportPreviewPhase({
               className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
               data-testid="sie4-merge-warning"
             >
-              <div className="mb-1 font-medium">Merge-läge — bekräfta innan import:</div>
+              <div className="mb-1 font-medium">
+                Merge-läge — bekräfta innan import:
+              </div>
               <ul className="ml-4 list-disc space-y-0.5">
-                <li>Befintligt företag uppdateras till filens namn om de skiljer sig.</li>
+                <li>
+                  Befintligt företag uppdateras till filens namn om de skiljer
+                  sig.
+                </li>
                 <li>Saknade konton i DB läggs till från filen.</li>
-                <li>Konton som existerar i båda behåller DB:s namn och inställningar.</li>
-                <li>Verifikationer bokförs i <span className="font-mono">I</span>-serien — kollision med befintliga I-nummer är inte möjlig (nästa lediga nummer används).</li>
+                <li>
+                  Konton som existerar i båda behåller DB:s namn och
+                  inställningar.
+                </li>
+                <li>
+                  Verifikationer bokförs i <span className="font-mono">I</span>
+                  -serien — kollision med befintliga I-nummer är inte möjlig
+                  (nästa lediga nummer används).
+                </li>
               </ul>
             </div>
           )}
@@ -189,10 +205,7 @@ export function ImportPreviewPhase({
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm">
                     {(['keep', 'overwrite', 'skip'] as const).map((r) => (
-                      <label
-                        key={r}
-                        className="flex items-center gap-1.5"
-                      >
+                      <label key={r} className="flex items-center gap-1.5">
                         <input
                           type="radio"
                           name={`conflict-${c.account_number}`}

@@ -13,10 +13,14 @@ export function ScheduleCard({
   onDeactivate: (scheduleId: number) => void
   isExecuting: boolean
 }) {
-  const badge = TYPE_BADGE[schedule.accrual_type] ?? { bg: 'bg-gray-100', text: 'text-gray-700' }
-  const progressPct = schedule.period_count > 0
-    ? Math.round((schedule.executedCount / schedule.period_count) * 100)
-    : 0
+  const badge = TYPE_BADGE[schedule.accrual_type] ?? {
+    bg: 'bg-gray-100',
+    text: 'text-gray-700',
+  }
+  const progressPct =
+    schedule.period_count > 0
+      ? Math.round((schedule.executedCount / schedule.period_count) * 100)
+      : 0
   const nextPeriod = schedule.periodStatuses.find((p) => !p.executed)
 
   return (
@@ -24,12 +28,16 @@ export function ScheduleCard({
       <div className="mb-2 flex items-start justify-between">
         <div>
           <h3 className="text-sm font-medium">{schedule.description}</h3>
-          <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.bg} ${badge.text}`}>
+          <span
+            className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.bg} ${badge.text}`}
+          >
             {TYPE_LABELS[schedule.accrual_type]}
           </span>
         </div>
         <div className="text-right text-sm">
-          <div className="font-medium">{formatKr(schedule.total_amount_ore)}</div>
+          <div className="font-medium">
+            {formatKr(schedule.total_amount_ore)}
+          </div>
           <div className="text-xs text-muted-foreground">
             {schedule.balance_account} / {schedule.result_account}
           </div>
@@ -39,8 +47,13 @@ export function ScheduleCard({
       {/* Progress */}
       <div className="mb-3">
         <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{schedule.executedCount} av {schedule.period_count} perioder körda</span>
-          <span>P{schedule.start_period}–P{schedule.start_period + schedule.period_count - 1}</span>
+          <span>
+            {schedule.executedCount} av {schedule.period_count} perioder körda
+          </span>
+          <span>
+            P{schedule.start_period}–P
+            {schedule.start_period + schedule.period_count - 1}
+          </span>
         </div>
         <div className="h-2 w-full rounded-full bg-muted">
           <div

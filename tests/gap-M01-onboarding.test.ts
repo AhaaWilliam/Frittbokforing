@@ -115,9 +115,10 @@ describe('GAP M01-2: Brutet räkenskapsår (jul–jun)', () => {
     })
     expect(result.success).toBe(true)
 
-    const fy = db
-      .prepare('SELECT * FROM fiscal_years LIMIT 1')
-      .get() as Record<string, unknown>
+    const fy = db.prepare('SELECT * FROM fiscal_years LIMIT 1').get() as Record<
+      string,
+      unknown
+    >
     expect(fy.start_date).toBe('2025-07-01')
     expect(fy.end_date).toBe('2026-06-30')
 
@@ -165,9 +166,9 @@ describe('GAP M01-3: Momskoder seed', () => {
 
   it('default fiscal_year kopplas till company', () => {
     createCompany(db, VALID_INPUT)
-    const company = db
-      .prepare('SELECT id FROM companies LIMIT 1')
-      .get() as { id: number }
+    const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
+      id: number
+    }
     const fy = db
       .prepare('SELECT company_id FROM fiscal_years LIMIT 1')
       .get() as { company_id: number }
@@ -217,9 +218,9 @@ describe('GAP M01-4: UpdateCompany schema', () => {
 describe('GAP M01-5: BAS-kontoplan seed count', () => {
   it('~95 konton seedas vid company creation', () => {
     createCompany(db, VALID_INPUT)
-    const count = db
-      .prepare('SELECT COUNT(*) AS cnt FROM accounts')
-      .get() as { cnt: number }
+    const count = db.prepare('SELECT COUNT(*) AS cnt FROM accounts').get() as {
+      cnt: number
+    }
     // The test prompt says ≈95, allow reasonable range
     expect(count.cnt).toBeGreaterThanOrEqual(80)
     expect(count.cnt).toBeLessThanOrEqual(120)

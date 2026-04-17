@@ -43,16 +43,14 @@ describe('F21 — useEntityForm isDirty (ref-based)', () => {
 
 describe('F22 — React.memo on line row components', () => {
   it('InvoiceLineRow is memo-wrapped', async () => {
-    const { InvoiceLineRow } = await import(
-      '../src/renderer/components/invoices/InvoiceLineRow'
-    )
+    const { InvoiceLineRow } =
+      await import('../src/renderer/components/invoices/InvoiceLineRow')
     expect(InvoiceLineRow).toHaveProperty('$$typeof', Symbol.for('react.memo'))
   })
 
   it('ExpenseLineRow is exported and memo-wrapped', async () => {
-    const { ExpenseLineRow } = await import(
-      '../src/renderer/components/expenses/ExpenseLineRow'
-    )
+    const { ExpenseLineRow } =
+      await import('../src/renderer/components/expenses/ExpenseLineRow')
     expect(ExpenseLineRow).toHaveProperty('$$typeof', Symbol.for('react.memo'))
   })
 
@@ -79,7 +77,12 @@ describe('F33 — shouldAutoPersist guard', () => {
     restoredId: unknown,
     restoredIdLoaded: boolean,
   ): boolean {
-    return !!(activeFiscalYear && !selectedYear && !restoredId && restoredIdLoaded)
+    return !!(
+      activeFiscalYear &&
+      !selectedYear &&
+      !restoredId &&
+      restoredIdLoaded
+    )
   }
 
   it('blocks before restoredIdLoaded', () => {

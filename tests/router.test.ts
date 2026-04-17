@@ -57,7 +57,15 @@ describe('matchRoute', () => {
   })
 
   it('matches all simple pages', () => {
-    const simplePages = ['overview', 'accounts', 'settings', 'export', 'reports', 'tax', 'vat']
+    const simplePages = [
+      'overview',
+      'accounts',
+      'settings',
+      'export',
+      'reports',
+      'tax',
+      'vat',
+    ]
     for (const page of simplePages) {
       const result = matchRoute(`/${page}`, routes)
       expect(result).not.toBeNull()
@@ -67,8 +75,12 @@ describe('matchRoute', () => {
 
   it('matches manual-entries sub-view routes', () => {
     expect(matchRoute('/manual-entries', routes)!.page).toBe('manual-entries')
-    expect(matchRoute('/manual-entries/create', routes)!.page).toBe('manual-entries')
-    expect(matchRoute('/manual-entries/edit/3', routes)!.params).toEqual({ id: '3' })
+    expect(matchRoute('/manual-entries/create', routes)!.page).toBe(
+      'manual-entries',
+    )
+    expect(matchRoute('/manual-entries/edit/3', routes)!.params).toEqual({
+      id: '3',
+    })
   })
 
   it('does not match partial paths', () => {

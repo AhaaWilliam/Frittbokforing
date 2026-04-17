@@ -15,7 +15,9 @@ test.describe('Onboarding', () => {
   test('K2 wizard happy path skapar bolag + FY @critical', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await expect(ctx.window.getByTestId('wizard')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('wizard')).toBeVisible({
+        timeout: 15_000,
+      })
 
       await ctx.window.getByPlaceholder('AB Företaget').fill('Onboarding K2 AB')
       await ctx.window.getByPlaceholder('NNNNNN-NNNN').fill('556036-0793')
@@ -24,14 +26,22 @@ test.describe('Onboarding', () => {
 
       await ctx.window.getByText('Nästa').click()
 
-      await expect(ctx.window.getByText('Sammanfattning')).toBeVisible({ timeout: 5_000 })
+      await expect(ctx.window.getByText('Sammanfattning')).toBeVisible({
+        timeout: 5_000,
+      })
       await ctx.window.getByText('Starta bokföringen').click()
 
-      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
 
       // Verifiera via IPC att bolag + FY finns
       const fyResult = await ctx.window.evaluate(async () => {
-        return (window as unknown as { api: { listFiscalYears: () => Promise<unknown> } }).api.listFiscalYears()
+        return (
+          window as unknown as {
+            api: { listFiscalYears: () => Promise<unknown> }
+          }
+        ).api.listFiscalYears()
       })
       const fy = fyResult as { success: boolean; data: Array<{ id: number }> }
       expect(fy.success).toBe(true)
@@ -44,7 +54,9 @@ test.describe('Onboarding', () => {
   test('Luhn-fel visar inline-meddelande och blockerar Nästa', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await expect(ctx.window.getByTestId('wizard')).toBeVisible({ timeout: 15_000 })
+      await expect(ctx.window.getByTestId('wizard')).toBeVisible({
+        timeout: 15_000,
+      })
 
       await ctx.window.getByPlaceholder('AB Företaget').fill('Test AB')
       // Luhn-felaktigt orgnr (sista siffran fel)

@@ -101,9 +101,7 @@ export function BudgetInputGrid({
       toast.success(`${result.count} budgetvärden kopierade`)
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Kunde inte kopiera budget',
+        err instanceof Error ? err.message : 'Kunde inte kopiera budget',
       )
     }
   }
@@ -146,7 +144,11 @@ export function BudgetInputGrid({
           type="button"
           onClick={handleCopy}
           disabled={!previousFy || copyMutation.isPending}
-          title={previousFy ? `Kopiera från ${previousFy.year_label}` : 'Inget tidigare räkenskapsår'}
+          title={
+            previousFy
+              ? `Kopiera från ${previousFy.year_label}`
+              : 'Inget tidigare räkenskapsår'
+          }
           className="rounded-md border border-input px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
         >
           Kopiera från förra året
@@ -164,13 +166,17 @@ export function BudgetInputGrid({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-              <th className="sticky left-0 bg-background px-3 py-2 min-w-[200px]">Rad</th>
+              <th className="sticky left-0 bg-background px-3 py-2 min-w-[200px]">
+                Rad
+              </th>
               {PERIOD_LABELS.map((label) => (
                 <th key={label} className="px-2 py-2 text-right min-w-[80px]">
                   {label}
                 </th>
               ))}
-              <th className="px-2 py-2 text-right min-w-[90px] font-semibold">Helår</th>
+              <th className="px-2 py-2 text-right min-w-[90px] font-semibold">
+                Helår
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -233,7 +239,9 @@ function BudgetInputRow({
                 type="number"
                 step="1"
                 value={ore === 0 ? '' : oreToKr(ore)}
-                onChange={(e) => onCellChange(line.lineId, period, e.target.value)}
+                onChange={(e) =>
+                  onCellChange(line.lineId, period, e.target.value)
+                }
                 className="w-full rounded border border-input bg-background px-2 py-1 text-right text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
                 aria-label={`${line.label} ${PERIOD_LABELS[i]}`}
               />

@@ -13,7 +13,12 @@ interface CustomerPickerProps {
   'aria-describedby'?: string
 }
 
-export function CustomerPicker({ value, onChange, testId, ...ariaProps }: CustomerPickerProps) {
+export function CustomerPicker({
+  value,
+  onChange,
+  testId,
+  ...ariaProps
+}: CustomerPickerProps) {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [open, setOpen] = useState(false)

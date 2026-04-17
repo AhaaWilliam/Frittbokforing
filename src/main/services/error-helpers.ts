@@ -79,6 +79,7 @@ export const EXPENSE_UNIQUE_MAPPINGS: UniqueConstraintMapping[] = [
     messageContains: ['expenses', 'supplier_invoice_number'],
     code: 'DUPLICATE_SUPPLIER_INVOICE',
     field: 'supplier_invoice_number',
-    error: 'En kostnad med detta leverantörsfakturanummer finns redan för denna leverantör.',
+    error:
+      'En kostnad med detta leverantörsfakturanummer finns redan för denna leverantör.',
   },
 ]

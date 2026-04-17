@@ -18,9 +18,12 @@ test.describe('E2E-infrastruktur', () => {
   test('composeEmptyK2 skapar bolag + FY via IPC @critical', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await ctx.window.waitForSelector('[data-testid="app-ready"], [data-testid="wizard"]', {
-        timeout: 30_000,
-      })
+      await ctx.window.waitForSelector(
+        '[data-testid="app-ready"], [data-testid="wizard"]',
+        {
+          timeout: 30_000,
+        },
+      )
       const fx = await composeEmptyK2(ctx.window)
       expect(fx.companyId).toBeGreaterThan(0)
       expect(fx.fiscalYearId).toBeGreaterThan(0)
@@ -32,9 +35,12 @@ test.describe('E2E-infrastruktur', () => {
   test('freezeClock påverkar SIE4 #GEN-datum (M150)', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await ctx.window.waitForSelector('[data-testid="app-ready"], [data-testid="wizard"]', {
-        timeout: 30_000,
-      })
+      await ctx.window.waitForSelector(
+        '[data-testid="app-ready"], [data-testid="wizard"]',
+        {
+          timeout: 30_000,
+        },
+      )
       await composeEmptyK2(ctx.window)
 
       // Frys till ett specifikt datum och verifiera via en IPC-driven export.
@@ -52,14 +58,24 @@ test.describe('E2E-infrastruktur', () => {
   test('contextIsolation: window.require/process är undefined @critical', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      await ctx.window.waitForSelector('[data-testid="app-ready"], [data-testid="wizard"]', {
-        timeout: 30_000,
-      })
+      await ctx.window.waitForSelector(
+        '[data-testid="app-ready"], [data-testid="wizard"]',
+        {
+          timeout: 30_000,
+        },
+      )
       const exposure = await ctx.window.evaluate(() => ({
-        hasRequire: typeof (window as unknown as { require?: unknown }).require !== 'undefined',
-        hasProcess: typeof (window as unknown as { process?: unknown }).process !== 'undefined',
-        hasBuffer: typeof (window as unknown as { Buffer?: unknown }).Buffer !== 'undefined',
-        hasApi: typeof (window as unknown as { api?: unknown }).api !== 'undefined',
+        hasRequire:
+          typeof (window as unknown as { require?: unknown }).require !==
+          'undefined',
+        hasProcess:
+          typeof (window as unknown as { process?: unknown }).process !==
+          'undefined',
+        hasBuffer:
+          typeof (window as unknown as { Buffer?: unknown }).Buffer !==
+          'undefined',
+        hasApi:
+          typeof (window as unknown as { api?: unknown }).api !== 'undefined',
       }))
       expect(exposure.hasRequire).toBe(false)
       expect(exposure.hasProcess).toBe(false)
@@ -85,9 +101,12 @@ test.describe('E2E-infrastruktur', () => {
       }
     })
     try {
-      await ctx.window.waitForSelector('[data-testid="app-ready"], [data-testid="wizard"]', {
-        timeout: 30_000,
-      })
+      await ctx.window.waitForSelector(
+        '[data-testid="app-ready"], [data-testid="wizard"]',
+        {
+          timeout: 30_000,
+        },
+      )
       await composeEmptyK2(ctx.window)
       await ctx.window.waitForTimeout(3000)
       expect(violations).toEqual([])

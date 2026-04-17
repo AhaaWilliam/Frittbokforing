@@ -26,23 +26,22 @@ describe('compareAccountNumbers — unit', () => {
 
 describe('compareAccountNumbers — property-tester (M98-kontrakt)', () => {
   // BAS-konton är 4–5 siffriga numeriska strängar (1000–99999).
-  const validAccountNumber = fc
-    .integer({ min: 1000, max: 99999 })
-    .map(String)
+  const validAccountNumber = fc.integer({ min: 1000, max: 99999 }).map(String)
 
   it('reflexivitet: cmp(a, a) === 0', () => {
     fc.assert(
-      fc.property(validAccountNumber, (a) =>
-        compareAccountNumbers(a, a) === 0,
-      ),
+      fc.property(validAccountNumber, (a) => compareAccountNumbers(a, a) === 0),
     )
   })
 
   it('antisymmetri: sign(cmp(a,b)) === -sign(cmp(b,a))', () => {
     fc.assert(
-      fc.property(validAccountNumber, validAccountNumber, (a, b) =>
-        Math.sign(compareAccountNumbers(a, b)) ===
-        -Math.sign(compareAccountNumbers(b, a)),
+      fc.property(
+        validAccountNumber,
+        validAccountNumber,
+        (a, b) =>
+          Math.sign(compareAccountNumbers(a, b)) ===
+          -Math.sign(compareAccountNumbers(b, a)),
       ),
     )
   })
@@ -68,9 +67,12 @@ describe('compareAccountNumbers — property-tester (M98-kontrakt)', () => {
 
   it('numerisk konsistens med Number-jämförelse (M98 direkt-kontrakt)', () => {
     fc.assert(
-      fc.property(validAccountNumber, validAccountNumber, (a, b) =>
-        Math.sign(compareAccountNumbers(a, b)) ===
-        Math.sign(Number(a) - Number(b)),
+      fc.property(
+        validAccountNumber,
+        validAccountNumber,
+        (a, b) =>
+          Math.sign(compareAccountNumbers(a, b)) ===
+          Math.sign(Number(a) - Number(b)),
       ),
     )
   })

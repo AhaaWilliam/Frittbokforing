@@ -17,7 +17,9 @@ describe('globalSearch performance baseline (F13)', () => {
   it('1000 counterparties + search median < gate', () => {
     const db = createTestDb()
     createCompany(db, VALID_COMPANY)
-    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
 
     // Seed 1000 counterparties
     const insert = db.prepare(
@@ -46,7 +48,9 @@ describe('globalSearch performance baseline (F13)', () => {
 
     const isCI = process.env.CI === 'true'
     const limit = isCI ? 500 : 200
-    console.log(`  globalSearch median: ${median.toFixed(1)}ms (gate: ${limit}ms)`)
+    console.log(
+      `  globalSearch median: ${median.toFixed(1)}ms (gate: ${limit}ms)`,
+    )
     expect(median).toBeLessThan(limit)
 
     db.close()
@@ -55,8 +59,12 @@ describe('globalSearch performance baseline (F13)', () => {
   it('1000 manual verifikat + search median < gate', () => {
     const db = createTestDb()
     createCompany(db, VALID_COMPANY)
-    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-    const companyId = (db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }).id
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    const companyId = (
+      db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }
+    ).id
 
     // Seed 1000 booked manual entries via direct SQL (faster than service calls).
     // Insert as draft first, add lines, then book — immutability trigger blocks
@@ -122,7 +130,9 @@ describe('globalSearch performance baseline (F13)', () => {
 
     const isCI = process.env.CI === 'true'
     const limit = isCI ? 500 : 200
-    console.log(`  verifikat desc median: ${descMedian.toFixed(1)}ms, ref median: ${refMedian.toFixed(1)}ms (gate: ${limit}ms)`)
+    console.log(
+      `  verifikat desc median: ${descMedian.toFixed(1)}ms, ref median: ${refMedian.toFixed(1)}ms (gate: ${limit}ms)`,
+    )
     expect(descMedian).toBeLessThan(limit)
     expect(refMedian).toBeLessThan(limit)
 

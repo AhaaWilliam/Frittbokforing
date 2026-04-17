@@ -20,7 +20,13 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 function fmtKr(ore: number): string {
   const sign = ore < 0 ? '-' : ''
   const abs = Math.abs(ore)
-  return sign + new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(abs / 100)
+  return (
+    sign +
+    new Intl.NumberFormat('sv-SE', {
+      style: 'currency',
+      currency: 'SEK',
+    }).format(abs / 100)
+  )
 }
 
 export function PageBankStatements() {
@@ -39,10 +45,21 @@ export function PageBankStatements() {
   if (statementId) {
     return <BankStatementDetail statementId={statementId} />
   }
-  return <BankStatementList fyId={activeFiscalYear.id} companyId={activeFiscalYear.company_id} />
+  return (
+    <BankStatementList
+      fyId={activeFiscalYear.id}
+      companyId={activeFiscalYear.company_id}
+    />
+  )
 }
 
-function BankStatementList({ fyId, companyId }: { fyId: number; companyId: number }) {
+function BankStatementList({
+  fyId,
+  companyId,
+}: {
+  fyId: number
+  companyId: number
+}) {
   const { data: statements, isLoading } = useBankStatements(fyId)
   const importMutation = useImportBankStatement()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -98,7 +115,9 @@ function BankStatementList({ fyId, companyId }: { fyId: number; companyId: numbe
         {isLoading ? (
           <LoadingSpinner />
         ) : !statements || statements.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Inga kontoutdrag importerade ännu.</div>
+          <div className="text-sm text-muted-foreground">
+            Inga kontoutdrag importerade ännu.
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -117,9 +136,15 @@ function BankStatementList({ fyId, companyId }: { fyId: number; companyId: numbe
                 <tr key={s.id} className="border-b hover:bg-accent/30">
                   <td className="px-2 py-2">{s.statement_date}</td>
                   <td className="px-2 py-2">{s.statement_number}</td>
-                  <td className="px-2 py-2 font-mono text-xs">{s.bank_account_iban}</td>
-                  <td className="px-2 py-2 text-right">{fmtKr(s.opening_balance_ore)}</td>
-                  <td className="px-2 py-2 text-right">{fmtKr(s.closing_balance_ore)}</td>
+                  <td className="px-2 py-2 font-mono text-xs">
+                    {s.bank_account_iban}
+                  </td>
+                  <td className="px-2 py-2 text-right">
+                    {fmtKr(s.opening_balance_ore)}
+                  </td>
+                  <td className="px-2 py-2 text-right">
+                    {fmtKr(s.closing_balance_ore)}
+                  </td>
                   <td className="px-2 py-2 text-right">
                     {s.matched_count}/{s.transaction_count}
                   </td>
@@ -152,7 +177,12 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
   async function handleUnmatch(txId: number) {
     try {
       const r = await unmatchMutation.mutateAsync({ bank_transaction_id: txId })
-      const res = r as { success?: boolean; error?: string; code?: string; data?: { correction_journal_entry_id: number } }
+      const res = r as {
+        success?: boolean
+        error?: string
+        code?: string
+        data?: { correction_journal_entry_id: number }
+      }
       if (res.success === false) {
         const msg = errorMessage(res.code, res.error)
         toast.error(msg)
@@ -199,15 +229,23 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
       <div className="flex-1 overflow-auto p-4">
         <div className="mb-4 flex gap-8 text-sm">
           <div>
-            <div className="text-xs uppercase text-muted-foreground">Öppning</div>
-            <div className="font-medium">{fmtKr(statement.opening_balance_ore)}</div>
+            <div className="text-xs uppercase text-muted-foreground">
+              Öppning
+            </div>
+            <div className="font-medium">
+              {fmtKr(statement.opening_balance_ore)}
+            </div>
           </div>
           <div>
             <div className="text-xs uppercase text-muted-foreground">Slut</div>
-            <div className="font-medium">{fmtKr(statement.closing_balance_ore)}</div>
+            <div className="font-medium">
+              {fmtKr(statement.closing_balance_ore)}
+            </div>
           </div>
           <div>
-            <div className="text-xs uppercase text-muted-foreground">Matchade</div>
+            <div className="text-xs uppercase text-muted-foreground">
+              Matchade
+            </div>
             <div className="font-medium">
               {statement.matched_count}/{statement.transaction_count}
             </div>
@@ -230,7 +268,9 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
               <tr key={tx.id} className="border-b hover:bg-accent/30">
                 <td className="px-2 py-2">{tx.value_date}</td>
                 <td className="px-2 py-2">{tx.counterparty_name ?? '—'}</td>
-                <td className="px-2 py-2 max-w-xs truncate">{tx.remittance_info ?? '—'}</td>
+                <td className="px-2 py-2 max-w-xs truncate">
+                  {tx.remittance_info ?? '—'}
+                </td>
                 <td
                   className={`px-2 py-2 text-right font-mono ${tx.amount_ore < 0 ? 'text-red-600' : 'text-green-700'}`}
                 >
@@ -238,11 +278,17 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                 </td>
                 <td className="px-2 py-2 text-xs">
                   {tx.reconciliation_status === 'matched' ? (
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-green-800">Matchad</span>
+                    <span className="rounded bg-green-100 px-2 py-0.5 text-green-800">
+                      Matchad
+                    </span>
                   ) : tx.reconciliation_status === 'excluded' ? (
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-800">Utesluten</span>
+                    <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-800">
+                      Utesluten
+                    </span>
                   ) : (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">Omatchad</span>
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">
+                      Omatchad
+                    </span>
                   )}
                 </td>
                 <td className="px-2 py-2">
@@ -260,7 +306,9 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                     <button
                       type="button"
                       disabled={tx.payment_batch_id !== null}
-                      onClick={() => tx.payment_batch_id === null && setUnmatchingTxId(tx.id)}
+                      onClick={() =>
+                        tx.payment_batch_id === null && setUnmatchingTxId(tx.id)
+                      }
                       title={
                         tx.payment_batch_id !== null
                           ? 'Batch-betalningar kan inte unmatchas per rad'
@@ -292,13 +340,18 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
         description="Detta skapar ett korrigeringsverifikat i C-serien som reverserar betalningen. Ursprungsverifikatet låses mot ytterligare ändringar. Fortsätt?"
         confirmLabel="Ångra match"
         variant="danger"
-        onConfirm={() => unmatchingTxId !== null && handleUnmatch(unmatchingTxId)}
+        onConfirm={() =>
+          unmatchingTxId !== null && handleUnmatch(unmatchingTxId)
+        }
       />
     </div>
   )
 }
 
-function errorMessage(code: string | undefined, fallback: string | undefined): string {
+function errorMessage(
+  code: string | undefined,
+  fallback: string | undefined,
+): string {
   switch (code) {
     case 'NOT_MATCHED':
       return 'Transaktionen är inte matchad.'
@@ -336,8 +389,10 @@ function MatchDialog({
 
   const candidates: Candidate[] =
     direction === 'invoice'
-      ? (invoicesQuery.data as { items?: Candidate[] } | undefined)?.items ?? []
-      : (expensesQuery.data as { expenses?: Candidate[] } | undefined)?.expenses ?? []
+      ? ((invoicesQuery.data as { items?: Candidate[] } | undefined)?.items ??
+        [])
+      : ((expensesQuery.data as { expenses?: Candidate[] } | undefined)
+          ?.expenses ?? [])
 
   async function onSubmit() {
     if (!selectedEntityId) return
@@ -367,7 +422,9 @@ function MatchDialog({
         <h2 className="mb-2 text-lg font-semibold">Matcha bank-transaktion</h2>
         <div className="mb-3 text-sm text-muted-foreground">
           {tx.value_date} · {fmtKr(tx.amount_ore)} ·{' '}
-          {direction === 'invoice' ? 'Inkommande → välj faktura' : 'Utgående → välj kostnad'}
+          {direction === 'invoice'
+            ? 'Inkommande → välj faktura'
+            : 'Utgående → välj kostnad'}
         </div>
         <label className="mb-3 block text-sm">
           <span className="mb-1 block text-xs uppercase text-muted-foreground">
@@ -376,7 +433,11 @@ function MatchDialog({
           <select
             className="w-full rounded border bg-background p-2 text-sm"
             value={selectedEntityId ?? ''}
-            onChange={(e) => setSelectedEntityId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) =>
+              setSelectedEntityId(
+                e.target.value ? Number(e.target.value) : null,
+              )
+            }
             data-testid="bank-match-entity-select"
           >
             <option value="">— Välj —</option>
@@ -388,7 +449,9 @@ function MatchDialog({
           </select>
         </label>
         <label className="mb-4 block text-sm">
-          <span className="mb-1 block text-xs uppercase text-muted-foreground">Bankkonto</span>
+          <span className="mb-1 block text-xs uppercase text-muted-foreground">
+            Bankkonto
+          </span>
           <input
             type="text"
             className="w-full rounded border bg-background p-2 text-sm"
@@ -428,10 +491,15 @@ type Candidate = {
   supplier_invoice_number?: string
 }
 
-function describeCandidate(c: Candidate, direction: 'invoice' | 'expense'): string {
-  const num = direction === 'invoice' ? c.invoice_number : c.supplier_invoice_number
-  const amt = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(
-    c.total_amount_ore / 100,
-  )
+function describeCandidate(
+  c: Candidate,
+  direction: 'invoice' | 'expense',
+): string {
+  const num =
+    direction === 'invoice' ? c.invoice_number : c.supplier_invoice_number
+  const amt = new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+  }).format(c.total_amount_ore / 100)
   return `${num ?? '—'} · ${c.counterparty_name ?? '—'} · ${amt}`
 }

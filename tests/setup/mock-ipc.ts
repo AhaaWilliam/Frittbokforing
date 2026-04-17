@@ -19,17 +19,21 @@ import { CHANNEL_RESPONSE_SCHEMAS } from './channel-response-schemas'
 
 // ── IpcResult shape validation (F57) ─────────────────────────────────
 
-const IpcSuccessSchema = z.object({
-  success: z.literal(true),
-  data: z.unknown(),
-}).strict()
+const IpcSuccessSchema = z
+  .object({
+    success: z.literal(true),
+    data: z.unknown(),
+  })
+  .strict()
 
-const IpcErrorSchema = z.object({
-  success: z.literal(false),
-  error: z.string(),
-  code: z.string(),
-  field: z.string().optional(),
-}).strict()
+const IpcErrorSchema = z
+  .object({
+    success: z.literal(false),
+    error: z.string(),
+    code: z.string(),
+    field: z.string().optional(),
+  })
+  .strict()
 
 const IpcResultSchema = z.discriminatedUnion('success', [
   IpcSuccessSchema,
@@ -201,7 +205,11 @@ interface ErrorOverride {
   type: 'error'
   error: Error
 }
-type Override = ResponseOverride | PendingOverride | DelayedOverride | ErrorOverride
+type Override =
+  | ResponseOverride
+  | PendingOverride
+  | DelayedOverride
+  | ErrorOverride
 
 let overrides = new Map<string, Override>()
 
@@ -292,8 +300,8 @@ export function mockIpcResponse(
     if (!parsed.success) {
       throw new Error(
         `mockIpcResponse('${channel}'): response does not match IpcResult shape. ` +
-        `Got: ${JSON.stringify(response).slice(0, 200)}. ` +
-        `Error: ${parsed.error.issues[0]?.message ?? 'unknown'}`
+          `Got: ${JSON.stringify(response).slice(0, 200)}. ` +
+          `Error: ${parsed.error.issues[0]?.message ?? 'unknown'}`,
       )
     }
 
@@ -305,8 +313,8 @@ export function mockIpcResponse(
         if (!dataResult.success) {
           throw new Error(
             `mockIpcResponse('${channel}'): data does not match response schema. ` +
-            `Got: ${JSON.stringify(parsed.data.data).slice(0, 200)}. ` +
-            `Error: ${dataResult.error.issues[0]?.message ?? 'unknown'}`
+              `Got: ${JSON.stringify(parsed.data.data).slice(0, 200)}. ` +
+              `Error: ${dataResult.error.issues[0]?.message ?? 'unknown'}`,
           )
         }
       }

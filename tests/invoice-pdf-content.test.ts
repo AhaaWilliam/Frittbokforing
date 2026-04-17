@@ -8,10 +8,7 @@ import { inflateSync } from 'zlib'
 import type Database from 'better-sqlite3'
 import { generateInvoicePdf } from '../src/main/services/pdf/invoice-pdf-service'
 import { createTestDbWithFinalizedInvoice } from './helpers/pdf-test-setup'
-import {
-  saveDraft,
-  finalizeDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
 
 let db: Database.Database
 let invoiceId: number
@@ -39,7 +36,7 @@ function extractPdfText(buffer: Buffer): string {
   while (pos < buffer.length) {
     const marker = buffer.indexOf('\nstream\n', pos)
     if (marker === -1) break
-    const dataStart = marker + 8  // skip \nstream\n
+    const dataStart = marker + 8 // skip \nstream\n
     let endMarker = buffer.indexOf('\nendstream', dataStart)
     if (endMarker === -1) {
       // Try raw endstream without leading newline
@@ -73,7 +70,18 @@ function extractPdfText(buffer: Buffer): string {
       }
     } catch (e) {
       // Not all streams are zlib-compressed (e.g., fonts), skip
-      console.error('inflate error at pos', pos, 'dataStart:', dataStart, 'endMarker:', endMarker, 'len:', endMarker - dataStart, ':', (e as Error).message)
+      console.error(
+        'inflate error at pos',
+        pos,
+        'dataStart:',
+        dataStart,
+        'endMarker:',
+        endMarker,
+        'len:',
+        endMarker - dataStart,
+        ':',
+        (e as Error).message,
+      )
     }
     pos = endMarker + 10
   }
@@ -87,7 +95,8 @@ describe('PDF content verification', () => {
     const text = extractPdfText(buffer)
     // The finalized invoice has number A0001
     // Check that either the text or the full extracted content contains it
-    const hasNumber = text.includes('A0001') || text.replace(/ /g, '').includes('A0001')
+    const hasNumber =
+      text.includes('A0001') || text.replace(/ /g, '').includes('A0001')
     if (!hasNumber) {
       // PDFKit may render numbers differently; just verify it's a valid PDF with content
       expect(text.length).toBeGreaterThan(100)
@@ -132,12 +141,25 @@ describe('PDF content verification', () => {
   })
 
   it('C8: multi-line invoice (4+ lines) shows all descriptions', async () => {
-    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-    const customer = db.prepare("SELECT id FROM counterparties WHERE type = 'customer' LIMIT 1").get() as { id: number }
-    const vatCode = db.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-    const product = db.prepare('SELECT id FROM products LIMIT 1').get() as { id: number }
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    const customer = db
+      .prepare("SELECT id FROM counterparties WHERE type = 'customer' LIMIT 1")
+      .get() as { id: number }
+    const vatCode = db
+      .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+      .get() as { id: number }
+    const product = db.prepare('SELECT id FROM products LIMIT 1').get() as {
+      id: number
+    }
 
-    const descriptions = ['Alfa Service', 'Beta Product', 'Gamma Item', 'Delta Work']
+    const descriptions = [
+      'Alfa Service',
+      'Beta Product',
+      'Gamma Item',
+      'Delta Work',
+    ]
     const draftResult = saveDraft(db, {
       counterparty_id: customer.id,
       fiscal_year_id: fy.id,
@@ -184,7 +206,9 @@ describe('PDF content verification', () => {
   })
 
   it('C11: draft invoice throws error', async () => {
-    const draftRow = db.prepare("SELECT id FROM invoices WHERE status = 'draft' LIMIT 1").get() as { id: number } | undefined
+    const draftRow = db
+      .prepare("SELECT id FROM invoices WHERE status = 'draft' LIMIT 1")
+      .get() as { id: number } | undefined
     if (!draftRow) return
     await expect(generateInvoicePdf(db, draftRow.id)).rejects.toThrow()
   })

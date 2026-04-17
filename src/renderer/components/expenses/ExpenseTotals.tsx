@@ -12,7 +12,11 @@ export function ExpenseTotals({ lines }: ExpenseTotalsProps) {
     let vatOre = 0
     for (const line of lines) {
       // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44)
-      const lineNetOre = Math.round(Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100)
+      const lineNetOre = Math.round(
+        (Math.round(line.quantity * 100) *
+          Math.round(line.unit_price_kr * 100)) /
+          100,
+      )
       const lineVatOre = Math.round(lineNetOre * line.vat_rate)
       netOre += lineNetOre
       vatOre += lineVatOre
@@ -25,19 +29,31 @@ export function ExpenseTotals({ lines }: ExpenseTotalsProps) {
       <div className="w-64 space-y-1 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Netto</span>
-          <span className="tabular-nums" data-testid="total-net-ore" data-value={totals.netOre}>
+          <span
+            className="tabular-nums"
+            data-testid="total-net-ore"
+            data-value={totals.netOre}
+          >
             {formatKr(totals.netOre)}
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Moms</span>
-          <span className="tabular-nums" data-testid="total-vat-ore" data-value={totals.vatOre}>
+          <span
+            className="tabular-nums"
+            data-testid="total-vat-ore"
+            data-value={totals.vatOre}
+          >
             {formatKr(totals.vatOre)}
           </span>
         </div>
         <div className="flex justify-between border-t pt-1 font-medium">
           <span>Totalt</span>
-          <span className="tabular-nums" data-testid="total-sum-ore" data-value={totals.totalOre}>
+          <span
+            className="tabular-nums"
+            data-testid="total-sum-ore"
+            data-value={totals.totalOre}
+          >
             {formatKr(totals.totalOre)}
           </span>
         </div>

@@ -17,9 +17,12 @@ export function useTestForm<TForm extends object>(
     return formData[name]
   }
 
-  const setField = useCallback(<K extends keyof TForm>(name: K, value: TForm[K]) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }, [])
+  const setField = useCallback(
+    <K extends keyof TForm>(name: K, value: TForm[K]) => {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    },
+    [],
+  )
 
   const handleSubmit = useCallback(async () => {
     // no-op stub

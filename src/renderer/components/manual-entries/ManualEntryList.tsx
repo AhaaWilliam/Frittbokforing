@@ -1,14 +1,8 @@
-import {
-  useManualEntryDrafts,
-  useManualEntries,
-} from '../../lib/hooks'
+import { useManualEntryDrafts, useManualEntries } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
-import {
-  EmptyState,
-  ManualEntryIllustration,
-} from '../ui/EmptyState'
+import { EmptyState, ManualEntryIllustration } from '../ui/EmptyState'
 
 interface ManualEntryListProps {
   onCreate: () => void
@@ -16,7 +10,11 @@ interface ManualEntryListProps {
   onView?: (id: number) => void
 }
 
-export function ManualEntryList({ onCreate, onEdit, onView }: ManualEntryListProps) {
+export function ManualEntryList({
+  onCreate,
+  onEdit,
+  onView,
+}: ManualEntryListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
   const fiscalYearId = activeFiscalYear?.id
 
@@ -39,26 +37,23 @@ export function ManualEntryList({ onCreate, onEdit, onView }: ManualEntryListPro
         ) : (
           <div className="space-y-2">
             {drafts.map((draft) => (
-                <button
-                  key={draft.id}
-                  type="button"
-                  onClick={() => onEdit(draft.id)}
-                  className="flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left hover:bg-muted/50 transition-colors"
-                >
-                  <div>
-                    <span className="text-sm font-medium">
-                      {draft.description || 'Utan beskrivning'}
-                    </span>
-                    <span className="ml-3 text-xs text-muted-foreground">
-                      {draft.entry_date}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    Utkast
+              <button
+                key={draft.id}
+                type="button"
+                onClick={() => onEdit(draft.id)}
+                className="flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+              >
+                <div>
+                  <span className="text-sm font-medium">
+                    {draft.description || 'Utan beskrivning'}
                   </span>
-                </button>
-              ),
-            )}
+                  <span className="ml-3 text-xs text-muted-foreground">
+                    {draft.entry_date}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">Utkast</span>
+              </button>
+            ))}
           </div>
         )}
       </section>
@@ -100,36 +95,34 @@ export function ManualEntryList({ onCreate, onEdit, onView }: ManualEntryListPro
               </thead>
               <tbody>
                 {entries.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
-                      onClick={() => onView?.(entry.id)}
-                    >
-                      <td className="py-2 pr-4 font-mono text-xs">
-                        {entry.verification_series}{entry.verification_number}
-                      </td>
-                      <td className="py-2 pr-4">{entry.entry_date}</td>
-                      <td className="py-2 pr-4">
-                        {entry.description || '-'}
-                      </td>
-                      <td className="py-2 pr-4">
-                        {entry.je_status === 'corrected' && (
-                          <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                            Korrigerad
-                          </span>
-                        )}
-                        {entry.corrects_entry_id != null && (
-                          <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                            Korrigering
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2 text-right">
-                        {formatKr(entry.total_amount_ore)}
-                      </td>
-                    </tr>
-                  ),
-                )}
+                  <tr
+                    key={entry.id}
+                    className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
+                    onClick={() => onView?.(entry.id)}
+                  >
+                    <td className="py-2 pr-4 font-mono text-xs">
+                      {entry.verification_series}
+                      {entry.verification_number}
+                    </td>
+                    <td className="py-2 pr-4">{entry.entry_date}</td>
+                    <td className="py-2 pr-4">{entry.description || '-'}</td>
+                    <td className="py-2 pr-4">
+                      {entry.je_status === 'corrected' && (
+                        <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                          Korrigerad
+                        </span>
+                      )}
+                      {entry.corrects_entry_id != null && (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                          Korrigering
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 text-right">
+                      {formatKr(entry.total_amount_ore)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

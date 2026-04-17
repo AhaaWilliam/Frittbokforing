@@ -53,8 +53,7 @@ async function seedAndFinalizeManualEntry(
     data: { id: number }
     error?: string
   }
-  if (!dr.success)
-    throw new Error(`saveManualEntryDraft failed: ${dr.error}`)
+  if (!dr.success) throw new Error(`saveManualEntryDraft failed: ${dr.error}`)
 
   const finalResult = await window.evaluate(
     async (d) => {
@@ -73,8 +72,7 @@ async function seedAndFinalizeManualEntry(
   )
 
   const fr = finalResult as { success: boolean; error?: string }
-  if (!fr.success)
-    throw new Error(`finalizeManualEntry failed: ${fr.error}`)
+  if (!fr.success) throw new Error(`finalizeManualEntry failed: ${fr.error}`)
 
   return dr.data.id
 }

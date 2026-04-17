@@ -159,9 +159,7 @@ export async function restoreBackup(
   } else {
     const result = await dialog.showOpenDialog(win!, {
       title: 'Välj säkerhetskopia att återställa',
-      filters: [
-        { name: 'SQLite-databas', extensions: ['db', 'sqlite'] },
-      ],
+      filters: [{ name: 'SQLite-databas', extensions: ['db', 'sqlite'] }],
       properties: ['openFile'],
     })
     if (result.canceled || result.filePaths.length === 0) {
@@ -178,10 +176,7 @@ export async function restoreBackup(
 
   const dbPath = getDbPath()
   const restoringPath = `${dbPath}.restoring`
-  const timestamp = getNow()
-    .toISOString()
-    .slice(0, 19)
-    .replace(/[:.]/g, '-')
+  const timestamp = getNow().toISOString().slice(0, 19).replace(/[:.]/g, '-')
   const preRestorePath = `${dbPath}.pre-restore-${timestamp}.db`
 
   try {
@@ -223,10 +218,14 @@ export async function restoreBackup(
     // Clean up WAL/SHM from old DB (new DB starts fresh)
     try {
       if (fs.existsSync(walPath)) fs.unlinkSync(walPath)
-    } catch { /* best effort */ }
+    } catch {
+      /* best effort */
+    }
     try {
       if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath)
-    } catch { /* best effort */ }
+    } catch {
+      /* best effort */
+    }
 
     log.info('[backup] Restore complete, relaunching app')
 
@@ -240,7 +239,9 @@ export async function restoreBackup(
     // Cleanup temp file
     try {
       if (fs.existsSync(restoringPath)) fs.unlinkSync(restoringPath)
-    } catch { /* best effort */ }
+    } catch {
+      /* best effort */
+    }
 
     const msg =
       err instanceof Error ? err.message : 'Okänt fel vid återställning'

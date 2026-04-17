@@ -3,7 +3,11 @@ import { Printer } from 'lucide-react'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useAgingReceivables, useAgingPayables } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
-import type { AgingReport, AgingBucket, AgingItem } from '../../main/services/aging-service'
+import type {
+  AgingReport,
+  AgingBucket,
+  AgingItem,
+} from '../../main/services/aging-service'
 
 function formatKr(ore: number): string {
   return (ore / 100).toLocaleString('sv-SE', {
@@ -40,9 +44,15 @@ function BucketTable({ bucket }: { bucket: AgingBucket }) {
             <tr key={item.id} className="border-b last:border-0">
               <td className="py-1.5 pr-3">{item.identifier}</td>
               <td className="py-1.5 pr-3">{item.counterpartyName}</td>
-              <td className="py-1.5 pr-3 text-right">{formatKr(item.totalAmountOre)}</td>
-              <td className="py-1.5 pr-3 text-right">{formatKr(item.paidAmountOre)}</td>
-              <td className="py-1.5 pr-3 text-right font-medium">{formatKr(item.remainingOre)}</td>
+              <td className="py-1.5 pr-3 text-right">
+                {formatKr(item.totalAmountOre)}
+              </td>
+              <td className="py-1.5 pr-3 text-right">
+                {formatKr(item.paidAmountOre)}
+              </td>
+              <td className="py-1.5 pr-3 text-right font-medium">
+                {formatKr(item.remainingOre)}
+              </td>
               <td className="py-1.5 pr-3">{item.dueDate}</td>
               <td className="py-1.5 text-right">{item.daysOverdue}</td>
             </tr>
@@ -79,9 +89,15 @@ function NoDueDateTable({ items }: { items: AgingItem[] }) {
             <tr key={item.id} className="border-b last:border-0">
               <td className="py-1.5 pr-3">{item.identifier}</td>
               <td className="py-1.5 pr-3">{item.counterpartyName}</td>
-              <td className="py-1.5 pr-3 text-right">{formatKr(item.totalAmountOre)}</td>
-              <td className="py-1.5 pr-3 text-right">{formatKr(item.paidAmountOre)}</td>
-              <td className="py-1.5 text-right font-medium">{formatKr(item.remainingOre)}</td>
+              <td className="py-1.5 pr-3 text-right">
+                {formatKr(item.totalAmountOre)}
+              </td>
+              <td className="py-1.5 pr-3 text-right">
+                {formatKr(item.paidAmountOre)}
+              </td>
+              <td className="py-1.5 text-right font-medium">
+                {formatKr(item.remainingOre)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -119,7 +135,9 @@ function AgingReportView({ report }: { report: AgingReport }) {
 
 export function PageAgingReport() {
   const { activeFiscalYear } = useFiscalYearContext()
-  const [activeTab, setActiveTab] = useState<'receivables' | 'payables'>('receivables')
+  const [activeTab, setActiveTab] = useState<'receivables' | 'payables'>(
+    'receivables',
+  )
 
   const { data: receivables } = useAgingReceivables(activeFiscalYear?.id)
   const { data: payables } = useAgingPayables(activeFiscalYear?.id)
@@ -170,8 +188,8 @@ export function PageAgingReport() {
         </div>
 
         <p className="mb-4 text-xs text-muted-foreground">
-          Per datum: {currentReport?.asOfDate ?? '–'}. Visar utestående fakturor/skulder — retroaktivt
-          betalda poster exkluderas.
+          Per datum: {currentReport?.asOfDate ?? '–'}. Visar utestående
+          fakturor/skulder — retroaktivt betalda poster exkluderas.
         </p>
 
         {currentReport ? (

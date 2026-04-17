@@ -9,7 +9,10 @@ interface TooltipProps {
  * A11y-correct tooltip: visible on hover AND focus.
  * Uses aria-describedby (not title attribute).
  */
-export const Tooltip = memo(function Tooltip({ content, children }: TooltipProps) {
+export const Tooltip = memo(function Tooltip({
+  content,
+  children,
+}: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const tooltipId = useId()
 

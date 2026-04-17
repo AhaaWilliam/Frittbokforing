@@ -17,7 +17,10 @@ import type {
   IpcResult,
   ErrorCode,
 } from '../../shared/types'
-import { mapUniqueConstraintError, EXPENSE_UNIQUE_MAPPINGS } from './error-helpers'
+import {
+  mapUniqueConstraintError,
+  EXPENSE_UNIQUE_MAPPINGS,
+} from './error-helpers'
 import log from 'electron-log'
 import {
   SaveExpenseDraftSchema,
@@ -116,12 +119,20 @@ export function saveExpenseDraft(
       if (expenseType === 'credit_note' && data.credits_expense_id) {
         const original = db
           .prepare('SELECT id, status FROM expenses WHERE id = ?')
-          .get(data.credits_expense_id) as { id: number; status: string } | undefined
+          .get(data.credits_expense_id) as
+          | { id: number; status: string }
+          | undefined
         if (!original) {
-          throw { code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const, error: 'Originalkostnaden hittades inte.' }
+          throw {
+            code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND' as const,
+            error: 'Originalkostnaden hittades inte.',
+          }
         }
         if (original.status === 'draft') {
-          throw { code: 'VALIDATION_ERROR' as const, error: 'Kan inte kreditera ett utkast.' }
+          throw {
+            code: 'VALIDATION_ERROR' as const,
+            error: 'Kan inte kreditera ett utkast.',
+          }
         }
       }
 
@@ -207,7 +218,9 @@ export function getExpenseDraft(
   if (!expense) return { success: true, data: null }
 
   const lines = db
-    .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
+    .prepare(
+      'SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC',
+    )
     .all(id) as ExpenseLine[]
 
   return { success: true, data: { ...expense, lines } }
@@ -367,7 +380,9 @@ export function finalizeExpense(
 
       // 2. Lines
       const lines = db
-        .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
+        .prepare(
+          'SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC',
+        )
         .all(id) as ExpenseLine[]
       if (lines.length === 0)
         throw { code: 'VALIDATION_ERROR', error: 'Kostnaden har inga rader' }
@@ -467,8 +482,12 @@ export function finalizeExpense(
       let description = `${label} — ${cp.name}`
       if (isCreditNote && expense.credits_expense_id) {
         const orig = db
-          .prepare('SELECT supplier_invoice_number, description FROM expenses WHERE id = ?')
-          .get(expense.credits_expense_id) as { supplier_invoice_number: string | null; description: string } | undefined
+          .prepare(
+            'SELECT supplier_invoice_number, description FROM expenses WHERE id = ?',
+          )
+          .get(expense.credits_expense_id) as
+          | { supplier_invoice_number: string | null; description: string }
+          | undefined
         if (orig) {
           const ref = orig.supplier_invoice_number ?? orig.description
           description += ` (avser kostnad: ${ref})`
@@ -523,7 +542,14 @@ export function finalizeExpense(
 
       // Öresutjämning 3740
       if (diff > 0) {
-        insertLine.run(journalEntryId, lineNum++, '3740', isCreditNote ? 0 : diff, isCreditNote ? diff : 0, description)
+        insertLine.run(
+          journalEntryId,
+          lineNum++,
+          '3740',
+          isCreditNote ? 0 : diff,
+          isCreditNote ? diff : 0,
+          description,
+        )
         totalDebit += diff
       } else if (diff < 0) {
         insertLine.run(
@@ -564,10 +590,19 @@ export function finalizeExpense(
         data: { id, verification_number: nextVer },
       }
     })()
-    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* rebuild failure non-fatal */
+    }
     return result
   } catch (err: unknown) {
-    const e = err as { code?: string; error?: string; message?: string; field?: string }
+    const e = err as {
+      code?: string
+      error?: string
+      message?: string
+      field?: string
+    }
     if (e.code && e.error) {
       return {
         success: false,
@@ -682,7 +717,8 @@ export function _payExpenseTx(
     if (bankFeeOre >= effectivePayment) {
       throw {
         code: 'VALIDATION_ERROR',
-        error: 'Bankavgiften kan inte vara lika med eller överstiga betalningsbeloppet.',
+        error:
+          'Bankavgiften kan inte vara lika med eller överstiga betalningsbeloppet.',
         field: 'bank_fee_ore',
       }
     }
@@ -694,9 +730,7 @@ export function _payExpenseTx(
     .prepare(
       'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
     )
-    .get(input.payment_date, input.payment_date) as
-    | { id: number }
-    | undefined
+    .get(input.payment_date, input.payment_date) as { id: number } | undefined
   if (!paymentYear) {
     throw {
       code: 'VALIDATION_ERROR',
@@ -769,28 +803,65 @@ export function _payExpenseTx(
   )
 
   // DEBET: 2440 Leverantörsskulder
-  insertLine.run(journalEntryId, lineNum++, '2440', actualPayablesDebit, 0, description)
+  insertLine.run(
+    journalEntryId,
+    lineNum++,
+    '2440',
+    actualPayablesDebit,
+    0,
+    description,
+  )
 
   // DEBET: 6570 Bankkostnader (om avgift > 0)
   if (bankFeeOre > 0) {
-    insertLine.run(journalEntryId, lineNum++, BANK_FEE_ACCOUNT, bankFeeOre, 0, description)
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      BANK_FEE_ACCOUNT,
+      bankFeeOre,
+      0,
+      description,
+    )
   }
 
   // DEBET: 3740 Öresutjämning (om vi betalar MER)
   if (roundingAmount > 0) {
-    insertLine.run(journalEntryId, lineNum++, '3740', roundingAmount, 0, description)
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      '3740',
+      roundingAmount,
+      0,
+      description,
+    )
   }
 
   // KREDIT: Bankkonto (pengar lämnar företaget + bankavgift)
-  insertLine.run(journalEntryId, lineNum++, input.account_number, 0, effectivePayment + bankFeeOre, description)
+  insertLine.run(
+    journalEntryId,
+    lineNum++,
+    input.account_number,
+    0,
+    effectivePayment + bankFeeOre,
+    description,
+  )
 
   // KREDIT: 3740 Öresutjämning (om vi betalar MINDRE)
   if (roundingAmount < 0) {
-    insertLine.run(journalEntryId, lineNum++, '3740', 0, Math.abs(roundingAmount), description)
+    insertLine.run(
+      journalEntryId,
+      lineNum++,
+      '3740',
+      0,
+      Math.abs(roundingAmount),
+      description,
+    )
   }
 
   // 13. Book journal entry
-  db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(journalEntryId)
+  db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(
+    journalEntryId,
+  )
 
   // 14. INSERT expense_payment
   const paymentResult = db
@@ -859,15 +930,31 @@ export function payExpense(
 
   try {
     const result = db.transaction(() => _payExpenseTx(db, input))()
-    try { rebuildSearchIndex(db) } catch { /* rebuild failure non-fatal */ }
-    return { success: true, data: { expense: result.expense, payment: result.payment } }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* rebuild failure non-fatal */
+    }
+    return {
+      success: true,
+      data: { expense: result.expense, payment: result.payment },
+    }
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string }
     if (e.code) {
-      return { success: false, error: e.error ?? 'Betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
+      return {
+        success: false,
+        error: e.error ?? 'Betalning misslyckades.',
+        code: e.code as ErrorCode,
+        field: e.field,
+      }
     }
     log.error('[expense-service] payExpense failed:', err)
-    return { success: false, error: 'Betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
+    return {
+      success: false,
+      error: 'Betalning misslyckades.',
+      code: 'UNEXPECTED_ERROR',
+    }
   }
 }
 
@@ -891,25 +978,45 @@ export function payExpensesBulk(
 ): IpcResult<BulkPaymentResult> {
   // Pre-flight validations
   if (input.payments.length < 1) {
-    return { success: false, error: 'Minst en betalning krävs.', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Minst en betalning krävs.',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
-  const ids = input.payments.map(p => p.expense_id)
+  const ids = input.payments.map((p) => p.expense_id)
   if (new Set(ids).size !== ids.length) {
-    return { success: false, error: 'Dubbletter av kostnad-id.', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Dubbletter av kostnad-id.',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
   const today = todayLocalFromNow()
   if (input.payment_date > today) {
-    return { success: false, error: 'Betalningsdatum kan inte vara i framtiden.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+    return {
+      success: false,
+      error: 'Betalningsdatum kan inte vara i framtiden.',
+      code: 'VALIDATION_ERROR',
+      field: 'payment_date',
+    }
   }
 
   // Find fiscal year
   const paymentYear = db
-    .prepare('SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?')
+    .prepare(
+      'SELECT id FROM fiscal_years WHERE start_date <= ? AND end_date >= ?',
+    )
     .get(input.payment_date, input.payment_date) as { id: number } | undefined
   if (!paymentYear) {
-    return { success: false, error: 'Betalningsdatum faller inte i något räkenskapsår.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+    return {
+      success: false,
+      error: 'Betalningsdatum faller inte i något räkenskapsår.',
+      code: 'VALIDATION_ERROR',
+      field: 'payment_date',
+    }
   }
 
   // M6 chronology check at batch level — B-serie
@@ -921,33 +1028,55 @@ export function payExpensesBulk(
     )
     .get(paymentYear.id) as { journal_date: string } | undefined
   if (lastEntry && input.payment_date < lastEntry.journal_date) {
-    return { success: false, error: 'Datum före senaste verifikation i B-serien.', code: 'VALIDATION_ERROR', field: 'payment_date' }
+    return {
+      success: false,
+      error: 'Datum före senaste verifikation i B-serien.',
+      code: 'VALIDATION_ERROR',
+      field: 'payment_date',
+    }
   }
 
   const bankFeeOre = input.bank_fee_ore ?? 0
   if (bankFeeOre > 0) {
-    const totalPayments = input.payments.reduce((sum, p) => sum + p.amount_ore, 0)
+    const totalPayments = input.payments.reduce(
+      (sum, p) => sum + p.amount_ore,
+      0,
+    )
     if (bankFeeOre >= totalPayments) {
-      return { success: false, error: 'Bankavgiften kan inte vara lika med eller överstiga summan av alla betalningar.', code: 'VALIDATION_ERROR', field: 'bank_fee_ore' }
+      return {
+        success: false,
+        error:
+          'Bankavgiften kan inte vara lika med eller överstiga summan av alla betalningar.',
+        code: 'VALIDATION_ERROR',
+        field: 'bank_fee_ore',
+      }
     }
   }
 
   try {
     const result = db.transaction(() => {
-      const succeeded: Array<{ id: number; payment_id: number; journal_entry_id: number }> = []
+      const succeeded: Array<{
+        id: number
+        payment_id: number
+        journal_entry_id: number
+      }> = []
       const failed: Array<{ id: number; error: string; code: string }> = []
 
       for (const p of input.payments) {
         try {
           db.transaction(() => {
-            const txResult = _payExpenseTx(db, {
-              expense_id: p.expense_id,
-              amount_ore: p.amount_ore,
-              payment_date: input.payment_date,
-              payment_method: 'bank',
-              account_number: input.account_number,
-              bank_fee_ore: 0,
-            }, true) // skipChronologyCheck — already validated at batch level
+            const txResult = _payExpenseTx(
+              db,
+              {
+                expense_id: p.expense_id,
+                amount_ore: p.amount_ore,
+                payment_date: input.payment_date,
+                payment_method: 'bank',
+                account_number: input.account_number,
+                bank_fee_ore: 0,
+              },
+              true,
+            ) // skipChronologyCheck — already validated at batch level
             succeeded.push({
               id: p.expense_id,
               payment_id: txResult.payment.id,
@@ -974,7 +1103,8 @@ export function payExpensesBulk(
         }
       }
 
-      const batchStatus: 'completed' | 'partial' = failed.length === 0 ? 'completed' : 'partial'
+      const batchStatus: 'completed' | 'partial' =
+        failed.length === 0 ? 'completed' : 'partial'
       const batchResult = db
         .prepare(
           `INSERT INTO payment_batches (
@@ -992,7 +1122,9 @@ export function payExpensesBulk(
         )
       const batchId = Number(batchResult.lastInsertRowid)
 
-      const updateBatch = db.prepare('UPDATE expense_payments SET payment_batch_id = ? WHERE id = ?')
+      const updateBatch = db.prepare(
+        'UPDATE expense_payments SET payment_batch_id = ? WHERE id = ?',
+      )
       for (const s of succeeded) {
         updateBatch.run(batchId, s.payment_id)
       }
@@ -1033,11 +1165,29 @@ export function payExpensesBulk(
             debit_ore, credit_ore, description
           ) VALUES (?, ?, ?, ?, ?, ?)`,
         )
-        insertLine.run(bankFeeJournalEntryId, 1, '6570', bankFeeOre, 0, description)
-        insertLine.run(bankFeeJournalEntryId, 2, input.account_number, 0, bankFeeOre, description)
+        insertLine.run(
+          bankFeeJournalEntryId,
+          1,
+          '6570',
+          bankFeeOre,
+          0,
+          description,
+        )
+        insertLine.run(
+          bankFeeJournalEntryId,
+          2,
+          input.account_number,
+          0,
+          bankFeeOre,
+          description,
+        )
 
-        db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(bankFeeJournalEntryId)
-        db.prepare('UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?').run(bankFeeJournalEntryId, batchId)
+        db.prepare(
+          "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
+        ).run(bankFeeJournalEntryId)
+        db.prepare(
+          'UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?',
+        ).run(bankFeeJournalEntryId, batchId)
       }
 
       return {
@@ -1053,10 +1203,19 @@ export function payExpensesBulk(
   } catch (err: unknown) {
     const e = err as { code?: string; error?: string; field?: string }
     if (e.code) {
-      return { success: false, error: e.error ?? 'Bulk-betalning misslyckades.', code: e.code as ErrorCode, field: e.field }
+      return {
+        success: false,
+        error: e.error ?? 'Bulk-betalning misslyckades.',
+        code: e.code as ErrorCode,
+        field: e.field,
+      }
     }
     log.error('[expense-service] payExpensesBulk failed:', err)
-    return { success: false, error: 'Bulk-betalning misslyckades.', code: 'UNEXPECTED_ERROR' }
+    return {
+      success: false,
+      error: 'Bulk-betalning misslyckades.',
+      code: 'UNEXPECTED_ERROR',
+    }
   }
 }
 
@@ -1194,7 +1353,9 @@ export function listExpenses(
     ORDER BY ${sortCol} ${sortDir}
     LIMIT ? OFFSET ?`,
     )
-    .all(...params, limit, offset) as (ExpenseListItem & { total_paid: number })[]
+    .all(...params, limit, offset) as (ExpenseListItem & {
+    total_paid: number
+  })[]
 
   // Compute remaining in TypeScript
   const expenses: ExpenseListItem[] = rows.map((row) => ({
@@ -1242,7 +1403,9 @@ export function getExpense(
   if (!expense) return { success: true, data: null }
 
   const lines = db
-    .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC')
+    .prepare(
+      'SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order ASC',
+    )
     .all(id) as ExpenseLine[]
 
   return {
@@ -1269,7 +1432,8 @@ export function createExpenseCreditNoteDraft(
     if (!original) {
       return {
         success: false,
-        error: 'Originalkostnaden hittades inte eller är fortfarande ett utkast.',
+        error:
+          'Originalkostnaden hittades inte eller är fortfarande ett utkast.',
         code: 'CREDIT_NOTE_ORIGINAL_NOT_FOUND',
       }
     }
@@ -1297,7 +1461,9 @@ export function createExpenseCreditNoteDraft(
 
     // Hämta originalens rader
     const originalLines = db
-      .prepare('SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order')
+      .prepare(
+        'SELECT * FROM expense_lines WHERE expense_id = ? ORDER BY sort_order',
+      )
       .all(input.original_expense_id) as ExpenseLine[]
 
     if (originalLines.length === 0) {

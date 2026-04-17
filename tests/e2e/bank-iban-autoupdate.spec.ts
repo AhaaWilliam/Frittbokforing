@@ -62,14 +62,17 @@ test('S57 D2: manuell match → counterparty.bank_account uppdateras från TX-IB
     })
 
     // Verifiera att counterparty saknar IBAN initialt
-    const before = await ctx.window.evaluate(
-      async (id) => {
-        return await (
-          window as unknown as { __testApi: { getCounterpartyById: (i: number) => Promise<{ bank_account: string | null }> } }
-        ).__testApi.getCounterpartyById(id)
-      },
-      custId,
-    )
+    const before = await ctx.window.evaluate(async (id) => {
+      return await (
+        window as unknown as {
+          __testApi: {
+            getCounterpartyById: (
+              i: number,
+            ) => Promise<{ bank_account: string | null }>
+          }
+        }
+      ).__testApi.getCounterpartyById(id)
+    }, custId)
     expect(before?.bank_account).toBeNull()
 
     // Importera camt.053
@@ -77,26 +80,37 @@ test('S57 D2: manuell match → counterparty.bank_account uppdateras från TX-IB
       async (p) => {
         return await (
           window as unknown as {
-            api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> }
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
           }
         ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     expect(importResult.success).toBe(true)
     const stmtId = importResult.data!.statement_id
 
     // Hämta tx_id
-    const detail = await ctx.window.evaluate(
-      async (id) => {
-        return await (
-          window as unknown as {
-            api: { getBankStatement: (d: { statement_id: number }) => Promise<{ success: boolean; data?: { transactions: Array<{ id: number }> } }> }
+    const detail = await ctx.window.evaluate(async (id) => {
+      return await (
+        window as unknown as {
+          api: {
+            getBankStatement: (d: { statement_id: number }) => Promise<{
+              success: boolean
+              data?: { transactions: Array<{ id: number }> }
+            }>
           }
-        ).api.getBankStatement({ statement_id: id })
-      },
-      stmtId,
-    )
+        }
+      ).api.getBankStatement({ statement_id: id })
+    }, stmtId)
     const txId = detail.data!.transactions[0].id
 
     // Match via IPC (snabbare och stabilare än UI för D2)
@@ -104,38 +118,44 @@ test('S57 D2: manuell match → counterparty.bank_account uppdateras från TX-IB
       async (p) => {
         return await (
           window as unknown as {
-            api: { matchBankTransaction: (d: unknown) => Promise<{ success: boolean }> }
+            api: {
+              matchBankTransaction: (
+                d: unknown,
+              ) => Promise<{ success: boolean }>
+            }
           }
         ).api.matchBankTransaction(p)
       },
       {
         bank_transaction_id: txId,
         matched_entity_type: 'invoice' as const,
-        matched_entity_id: (await ctx.window.evaluate(
-          async (fyId) => {
-            const r = await (
-              window as unknown as {
-                __testApi: { getInvoices: (id?: number) => Promise<Array<{ id: number }>> }
+        matched_entity_id: await ctx.window.evaluate(async (fyId) => {
+          const r = await (
+            window as unknown as {
+              __testApi: {
+                getInvoices: (id?: number) => Promise<Array<{ id: number }>>
               }
-            ).__testApi.getInvoices(fyId)
-            return r[0].id
-          },
-          fiscalYearId,
-        )),
+            }
+          ).__testApi.getInvoices(fyId)
+          return r[0].id
+        }, fiscalYearId),
         payment_account: '1930',
       },
     )
     expect(matchResult.success).toBe(true)
 
     // Assert counterparty.bank_account är satt till normaliserad IBAN
-    const after = await ctx.window.evaluate(
-      async (id) => {
-        return await (
-          window as unknown as { __testApi: { getCounterpartyById: (i: number) => Promise<{ bank_account: string | null }> } }
-        ).__testApi.getCounterpartyById(id)
-      },
-      custId,
-    )
+    const after = await ctx.window.evaluate(async (id) => {
+      return await (
+        window as unknown as {
+          __testApi: {
+            getCounterpartyById: (
+              i: number,
+            ) => Promise<{ bank_account: string | null }>
+          }
+        }
+      ).__testApi.getCounterpartyById(id)
+    }, custId)
     expect(after?.bank_account).toBe(NORMALIZED_IBAN)
   } finally {
     await ctx.cleanup()

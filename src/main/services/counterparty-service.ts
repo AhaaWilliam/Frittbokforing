@@ -5,7 +5,10 @@ import {
   CreateCounterpartyInputSchema,
   UpdateCounterpartyInputSchema,
 } from '../ipc-schemas'
-import { mapUniqueConstraintError, COUNTERPARTY_UNIQUE_MAPPINGS } from './error-helpers'
+import {
+  mapUniqueConstraintError,
+  COUNTERPARTY_UNIQUE_MAPPINGS,
+} from './error-helpers'
 import { rebuildSearchIndex } from './search-service'
 import log from 'electron-log'
 
@@ -41,7 +44,8 @@ export function listCounterparties(
     }
   }
   if (input.search) {
-    sql += " AND (name LIKE ? ESCAPE '!' OR org_number LIKE ? ESCAPE '!' OR vat_number LIKE ? ESCAPE '!')"
+    sql +=
+      " AND (name LIKE ? ESCAPE '!' OR org_number LIKE ? ESCAPE '!' OR vat_number LIKE ? ESCAPE '!')"
     const term = `%${escapeLikePattern(input.search)}%`
     params.push(term, term, term)
   }
@@ -108,7 +112,11 @@ export function createCounterparty(
         error: 'Kunde inte hämta skapad kund',
         code: 'UNEXPECTED_ERROR',
       }
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: cp }
   } catch (err: unknown) {
     const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)
@@ -197,7 +205,11 @@ export function updateCounterparty(
     }
 
     const updated = getCounterparty(db, id)!
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: updated }
   } catch (err: unknown) {
     const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)

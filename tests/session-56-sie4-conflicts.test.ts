@@ -36,7 +36,10 @@ function buildSie4Buffer(lines: string[]): Buffer {
   return iconv.encode(content, 'cp437')
 }
 
-function seedExistingCompany(db: Database.Database, accountOverrides: Array<{ number: string; name: string }>): void {
+function seedExistingCompany(
+  db: Database.Database,
+  accountOverrides: Array<{ number: string; name: string }>,
+): void {
   createCompany(db, {
     name: 'Konflikt AB',
     org_number: '556036-0793',
@@ -47,14 +50,21 @@ function seedExistingCompany(db: Database.Database, accountOverrides: Array<{ nu
     fiscal_year_end: '2025-12-31',
   })
   for (const o of accountOverrides) {
-    db.prepare('UPDATE accounts SET name = ? WHERE account_number = ?').run(o.name, o.number)
+    db.prepare('UPDATE accounts SET name = ? WHERE account_number = ?').run(
+      o.name,
+      o.number,
+    )
   }
 }
 
 describe('S56 B1: detectAccountConflicts', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
-  afterEach(() => { db.close() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
+  afterEach(() => {
+    db.close()
+  })
 
   it('1. Namnkonflikt vid merge → conflicts[] populerad', () => {
     seedExistingCompany(db, [{ number: '1930', name: 'Bank' }])
@@ -119,8 +129,12 @@ describe('S56 B1: detectAccountConflicts', () => {
 
 describe('S56 B2: importSie4 conflict_resolutions', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
-  afterEach(() => { db.close() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
+  afterEach(() => {
+    db.close()
+  })
 
   function makeBuf(extraLines: string[] = []): Buffer {
     return buildSie4Buffer([
@@ -138,39 +152,58 @@ describe('S56 B2: importSie4 conflict_resolutions', () => {
   it('1. keep → existerande namn lämnas oförändrat', () => {
     seedExistingCompany(db, [{ number: '1930', name: 'Bank Original' }])
     const parsed = parseSie4(makeBuf())
-    const r = importSie4(db, parsed, { strategy: 'merge', conflict_resolutions: { '1930': 'keep' } })
+    const r = importSie4(db, parsed, {
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'keep' },
+    })
     expect(r.success).toBe(true)
-    const row = db.prepare("SELECT name FROM accounts WHERE account_number='1930'").get() as { name: string }
+    const row = db
+      .prepare("SELECT name FROM accounts WHERE account_number='1930'")
+      .get() as { name: string }
     expect(row.name).toBe('Bank Original')
   })
 
   it('2. overwrite → namn uppdateras', () => {
     seedExistingCompany(db, [{ number: '1930', name: 'Bank Original' }])
     const parsed = parseSie4(makeBuf())
-    const r = importSie4(db, parsed, { strategy: 'merge', conflict_resolutions: { '1930': 'overwrite' } })
+    const r = importSie4(db, parsed, {
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'overwrite' },
+    })
     expect(r.success).toBe(true)
-    const row = db.prepare("SELECT name FROM accounts WHERE account_number='1930'").get() as { name: string }
+    const row = db
+      .prepare("SELECT name FROM accounts WHERE account_number='1930'")
+      .get() as { name: string }
     expect(row.name).toBe('Företagskonto SIE')
   })
 
   it('3. skip på använt konto → VALIDATION_ERROR utan partial commit', () => {
     seedExistingCompany(db, [{ number: '1930', name: 'Bank Original' }])
-    const parsed = parseSie4(makeBuf([
-      '#VER A 1 20250115 "Test"',
-      '{',
-      '#TRANS 1930 {} 1000',
-      '#TRANS 3001 {} -1000',
-      '}',
-    ]))
-    const r = importSie4(db, parsed, { strategy: 'merge', conflict_resolutions: { '1930': 'skip' } })
+    const parsed = parseSie4(
+      makeBuf([
+        '#VER A 1 20250115 "Test"',
+        '{',
+        '#TRANS 1930 {} 1000',
+        '#TRANS 3001 {} -1000',
+        '}',
+      ]),
+    )
+    const r = importSie4(db, parsed, {
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'skip' },
+    })
     expect(r.success).toBe(false)
     if (r.success) return
     expect(r.code).toBe('VALIDATION_ERROR')
     // Inget partial commit: original-namn kvar
-    const row = db.prepare("SELECT name FROM accounts WHERE account_number='1930'").get() as { name: string }
+    const row = db
+      .prepare("SELECT name FROM accounts WHERE account_number='1930'")
+      .get() as { name: string }
     expect(row.name).toBe('Bank Original')
     // Inga journal_entries skapade
-    const entries = db.prepare('SELECT COUNT(*) AS c FROM journal_entries').get() as { c: number }
+    const entries = db
+      .prepare('SELECT COUNT(*) AS c FROM journal_entries')
+      .get() as { c: number }
     expect(entries.c).toBe(0)
   })
 
@@ -178,9 +211,14 @@ describe('S56 B2: importSie4 conflict_resolutions', () => {
     seedExistingCompany(db, [{ number: '1930', name: 'Bank Original' }])
     // Filen har 1930 men inga verifikat refererar det
     const parsed = parseSie4(makeBuf())
-    const r = importSie4(db, parsed, { strategy: 'merge', conflict_resolutions: { '1930': 'skip' } })
+    const r = importSie4(db, parsed, {
+      strategy: 'merge',
+      conflict_resolutions: { '1930': 'skip' },
+    })
     expect(r.success).toBe(true)
-    const row = db.prepare("SELECT name FROM accounts WHERE account_number='1930'").get() as { name: string }
+    const row = db
+      .prepare("SELECT name FROM accounts WHERE account_number='1930'")
+      .get() as { name: string }
     expect(row.name).toBe('Bank Original')
   })
 
@@ -190,7 +228,9 @@ describe('S56 B2: importSie4 conflict_resolutions', () => {
     // Ingen conflict_resolutions alls — alla konflikter defaultar till keep
     const r = importSie4(db, parsed, { strategy: 'merge' })
     expect(r.success).toBe(true)
-    const row = db.prepare("SELECT name FROM accounts WHERE account_number='1930'").get() as { name: string }
+    const row = db
+      .prepare("SELECT name FROM accounts WHERE account_number='1930'")
+      .get() as { name: string }
     expect(row.name).toBe('Bank Original')
   })
 })

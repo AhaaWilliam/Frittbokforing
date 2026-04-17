@@ -10,7 +10,9 @@ import {
 
 describe('PaymentBatchValidateExportSchema', () => {
   it('accepts valid batch_id', () => {
-    expect(PaymentBatchValidateExportSchema.safeParse({ batch_id: 1 }).success).toBe(true)
+    expect(
+      PaymentBatchValidateExportSchema.safeParse({ batch_id: 1 }).success,
+    ).toBe(true)
   })
 
   it('rejects missing batch_id', () => {
@@ -20,11 +22,15 @@ describe('PaymentBatchValidateExportSchema', () => {
 
 describe('PaymentBatchExportPain001Schema', () => {
   it('accepts valid batch_id', () => {
-    expect(PaymentBatchExportPain001Schema.safeParse({ batch_id: 1 }).success).toBe(true)
+    expect(
+      PaymentBatchExportPain001Schema.safeParse({ batch_id: 1 }).success,
+    ).toBe(true)
   })
 
   it('rejects negative batch_id', () => {
-    expect(PaymentBatchExportPain001Schema.safeParse({ batch_id: -1 }).success).toBe(false)
+    expect(
+      PaymentBatchExportPain001Schema.safeParse({ batch_id: -1 }).success,
+    ).toBe(false)
   })
 })
 
@@ -36,37 +42,49 @@ describe('CreateCounterpartyInputSchema — payment fields', () => {
 
   it('accepts bankgiro with hyphen', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, bankgiro: '1234-5678' }).success,
+      CreateCounterpartyInputSchema.safeParse({
+        ...base,
+        bankgiro: '1234-5678',
+      }).success,
     ).toBe(true)
   })
 
   it('accepts bankgiro without hyphen', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, bankgiro: '12345678' }).success,
+      CreateCounterpartyInputSchema.safeParse({ ...base, bankgiro: '12345678' })
+        .success,
     ).toBe(true)
   })
 
   it('rejects bankgiro with letters', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, bankgiro: '1234-ABCD' }).success,
+      CreateCounterpartyInputSchema.safeParse({
+        ...base,
+        bankgiro: '1234-ABCD',
+      }).success,
     ).toBe(false)
   })
 
   it('accepts plusgiro', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, plusgiro: '12345678' }).success,
+      CreateCounterpartyInputSchema.safeParse({ ...base, plusgiro: '12345678' })
+        .success,
     ).toBe(true)
   })
 
   it('accepts bank_clearing (4 digits)', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, bank_clearing: '1234' }).success,
+      CreateCounterpartyInputSchema.safeParse({
+        ...base,
+        bank_clearing: '1234',
+      }).success,
     ).toBe(true)
   })
 
   it('rejects bank_clearing with wrong length', () => {
     expect(
-      CreateCounterpartyInputSchema.safeParse({ ...base, bank_clearing: '123' }).success,
+      CreateCounterpartyInputSchema.safeParse({ ...base, bank_clearing: '123' })
+        .success,
     ).toBe(false)
   })
 

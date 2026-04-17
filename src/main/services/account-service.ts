@@ -1,6 +1,9 @@
 import type Database from 'better-sqlite3'
 import type { Account, IpcResult, ErrorCode } from '../../shared/types'
-import { mapUniqueConstraintError, ACCOUNT_UNIQUE_MAPPINGS } from './error-helpers'
+import {
+  mapUniqueConstraintError,
+  ACCOUNT_UNIQUE_MAPPINGS,
+} from './error-helpers'
 
 export function listAccounts(
   db: Database.Database,

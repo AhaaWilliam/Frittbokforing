@@ -39,12 +39,12 @@ let fiscalYearId: number
 
 function seedCompany(testDb: Database.Database) {
   createCompany(testDb, VALID_COMPANY)
-  const company = testDb
-    .prepare('SELECT id FROM companies LIMIT 1')
-    .get() as { id: number }
-  const fy = testDb
-    .prepare('SELECT id FROM fiscal_years LIMIT 1')
-    .get() as { id: number }
+  const company = testDb.prepare('SELECT id FROM companies LIMIT 1').get() as {
+    id: number
+  }
+  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   return { companyId: company.id, fiscalYearId: fy.id }
 }
 
@@ -71,7 +71,13 @@ function createBookedEntry(
         `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
        VALUES (?, ?, ?, ?, ?)`,
       )
-      .run(jeId, i + 1, lines[i].account_number, lines[i].debit, lines[i].credit)
+      .run(
+        jeId,
+        i + 1,
+        lines[i].account_number,
+        lines[i].debit,
+        lines[i].credit,
+      )
   }
   testDb
     .prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?")
@@ -104,9 +110,7 @@ describe('GAP M09-1: Exakt bolagsskatt-beräkning', () => {
 
     const result = getTaxForecast(db, fiscalYearId)
     expect(result.operatingProfitOre).toBe(100_000_00)
-    expect(result.corporateTaxOre).toBe(
-      Math.floor((100_000_00 * 206) / 1000),
-    )
+    expect(result.corporateTaxOre).toBe(Math.floor((100_000_00 * 206) / 1000))
     expect(result.corporateTaxOre).toBe(20_600_00)
   })
 
@@ -344,10 +348,7 @@ describe('GAP M10-4: Timezone-säker datumparsning', () => {
   it('vat-report-service uses parseInt(substring), not new Date()', async () => {
     // Static code analysis: verify vat-report-service.ts
     const { readFileSync } = await import('fs')
-    const src = readFileSync(
-      'src/main/services/vat-report-service.ts',
-      'utf-8',
-    )
+    const src = readFileSync('src/main/services/vat-report-service.ts', 'utf-8')
     // Should use parseInt/substring for month extraction
     expect(src).toContain('parseInt')
     expect(src).toContain('substring')

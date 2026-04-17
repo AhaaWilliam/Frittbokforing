@@ -33,7 +33,10 @@ export function Pagination({
 
   return (
     <div className="flex items-center justify-between gap-4 border-t px-4 py-2 text-sm">
-      <span className="text-muted-foreground" data-testid={`${testIdPrefix}-summary`}>
+      <span
+        className="text-muted-foreground"
+        data-testid={`${testIdPrefix}-summary`}
+      >
         Visar {from}–{to} av {totalItems} {label}
       </span>
       <div className="flex items-center gap-2">

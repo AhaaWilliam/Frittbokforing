@@ -180,7 +180,9 @@ export function exportSie5(
 
   // ═══ Build XML ═══
 
-  const now = getNow().toISOString().replace(/\.\d+Z$/, 'Z')
+  const now = getNow()
+    .toISOString()
+    .replace(/\.\d+Z$/, 'Z')
 
   const doc = create({ version: '1.0', encoding: 'UTF-8' })
   const sie = doc

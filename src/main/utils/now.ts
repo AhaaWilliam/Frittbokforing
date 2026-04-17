@@ -27,7 +27,9 @@ export function getNow(): Date {
   if (Number.isNaN(parsed.getTime())) {
     if (!warnedOnce) {
       warnedOnce = true
-      console.warn(`[getNow] FRITT_NOW="${override}" is not a valid ISO date — falling back to real time`)
+      console.warn(
+        `[getNow] FRITT_NOW="${override}" is not a valid ISO date — falling back to real time`,
+      )
     }
     return new Date()
   }

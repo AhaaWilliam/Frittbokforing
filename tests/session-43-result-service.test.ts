@@ -471,7 +471,9 @@ describe('validateResultConfigInvariants', () => {
           : [...g.lines],
     }))
 
-    expect(() => validateResultConfigInvariants(broken)).toThrow(/sign mismatch/)
+    expect(() => validateResultConfigInvariants(broken)).toThrow(
+      /sign mismatch/,
+    )
   })
 })
 

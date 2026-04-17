@@ -57,20 +57,40 @@ test('S55 A7c: full-stack match skapar A-serie-verifikat', async () => {
     // Importera bank-statement
     const importResult = await ctx.window.evaluate(
       async (p) => {
-        return await (window as unknown as { api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number; transaction_count: number }; error?: string }> } }).api.importBankStatement(p)
+        return await (
+          window as unknown as {
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number; transaction_count: number }
+                error?: string
+              }>
+            }
+          }
+        ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     expect(importResult.success).toBe(true)
     const stmtId = importResult.data!.statement_id
 
     // Läs ut bank_transaction_id
-    const detail = await ctx.window.evaluate(
-      async (id) => {
-        return await (window as unknown as { api: { getBankStatement: (d: { statement_id: number }) => Promise<{ success: boolean; data?: { transactions: Array<{ id: number; amount_ore: number }> } }> } }).api.getBankStatement({ statement_id: id })
-      },
-      stmtId,
-    )
+    const detail = await ctx.window.evaluate(async (id) => {
+      return await (
+        window as unknown as {
+          api: {
+            getBankStatement: (d: { statement_id: number }) => Promise<{
+              success: boolean
+              data?: { transactions: Array<{ id: number; amount_ore: number }> }
+            }>
+          }
+        }
+      ).api.getBankStatement({ statement_id: id })
+    }, stmtId)
     const txs = detail.data!.transactions
     expect(txs.length).toBe(1)
     expect(txs[0].amount_ore).toBe(12_500)
@@ -79,7 +99,17 @@ test('S55 A7c: full-stack match skapar A-serie-verifikat', async () => {
     // Matcha
     const matchResult = await ctx.window.evaluate(
       async (p) => {
-        return await (window as unknown as { api: { matchBankTransaction: (d: unknown) => Promise<{ success: boolean; data?: { payment_id: number; journal_entry_id: number }; error?: string }> } }).api.matchBankTransaction(p)
+        return await (
+          window as unknown as {
+            api: {
+              matchBankTransaction: (d: unknown) => Promise<{
+                success: boolean
+                data?: { payment_id: number; journal_entry_id: number }
+                error?: string
+              }>
+            }
+          }
+        ).api.matchBankTransaction(p)
       },
       {
         bank_transaction_id: txId,

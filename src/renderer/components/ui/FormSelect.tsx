@@ -28,7 +28,10 @@ export function FormSelect<TForm extends object>({
 
   return (
     <div>
-      <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+      <label
+        htmlFor={fieldId}
+        className="block text-sm font-medium text-foreground mb-1"
+      >
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
@@ -52,7 +55,9 @@ export function FormSelect<TForm extends object>({
         ))}
       </select>
       {error && (
-        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">{error}</p>
+        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">
+          {error}
+        </p>
       )}
     </div>
   )

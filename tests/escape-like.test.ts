@@ -23,7 +23,9 @@ describe('escapeLikePattern', () => {
   })
 
   it('escapes mixed wildcards', () => {
-    expect(escapeLikePattern('50% rabatt_special!')).toBe('50!% rabatt!_special!!')
+    expect(escapeLikePattern('50% rabatt_special!')).toBe(
+      '50!% rabatt!_special!!',
+    )
   })
 
   it('Swedish characters unchanged', () => {

@@ -115,9 +115,7 @@ describe('SEC01: IPC Input-validering', () => {
         fiscal_year_id: 1,
         entry_date: '2026-03-15',
         description: 'Test',
-        lines: [
-          { account_number: '1930', debit_ore: 10000, credit_ore: 0 },
-        ],
+        lines: [{ account_number: '1930', debit_ore: 10000, credit_ore: 0 }],
         malicious: 'payload',
       })
       expect(result.success).toBe(false)

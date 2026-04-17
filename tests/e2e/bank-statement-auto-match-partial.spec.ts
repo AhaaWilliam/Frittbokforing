@@ -67,19 +67,28 @@ test('S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista', a
 
     // 3 fakturor, olika unit_price så totalerna blir 125/250/375 (×1.25 moms).
     const inv1 = await seedAndFinalizeInvoice(ctx.window, {
-      counterpartyId: custId, fiscalYearId,
-      invoiceDate: '2026-03-15', dueDate: '2026-04-14',
-      unitPriceOre: 10000, quantity: 1,
+      counterpartyId: custId,
+      fiscalYearId,
+      invoiceDate: '2026-03-15',
+      dueDate: '2026-04-14',
+      unitPriceOre: 10000,
+      quantity: 1,
     })
     const inv2 = await seedAndFinalizeInvoice(ctx.window, {
-      counterpartyId: custId, fiscalYearId,
-      invoiceDate: '2026-03-15', dueDate: '2026-04-14',
-      unitPriceOre: 20000, quantity: 1,
+      counterpartyId: custId,
+      fiscalYearId,
+      invoiceDate: '2026-03-15',
+      dueDate: '2026-04-14',
+      unitPriceOre: 20000,
+      quantity: 1,
     })
     const inv3 = await seedAndFinalizeInvoice(ctx.window, {
-      counterpartyId: custId, fiscalYearId,
-      invoiceDate: '2026-03-15', dueDate: '2026-04-14',
-      unitPriceOre: 30000, quantity: 1,
+      counterpartyId: custId,
+      fiscalYearId,
+      invoiceDate: '2026-03-15',
+      dueDate: '2026-04-14',
+      unitPriceOre: 30000,
+      quantity: 1,
     })
 
     // Importera bank-statement
@@ -87,11 +96,20 @@ test('S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista', a
       async (p) => {
         return await (
           window as unknown as {
-            api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> }
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
           }
         ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     expect(importResult.success).toBe(true)
     const stmtId = importResult.data!.statement_id
@@ -114,7 +132,9 @@ test('S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista', a
       (id) =>
         (
           window as unknown as {
-            __testApi: { setInvoiceStatus: (id: number, s: string) => Promise<unknown> }
+            __testApi: {
+              setInvoiceStatus: (id: number, s: string) => Promise<unknown>
+            }
           }
         ).__testApi.setInvoiceStatus(id, 'paid'),
       inv2.invoiceId,
@@ -137,16 +157,17 @@ test('S57 A5 partial: 1 av 3 failar → "2 av 3 accepterade" + failure-lista', a
 
     // Sanity: inv1 och inv3 ska vara paid; inv2 är fortfarande 'paid' (vår flip),
     // men paid_amount_ore = 0 (ingen verklig betalning).
-    const invs = await ctx.window.evaluate(
-      async (fyId) => {
-        return await (
-          window as unknown as {
-            __testApi: { getInvoices: (id?: number) => Promise<Array<{ id: number; paid_amount_ore: number }>> }
+    const invs = await ctx.window.evaluate(async (fyId) => {
+      return await (
+        window as unknown as {
+          __testApi: {
+            getInvoices: (
+              id?: number,
+            ) => Promise<Array<{ id: number; paid_amount_ore: number }>>
           }
-        ).__testApi.getInvoices(fyId)
-      },
-      fiscalYearId,
-    )
+        }
+      ).__testApi.getInvoices(fyId)
+    }, fiscalYearId)
     const row1 = invs.find((i) => i.id === inv1.invoiceId)!
     const row2 = invs.find((i) => i.id === inv2.invoiceId)!
     const row3 = invs.find((i) => i.id === inv3.invoiceId)!

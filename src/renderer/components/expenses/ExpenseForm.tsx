@@ -5,11 +5,7 @@ import type {
   ExpenseLine,
   VatCode,
 } from '../../../shared/types'
-import {
-  toKr,
-  todayLocal,
-  addDaysLocal,
-} from '../../lib/format'
+import { toKr, todayLocal, addDaysLocal } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { errorIdFor } from '../../lib/a11y'
 import { SupplierPicker } from './SupplierPicker'
@@ -120,14 +116,16 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const initialData = useMemo(
-    () => (existingDraft ? buildInitialData(existingDraft, vatCodes) : undefined),
+    () =>
+      existingDraft ? buildInitialData(existingDraft, vatCodes) : undefined,
     [existingDraft?.id],
   )
 
   const form = useEntityForm<ExpenseFormState, ExpenseSavePayload>({
     formSchema: ExpenseFormStateSchema,
     payloadSchema: ExpenseSavePayloadSchema,
-    transform: (formData) => transformExpenseForm(formData, activeFiscalYear!.id),
+    transform: (formData) =>
+      transformExpenseForm(formData, activeFiscalYear!.id),
     defaults: {
       ...EXPENSE_DEFAULTS,
       expenseDate: todayLocal(),
@@ -167,30 +165,71 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
     ] as ExpenseFormState['lines'])
   }, [defaultVcId, defaultVcRate, form.setField])
 
-  const removeLine = useCallback((index: number) => {
-    form.setField('lines', linesRef.current.filter((_, i) => i !== index) as ExpenseFormState['lines'])
-  }, [form.setField])
+  const removeLine = useCallback(
+    (index: number) => {
+      form.setField(
+        'lines',
+        linesRef.current.filter(
+          (_, i) => i !== index,
+        ) as ExpenseFormState['lines'],
+      )
+    },
+    [form.setField],
+  )
 
-  const updateLine = useCallback((index: number, updates: Partial<ExpenseLineForm>) => {
-    form.setField('lines', linesRef.current.map((l, i) => i === index ? { ...l, ...updates } : l) as ExpenseFormState['lines'])
-  }, [form.setField])
+  const updateLine = useCallback(
+    (index: number, updates: Partial<ExpenseLineForm>) => {
+      form.setField(
+        'lines',
+        linesRef.current.map((l, i) =>
+          i === index ? { ...l, ...updates } : l,
+        ) as ExpenseFormState['lines'],
+      )
+    },
+    [form.setField],
+  )
 
   // Derived dueDate wrappers
   function handleDateChange(date: string) {
     form.setField('expenseDate', date as ExpenseFormState['expenseDate'])
-    form.setField('dueDate', addDaysLocal(date, form.getField('paymentTerms') as number) as ExpenseFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        date,
+        form.getField('paymentTerms') as number,
+      ) as ExpenseFormState['dueDate'],
+    )
   }
 
   function handlePaymentTermsChange(terms: number) {
     form.setField('paymentTerms', terms as ExpenseFormState['paymentTerms'])
-    form.setField('dueDate', addDaysLocal(form.getField('expenseDate') as string, terms) as ExpenseFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        form.getField('expenseDate') as string,
+        terms,
+      ) as ExpenseFormState['dueDate'],
+    )
   }
 
-  function handleSupplierChange(s: { id: number; name: string; default_payment_terms: number }) {
-    form.setField('_supplier', { id: s.id, name: s.name } as ExpenseFormState['_supplier'])
+  function handleSupplierChange(s: {
+    id: number
+    name: string
+    default_payment_terms: number
+  }) {
+    form.setField('_supplier', {
+      id: s.id,
+      name: s.name,
+    } as ExpenseFormState['_supplier'])
     const terms = s.default_payment_terms
     form.setField('paymentTerms', terms as ExpenseFormState['paymentTerms'])
-    form.setField('dueDate', addDaysLocal(form.getField('expenseDate') as string, terms) as ExpenseFormState['dueDate'])
+    form.setField(
+      'dueDate',
+      addDaysLocal(
+        form.getField('expenseDate') as string,
+        terms,
+      ) as ExpenseFormState['dueDate'],
+    )
   }
 
   // Totals computed by ExpenseTotals component (per-rad avrundning, M129)
@@ -207,7 +246,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
   useEffect(() => {
     if (submitCountRef.current === 0) return
     if (Object.keys(form.errors).length === 0) return
-    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    )
     firstInvalid?.focus()
   }, [form.errors])
 
@@ -218,7 +259,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
       await deleteDraft.mutateAsync({ id: expenseId })
       onSave()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte ta bort utkastet')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte ta bort utkastet',
+      )
     }
   }
 
@@ -226,7 +269,10 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
     <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
       <div className="space-y-6 px-8 py-6">
         {form.submitError && (
-          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
             {form.submitError}
           </div>
         )}
@@ -250,17 +296,28 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             value={form.getField('_supplier') as ExpenseFormState['_supplier']}
             onChange={handleSupplierChange}
             aria-invalid={!!form.errors._supplier}
-            aria-describedby={form.errors._supplier ? errorIdFor('expense-supplier') : undefined}
+            aria-describedby={
+              form.errors._supplier ? errorIdFor('expense-supplier') : undefined
+            }
           />
           {form.errors._supplier && (
-            <p role="alert" id={errorIdFor('expense-supplier')} className="mt-1 text-xs text-red-600">{form.errors._supplier}</p>
+            <p
+              role="alert"
+              id={errorIdFor('expense-supplier')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors._supplier}
+            </p>
           )}
         </div>
 
         {/* Supplier invoice number + dates */}
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label htmlFor="expense-supplier-invoice-number" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="expense-supplier-invoice-number"
+              className="mb-1 block text-sm font-medium"
+            >
               Leverant&ouml;rsfakturanr
             </label>
             <input
@@ -268,29 +325,49 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
               type="text"
               value={form.getField('supplierInvoiceNumber') as string}
               onChange={(e) =>
-                form.setField('supplierInvoiceNumber', e.target.value as ExpenseFormState['supplierInvoiceNumber'])
+                form.setField(
+                  'supplierInvoiceNumber',
+                  e.target.value as ExpenseFormState['supplierInvoiceNumber'],
+                )
               }
               placeholder="Valfritt"
               className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor="expense-date" className="mb-1 block text-sm font-medium">Datum</label>
+            <label
+              htmlFor="expense-date"
+              className="mb-1 block text-sm font-medium"
+            >
+              Datum
+            </label>
             <input
               id="expense-date"
               type="date"
               value={form.getField('expenseDate') as string}
               onChange={(e) => handleDateChange(e.target.value)}
               aria-invalid={!!form.errors.expenseDate}
-              aria-describedby={form.errors.expenseDate ? 'expense-date-error' : undefined}
+              aria-describedby={
+                form.errors.expenseDate ? 'expense-date-error' : undefined
+              }
               className={inputClass}
             />
             {form.errors.expenseDate && (
-              <p id="expense-date-error" role="alert" data-testid="expense-date-error" className="mt-1 text-xs text-red-600">{form.errors.expenseDate}</p>
+              <p
+                id="expense-date-error"
+                role="alert"
+                data-testid="expense-date-error"
+                className="mt-1 text-xs text-red-600"
+              >
+                {form.errors.expenseDate}
+              </p>
             )}
           </div>
           <div>
-            <label htmlFor="expense-payment-terms" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="expense-payment-terms"
+              className="mb-1 block text-sm font-medium"
+            >
               Betalningsvillkor
             </label>
             <select
@@ -309,7 +386,10 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             </select>
           </div>
           <div>
-            <label htmlFor="expense-due-date" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="expense-due-date"
+              className="mb-1 block text-sm font-medium"
+            >
               F&ouml;rfallodatum
             </label>
             <input
@@ -324,21 +404,39 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
         {/* Description */}
         <div>
-          <label htmlFor="expense-description" className="mb-1 block text-sm font-medium">Beskrivning</label>
+          <label
+            htmlFor="expense-description"
+            className="mb-1 block text-sm font-medium"
+          >
+            Beskrivning
+          </label>
           <input
             id="expense-description"
             type="text"
             value={form.getField('description') as string}
             onChange={(e) =>
-              form.setField('description', e.target.value as ExpenseFormState['description'])
+              form.setField(
+                'description',
+                e.target.value as ExpenseFormState['description'],
+              )
             }
             placeholder="T.ex. kontorsmaterial, konsulttj&auml;nst..."
             aria-invalid={form.errors.description ? true : undefined}
-            aria-describedby={form.errors.description ? errorIdFor('expense-description') : undefined}
+            aria-describedby={
+              form.errors.description
+                ? errorIdFor('expense-description')
+                : undefined
+            }
             className={inputClass}
           />
           {form.errors.description && (
-            <p role="alert" id={errorIdFor('expense-description')} className="mt-1 text-xs text-red-600">{form.errors.description}</p>
+            <p
+              role="alert"
+              id={errorIdFor('expense-description')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors.description}
+            </p>
           )}
         </div>
 
@@ -353,7 +451,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
                 <th className="px-2 py-2 w-24">Pris (kr)</th>
                 <th className="px-2 py-2 w-32">Moms</th>
                 <th className="px-2 py-2 w-24 text-right">Summa</th>
-                <th className="px-2 py-2 w-10"><span className="sr-only">Åtgärd</span></th>
+                <th className="px-2 py-2 w-10">
+                  <span className="sr-only">Åtgärd</span>
+                </th>
               </tr>
             </thead>
             <tbody aria-live="polite">
@@ -378,7 +478,13 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
             L&auml;gg till rad
           </button>
           {form.errors.lines && (
-            <p role="alert" id={errorIdFor('expense-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+            <p
+              role="alert"
+              id={errorIdFor('expense-lines')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors.lines}
+            </p>
           )}
         </div>
 
@@ -387,12 +493,20 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
         {/* Notes */}
         <div>
-          <label htmlFor="expense-notes" className="mb-1 block text-sm font-medium">Anteckningar</label>
+          <label
+            htmlFor="expense-notes"
+            className="mb-1 block text-sm font-medium"
+          >
+            Anteckningar
+          </label>
           <textarea
             id="expense-notes"
             value={form.getField('notes') as string}
             onChange={(e) =>
-              form.setField('notes', e.target.value as ExpenseFormState['notes'])
+              form.setField(
+                'notes',
+                e.target.value as ExpenseFormState['notes'],
+              )
             }
             rows={2}
             className={`${inputClass} placeholder:text-muted-foreground`}

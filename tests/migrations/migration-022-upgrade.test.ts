@@ -32,7 +32,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     // M122: migrations that use table-recreate on tables with inbound FK
     const needsFkOff = i === 20 || i === 21 || i === 22
@@ -48,7 +52,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -134,25 +140,37 @@ describe('Migration 022 upgrade smoke test', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(22)
 
     // Step 4: Verify all 5 values are intact under new column names
-    const ip = db.prepare('SELECT amount_ore FROM invoice_payments WHERE id = 1').get() as { amount_ore: number }
+    const ip = db
+      .prepare('SELECT amount_ore FROM invoice_payments WHERE id = 1')
+      .get() as { amount_ore: number }
     expect(ip.amount_ore).toBe(50000)
 
-    const ep = db.prepare('SELECT amount_ore FROM expense_payments WHERE id = 1').get() as { amount_ore: number }
+    const ep = db
+      .prepare('SELECT amount_ore FROM expense_payments WHERE id = 1')
+      .get() as { amount_ore: number }
     expect(ep.amount_ore).toBe(75000)
 
-    const inv = db.prepare('SELECT paid_amount_ore FROM invoices WHERE id = 1').get() as { paid_amount_ore: number }
+    const inv = db
+      .prepare('SELECT paid_amount_ore FROM invoices WHERE id = 1')
+      .get() as { paid_amount_ore: number }
     expect(inv.paid_amount_ore).toBe(50000)
 
-    const exp = db.prepare('SELECT paid_amount_ore FROM expenses WHERE id = 1').get() as { paid_amount_ore: number }
+    const exp = db
+      .prepare('SELECT paid_amount_ore FROM expenses WHERE id = 1')
+      .get() as { paid_amount_ore: number }
     expect(exp.paid_amount_ore).toBe(75000)
 
-    const ob = db.prepare('SELECT balance_ore FROM opening_balances WHERE id = 1').get() as { balance_ore: number }
+    const ob = db
+      .prepare('SELECT balance_ore FROM opening_balances WHERE id = 1')
+      .get() as { balance_ore: number }
     expect(ob.balance_ore).toBe(25000)
 
     // Step 5: Verify trg_prevent_invoice_delete survived table-recreate (M121)
-    const trigger = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_prevent_invoice_delete'"
-    ).get()
+    const trigger = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_prevent_invoice_delete'",
+      )
+      .get()
     expect(trigger).toBeDefined()
 
     // Step 6: FK integrity check passes (proves FK-off handling worked correctly)
@@ -160,9 +178,9 @@ describe('Migration 022 upgrade smoke test', () => {
     expect(fkCheck).toHaveLength(0)
 
     // Step 7: Trigger count unchanged (11 pre-migration-024)
-    const triggerCount = db.prepare(
-      "SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'"
-    ).get() as { cnt: number }
+    const triggerCount = db
+      .prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='trigger'")
+      .get() as { cnt: number }
     expect(triggerCount.cnt).toBe(11)
   })
 
@@ -200,7 +218,7 @@ describe('Migration 022 upgrade smoke test', () => {
     expect(() => {
       db.prepare(
         `INSERT INTO invoice_payments (invoice_id, journal_entry_id, payment_date, amount_ore, account_number)
-         VALUES (1, 1, '2025-01-20', -1, '1930')`
+         VALUES (1, 1, '2025-01-20', -1, '1930')`,
       ).run()
     }).toThrow(/CHECK/)
   })

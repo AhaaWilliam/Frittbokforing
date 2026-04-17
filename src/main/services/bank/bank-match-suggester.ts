@@ -23,7 +23,11 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import type { IpcResult } from '../../../shared/types'
-import { classifyBankFeeTx, type FeeMethod, type FeeType } from './bank-fee-classifier'
+import {
+  classifyBankFeeTx,
+  type FeeMethod,
+  type FeeType,
+} from './bank-fee-classifier'
 
 // ═══ Types ═══
 
@@ -130,7 +134,11 @@ interface ScoringInput {
   candOcrNumber: string | null
 }
 
-export function computeScore(s: ScoringInput): { score: number; reasons: string[]; method: MatchMethod } {
+export function computeScore(s: ScoringInput): {
+  score: number
+  reasons: string[]
+  method: MatchMethod
+} {
   let score = 0
   const reasons: string[] = []
   const absAmount = Math.abs(s.txAmountOre)
@@ -170,7 +178,8 @@ export function computeScore(s: ScoringInput): { score: number; reasons: string[
   if (
     s.txCounterpartyIban &&
     s.candCounterpartyIban &&
-    normalizeIban(s.txCounterpartyIban) === normalizeIban(s.candCounterpartyIban)
+    normalizeIban(s.txCounterpartyIban) ===
+      normalizeIban(s.candCounterpartyIban)
   ) {
     score += 50
     reasons.push('IBAN match')
@@ -184,7 +193,10 @@ export function computeScore(s: ScoringInput): { score: number; reasons: string[
       score += 40
       reasons.push('Referens i meddelande')
       hasRef = true
-    } else if (s.candOcrNumber && s.txRemittanceInfo.includes(s.candOcrNumber)) {
+    } else if (
+      s.candOcrNumber &&
+      s.txRemittanceInfo.includes(s.candOcrNumber)
+    ) {
       score += 40
       reasons.push('OCR i meddelande')
       hasRef = true
@@ -210,7 +222,8 @@ type EntityCandidateNoConfidence = Omit<EntityMatchCandidate, 'confidence'>
 
 function tieBreakKey(c: MatchCandidate | EntityCandidateNoConfidence): string {
   if (c.entity_type === 'invoice' || c.entity_type === 'expense') {
-    const dateA = c.entity_type === 'invoice' ? (c.due_date ?? '') : c.entity_date
+    const dateA =
+      c.entity_type === 'invoice' ? (c.due_date ?? '') : c.entity_date
     return `${dateA}:${c.entity_id}`
   }
   const fee = c as FeeMatchCandidate
@@ -230,13 +243,16 @@ export function classifyCandidates(
   const entityTop = hasEntities
     ? Math.max(...entityCandidates.map((c) => c.score))
     : 0
-  const entityTopTieCount = entityCandidates.filter((c) => c.score === entityTop).length
+  const entityTopTieCount = entityCandidates.filter(
+    (c) => c.score === entityTop,
+  ).length
   const entityUniqueTop = entityTopTieCount === 1
 
   const classed: MatchCandidate[] = []
   for (const c of entityCandidates) {
     let confidence: MatchConfidence | null
-    if (c.score >= 130 && entityUniqueTop && c.score === entityTop) confidence = 'HIGH'
+    if (c.score >= 130 && entityUniqueTop && c.score === entityTop)
+      confidence = 'HIGH'
     else if (c.score >= 80) confidence = 'MEDIUM'
     else confidence = null
     if (confidence !== null) classed.push({ ...c, confidence })
@@ -260,7 +276,9 @@ export function suggestMatchesForStatement(
 ): IpcResult<TxSuggestion[]> {
   try {
     const stmt = db
-      .prepare('SELECT id, company_id, fiscal_year_id FROM bank_statements WHERE id = ?')
+      .prepare(
+        'SELECT id, company_id, fiscal_year_id FROM bank_statements WHERE id = ?',
+      )
       .get(statementId) as
       | { id: number; company_id: number; fiscal_year_id: number }
       | undefined

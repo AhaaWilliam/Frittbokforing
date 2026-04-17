@@ -22,7 +22,10 @@ import {
   type ManualEntrySavePayload,
   type ManualEntryLineForm,
 } from '../../lib/form-schemas/manual-entry'
-import { calculateManualEntryTotals, formatDiffLabel } from '../../lib/manual-entry-calcs'
+import {
+  calculateManualEntryTotals,
+  formatDiffLabel,
+} from '../../lib/manual-entry-calcs'
 
 // === Helpers ===
 
@@ -75,7 +78,11 @@ export function ManualEntryForm({
     [initialData?.id],
   )
 
-  const form = useEntityForm<ManualEntryFormState, ManualEntrySavePayload, { id: number }>({
+  const form = useEntityForm<
+    ManualEntryFormState,
+    ManualEntrySavePayload,
+    { id: number }
+  >({
     formSchema: ManualEntryFormStateSchema,
     payloadSchema: ManualEntrySavePayloadSchema,
     transform: (formData) => transformManualEntryForm(formData, fiscalYearId),
@@ -87,7 +94,12 @@ export function ManualEntryForm({
     onSubmit: async (payload) => {
       if (initialData?.id) {
         const { entry_date, description, lines } = payload
-        await updateDraft.mutateAsync({ id: initialData.id, entry_date, description, lines })
+        await updateDraft.mutateAsync({
+          id: initialData.id,
+          entry_date,
+          description,
+          lines,
+        })
         return { id: initialData.id }
       }
       const result = await saveDraft.mutateAsync(payload)
@@ -100,16 +112,31 @@ export function ManualEntryForm({
   const lines = form.getField('lines') as ManualEntryLineForm[]
 
   function addLine() {
-    form.setField('lines', [...lines, makeEmptyManualLine()] as ManualEntryFormState['lines'])
+    form.setField('lines', [
+      ...lines,
+      makeEmptyManualLine(),
+    ] as ManualEntryFormState['lines'])
   }
 
   function removeLine(index: number) {
     if (lines.length <= 1) return
-    form.setField('lines', lines.filter((_, i) => i !== index) as ManualEntryFormState['lines'])
+    form.setField(
+      'lines',
+      lines.filter((_, i) => i !== index) as ManualEntryFormState['lines'],
+    )
   }
 
-  function updateLineField(index: number, field: keyof ManualEntryLineForm, value: string) {
-    form.setField('lines', lines.map((l, i) => i === index ? { ...l, [field]: value } : l) as ManualEntryFormState['lines'])
+  function updateLineField(
+    index: number,
+    field: keyof ManualEntryLineForm,
+    value: string,
+  ) {
+    form.setField(
+      'lines',
+      lines.map((l, i) =>
+        i === index ? { ...l, [field]: value } : l,
+      ) as ManualEntryFormState['lines'],
+    )
   }
 
   // Account lookup map
@@ -126,8 +153,12 @@ export function ManualEntryForm({
   // Derived state (totals + balance indicator)
   const { totalDebit, totalCredit, diff } = calculateManualEntryTotals(lines)
   const diffLabel = formatDiffLabel(diff)
-  const canFinalize = (form.getField('entryDate') as string) !== '' &&
-    lines.filter(l => parseSwedishAmount(l.debitKr) > 0 || parseSwedishAmount(l.creditKr) > 0).length >= 2 &&
+  const canFinalize =
+    (form.getField('entryDate') as string) !== '' &&
+    lines.filter(
+      (l) =>
+        parseSwedishAmount(l.debitKr) > 0 || parseSwedishAmount(l.creditKr) > 0,
+    ).length >= 2 &&
     diff === 0
 
   // Lokal finalize
@@ -145,7 +176,12 @@ export function ManualEntryForm({
       let id: number
       if (initialData?.id) {
         const { entry_date, description, lines: payloadLines } = payload
-        await updateDraft.mutateAsync({ id: initialData.id, entry_date, description, lines: payloadLines })
+        await updateDraft.mutateAsync({
+          id: initialData.id,
+          entry_date,
+          description,
+          lines: payloadLines,
+        })
         id = initialData.id
       } else {
         const result = await saveDraft.mutateAsync(payload)
@@ -170,12 +206,17 @@ export function ManualEntryForm({
   useEffect(() => {
     if (submitCountRef.current === 0) return
     if (Object.keys(form.errors).length === 0) return
-    const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+    const firstInvalid = formRef.current?.querySelector<HTMLElement>(
+      '[aria-invalid="true"]',
+    )
     firstInvalid?.focus()
   }, [form.errors])
 
   const isSaving =
-    saveDraft.isPending || updateDraft.isPending || finalize.isPending || form.isSubmitting
+    saveDraft.isPending ||
+    updateDraft.isPending ||
+    finalize.isPending ||
+    form.isSubmitting
 
   return (
     <div ref={formRef} className="flex flex-1 flex-col overflow-auto px-8 py-6">
@@ -186,7 +227,10 @@ export function ManualEntryForm({
       </h2>
 
       {form.submitError && (
-        <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {form.submitError}
         </div>
       )}
@@ -194,30 +238,56 @@ export function ManualEntryForm({
       {/* Header inputs */}
       <div className="mb-6 grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="manual-entry-date" className="mb-1 block text-sm font-medium">Datum</label>
+          <label
+            htmlFor="manual-entry-date"
+            className="mb-1 block text-sm font-medium"
+          >
+            Datum
+          </label>
           <input
             id="manual-entry-date"
             type="date"
             value={form.getField('entryDate') as string}
             onChange={(e) =>
-              form.setField('entryDate', e.target.value as ManualEntryFormState['entryDate'])
+              form.setField(
+                'entryDate',
+                e.target.value as ManualEntryFormState['entryDate'],
+              )
             }
             aria-invalid={form.errors.entryDate ? true : undefined}
-            aria-describedby={form.errors.entryDate ? errorIdFor('manual-entry-date') : undefined}
+            aria-describedby={
+              form.errors.entryDate
+                ? errorIdFor('manual-entry-date')
+                : undefined
+            }
             className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {form.errors.entryDate && (
-            <p role="alert" id={errorIdFor('manual-entry-date')} className="mt-1 text-xs text-red-600">{form.errors.entryDate}</p>
+            <p
+              role="alert"
+              id={errorIdFor('manual-entry-date')}
+              className="mt-1 text-xs text-red-600"
+            >
+              {form.errors.entryDate}
+            </p>
           )}
         </div>
         <div>
-          <label htmlFor="manual-entry-description" className="mb-1 block text-sm font-medium">Beskrivning</label>
+          <label
+            htmlFor="manual-entry-description"
+            className="mb-1 block text-sm font-medium"
+          >
+            Beskrivning
+          </label>
           <input
             id="manual-entry-description"
             type="text"
             value={form.getField('description') as string}
             onChange={(e) =>
-              form.setField('description', e.target.value as ManualEntryFormState['description'])
+              form.setField(
+                'description',
+                e.target.value as ManualEntryFormState['description'],
+              )
             }
             placeholder="T.ex. Periodisering hyra"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -236,7 +306,9 @@ export function ManualEntryForm({
               <th className="w-32 pb-2 pr-2 font-medium text-right">Debet</th>
               <th className="w-32 pb-2 pr-2 font-medium text-right">Kredit</th>
               <th className="pb-2 pr-2 font-medium">Text</th>
-              <th className="w-8 pb-2 font-medium"><span className="sr-only">Åtgärd</span></th>
+              <th className="w-8 pb-2 font-medium">
+                <span className="sr-only">Åtgärd</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -324,7 +396,13 @@ export function ManualEntryForm({
         + L&auml;gg till rad
       </button>
       {form.errors.lines && (
-        <p role="alert" id={errorIdFor('manual-entry-lines')} className="mt-1 text-xs text-red-600">{form.errors.lines}</p>
+        <p
+          role="alert"
+          id={errorIdFor('manual-entry-lines')}
+          className="mt-1 text-xs text-red-600"
+        >
+          {form.errors.lines}
+        </p>
       )}
 
       {/* Totals */}

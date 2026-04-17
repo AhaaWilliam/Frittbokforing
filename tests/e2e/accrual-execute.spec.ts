@@ -27,7 +27,9 @@ test('Accrual: create schedule and execute P1 creates D-verifikat', async () => 
 
     // Fill form: prepaid_expense, 1710 → 5010, 12000 kr over 3 periods from P1
     // Labels are not wired via htmlFor; use placeholder + positional instead.
-    await dialog.getByPlaceholder('T.ex. Förutbetald hyra 2025').fill('E2E förutbetald hyra')
+    await dialog
+      .getByPlaceholder('T.ex. Förutbetald hyra 2025')
+      .fill('E2E förutbetald hyra')
     // Typ defaults to prepaid_expense
     await dialog.getByPlaceholder('1710').fill('1710')
     await dialog.getByPlaceholder('5010').fill('5010')

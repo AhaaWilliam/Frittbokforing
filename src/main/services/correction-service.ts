@@ -298,7 +298,11 @@ export function createCorrectionEntry(
       }
     })()
 
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: result }
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err) {

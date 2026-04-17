@@ -12,7 +12,9 @@ export const queryKeys = {
   fiscalYears: () => ['fiscal-years'] as const,
   fiscalPeriods: (fyId: number) => ['fiscal-periods', fyId] as const,
   counterparties: (params?: Record<string, unknown>) =>
-    params ? (['counterparties', params] as const) : (['counterparties'] as const),
+    params
+      ? (['counterparties', params] as const)
+      : (['counterparties'] as const),
   counterparty: (id: number) => ['counterparty', id] as const,
   products: (params?: Record<string, unknown>) =>
     params ? (['products', params] as const) : (['products'] as const),
@@ -43,8 +45,17 @@ export const queryKeys = {
     search?: string | null,
     sortBy?: string,
     sortOrder?: string,
-  ) => ['expenses', fyId, status ?? null, search ?? null, sortBy ?? 'expense_date', sortOrder ?? 'desc'] as const,
-  expensePayments: (expenseId: number) => ['expense-payments', expenseId] as const,
+  ) =>
+    [
+      'expenses',
+      fyId,
+      status ?? null,
+      search ?? null,
+      sortBy ?? 'expense_date',
+      sortOrder ?? 'desc',
+    ] as const,
+  expensePayments: (expenseId: number) =>
+    ['expense-payments', expenseId] as const,
 
   // === Manuella verifikationer ===
   manualEntryDrafts: (fyId: number) => ['manual-entry-drafts', fyId] as const,
@@ -61,8 +72,12 @@ export const queryKeys = {
   balanceSheet: (fyId: number, dateRange?: { from: string; to: string }) =>
     ['balance-sheet', fyId, dateRange ?? 'full-year'] as const,
   cashFlow: (fyId: number) => ['cash-flow', fyId] as const,
-  accountStatement: (fyId: number, accountNumber: string, dateFrom?: string, dateTo?: string) =>
-    ['account-statement', fyId, accountNumber, dateFrom, dateTo] as const,
+  accountStatement: (
+    fyId: number,
+    accountNumber: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ) => ['account-statement', fyId, accountNumber, dateFrom, dateTo] as const,
 
   // === Aging Report ===
   agingReceivables: (fyId: number, asOfDate?: string) =>

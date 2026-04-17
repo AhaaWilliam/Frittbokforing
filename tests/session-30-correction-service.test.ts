@@ -36,13 +36,22 @@ const VALID_COMPANY = {
 
 function seedBase(testDb: Database.Database) {
   createCompany(testDb, VALID_COMPANY)
-  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
   if (!cp.success) throw new Error('CP failed')
-  const supplierCp = createCounterparty(testDb, { name: 'Leverantör AB', type: 'supplier' })
+  const supplierCp = createCounterparty(testDb, {
+    name: 'Leverantör AB',
+    type: 'supplier',
+  })
   if (!supplierCp.success) throw new Error('Supplier CP failed')
-  const vatCode = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'MP1'").get() as { id: number }
-  const inVatCode = testDb.prepare("SELECT id FROM vat_codes WHERE code = 'IP1'").get() as { id: number }
+  const vatCode = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
+    .get() as { id: number }
+  const inVatCode = testDb
+    .prepare("SELECT id FROM vat_codes WHERE code = 'IP1'")
+    .get() as { id: number }
   return {
     fiscalYearId: fy.id,
     cpId: cp.data.id,
@@ -52,83 +61,152 @@ function seedBase(testDb: Database.Database) {
   }
 }
 
-function bookInvoice(testDb: Database.Database, seed: ReturnType<typeof seedBase>, date: string) {
+function bookInvoice(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedBase>,
+  date: string,
+) {
   const draft = saveDraft(testDb, {
     counterparty_id: seed.cpId,
     fiscal_year_id: seed.fiscalYearId,
     invoice_date: date,
     due_date: date,
-    lines: [{
-      product_id: null,
-      description: 'Konsulttjänst',
-      account_number: '3001',
-      quantity: 1,
-      unit_price_ore: 10000,
-      vat_code_id: seed.vatCodeId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        product_id: null,
+        description: 'Konsulttjänst',
+        account_number: '3001',
+        quantity: 1,
+        unit_price_ore: 10000,
+        vat_code_id: seed.vatCodeId,
+        sort_order: 0,
+      },
+    ],
   })
   if (!draft.success) throw new Error('Draft failed')
   const fin = finalizeDraft(testDb, draft.data.id)
   if (!fin.success) throw new Error('Finalize failed: ' + fin.error)
-  return { invoiceId: fin.data.id, journalEntryId: fin.data.journal_entry_id!, totalAmountOre: fin.data.total_amount_ore }
+  return {
+    invoiceId: fin.data.id,
+    journalEntryId: fin.data.journal_entry_id!,
+    totalAmountOre: fin.data.total_amount_ore,
+  }
 }
 
-function bookExpense(testDb: Database.Database, seed: ReturnType<typeof seedBase>, date: string) {
+function bookExpense(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedBase>,
+  date: string,
+) {
   const draft = saveExpenseDraft(testDb, {
     counterparty_id: seed.supplierCpId,
     fiscal_year_id: seed.fiscalYearId,
     expense_date: date,
     description: 'Kontorsmaterial',
-    lines: [{
-      description: 'Papper',
-      account_number: '5410',
-      quantity: 1,
-      unit_price_ore: 5000,
-      vat_code_id: seed.inVatCodeId,
-      sort_order: 0,
-    }],
+    lines: [
+      {
+        description: 'Papper',
+        account_number: '5410',
+        quantity: 1,
+        unit_price_ore: 5000,
+        vat_code_id: seed.inVatCodeId,
+        sort_order: 0,
+      },
+    ],
   })
   if (!draft.success) throw new Error('Expense draft failed')
   const fin = finalizeExpense(testDb, draft.data.id)
   if (!fin.success) throw new Error('Expense finalize failed: ' + fin.error)
   // finalizeExpense returns { id, verification_number } — read full expense from DB
-  const exp = testDb.prepare('SELECT id, journal_entry_id, total_amount_ore FROM expenses WHERE id = ?').get(fin.data.id) as {
-    id: number; journal_entry_id: number; total_amount_ore: number
+  const exp = testDb
+    .prepare(
+      'SELECT id, journal_entry_id, total_amount_ore FROM expenses WHERE id = ?',
+    )
+    .get(fin.data.id) as {
+    id: number
+    journal_entry_id: number
+    total_amount_ore: number
   }
-  return { expenseId: exp.id, journalEntryId: exp.journal_entry_id, totalAmountOre: exp.total_amount_ore }
+  return {
+    expenseId: exp.id,
+    journalEntryId: exp.journal_entry_id,
+    totalAmountOre: exp.total_amount_ore,
+  }
 }
 
-function bookManualEntry(testDb: Database.Database, seed: ReturnType<typeof seedBase>, date: string) {
+function bookManualEntry(
+  testDb: Database.Database,
+  seed: ReturnType<typeof seedBase>,
+  date: string,
+) {
   const draft = saveManualEntryDraft(testDb, {
     fiscal_year_id: seed.fiscalYearId,
     entry_date: date,
     description: 'Manuell testbokning',
     lines: [
-      { account_number: '1930', debit_ore: 10000, credit_ore: 0, description: 'Bank' },
-      { account_number: '3001', debit_ore: 0, credit_ore: 10000, description: 'Intäkt' },
+      {
+        account_number: '1930',
+        debit_ore: 10000,
+        credit_ore: 0,
+        description: 'Bank',
+      },
+      {
+        account_number: '3001',
+        debit_ore: 0,
+        credit_ore: 10000,
+        description: 'Intäkt',
+      },
     ],
   })
-  if (!draft.success) throw new Error('Manual entry draft failed: ' + draft.error)
+  if (!draft.success)
+    throw new Error('Manual entry draft failed: ' + draft.error)
   const fin = finalizeManualEntry(testDb, draft.data.id, seed.fiscalYearId)
-  if (!fin.success) throw new Error('Manual entry finalize failed: ' + fin.error)
-  return { journalEntryId: fin.data.journalEntryId, verificationNumber: fin.data.verificationNumber }
+  if (!fin.success)
+    throw new Error('Manual entry finalize failed: ' + fin.error)
+  return {
+    journalEntryId: fin.data.journalEntryId,
+    verificationNumber: fin.data.verificationNumber,
+  }
 }
 
 function getLines(testDb: Database.Database, journalEntryId: number) {
-  return testDb.prepare(
-    'SELECT line_number, account_number, debit_ore, credit_ore, description FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
-  ).all(journalEntryId) as { line_number: number; account_number: string; debit_ore: number; credit_ore: number; description: string | null }[]
+  return testDb
+    .prepare(
+      'SELECT line_number, account_number, debit_ore, credit_ore, description FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
+    )
+    .all(journalEntryId) as {
+    line_number: number
+    account_number: string
+    debit_ore: number
+    credit_ore: number
+    description: string | null
+  }[]
 }
 
 function getEntry(testDb: Database.Database, id: number) {
-  return testDb.prepare(
-    'SELECT id, status, corrects_entry_id, corrected_by_id, verification_series, verification_number, description, fiscal_year_id, source_type FROM journal_entries WHERE id = ?',
-  ).get(id) as { id: number; status: string; corrects_entry_id: number | null; corrected_by_id: number | null; verification_series: string; verification_number: number; description: string; fiscal_year_id: number; source_type: string }
+  return testDb
+    .prepare(
+      'SELECT id, status, corrects_entry_id, corrected_by_id, verification_series, verification_number, description, fiscal_year_id, source_type FROM journal_entries WHERE id = ?',
+    )
+    .get(id) as {
+    id: number
+    status: string
+    corrects_entry_id: number | null
+    corrected_by_id: number | null
+    verification_series: string
+    verification_number: number
+    description: string
+    fiscal_year_id: number
+    source_type: string
+  }
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  db.close()
+})
 
 describe('B4: Correction Service', () => {
   // === Happy path ===
@@ -197,7 +275,9 @@ describe('B4: Correction Service', () => {
 
     expect(correctionLines.length).toBe(originalLines.length)
     for (let i = 0; i < originalLines.length; i++) {
-      expect(correctionLines[i].account_number).toBe(originalLines[i].account_number)
+      expect(correctionLines[i].account_number).toBe(
+        originalLines[i].account_number,
+      )
       expect(correctionLines[i].debit_ore).toBe(originalLines[i].credit_ore)
       expect(correctionLines[i].credit_ore).toBe(originalLines[i].debit_ore)
     }
@@ -261,7 +341,9 @@ describe('B4: Correction Service', () => {
       fiscal_year_start: '2025-01-01',
       fiscal_year_end: '2025-12-31',
     })
-    const fy1 = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+    const fy1 = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
 
     // Book a manual entry in FY1 (2025)
     const draft = saveManualEntryDraft(testDb, {
@@ -269,30 +351,57 @@ describe('B4: Correction Service', () => {
       entry_date: '2025-06-01',
       description: 'Original i FY2025',
       lines: [
-        { account_number: '1930', debit_ore: 10000, credit_ore: 0, description: 'Bank' },
-        { account_number: '3001', debit_ore: 0, credit_ore: 10000, description: 'Intäkt' },
+        {
+          account_number: '1930',
+          debit_ore: 10000,
+          credit_ore: 0,
+          description: 'Bank',
+        },
+        {
+          account_number: '3001',
+          debit_ore: 0,
+          credit_ore: 10000,
+          description: 'Intäkt',
+        },
       ],
     })
     expect(draft.success).toBe(true)
-    if (!draft.success) { testDb.close(); return }
+    if (!draft.success) {
+      testDb.close()
+      return
+    }
     const fin = finalizeManualEntry(testDb, draft.data.id, fy1.id)
     expect(fin.success).toBe(true)
-    if (!fin.success) { testDb.close(); return }
+    if (!fin.success) {
+      testDb.close()
+      return
+    }
 
     // Create FY2 = 2026 (covers today)
-    testDb.prepare(`INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed, annual_report_status)
-      VALUES (1, '2026', '2026-01-01', '2026-12-31', 0, 'not_started')`).run()
-    const fy2 = testDb.prepare("SELECT id FROM fiscal_years WHERE year_label = '2026'").get() as { id: number }
+    testDb
+      .prepare(
+        `INSERT INTO fiscal_years (company_id, year_label, start_date, end_date, is_closed, annual_report_status)
+      VALUES (1, '2026', '2026-01-01', '2026-12-31', 0, 'not_started')`,
+      )
+      .run()
+    const fy2 = testDb
+      .prepare("SELECT id FROM fiscal_years WHERE year_label = '2026'")
+      .get() as { id: number }
 
     // Close FY1
-    testDb.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(fy1.id)
+    testDb
+      .prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?')
+      .run(fy1.id)
 
     const result = createCorrectionEntry(testDb, {
       journal_entry_id: fin.data.journalEntryId,
       fiscal_year_id: fy2.id,
     })
     expect(result.success).toBe(true)
-    if (!result.success) { testDb.close(); return }
+    if (!result.success) {
+      testDb.close()
+      return
+    }
 
     // Correction is in FY2
     const correction = getEntry(testDb, result.data.correction_entry_id)
@@ -322,9 +431,14 @@ describe('B4: Correction Service', () => {
 
     // The manual_entry has a journal_entry_id that is null for drafts,
     // so we need to use a draft journal entry directly
-    db.prepare(`INSERT INTO journal_entries (company_id, fiscal_year_id, verification_series, journal_date, description, status, source_type)
-      VALUES (1, ?, 'C', '2026-03-01', 'Draft entry', 'draft', 'manual')`).run(seed.fiscalYearId)
-    const draftJeId = Number((db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id)
+    db.prepare(
+      `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_series, journal_date, description, status, source_type)
+      VALUES (1, ?, 'C', '2026-03-01', 'Draft entry', 'draft', 'manual')`,
+    ).run(seed.fiscalYearId)
+    const draftJeId = Number(
+      (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number })
+        .id,
+    )
 
     const result = createCorrectionEntry(db, {
       journal_entry_id: draftJeId,
@@ -432,7 +546,9 @@ describe('B4: Correction Service', () => {
     const manual = bookManualEntry(db, seed, '2026-03-01')
 
     // Close the FY
-    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(seed.fiscalYearId)
+    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(
+      seed.fiscalYearId,
+    )
 
     const result = createCorrectionEntry(db, {
       journal_entry_id: manual.journalEntryId,
@@ -488,7 +604,10 @@ describe('B4: Correction Service', () => {
   it('canCorrectEntry returns false for corrected entry', () => {
     const seed = seedBase(db)
     const manual = bookManualEntry(db, seed, '2026-03-01')
-    createCorrectionEntry(db, { journal_entry_id: manual.journalEntryId, fiscal_year_id: seed.fiscalYearId })
+    createCorrectionEntry(db, {
+      journal_entry_id: manual.journalEntryId,
+      fiscal_year_id: seed.fiscalYearId,
+    })
 
     const result = canCorrectEntry(db, manual.journalEntryId)
     expect(result.success).toBe(true)
@@ -512,9 +631,13 @@ describe('B4: Correction Service', () => {
     const manual = bookManualEntry(db, seed, '2026-03-01')
 
     // Close the FY to make the correction fail
-    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(seed.fiscalYearId)
+    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(
+      seed.fiscalYearId,
+    )
 
-    const before = db.prepare('SELECT COUNT(*) as cnt FROM journal_entries').get() as { cnt: number }
+    const before = db
+      .prepare('SELECT COUNT(*) as cnt FROM journal_entries')
+      .get() as { cnt: number }
 
     const result = createCorrectionEntry(db, {
       journal_entry_id: manual.journalEntryId,
@@ -523,7 +646,9 @@ describe('B4: Correction Service', () => {
     expect(result.success).toBe(false)
 
     // No new entries should have been created
-    const after = db.prepare('SELECT COUNT(*) as cnt FROM journal_entries').get() as { cnt: number }
+    const after = db
+      .prepare('SELECT COUNT(*) as cnt FROM journal_entries')
+      .get() as { cnt: number }
     expect(after.cnt).toBe(before.cnt)
 
     // Original should still be booked (not corrected)

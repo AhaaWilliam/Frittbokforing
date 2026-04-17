@@ -20,7 +20,11 @@ async function ensureAccount(
 ): Promise<void> {
   const result = await window.evaluate(
     async ({ an, n }) => {
-      return await (window as unknown as { api: { accountCreate: (d: unknown) => Promise<unknown> } }).api.accountCreate({
+      return await (
+        window as unknown as {
+          api: { accountCreate: (d: unknown) => Promise<unknown> }
+        }
+      ).api.accountCreate({
         account_number: an,
         name: n,
         k2_allowed: true,
@@ -58,7 +62,11 @@ async function createAsset(
   }
   const result = await window.evaluate(
     async (data) =>
-      await (window as unknown as { api: { createFixedAsset: (d: unknown) => Promise<unknown> } }).api.createFixedAsset(data),
+      await (
+        window as unknown as {
+          api: { createFixedAsset: (d: unknown) => Promise<unknown> }
+        }
+      ).api.createFixedAsset(data),
     input,
   )
   const r = result as { success: boolean; data: { id: number }; error?: string }
@@ -73,14 +81,19 @@ async function executePeriod(
 ): Promise<void> {
   const result = await window.evaluate(
     async ({ fy, ped }) =>
-      await (window as unknown as { api: { executeDepreciationPeriod: (d: unknown) => Promise<unknown> } }).api.executeDepreciationPeriod({
+      await (
+        window as unknown as {
+          api: { executeDepreciationPeriod: (d: unknown) => Promise<unknown> }
+        }
+      ).api.executeDepreciationPeriod({
         fiscal_year_id: fy,
         period_end_date: ped,
       }),
     { fy: fiscalYearId, ped: period_end_date },
   )
   const r = result as { success: boolean; error?: string }
-  if (!r.success) throw new Error(`executeDepreciationPeriod failed: ${r.error}`)
+  if (!r.success)
+    throw new Error(`executeDepreciationPeriod failed: ${r.error}`)
 }
 
 async function disposeAsset(
@@ -90,7 +103,11 @@ async function disposeAsset(
 ): Promise<void> {
   const result = await window.evaluate(
     async (data) =>
-      await (window as unknown as { api: { disposeFixedAsset: (d: unknown) => Promise<unknown> } }).api.disposeFixedAsset(data),
+      await (
+        window as unknown as {
+          api: { disposeFixedAsset: (d: unknown) => Promise<unknown> }
+        }
+      ).api.disposeFixedAsset(data),
     {
       id,
       disposed_date: '2026-02-01',

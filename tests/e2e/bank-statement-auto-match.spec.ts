@@ -61,11 +61,20 @@ test('S57 A5 happy: bulk-accept HIGH skapar A-serie-verifikat', async () => {
       async (p) => {
         return await (
           window as unknown as {
-            api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> }
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
           }
         ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     expect(importResult.success).toBe(true)
     const stmtId = importResult.data!.statement_id
@@ -84,10 +93,15 @@ test('S57 A5 happy: bulk-accept HIGH skapar A-serie-verifikat', async () => {
     await bulkBtn.click()
 
     // Verifiera A-serie-verifikat
-    await expect.poll(async () => {
-      const { entries } = await getJournalEntries(ctx.window, fiscalYearId)
-      return entries.filter((e) => e.verification_series === 'A').length
-    }, { timeout: 10_000 }).toBeGreaterThanOrEqual(2) // 1 finalize + 1 match
+    await expect
+      .poll(
+        async () => {
+          const { entries } = await getJournalEntries(ctx.window, fiscalYearId)
+          return entries.filter((e) => e.verification_series === 'A').length
+        },
+        { timeout: 10_000 },
+      )
+      .toBeGreaterThanOrEqual(2) // 1 finalize + 1 match
   } finally {
     await ctx.cleanup()
   }

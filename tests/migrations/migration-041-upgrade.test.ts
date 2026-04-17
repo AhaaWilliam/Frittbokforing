@@ -9,7 +9,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     // M122: table-recreate on tables with inbound FK
     const needsFkOff = i === 20 || i === 21 || i === 22 || i === 37
@@ -25,7 +29,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -75,7 +81,9 @@ describe('Migration 041 upgrade smoke test (S58 F66-d)', () => {
     // Step 4: Verifiera schema
     const brmSql = (
       db
-        .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+        .prepare(
+          "SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'",
+        )
         .get() as { sql: string }
     ).sql
     expect(brmSql).toContain('fee_journal_entry_id')
@@ -86,14 +94,16 @@ describe('Migration 041 upgrade smoke test (S58 F66-d)', () => {
 
     // Befintlig data bevarad
     const match = db
-      .prepare('SELECT matched_entity_type, matched_entity_id, invoice_payment_id, fee_journal_entry_id, match_method FROM bank_reconciliation_matches WHERE bank_transaction_id = 1')
+      .prepare(
+        'SELECT matched_entity_type, matched_entity_id, invoice_payment_id, fee_journal_entry_id, match_method FROM bank_reconciliation_matches WHERE bank_transaction_id = 1',
+      )
       .get() as {
-        matched_entity_type: string
-        matched_entity_id: number
-        invoice_payment_id: number
-        fee_journal_entry_id: number | null
-        match_method: string
-      }
+      matched_entity_type: string
+      matched_entity_id: number
+      invoice_payment_id: number
+      fee_journal_entry_id: number | null
+      match_method: string
+    }
     expect(match.matched_entity_type).toBe('invoice')
     expect(match.matched_entity_id).toBe(1)
     expect(match.invoice_payment_id).toBe(1)
@@ -101,7 +111,9 @@ describe('Migration 041 upgrade smoke test (S58 F66-d)', () => {
     expect(match.match_method).toBe('manual')
 
     // BkTxCd-kolumner på bank_transactions
-    const btCols = db.prepare('PRAGMA table_info(bank_transactions)').all() as Array<{ name: string }>
+    const btCols = db
+      .prepare('PRAGMA table_info(bank_transactions)')
+      .all() as Array<{ name: string }>
     const colNames = btCols.map((c) => c.name)
     expect(colNames).toContain('bank_tx_domain')
     expect(colNames).toContain('bank_tx_family')
@@ -142,7 +154,9 @@ describe('Migration 041 upgrade smoke test (S58 F66-d)', () => {
     ).run(1, 1)
 
     const row = db
-      .prepare('SELECT matched_entity_type, fee_journal_entry_id FROM bank_reconciliation_matches WHERE bank_transaction_id = 1')
+      .prepare(
+        'SELECT matched_entity_type, fee_journal_entry_id FROM bank_reconciliation_matches WHERE bank_transaction_id = 1',
+      )
       .get() as { matched_entity_type: string; fee_journal_entry_id: number }
     expect(row.matched_entity_type).toBe('bank_fee')
     expect(row.fee_journal_entry_id).toBe(1)

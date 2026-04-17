@@ -231,7 +231,9 @@ export function PageAccounts() {
         is_active: newActive,
       })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte ändra status')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte ändra status',
+      )
     }
   }
 

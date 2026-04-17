@@ -54,7 +54,9 @@ function seed(db: Database.Database, cpBankAccount: string | null): Seeded {
     )
   }
 
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
   return {
     companyId: 1,
     fyId: 1,
@@ -63,7 +65,11 @@ function seed(db: Database.Database, cpBankAccount: string | null): Seeded {
   }
 }
 
-function createUnpaidInvoice(db: Database.Database, s: Seeded, totalOre: number): number {
+function createUnpaidInvoice(
+  db: Database.Database,
+  s: Seeded,
+  totalOre: number,
+): number {
   const netOre = Math.round(totalOre / 1.25)
   const draft = saveInvoiceDraft(db, {
     counterparty_id: s.custId,
@@ -113,9 +119,9 @@ function insertBankTx(
 }
 
 function getCpBankAccount(db: Database.Database, id: number): string | null {
-  const row = db.prepare('SELECT bank_account FROM counterparties WHERE id = ?').get(id) as
-    | { bank_account: string | null }
-    | undefined
+  const row = db
+    .prepare('SELECT bank_account FROM counterparties WHERE id = ?')
+    .get(id) as { bank_account: string | null } | undefined
   return row?.bank_account ?? null
 }
 

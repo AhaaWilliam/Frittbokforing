@@ -10,10 +10,12 @@ export const ProductFormStateSchema = z.object({
   description: z.string(),
   article_type: z.enum(['service', 'goods', 'expense']),
   unit: z.enum(['timme', 'styck', 'dag', 'månad', 'km', 'pauschal']),
-  _priceKr: z.string().refine(
-    (v) => v === '' || (!isNaN(parseFloat(v)) && parseFloat(v) >= 0),
-    'Ange ett giltigt pris',
-  ),
+  _priceKr: z
+    .string()
+    .refine(
+      (v) => v === '' || (!isNaN(parseFloat(v)) && parseFloat(v) >= 0),
+      'Ange ett giltigt pris',
+    ),
   vat_code_id: z.number().int().positive('Välj en momskod'),
   account_id: z.number().int().positive('Välj ett konto'),
 })

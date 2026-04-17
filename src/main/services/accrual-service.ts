@@ -13,12 +13,27 @@ import type {
 
 const DEBIT_CREDIT_MAP: Record<
   string,
-  { debitField: 'balance_account' | 'result_account'; creditField: 'balance_account' | 'result_account' }
+  {
+    debitField: 'balance_account' | 'result_account'
+    creditField: 'balance_account' | 'result_account'
+  }
 > = {
-  prepaid_expense: { debitField: 'balance_account', creditField: 'result_account' },
-  accrued_expense: { debitField: 'result_account', creditField: 'balance_account' },
-  prepaid_income: { debitField: 'result_account', creditField: 'balance_account' },
-  accrued_income: { debitField: 'balance_account', creditField: 'result_account' },
+  prepaid_expense: {
+    debitField: 'balance_account',
+    creditField: 'result_account',
+  },
+  accrued_expense: {
+    debitField: 'result_account',
+    creditField: 'balance_account',
+  },
+  prepaid_income: {
+    debitField: 'result_account',
+    creditField: 'balance_account',
+  },
+  accrued_income: {
+    debitField: 'balance_account',
+    creditField: 'result_account',
+  },
 }
 
 // ═══ Public API ═══
@@ -64,9 +79,18 @@ export function createAccrualSchedule(
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
       const e = err as { code: string; error: string; field?: string }
-      return { success: false, error: e.error, code: e.code, field: e.field } as IpcResult<{ id: number }>
+      return {
+        success: false,
+        error: e.error,
+        code: e.code,
+        field: e.field,
+      } as IpcResult<{ id: number }>
     }
-    return { success: false, error: 'Kontot kunde inte valideras', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Kontot kunde inte valideras',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
   const result = db
@@ -138,7 +162,10 @@ export function getAccrualSchedules(
   const result: AccrualScheduleWithStatus[] = schedules.map((s) => {
     const scheduleEntries = entriesBySchedule.get(s.id) ?? []
     const executedPeriods = new Set(scheduleEntries.map((e) => e.period_number))
-    const executedTotal = scheduleEntries.reduce((sum, e) => sum + e.amount_ore, 0)
+    const executedTotal = scheduleEntries.reduce(
+      (sum, e) => sum + e.amount_ore,
+      0,
+    )
 
     const periodStatuses: AccrualPeriodStatus[] = []
     for (let p = s.start_period; p < s.start_period + s.period_count; p++) {
@@ -147,13 +174,19 @@ export function getAccrualSchedules(
         periodNumber: p,
         executed: executedPeriods.has(p),
         journalEntryId: periodEntry?.journal_entry_id,
-        amountOre: computePeriodAmount(s.total_amount_ore, s.period_count, p, s.start_period),
+        amountOre: computePeriodAmount(
+          s.total_amount_ore,
+          s.period_count,
+          p,
+          s.start_period,
+        ),
       })
     }
 
     return {
       ...s,
-      accrual_type: s.accrual_type as CreateAccrualScheduleInput['accrual_type'],
+      accrual_type:
+        s.accrual_type as CreateAccrualScheduleInput['accrual_type'],
       periodStatuses,
       executedCount: executedPeriods.size,
       remainingOre: s.total_amount_ore - executedTotal,
@@ -173,18 +206,20 @@ export function executeAccrualForPeriod(
       // 1. Fetch schedule
       const schedule = db
         .prepare('SELECT * FROM accrual_schedules WHERE id = ?')
-        .get(scheduleId) as {
-        id: number
-        fiscal_year_id: number
-        description: string
-        accrual_type: string
-        balance_account: string
-        result_account: string
-        total_amount_ore: number
-        period_count: number
-        start_period: number
-        is_active: number
-      } | undefined
+        .get(scheduleId) as
+        | {
+            id: number
+            fiscal_year_id: number
+            description: string
+            accrual_type: string
+            balance_account: string
+            result_account: string
+            total_amount_ore: number
+            period_count: number
+            start_period: number
+            is_active: number
+          }
+        | undefined
 
       if (!schedule) {
         throw { code: 'NOT_FOUND', error: 'Periodiseringsschema hittades inte' }
@@ -206,13 +241,18 @@ export function executeAccrualForPeriod(
           `SELECT is_closed, end_date FROM accounting_periods
            WHERE fiscal_year_id = ? AND period_number = ?`,
         )
-        .get(schedule.fiscal_year_id, periodNumber) as {
-        is_closed: number
-        end_date: string
-      } | undefined
+        .get(schedule.fiscal_year_id, periodNumber) as
+        | {
+            is_closed: number
+            end_date: string
+          }
+        | undefined
 
       if (!period) {
-        throw { code: 'VALIDATION_ERROR', error: `Period ${periodNumber} finns inte` }
+        throw {
+          code: 'VALIDATION_ERROR',
+          error: `Period ${periodNumber} finns inte`,
+        }
       }
       if (period.is_closed) {
         throw {
@@ -280,9 +320,9 @@ export function executeAccrualForPeriod(
       insertJel.run(journalEntryId, 2, creditAccount, 0, amountOre, description)
 
       // 10. Book the entry
-      db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(
-        journalEntryId,
-      )
+      db.prepare(
+        "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
+      ).run(journalEntryId)
 
       // 11. Track in accrual_entries
       db.prepare(
@@ -303,11 +343,17 @@ export function executeAccrualForPeriod(
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
       const e = err as { code: string; error: string; field?: string }
-      return { success: false, error: e.error, code: e.code, field: e.field } as IpcResult<{ journalEntryId: number }>
+      return {
+        success: false,
+        error: e.error,
+        code: e.code,
+        field: e.field,
+      } as IpcResult<{ journalEntryId: number }>
     }
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Oväntat fel vid periodisering',
+      error:
+        err instanceof Error ? err.message : 'Oväntat fel vid periodisering',
       code: 'UNEXPECTED_ERROR',
     }
   }
@@ -317,7 +363,10 @@ export function executeAllForPeriod(
   db: Database.Database,
   fiscalYearId: number,
   periodNumber: number,
-): IpcResult<{ executed: number; failed: Array<{ scheduleId: number; error: string }> }> {
+): IpcResult<{
+  executed: number
+  failed: Array<{ scheduleId: number; error: string }>
+}> {
   const schedules = db
     .prepare(
       `SELECT id, start_period, period_count FROM accrual_schedules
@@ -331,7 +380,9 @@ export function executeAllForPeriod(
 
   // Filter to schedules that cover this period
   const applicable = schedules.filter(
-    (s) => periodNumber >= s.start_period && periodNumber < s.start_period + s.period_count,
+    (s) =>
+      periodNumber >= s.start_period &&
+      periodNumber < s.start_period + s.period_count,
   )
 
   const succeeded: number[] = []
@@ -358,7 +409,11 @@ export function deactivateSchedule(
     .run(scheduleId)
 
   if (result.changes === 0) {
-    return { success: false, error: 'Periodiseringsschema hittades inte', code: 'NOT_FOUND' }
+    return {
+      success: false,
+      error: 'Periodiseringsschema hittades inte',
+      code: 'NOT_FOUND',
+    }
   }
 
   return { success: true, data: undefined }

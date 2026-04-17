@@ -42,16 +42,32 @@ function seed(db: Database.Database): Seeded {
     ).run(m, start, end)
   }
   const cust = createCounterparty(db, {
-    name: 'Kund AB', type: 'customer', org_number: null, default_payment_terms: 30,
+    name: 'Kund AB',
+    type: 'customer',
+    org_number: null,
+    default_payment_terms: 30,
   })
   if (!cust.success) throw new Error(cust.error)
   const supp = createCounterparty(db, {
-    name: 'Lev AB', type: 'supplier', org_number: null, default_payment_terms: 30,
+    name: 'Lev AB',
+    type: 'supplier',
+    org_number: null,
+    default_payment_terms: 30,
   })
   if (!supp.success) throw new Error(supp.error)
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
-  const vatIn = db.prepare("SELECT id FROM vat_codes WHERE code='IP1'").get() as { id: number }
-  return { fyId: 1, custId: cust.data.id, suppId: supp.data.id, vatOutId: vatOut.id, vatInId: vatIn.id }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
+  const vatIn = db
+    .prepare("SELECT id FROM vat_codes WHERE code='IP1'")
+    .get() as { id: number }
+  return {
+    fyId: 1,
+    custId: cust.data.id,
+    suppId: supp.data.id,
+    vatOutId: vatOut.id,
+    vatInId: vatIn.id,
+  }
 }
 
 function createInvoices(db: Database.Database, s: Seeded, count: number): void {
@@ -61,15 +77,17 @@ function createInvoices(db: Database.Database, s: Seeded, count: number): void {
       fiscal_year_id: s.fyId,
       invoice_date: '2026-03-01',
       due_date: '2026-03-31',
-      lines: [{
-        product_id: null,
-        description: `Tjänst ${i}`,
-        quantity: 1,
-        unit_price_ore: 100_00,
-        vat_code_id: s.vatOutId,
-        sort_order: 0,
-        account_number: '3002',
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: `Tjänst ${i}`,
+          quantity: 1,
+          unit_price_ore: 100_00,
+          vat_code_id: s.vatOutId,
+          sort_order: 0,
+          account_number: '3002',
+        },
+      ],
     })
     if (!draft.success) throw new Error(draft.error)
     const fin = finalizeInvoice(db, draft.data.id)
@@ -85,13 +103,15 @@ function createExpenses(db: Database.Database, s: Seeded, count: number): void {
       expense_date: '2026-03-05',
       due_date: '2026-04-05',
       description: `Kostnad ${i}`,
-      lines: [{
-        description: 'Pennor',
-        account_number: '6110',
-        quantity: 1,
-        unit_price_ore: 100_00,
-        vat_code_id: s.vatInId,
-      }],
+      lines: [
+        {
+          description: 'Pennor',
+          account_number: '6110',
+          quantity: 1,
+          unit_price_ore: 100_00,
+          vat_code_id: s.vatInId,
+        },
+      ],
     })
     if (!draft.success) throw new Error(draft.error)
     const fin = finalizeExpense(db, draft.data.id)
@@ -101,7 +121,9 @@ function createExpenses(db: Database.Database, s: Seeded, count: number): void {
 
 describe('S56 C1: pagination', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
 
   it('1. limit=10 + offset=0 → 10 items', () => {
     const s = seed(db)
@@ -114,8 +136,16 @@ describe('S56 C1: pagination', () => {
   it('2. offset=10, limit=10 → items 11–20 (skip first 10)', () => {
     const s = seed(db)
     createInvoices(db, s, 25)
-    const all = listInvoices(db, { fiscal_year_id: s.fyId, limit: 50, offset: 0 })
-    const page2 = listInvoices(db, { fiscal_year_id: s.fyId, limit: 10, offset: 10 })
+    const all = listInvoices(db, {
+      fiscal_year_id: s.fyId,
+      limit: 50,
+      offset: 0,
+    })
+    const page2 = listInvoices(db, {
+      fiscal_year_id: s.fyId,
+      limit: 10,
+      offset: 10,
+    })
     expect(page2.items).toHaveLength(10)
     expect(page2.items[0].id).toBe(all.items[10].id)
     expect(page2.items[9].id).toBe(all.items[19].id)
@@ -125,7 +155,11 @@ describe('S56 C1: pagination', () => {
     const s = seed(db)
     createInvoices(db, s, 25)
     const r1 = listInvoices(db, { fiscal_year_id: s.fyId, limit: 5, offset: 0 })
-    const r2 = listInvoices(db, { fiscal_year_id: s.fyId, limit: 50, offset: 0 })
+    const r2 = listInvoices(db, {
+      fiscal_year_id: s.fyId,
+      limit: 50,
+      offset: 0,
+    })
     expect(r1.counts.total).toBe(25)
     expect(r2.counts.total).toBe(25)
     expect(r1.counts.total).toBe(r2.counts.total)

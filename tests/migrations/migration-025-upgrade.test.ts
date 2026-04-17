@@ -9,7 +9,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     const needsFkOff = i === 20 || i === 21 || i === 22
     if (needsFkOff) testDb.pragma('foreign_keys = OFF')
@@ -24,7 +28,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -51,10 +57,16 @@ describe('Migration 025 upgrade smoke test', () => {
     `)
 
     // Verify old column names exist
-    const oldProdCols = (db.prepare('PRAGMA table_info(products)').all() as { name: string }[]).map(c => c.name)
+    const oldProdCols = (
+      db.prepare('PRAGMA table_info(products)').all() as { name: string }[]
+    ).map((c) => c.name)
     expect(oldProdCols).toContain('default_price')
 
-    const oldPliCols = (db.prepare('PRAGMA table_info(price_list_items)').all() as { name: string }[]).map(c => c.name)
+    const oldPliCols = (
+      db.prepare('PRAGMA table_info(price_list_items)').all() as {
+        name: string
+      }[]
+    ).map((c) => c.name)
     expect(oldPliCols).toContain('price')
 
     // Run migration 025
@@ -62,19 +74,29 @@ describe('Migration 025 upgrade smoke test', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(25)
 
     // Verify new column names
-    const newProdCols = (db.prepare('PRAGMA table_info(products)').all() as { name: string }[]).map(c => c.name)
+    const newProdCols = (
+      db.prepare('PRAGMA table_info(products)').all() as { name: string }[]
+    ).map((c) => c.name)
     expect(newProdCols).toContain('default_price_ore')
     expect(newProdCols).not.toContain('default_price')
 
-    const newPliCols = (db.prepare('PRAGMA table_info(price_list_items)').all() as { name: string }[]).map(c => c.name)
+    const newPliCols = (
+      db.prepare('PRAGMA table_info(price_list_items)').all() as {
+        name: string
+      }[]
+    ).map((c) => c.name)
     expect(newPliCols).toContain('price_ore')
     expect(newPliCols).not.toContain('price')
 
     // Verify data preserved
-    const product = db.prepare('SELECT default_price_ore FROM products WHERE id = 1').get() as { default_price_ore: number }
+    const product = db
+      .prepare('SELECT default_price_ore FROM products WHERE id = 1')
+      .get() as { default_price_ore: number }
     expect(product.default_price_ore).toBe(95000)
 
-    const pli = db.prepare('SELECT price_ore FROM price_list_items WHERE product_id = 1').get() as { price_ore: number }
+    const pli = db
+      .prepare('SELECT price_ore FROM price_list_items WHERE product_id = 1')
+      .get() as { price_ore: number }
     expect(pli.price_ore).toBe(85000)
   })
 

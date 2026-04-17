@@ -88,10 +88,15 @@ test.describe.serial('B1 pagination URL-state', () => {
       location.hash = '#/income?invoices_page=1'
     })
 
-    await expect(ctx.window.getByTestId('page-income')).toBeVisible({ timeout: 15_000 })
-    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText('Sida 2 / 2', {
-      timeout: 10_000,
+    await expect(ctx.window.getByTestId('page-income')).toBeVisible({
+      timeout: 15_000,
     })
+    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText(
+      'Sida 2 / 2',
+      {
+        timeout: 10_000,
+      },
+    )
   })
 
   test('T2 — back-button bevarar pagination-state', async () => {
@@ -102,25 +107,39 @@ test.describe.serial('B1 pagination URL-state', () => {
     await ctx.window.evaluate(() => {
       location.hash = '#/income'
     })
-    await expect(ctx.window.getByTestId('page-income')).toBeVisible({ timeout: 15_000 })
-    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText('Sida 1 / 2', {
-      timeout: 10_000,
+    await expect(ctx.window.getByTestId('page-income')).toBeVisible({
+      timeout: 15_000,
     })
+    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText(
+      'Sida 1 / 2',
+      {
+        timeout: 10_000,
+      },
+    )
 
     await ctx.window.getByTestId('pag-invoices-next').click()
-    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText('Sida 2 / 2')
+    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText(
+      'Sida 2 / 2',
+    )
 
     // Navigera bort
     await ctx.window.evaluate(() => {
       location.hash = '#/expenses'
     })
-    await expect(ctx.window.getByTestId('page-expenses')).toBeVisible({ timeout: 10_000 })
+    await expect(ctx.window.getByTestId('page-expenses')).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Back → återställ pagination
     await ctx.window.goBack()
-    await expect(ctx.window.getByTestId('page-income')).toBeVisible({ timeout: 10_000 })
-    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText('Sida 2 / 2', {
+    await expect(ctx.window.getByTestId('page-income')).toBeVisible({
       timeout: 10_000,
     })
+    await expect(ctx.window.getByTestId('pag-invoices-position')).toHaveText(
+      'Sida 2 / 2',
+      {
+        timeout: 10_000,
+      },
+    )
   })
 })

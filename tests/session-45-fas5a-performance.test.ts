@@ -190,14 +190,20 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
 
     // Create test data via direct INSERT
     createCompany(freshDb, VALID_COMPANY)
-    const fy = freshDb
-      .prepare('SELECT id FROM fiscal_years LIMIT 1')
-      .get() as { id: number }
+    const fy = freshDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
     // Direct SQL — DB is at migration 014, column is still payment_terms_days
-    freshDb.prepare(
-      "INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)",
-    ).run('Leverantör AB', 'supplier')
-    const cpId = (freshDb.prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'").get() as { id: number }).id
+    freshDb
+      .prepare(
+        'INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)',
+      )
+      .run('Leverantör AB', 'supplier')
+    const cpId = (
+      freshDb
+        .prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'")
+        .get() as { id: number }
+    ).id
 
     // Insert expense directly (status = 'unpaid' to mimic finalized)
     freshDb
@@ -207,7 +213,11 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
       )
       .run(fy.id, cpId)
     const expenseId = Number(
-      (freshDb.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id,
+      (
+        freshDb.prepare('SELECT last_insert_rowid() as id').get() as {
+          id: number
+        }
+      ).id,
     )
 
     // Create a dummy journal entry for FK reference
@@ -223,7 +233,11 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
       )
       .run(companyId, fy.id)
     const jeId = Number(
-      (freshDb.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id,
+      (
+        freshDb.prepare('SELECT last_insert_rowid() as id').get() as {
+          id: number
+        }
+      ).id,
     )
 
     // Insert payments directly
@@ -278,14 +292,20 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
     }
 
     createCompany(freshDb, VALID_COMPANY)
-    const fy = freshDb
-      .prepare('SELECT id FROM fiscal_years LIMIT 1')
-      .get() as { id: number }
+    const fy = freshDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
     // Direct SQL — DB is at migration 014, column is still payment_terms_days
-    freshDb.prepare(
-      "INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)",
-    ).run('Leverantör AB', 'supplier')
-    const cpId = (freshDb.prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'").get() as { id: number }).id
+    freshDb
+      .prepare(
+        'INSERT INTO counterparties (name, type, payment_terms_days) VALUES (?, ?, 30)',
+      )
+      .run('Leverantör AB', 'supplier')
+    const cpId = (
+      freshDb
+        .prepare("SELECT id FROM counterparties WHERE name = 'Leverantör AB'")
+        .get() as { id: number }
+    ).id
 
     freshDb
       .prepare(
@@ -498,7 +518,7 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
     const summary = getDashboardSummary(db, seed.fiscalYearId)
 
     // Unpaid receivables = (inv2 remaining) + (inv3 total)
-    const expectedReceivables = (total - halfAmount) + total
+    const expectedReceivables = total - halfAmount + total
     expect(summary.unpaidReceivablesOre).toBe(expectedReceivables)
   })
 

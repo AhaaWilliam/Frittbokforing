@@ -201,7 +201,9 @@ describe('K1 – atomic year-end result booking', () => {
         confirmBookResult: true,
         netResultOre: 5_000_000,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
 
@@ -228,7 +230,9 @@ describe('K1 – atomic year-end result booking', () => {
         confirmBookResult: true,
         netResultOre: 1_000, // deliberately wrong
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('STALE_DATA')
 
@@ -257,7 +261,9 @@ describe('K1 – atomic year-end result booking', () => {
         confirmBookResult: true,
         netResultOre: 5_000_000,
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBeDefined()
   })
@@ -304,7 +310,9 @@ describe('K4 – deleteDraft atomically removes invoice and lines', () => {
 
   it('returns INVOICE_NOT_DRAFT without deleting when status is not draft', () => {
     const invoiceId = seedDraftInvoice()
-    db.prepare("UPDATE invoice_lines SET account_number = '3002' WHERE invoice_id = ? AND account_number IS NULL").run(invoiceId)
+    db.prepare(
+      "UPDATE invoice_lines SET account_number = '3002' WHERE invoice_id = ? AND account_number IS NULL",
+    ).run(invoiceId)
     db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = ?").run(
       invoiceId,
     )

@@ -1,12 +1,35 @@
 import type { ExpenseWithLines, VatCode } from '../../../../src/shared/types'
 
 export const defaultExpenseVatCodes: VatCode[] = [
-  { id: 1, code: '25', description: 'Moms 25%', rate_percent: 25, vat_type: 'incoming', report_box: null },
-  { id: 2, code: '12', description: 'Moms 12%', rate_percent: 12, vat_type: 'incoming', report_box: null },
-  { id: 3, code: '06', description: 'Moms 6%', rate_percent: 6, vat_type: 'incoming', report_box: null },
+  {
+    id: 1,
+    code: '25',
+    description: 'Moms 25%',
+    rate_percent: 25,
+    vat_type: 'incoming',
+    report_box: null,
+  },
+  {
+    id: 2,
+    code: '12',
+    description: 'Moms 12%',
+    rate_percent: 12,
+    vat_type: 'incoming',
+    report_box: null,
+  },
+  {
+    id: 3,
+    code: '06',
+    description: 'Moms 6%',
+    rate_percent: 6,
+    vat_type: 'incoming',
+    report_box: null,
+  },
 ]
 
-export function makeExpenseDraft(overrides?: Partial<ExpenseWithLines>): ExpenseWithLines {
+export function makeExpenseDraft(
+  overrides?: Partial<ExpenseWithLines>,
+): ExpenseWithLines {
   return {
     id: 42,
     fiscal_year_id: 1,

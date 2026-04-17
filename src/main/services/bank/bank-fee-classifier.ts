@@ -101,7 +101,9 @@ function classifyByHeuristic(tx: BankTxInput): FeeClassification | null {
   const bankHit = tx.counterparty_name
     ? BANK_NAME_RE.test(tx.counterparty_name)
     : false
-  const feeHit = tx.remittance_info ? FEE_TEXT_RE.test(tx.remittance_info) : false
+  const feeHit = tx.remittance_info
+    ? FEE_TEXT_RE.test(tx.remittance_info)
+    : false
   const interestHit = tx.remittance_info
     ? INTEREST_TEXT_RE.test(tx.remittance_info)
     : false
@@ -117,7 +119,8 @@ function classifyByHeuristic(tx: BankTxInput): FeeClassification | null {
     score += 40
     reasons.push('Text matchar ränta')
     if (score < FEE_SCORE_MEDIUM) return null
-    const confidence: 'HIGH' | 'MEDIUM' = score >= FEE_SCORE_HIGH ? 'HIGH' : 'MEDIUM'
+    const confidence: 'HIGH' | 'MEDIUM' =
+      score >= FEE_SCORE_HIGH ? 'HIGH' : 'MEDIUM'
     if (tx.amount_ore > 0) {
       return {
         type: 'interest_income',
@@ -146,7 +149,8 @@ function classifyByHeuristic(tx: BankTxInput): FeeClassification | null {
     score += 40
     reasons.push('Text matchar avgift')
     if (score < FEE_SCORE_MEDIUM) return null
-    const confidence: 'HIGH' | 'MEDIUM' = score >= FEE_SCORE_HIGH ? 'HIGH' : 'MEDIUM'
+    const confidence: 'HIGH' | 'MEDIUM' =
+      score >= FEE_SCORE_HIGH ? 'HIGH' : 'MEDIUM'
     return {
       type: 'bank_fee',
       account: '6570',

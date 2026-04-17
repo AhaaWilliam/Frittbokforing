@@ -5,7 +5,16 @@
  * checkChronology enforced i finalizeDraft (A), finalizeExpense (B),
  * finalizeManualEntry (C), _payInvoiceTx (A), _payExpenseTx (B).
  */
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+  vi,
+} from 'vitest'
 import {
   createTemplateDb,
   createSystemTestContext,
@@ -75,15 +84,17 @@ describe('Kronologisk datumordning — A-serie (fakturor)', () => {
       fiscal_year_id: ctx.seed.fiscalYearId,
       invoice_date: '2026-03-10',
       due_date: '2026-04-30',
-      lines: [{
-        product_id: null,
-        description: 'Test',
-        quantity: 1,
-        unit_price_ore: 10000,
-        vat_code_id: vatCode.id,
-        sort_order: 0,
-        account_number: '3002',
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: 'Test',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: vatCode.id,
+          sort_order: 0,
+          account_number: '3002',
+        },
+      ],
     })
     expect(draft.success).toBe(true)
     if (!draft.success) return
@@ -97,8 +108,12 @@ describe('Kronologisk datumordning — A-serie (fakturor)', () => {
 
   it('payInvoice avvisar datum före senaste bokförda i A-serien', () => {
     // Finalisera + betala en faktura (ger A1 + A2 med datum 2026-03-15 resp 2026-03-20)
-    const { invoiceId: id1 } = seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-15' })
-    const inv1 = ctx.db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(id1) as { total_amount_ore: number }
+    const { invoiceId: id1 } = seedAndFinalizeInvoice(ctx, {
+      invoiceDate: '2026-03-15',
+    })
+    const inv1 = ctx.db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(id1) as { total_amount_ore: number }
     const pay1 = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: id1,
       amount_ore: inv1.total_amount_ore,
@@ -109,8 +124,12 @@ describe('Kronologisk datumordning — A-serie (fakturor)', () => {
     expect(pay1.success).toBe(true)
 
     // Skapa + finalisera en ny faktura
-    const { invoiceId: id2 } = seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-25' })
-    const inv2 = ctx.db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(id2) as { total_amount_ore: number }
+    const { invoiceId: id2 } = seedAndFinalizeInvoice(ctx, {
+      invoiceDate: '2026-03-25',
+    })
+    const inv2 = ctx.db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(id2) as { total_amount_ore: number }
 
     // Försök betala med datum före senaste A-serien (2026-03-25)
     const pay2 = ctx.invoiceService.payInvoice(ctx.db, {
@@ -134,15 +153,17 @@ describe('Kronologisk datumordning — A-serie (fakturor)', () => {
       fiscal_year_id: ctx.seed.fiscalYearId,
       invoice_date: '2026-03-14',
       due_date: '2026-04-30',
-      lines: [{
-        product_id: null,
-        description: 'Test',
-        quantity: 1,
-        unit_price_ore: 10000,
-        vat_code_id: vatCode.id,
-        sort_order: 0,
-        account_number: '3002',
-      }],
+      lines: [
+        {
+          product_id: null,
+          description: 'Test',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: vatCode.id,
+          sort_order: 0,
+          account_number: '3002',
+        },
+      ],
     })
     expect(draft.success).toBe(true)
     if (!draft.success) return
@@ -164,13 +185,15 @@ describe('Kronologisk datumordning — B-serie (kostnader)', () => {
       expense_date: '2026-03-10',
       due_date: '2026-04-14',
       description: 'Test-kostnad',
-      lines: [{
-        description: 'Test',
-        account_number: '6110',
-        quantity: 1,
-        unit_price_ore: 10000,
-        vat_code_id: vatCode.id,
-      }],
+      lines: [
+        {
+          description: 'Test',
+          account_number: '6110',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: vatCode.id,
+        },
+      ],
     })
     expect(draft.success).toBe(true)
     if (!draft.success) return
@@ -183,8 +206,12 @@ describe('Kronologisk datumordning — B-serie (kostnader)', () => {
   })
 
   it('payExpense: beteendeidentiskt efter migration till delad helper', () => {
-    const { expenseId } = seedAndFinalizeExpense(ctx, { expenseDate: '2026-03-15' })
-    const exp = ctx.db.prepare('SELECT total_amount_ore FROM expenses WHERE id = ?').get(expenseId) as { total_amount_ore: number }
+    const { expenseId } = seedAndFinalizeExpense(ctx, {
+      expenseDate: '2026-03-15',
+    })
+    const exp = ctx.db
+      .prepare('SELECT total_amount_ore FROM expenses WHERE id = ?')
+      .get(expenseId) as { total_amount_ore: number }
 
     // Betala med datum 2026-03-20 → B2
     const pay1 = ctx.expenseService.payExpense(ctx.db, {
@@ -197,8 +224,12 @@ describe('Kronologisk datumordning — B-serie (kostnader)', () => {
     expect(pay1.success).toBe(true)
 
     // Skapa ny kostnad med datum 2026-03-25
-    const { expenseId: id2 } = seedAndFinalizeExpense(ctx, { expenseDate: '2026-03-25' })
-    const exp2 = ctx.db.prepare('SELECT total_amount_ore FROM expenses WHERE id = ?').get(id2) as { total_amount_ore: number }
+    const { expenseId: id2 } = seedAndFinalizeExpense(ctx, {
+      expenseDate: '2026-03-25',
+    })
+    const exp2 = ctx.db
+      .prepare('SELECT total_amount_ore FROM expenses WHERE id = ?')
+      .get(id2) as { total_amount_ore: number }
 
     // Betala med datum före senaste B-serien (2026-03-25) → avvisas
     const pay2 = ctx.expenseService.payExpense(ctx.db, {
@@ -214,10 +245,14 @@ describe('Kronologisk datumordning — B-serie (kostnader)', () => {
 
 describe('Kronologisk datumordning — C-serie (manuella bokföringsordrar)', () => {
   it('manual entry finalize: datum före senaste → avvisas', () => {
-    seedManualEntry(ctx, [
-      { account_number: '1930', debit_ore: 10000, credit_ore: 0 },
-      { account_number: '3001', debit_ore: 0, credit_ore: 10000 },
-    ], { entryDate: '2026-03-15' })
+    seedManualEntry(
+      ctx,
+      [
+        { account_number: '1930', debit_ore: 10000, credit_ore: 0 },
+        { account_number: '3001', debit_ore: 0, credit_ore: 10000 },
+      ],
+      { entryDate: '2026-03-15' },
+    )
 
     // Försök med tidigare datum
     const draft = ctx.manualEntryService.saveManualEntryDraft(ctx.db, {
@@ -225,8 +260,18 @@ describe('Kronologisk datumordning — C-serie (manuella bokföringsordrar)', ()
       entry_date: '2026-03-10',
       description: 'Kronologi-test',
       lines: [
-        { account_number: '1930', debit_ore: 5000, credit_ore: 0, description: '' },
-        { account_number: '3001', debit_ore: 0, credit_ore: 5000, description: '' },
+        {
+          account_number: '1930',
+          debit_ore: 5000,
+          credit_ore: 0,
+          description: '',
+        },
+        {
+          account_number: '3001',
+          debit_ore: 0,
+          credit_ore: 5000,
+          description: '',
+        },
       ],
     })
     expect(draft.success).toBe(true)
@@ -264,13 +309,15 @@ describe('Kronologisk datumordning — cross-FY', () => {
       expense_date: '2027-01-10',
       due_date: '2027-02-10',
       description: 'FY2027-kostnad',
-      lines: [{
-        description: 'Test',
-        account_number: '6110',
-        quantity: 1,
-        unit_price_ore: 10000,
-        vat_code_id: vatCode.id,
-      }],
+      lines: [
+        {
+          description: 'Test',
+          account_number: '6110',
+          quantity: 1,
+          unit_price_ore: 10000,
+          vat_code_id: vatCode.id,
+        },
+      ],
     })
     expect(draft.success).toBe(true)
     if (!draft.success) return
@@ -283,11 +330,17 @@ describe('Kronologisk datumordning — cross-FY', () => {
 describe('Kronologisk datumordning — bulk', () => {
   it('payInvoicesBulk batch-check avvisar före loop-start', () => {
     // Finalisera 2 fakturor
-    const { invoiceId: id1 } = seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-15' })
-    const { invoiceId: id2 } = seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-15' })
+    const { invoiceId: id1 } = seedAndFinalizeInvoice(ctx, {
+      invoiceDate: '2026-03-15',
+    })
+    const { invoiceId: id2 } = seedAndFinalizeInvoice(ctx, {
+      invoiceDate: '2026-03-15',
+    })
 
     // Betala id1 med datum 2026-03-20 → skapar A3 (efter A1, A2 från finalize)
-    const inv1 = ctx.db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(id1) as { total_amount_ore: number }
+    const inv1 = ctx.db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(id1) as { total_amount_ore: number }
     ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: id1,
       amount_ore: inv1.total_amount_ore,
@@ -297,11 +350,17 @@ describe('Kronologisk datumordning — bulk', () => {
     })
 
     // Finalisera en tredje faktura (A4 med datum 2026-03-25)
-    const { invoiceId: id3 } = seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-25' })
+    const { invoiceId: id3 } = seedAndFinalizeInvoice(ctx, {
+      invoiceDate: '2026-03-25',
+    })
 
     // Bulk-betala med datum före senaste A-serien
-    const inv2 = ctx.db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(id2) as { total_amount_ore: number }
-    const inv3 = ctx.db.prepare('SELECT total_amount_ore FROM invoices WHERE id = ?').get(id3) as { total_amount_ore: number }
+    const inv2 = ctx.db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(id2) as { total_amount_ore: number }
+    const inv3 = ctx.db
+      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
+      .get(id3) as { total_amount_ore: number }
 
     const bulkResult = payInvoicesBulk(ctx.db, {
       payments: [

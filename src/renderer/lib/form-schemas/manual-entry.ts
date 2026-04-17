@@ -20,7 +20,9 @@ export const ManualEntryFormStateSchema = z.object({
 export type ManualEntryFormState = z.infer<typeof ManualEntryFormStateSchema>
 
 export const ManualEntrySavePayloadSchema = SaveManualEntryDraftSchema
-export type ManualEntrySavePayload = z.infer<typeof ManualEntrySavePayloadSchema>
+export type ManualEntrySavePayload = z.infer<
+  typeof ManualEntrySavePayloadSchema
+>
 
 export function parseSwedishAmount(input: string): number {
   if (!input || input.trim() === '') return 0
@@ -45,7 +47,11 @@ export function makeManualEntryDefaults(): ManualEntryFormState {
   return {
     entryDate: '',
     description: '',
-    lines: [makeEmptyManualLine(), makeEmptyManualLine(), makeEmptyManualLine()],
+    lines: [
+      makeEmptyManualLine(),
+      makeEmptyManualLine(),
+      makeEmptyManualLine(),
+    ],
   }
 }
 
@@ -58,11 +64,13 @@ export function transformManualEntryForm(
     entry_date: form.entryDate,
     description: form.description,
     lines: form.lines
-      .filter(l =>
-        l.accountNumber !== '' &&
-        (parseSwedishAmount(l.debitKr) > 0 || parseSwedishAmount(l.creditKr) > 0)
+      .filter(
+        (l) =>
+          l.accountNumber !== '' &&
+          (parseSwedishAmount(l.debitKr) > 0 ||
+            parseSwedishAmount(l.creditKr) > 0),
       )
-      .map(l => ({
+      .map((l) => ({
         account_number: l.accountNumber,
         debit_ore: parseSwedishAmount(l.debitKr),
         credit_ore: parseSwedishAmount(l.creditKr),

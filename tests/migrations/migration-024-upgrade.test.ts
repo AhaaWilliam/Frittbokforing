@@ -9,7 +9,11 @@ afterEach(() => {
 })
 
 /** Run migrations from..upTo (1-indexed, inclusive) with FK-off handling */
-function runMigrations(testDb: Database.Database, upTo: number, from = 1): void {
+function runMigrations(
+  testDb: Database.Database,
+  upTo: number,
+  from = 1,
+): void {
   for (let i = from - 1; i < upTo; i++) {
     // M122: migrations that use table-recreate on tables with inbound FK
     const needsFkOff = i === 20 || i === 21 || i === 22
@@ -25,7 +29,9 @@ function runMigrations(testDb: Database.Database, upTo: number, from = 1): void 
       testDb.pragma('foreign_keys = ON')
       const fkCheck = testDb.pragma('foreign_key_check') as unknown[]
       if (fkCheck.length > 0) {
-        throw new Error(`Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`)
+        throw new Error(
+          `Migration ${i + 1} FK check failed: ${JSON.stringify(fkCheck)}`,
+        )
       }
     }
   }
@@ -76,7 +82,9 @@ describe('Migration 024 upgrade smoke test', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(24)
 
     // Step 4: Verify data intact
-    const lines = db.prepare('SELECT * FROM invoice_lines WHERE invoice_id = 1').all() as Array<{ account_number: string | null }>
+    const lines = db
+      .prepare('SELECT * FROM invoice_lines WHERE invoice_id = 1')
+      .all() as Array<{ account_number: string | null }>
     expect(lines).toHaveLength(2)
     expect(lines[0].account_number).toBe('3001')
     expect(lines[1].account_number).toBeNull()
@@ -87,12 +95,16 @@ describe('Migration 024 upgrade smoke test', () => {
     }).toThrow('kontonummer')
 
     // Step 6: Fix the line, retry — should succeed
-    db.prepare("UPDATE invoice_lines SET account_number = '3001' WHERE id = 2").run()
+    db.prepare(
+      "UPDATE invoice_lines SET account_number = '3001' WHERE id = 2",
+    ).run()
     expect(() => {
       db.prepare("UPDATE invoices SET status = 'unpaid' WHERE id = 1").run()
     }).not.toThrow()
 
-    const updated = db.prepare('SELECT status FROM invoices WHERE id = 1').get() as { status: string }
+    const updated = db
+      .prepare('SELECT status FROM invoices WHERE id = 1')
+      .get() as { status: string }
     expect(updated.status).toBe('unpaid')
   })
 
@@ -109,7 +121,9 @@ describe('Migration 024 upgrade smoke test', () => {
     expect(triggerCount.cnt).toBe(12)
 
     const trigger = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_invoice_lines_account_number_on_finalize'")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_invoice_lines_account_number_on_finalize'",
+      )
       .get()
     expect(trigger).toBeTruthy()
   })

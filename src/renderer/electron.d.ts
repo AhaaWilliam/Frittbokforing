@@ -71,7 +71,9 @@ interface ElectronAPI {
     type?: string
     active_only?: boolean
   }) => Promise<IpcResult<Counterparty[]>>
-  getCounterparty: (data: { id: number }) => Promise<IpcResult<Counterparty | null>>
+  getCounterparty: (data: {
+    id: number
+  }) => Promise<IpcResult<Counterparty | null>>
   createCounterparty: (
     data: CreateCounterpartyInput,
   ) => Promise<IpcResult<Counterparty>>
@@ -88,7 +90,9 @@ interface ElectronAPI {
   }) => Promise<IpcResult<Product[]>>
   getProduct: (data: {
     id: number
-  }) => Promise<IpcResult<(Product & { customer_prices: CustomerPrice[] }) | null>>
+  }) => Promise<
+    IpcResult<(Product & { customer_prices: CustomerPrice[] }) | null>
+  >
   createProduct: (data: CreateProductInput) => Promise<IpcResult<Product>>
   updateProduct: (data: UpdateProductInput) => Promise<IpcResult<Product>>
   deactivateProduct: (data: { id: number }) => Promise<IpcResult<Product>>
@@ -111,7 +115,9 @@ interface ElectronAPI {
     class?: number
     is_active?: boolean
   }) => Promise<IpcResult<Account[]>>
-  listAllAccounts: (data: { is_active?: boolean }) => Promise<IpcResult<Account[]>>
+  listAllAccounts: (data: {
+    is_active?: boolean
+  }) => Promise<IpcResult<Account[]>>
   accountCreate: (data: {
     account_number: string
     name: string
@@ -133,26 +139,28 @@ interface ElectronAPI {
     account_number: string
     date_from?: string
     date_to?: string
-  }) => Promise<IpcResult<{
-    account_number: string
-    account_name: string
-    lines: Array<{
-      date: string
-      verification_series: string
-      verification_number: number
-      description: string
-      debit_ore: number
-      credit_ore: number
-      running_balance_ore: number
+  }) => Promise<
+    IpcResult<{
+      account_number: string
+      account_name: string
+      lines: Array<{
+        date: string
+        verification_series: string
+        verification_number: number
+        description: string
+        debit_ore: number
+        credit_ore: number
+        running_balance_ore: number
+      }>
+      summary: {
+        opening_balance_ore: number
+        total_debit_ore: number
+        total_credit_ore: number
+        closing_balance_ore: number
+        transaction_count: number
+      }
     }>
-    summary: {
-      opening_balance_ore: number
-      total_debit_ore: number
-      total_credit_ore: number
-      closing_balance_ore: number
-      transaction_count: number
-    }
-  }>>
+  >
   backupCreate: () => Promise<{ filePath: string | null }>
   backupRestore: () => Promise<{ restored: boolean; message?: string }>
   // Invoices
@@ -168,7 +176,9 @@ interface ElectronAPI {
       payment: import('../shared/types').InvoicePayment
     }>
   >
-  payInvoicesBulk: (data: Record<string, unknown>) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
+  payInvoicesBulk: (
+    data: Record<string, unknown>,
+  ) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
   getPayments: (data: {
     invoice_id: number
   }) => Promise<IpcResult<import('../shared/types').InvoicePayment[]>>
@@ -194,7 +204,9 @@ interface ElectronAPI {
     due_date?: string
   }) => Promise<IpcResult<Invoice>>
   saveDraft: (data: SaveDraftInput) => Promise<IpcResult<InvoiceWithLines>>
-  getDraft: (data: { id: number }) => Promise<IpcResult<InvoiceWithLines | null>>
+  getDraft: (data: {
+    id: number
+  }) => Promise<IpcResult<InvoiceWithLines | null>>
   updateDraft: (data: UpdateDraftInput) => Promise<IpcResult<InvoiceWithLines>>
   deleteDraft: (data: { id: number }) => Promise<IpcResult<undefined>>
   listDrafts: (data: {
@@ -236,7 +248,9 @@ interface ElectronAPI {
       payment: import('../shared/types').ExpensePayment
     }>
   >
-  payExpensesBulk: (data: Record<string, unknown>) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
+  payExpensesBulk: (
+    data: Record<string, unknown>,
+  ) => Promise<IpcResult<import('../shared/types').BulkPaymentResult>>
   getExpensePayments: (data: {
     expense_id: number
   }) => Promise<IpcResult<import('../shared/types').ExpensePayment[]>>
@@ -271,10 +285,12 @@ interface ElectronAPI {
   savePdfBatch: (data: {
     directory: string
     invoices: Array<{ invoiceId: number; fileName: string }>
-  }) => Promise<IpcResult<{
-    succeeded: number
-    failed: Array<{ invoiceId: number; error: string }>
-  }>>
+  }) => Promise<
+    IpcResult<{
+      succeeded: number
+      failed: Array<{ invoiceId: number; error: string }>
+    }>
+  >
   // Dashboard
   getDashboardSummary: (data: {
     fiscalYearId: number
@@ -378,13 +394,19 @@ interface ElectronAPI {
   sie4SelectFile: () => Promise<IpcResult<{ filePath: string } | null>>
   sie4Validate: (data: {
     filePath: string
-  }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-validator').SieValidationResult>>
+  }) => Promise<
+    IpcResult<
+      import('../main/services/sie4/sie4-import-validator').SieValidationResult
+    >
+  >
   sie4Import: (data: {
     filePath: string
     strategy: 'new' | 'merge'
     fiscal_year_id?: number
     conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
-  }) => Promise<IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>>
+  }) => Promise<
+    IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>
+  >
   // Payment batch export
   validateBatchExport: (data: {
     batch_id: number
@@ -393,19 +415,42 @@ interface ElectronAPI {
     batch_id: number
   }) => Promise<IpcResult<{ saved: boolean; filePath?: string }>>
   // Accruals
-  createAccrualSchedule: (data: import('../shared/types').CreateAccrualScheduleInput) => Promise<IpcResult<{ id: number }>>
-  getAccrualSchedules: (data: { fiscal_year_id: number }) => Promise<IpcResult<import('../shared/types').AccrualScheduleWithStatus[]>>
-  executeAccrual: (data: { schedule_id: number; period_number: number }) => Promise<IpcResult<{ journalEntryId: number }>>
-  executeAllAccruals: (data: { fiscal_year_id: number; period_number: number }) => Promise<IpcResult<{ executed: number; failed: Array<{ scheduleId: number; error: string }> }>>
+  createAccrualSchedule: (
+    data: import('../shared/types').CreateAccrualScheduleInput,
+  ) => Promise<IpcResult<{ id: number }>>
+  getAccrualSchedules: (data: {
+    fiscal_year_id: number
+  }) => Promise<
+    IpcResult<import('../shared/types').AccrualScheduleWithStatus[]>
+  >
+  executeAccrual: (data: {
+    schedule_id: number
+    period_number: number
+  }) => Promise<IpcResult<{ journalEntryId: number }>>
+  executeAllAccruals: (data: {
+    fiscal_year_id: number
+    period_number: number
+  }) => Promise<
+    IpcResult<{
+      executed: number
+      failed: Array<{ scheduleId: number; error: string }>
+    }>
+  >
   deactivateAccrual: (data: { schedule_id: number }) => Promise<IpcResult<void>>
   // Budget
-  getBudgetLines: (data: Record<string, never>) => Promise<IpcResult<import('../shared/types').BudgetLineMeta[]>>
+  getBudgetLines: (
+    data: Record<string, never>,
+  ) => Promise<IpcResult<import('../shared/types').BudgetLineMeta[]>>
   getBudgetTargets: (data: {
     fiscal_year_id: number
   }) => Promise<IpcResult<import('../shared/types').BudgetTarget[]>>
   saveBudgetTargets: (data: {
     fiscal_year_id: number
-    targets: Array<{ line_id: string; period_number: number; amount_ore: number }>
+    targets: Array<{
+      line_id: string
+      period_number: number
+      amount_ore: number
+    }>
   }) => Promise<IpcResult<{ count: number }>>
   getBudgetVsActual: (data: {
     fiscal_year_id: number
@@ -422,12 +467,14 @@ interface ElectronAPI {
     id: number
     input: import('../shared/types').UpdateFixedAssetInput
   }) => Promise<IpcResult<{ scheduleCount: number }>>
-  listFixedAssets: (data: { fiscal_year_id?: number }) => Promise<
+  listFixedAssets: (data: {
+    fiscal_year_id?: number
+  }) => Promise<
     IpcResult<import('../shared/types').FixedAssetWithAccumulation[]>
   >
-  getFixedAsset: (data: { id: number }) => Promise<
-    IpcResult<import('../shared/types').FixedAssetWithSchedule>
-  >
+  getFixedAsset: (data: {
+    id: number
+  }) => Promise<IpcResult<import('../shared/types').FixedAssetWithSchedule>>
   disposeFixedAsset: (data: {
     id: number
     disposed_date: string
@@ -439,9 +486,13 @@ interface ElectronAPI {
   executeDepreciationPeriod: (data: {
     fiscal_year_id: number
     period_end_date: string
-  }) => Promise<IpcResult<import('../shared/types').ExecuteDepreciationPeriodResult>>
+  }) => Promise<
+    IpcResult<import('../shared/types').ExecuteDepreciationPeriodResult>
+  >
   // Cash Flow (Sprint 53 F65)
-  getCashFlowStatement: (data: { fiscal_year_id: number }) => Promise<
+  getCashFlowStatement: (data: {
+    fiscal_year_id: number
+  }) => Promise<
     IpcResult<import('../../main/services/cash-flow-service').CashFlowReport>
   >
   // Bank statement / reconciliation (Sprint 55 F66-a)
@@ -449,31 +500,60 @@ interface ElectronAPI {
     company_id: number
     fiscal_year_id: number
     xml_content: string
-  }) => Promise<IpcResult<import('../../main/services/bank/bank-statement-service').ImportBankStatementResult>>
-  listBankStatements: (data: { fiscal_year_id: number }) => Promise<
-    IpcResult<import('../../main/services/bank/bank-statement-service').BankStatementSummary[]>
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-statement-service').ImportBankStatementResult
+    >
   >
-  getBankStatement: (data: { statement_id: number }) => Promise<
-    IpcResult<import('../../main/services/bank/bank-statement-service').BankStatementDetail | null>
+  listBankStatements: (data: {
+    fiscal_year_id: number
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-statement-service').BankStatementSummary[]
+    >
+  >
+  getBankStatement: (data: {
+    statement_id: number
+  }) => Promise<
+    IpcResult<
+      | import('../../main/services/bank/bank-statement-service').BankStatementDetail
+      | null
+    >
   >
   matchBankTransaction: (data: {
     bank_transaction_id: number
     matched_entity_type: 'invoice' | 'expense'
     matched_entity_id: number
     payment_account: string
-  }) => Promise<IpcResult<import('../../main/services/bank/bank-match-service').MatchBankTransactionResult>>
-  suggestBankMatches: (data: { statement_id: number }) => Promise<
-    IpcResult<import('../../main/services/bank/bank-match-suggester').TxSuggestion[]>
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-match-service').MatchBankTransactionResult
+    >
+  >
+  suggestBankMatches: (data: {
+    statement_id: number
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-match-suggester').TxSuggestion[]
+    >
   >
   unmatchBankTransaction: (data: {
     bank_transaction_id: number
     correction_description?: string
-  }) => Promise<IpcResult<import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult>>
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult
+    >
+  >
   createBankFeeEntry: (data: {
     bank_transaction_id: number
     payment_account: string
     skipChronologyCheck?: boolean
-  }) => Promise<IpcResult<import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult>>
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult
+    >
+  >
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

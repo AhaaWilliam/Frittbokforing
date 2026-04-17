@@ -103,10 +103,14 @@ describe('Migration 014: Fiscal year overlap protection', () => {
     // (samma datumintervall som company 1). Overlap-triggern är scoped
     // per company_id så detta ska fungera utan konflikt.
     const co1Fys = db
-      .prepare('SELECT start_date, end_date FROM fiscal_years WHERE company_id = ?')
+      .prepare(
+        'SELECT start_date, end_date FROM fiscal_years WHERE company_id = ?',
+      )
       .all(companyId) as { start_date: string; end_date: string }[]
     const co2Fys = db
-      .prepare('SELECT start_date, end_date FROM fiscal_years WHERE company_id = ?')
+      .prepare(
+        'SELECT start_date, end_date FROM fiscal_years WHERE company_id = ?',
+      )
       .all(co2Result.data.id) as { start_date: string; end_date: string }[]
 
     expect(co1Fys.length).toBe(1)

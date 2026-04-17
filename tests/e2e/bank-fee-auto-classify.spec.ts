@@ -62,7 +62,11 @@ test('S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat
           }
         ).api.importBankStatement(p)
       },
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053_FEE },
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053_FEE,
+      },
     )
     expect(imp.success).toBe(true)
     const stmtId = imp.data!.statement_id
@@ -100,19 +104,22 @@ test('S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat
     const txId = sug[0].bank_transaction_id
 
     // Accept fee
-    const feeRes = await ctx.window.evaluate(async (p) => {
-      return await (
-        window as unknown as {
-          api: {
-            createBankFeeEntry: (d: unknown) => Promise<{
-              success: boolean
-              data?: { journal_entry_id: number; match_id: number }
-              error?: string
-            }>
+    const feeRes = await ctx.window.evaluate(
+      async (p) => {
+        return await (
+          window as unknown as {
+            api: {
+              createBankFeeEntry: (d: unknown) => Promise<{
+                success: boolean
+                data?: { journal_entry_id: number; match_id: number }
+                error?: string
+              }>
+            }
           }
-        }
-      ).api.createBankFeeEntry(p)
-    }, { bank_transaction_id: txId, payment_account: '1930' })
+        ).api.createBankFeeEntry(p)
+      },
+      { bank_transaction_id: txId, payment_account: '1930' },
+    )
     expect(feeRes.success).toBe(true)
 
     // Verifiera journal_entry: B-serie, 2 rader (D 6570 / K 1930)
@@ -122,10 +129,20 @@ test('S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat
     expect(feeEntry!.verification_series).toBe('B')
     expect(feeEntry!.source_type).toBe('auto_bank_fee')
 
-    const feeLines = lines.filter((l) => l.journal_entry_id === feeEntry!.id).sort((a, b) => a.line_number - b.line_number)
+    const feeLines = lines
+      .filter((l) => l.journal_entry_id === feeEntry!.id)
+      .sort((a, b) => a.line_number - b.line_number)
     expect(feeLines).toHaveLength(2)
-    expect(feeLines[0]).toMatchObject({ account_number: '6570', debit_ore: 5000, credit_ore: 0 })
-    expect(feeLines[1]).toMatchObject({ account_number: '1930', debit_ore: 0, credit_ore: 5000 })
+    expect(feeLines[0]).toMatchObject({
+      account_number: '6570',
+      debit_ore: 5000,
+      credit_ore: 0,
+    })
+    expect(feeLines[1]).toMatchObject({
+      account_number: '1930',
+      debit_ore: 0,
+      credit_ore: 5000,
+    })
 
     // Reconciliation-rad har matched_entity_type='bank_fee'
     const matches = await ctx.window.evaluate(async (id) => {
@@ -134,12 +151,21 @@ test('S58 B3: CHRG-TX auto-klassas som bank_fee, accept skapar B-serie-verifikat
           api: {
             invoke: (ch: string, arg: unknown) => Promise<unknown>
           }
-          __testApi?: { getReconciliationMatches: (stmtId: number) => Promise<unknown> }
+          __testApi?: {
+            getReconciliationMatches: (stmtId: number) => Promise<unknown>
+          }
         }
       ).__testApi!.getReconciliationMatches(id)
     }, stmtId)
     expect(Array.isArray(matches)).toBe(true)
-    expect((matches as Array<{ matched_entity_type: string; fee_journal_entry_id: number | null }>)[0]).toMatchObject({
+    expect(
+      (
+        matches as Array<{
+          matched_entity_type: string
+          fee_journal_entry_id: number | null
+        }>
+      )[0],
+    ).toMatchObject({
       matched_entity_type: 'bank_fee',
       fee_journal_entry_id: feeRes.data!.journal_entry_id,
     })

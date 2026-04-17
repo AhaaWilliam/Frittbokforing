@@ -17,7 +17,11 @@ function collectFiles(dir: string, ext: string): string[] {
       const full = join(dir, entry)
       try {
         const stat = statSync(full)
-        if (stat.isDirectory() && entry !== 'node_modules' && entry !== 'dist') {
+        if (
+          stat.isDirectory() &&
+          entry !== 'node_modules' &&
+          entry !== 'dist'
+        ) {
           results.push(...collectFiles(full, ext))
         } else if (entry.endsWith(ext)) {
           results.push(full)
@@ -82,10 +86,7 @@ describe('S11-02: SQL date safety — date("now","localtime")', () => {
         const lines = src.split('\n')
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i]
-          if (
-            line.includes("date('now')") &&
-            !line.includes('localtime')
-          ) {
+          if (line.includes("date('now')") && !line.includes('localtime')) {
             violations.push(`${file}:${i + 1}`)
           }
         }
@@ -148,9 +149,8 @@ describe('S11-06: IPC handlers — try/catch och felmeddelande-sanitering', () =
     const src = readFileSync('src/main/ipc-handlers.ts', 'utf-8')
     // Check that raw error messages are not directly sent to renderer
     // Pattern: error: err.message (direct leak)
-    const directLeaks = (
-      src.match(/error:\s*(?:err|e|error)\.message/g) || []
-    ).length
+    const directLeaks = (src.match(/error:\s*(?:err|e|error)\.message/g) || [])
+      .length
     expect(
       directLeaks,
       'Rå err.message läcker till renderer i ipc-handlers.ts',
@@ -166,10 +166,7 @@ describe('S11-07: Renderer date safety', () => {
     const dateArithmetic = (
       src.match(/new Date\(.*\).*(?:getTime|setDate|setMonth)/g) || []
     ).length
-    expect(
-      dateArithmetic,
-      'Datumartmetik med new Date() i format.ts',
-    ).toBe(0)
+    expect(dateArithmetic, 'Datumartmetik med new Date() i format.ts').toBe(0)
   })
 })
 

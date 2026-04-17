@@ -16,7 +16,10 @@ import {
   transformProductForm,
   PRODUCT_DEFAULTS,
 } from '../../lib/form-schemas/product'
-import type { ProductFormState, ProductPayload } from '../../lib/form-schemas/product'
+import type {
+  ProductFormState,
+  ProductPayload,
+} from '../../lib/form-schemas/product'
 import { FormField } from '../ui/FormField'
 import { FormSelect } from '../ui/FormSelect'
 import { FormTextarea } from '../ui/FormTextarea'
@@ -91,7 +94,9 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
   useEffect(() => {
     if (accounts?.length && form.getField('account_id') === 0) {
       const defaults = ARTICLE_TYPE_DEFAULTS[form.getField('article_type')]
-      const match = accounts.find((a) => a.account_number === defaults.account_number)
+      const match = accounts.find(
+        (a) => a.account_number === defaults.account_number,
+      )
       form.setField('account_id', match?.id ?? accounts[0].id)
     }
   }, [accounts])
@@ -101,7 +106,9 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
     const defaults = ARTICLE_TYPE_DEFAULTS[newType]
     form.setField('unit', defaults.unit)
     if (accounts) {
-      const match = accounts.find((a) => a.account_number === defaults.account_number)
+      const match = accounts.find(
+        (a) => a.account_number === defaults.account_number,
+      )
       if (match) form.setField('account_id', match.id)
     }
   }
@@ -125,13 +132,26 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         }}
         className="space-y-4"
       >
-        <FormField form={form} formName="product" name="name" label="Namn" required />
+        <FormField
+          form={form}
+          formName="product"
+          name="name"
+          label="Namn"
+          required
+        />
 
-        <FormTextarea form={form} formName="product" name="description" label="Beskrivning" />
+        <FormTextarea
+          form={form}
+          formName="product"
+          name="description"
+          label="Beskrivning"
+        />
 
         {/* Article type radio buttons */}
         <div>
-          <span className="block text-sm font-medium text-foreground mb-1">Artikeltyp</span>
+          <span className="block text-sm font-medium text-foreground mb-1">
+            Artikeltyp
+          </span>
           <div className="flex gap-4">
             {(
               [
@@ -140,7 +160,10 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
                 { value: 'expense', label: 'Utlägg' },
               ] as const
             ).map((opt) => (
-              <label key={opt.value} className="flex items-center gap-1.5 text-sm">
+              <label
+                key={opt.value}
+                className="flex items-center gap-1.5 text-sm"
+              >
                 <input
                   type="radio"
                   name="article_type"
@@ -155,16 +178,33 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
           </div>
         </div>
 
-        <FormSelect form={form} formName="product" name="unit" label="Enhet" options={UNIT_OPTIONS} />
+        <FormSelect
+          form={form}
+          formName="product"
+          name="unit"
+          label="Enhet"
+          options={UNIT_OPTIONS}
+        />
 
-        <FormField form={form} formName="product" name="_priceKr" label="Standardpris (kr)" type="number" />
+        <FormField
+          form={form}
+          formName="product"
+          name="_priceKr"
+          label="Standardpris (kr)"
+          type="number"
+        />
 
         <FormSelect
           form={form}
           formName="product"
           name="vat_code_id"
           label="Momskod"
-          options={vatCodes?.map((vc) => ({ value: vc.id, label: vatLabel(vc.rate_percent) })) ?? []}
+          options={
+            vatCodes?.map((vc) => ({
+              value: vc.id,
+              label: vatLabel(vc.rate_percent),
+            })) ?? []
+          }
         />
 
         <FormSelect

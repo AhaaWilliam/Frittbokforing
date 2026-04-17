@@ -56,25 +56,73 @@ test('S58 D2 happy: unmatch invoice-match skapar C-serie-korrigering + återstä
 
     // Import + match
     const imp = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> } }).api.importBankStatement(p),
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
+          }
+        ).api.importBankStatement(p),
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     const stmtId = imp.data!.statement_id
     const detail = await ctx.window.evaluate(
-      async (id) => (window as unknown as { api: { getBankStatement: (d: { statement_id: number }) => Promise<{ data?: { transactions: Array<{ id: number }> } }> } }).api.getBankStatement({ statement_id: id }),
+      async (id) =>
+        (
+          window as unknown as {
+            api: {
+              getBankStatement: (d: {
+                statement_id: number
+              }) => Promise<{ data?: { transactions: Array<{ id: number }> } }>
+            }
+          }
+        ).api.getBankStatement({ statement_id: id }),
       stmtId,
     )
     const txId = detail.data!.transactions[0].id
 
     const match = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { matchBankTransaction: (d: unknown) => Promise<{ success: boolean; data?: { payment_id: number; journal_entry_id: number } }> } }).api.matchBankTransaction(p),
-      { bank_transaction_id: txId, matched_entity_type: 'invoice', matched_entity_id: invoiceId, payment_account: '1930' },
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              matchBankTransaction: (d: unknown) => Promise<{
+                success: boolean
+                data?: { payment_id: number; journal_entry_id: number }
+              }>
+            }
+          }
+        ).api.matchBankTransaction(p),
+      {
+        bank_transaction_id: txId,
+        matched_entity_type: 'invoice',
+        matched_entity_id: invoiceId,
+        payment_account: '1930',
+      },
     )
     expect(match.success).toBe(true)
 
     // Unmatch via IPC
     const unmatch = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { unmatchBankTransaction: (d: unknown) => Promise<{ success: boolean; data?: { correction_journal_entry_id: number } }> } }).api.unmatchBankTransaction(p),
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              unmatchBankTransaction: (d: unknown) => Promise<{
+                success: boolean
+                data?: { correction_journal_entry_id: number }
+              }>
+            }
+          }
+        ).api.unmatchBankTransaction(p),
       { bank_transaction_id: txId },
     )
     expect(unmatch.success).toBe(true)
@@ -82,7 +130,14 @@ test('S58 D2 happy: unmatch invoice-match skapar C-serie-korrigering + återstä
 
     // Reconciliation-rad borta
     const matches = await ctx.window.evaluate(
-      async (id) => (window as unknown as { __testApi: { getReconciliationMatches: (i: number) => Promise<unknown[]> } }).__testApi.getReconciliationMatches(id),
+      async (id) =>
+        (
+          window as unknown as {
+            __testApi: {
+              getReconciliationMatches: (i: number) => Promise<unknown[]>
+            }
+          }
+        ).__testApi.getReconciliationMatches(id),
       stmtId,
     )
     expect(matches).toHaveLength(0)
@@ -95,7 +150,18 @@ test('S58 D2 happy: unmatch invoice-match skapar C-serie-korrigering + återstä
 
     // Invoice paid_amount=0, status=unpaid
     const invoices = await ctx.window.evaluate(
-      async (fy) => (window as unknown as { __testApi: { getInvoices: (f: number) => Promise<Array<{ id: number; paid_amount_ore: number; status: string }>> } }).__testApi.getInvoices(fy),
+      async (fy) =>
+        (
+          window as unknown as {
+            __testApi: {
+              getInvoices: (
+                f: number,
+              ) => Promise<
+                Array<{ id: number; paid_amount_ore: number; status: string }>
+              >
+            }
+          }
+        ).__testApi.getInvoices(fy),
       fiscalYearId,
     )
     const inv = invoices.find((i) => i.id === invoiceId)
@@ -122,7 +188,18 @@ test('S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_U
 
     // Bulk-pay (skapar payment_batch + payment)
     const bulk = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { payInvoicesBulk: (d: unknown) => Promise<{ success: boolean; data?: { succeeded: Array<{ payment_id: number }> }; error?: string }> } }).api.payInvoicesBulk(p),
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              payInvoicesBulk: (d: unknown) => Promise<{
+                success: boolean
+                data?: { succeeded: Array<{ payment_id: number }> }
+                error?: string
+              }>
+            }
+          }
+        ).api.payInvoicesBulk(p),
       {
         payment_date: '2026-03-18',
         account_number: '1930',
@@ -134,25 +211,68 @@ test('S58 D2 batch-blocked: unmatch av batch-payment avvisas med BATCH_PAYMENT_U
 
     // Importera TX + länka manuellt
     const imp = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { importBankStatement: (d: unknown) => Promise<{ success: boolean; data?: { statement_id: number } }> } }).api.importBankStatement(p),
-      { company_id: companyId, fiscal_year_id: fiscalYearId, xml_content: CAMT053 },
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              importBankStatement: (d: unknown) => Promise<{
+                success: boolean
+                data?: { statement_id: number }
+              }>
+            }
+          }
+        ).api.importBankStatement(p),
+      {
+        company_id: companyId,
+        fiscal_year_id: fiscalYearId,
+        xml_content: CAMT053,
+      },
     )
     const stmtId = imp.data!.statement_id
     const detail = await ctx.window.evaluate(
-      async (id) => (window as unknown as { api: { getBankStatement: (d: { statement_id: number }) => Promise<{ data?: { transactions: Array<{ id: number }> } }> } }).api.getBankStatement({ statement_id: id }),
+      async (id) =>
+        (
+          window as unknown as {
+            api: {
+              getBankStatement: (d: {
+                statement_id: number
+              }) => Promise<{ data?: { transactions: Array<{ id: number }> } }>
+            }
+          }
+        ).api.getBankStatement({ statement_id: id }),
       stmtId,
     )
     const txId = detail.data!.transactions[0].id
 
     // Länka batch-payment till TX via __testApi
     await ctx.window.evaluate(
-      async ({ pid, tid }) => (window as unknown as { __testApi: { linkPaymentToBankTx: (p: number, t: number, e: 'invoice' | 'expense') => Promise<unknown> } }).__testApi.linkPaymentToBankTx(pid, tid, 'invoice'),
+      async ({ pid, tid }) =>
+        (
+          window as unknown as {
+            __testApi: {
+              linkPaymentToBankTx: (
+                p: number,
+                t: number,
+                e: 'invoice' | 'expense',
+              ) => Promise<unknown>
+            }
+          }
+        ).__testApi.linkPaymentToBankTx(pid, tid, 'invoice'),
       { pid: paymentId, tid: txId },
     )
 
     // Unmatch ska avvisas
     const unmatch = await ctx.window.evaluate(
-      async (p) => (window as unknown as { api: { unmatchBankTransaction: (d: unknown) => Promise<{ success: boolean; code?: string; error?: string }> } }).api.unmatchBankTransaction(p),
+      async (p) =>
+        (
+          window as unknown as {
+            api: {
+              unmatchBankTransaction: (
+                d: unknown,
+              ) => Promise<{ success: boolean; code?: string; error?: string }>
+            }
+          }
+        ).api.unmatchBankTransaction(p),
       { bank_transaction_id: txId },
     )
     expect(unmatch.success).toBe(false)

@@ -82,10 +82,7 @@ export const ConfirmDialog = memo(function ConfirmDialog({
         aria-describedby="confirm-dialog-desc"
         className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl"
       >
-        <h2
-          id="confirm-dialog-title"
-          className="mb-2 text-base font-semibold"
-        >
+        <h2 id="confirm-dialog-title" className="mb-2 text-base font-semibold">
           {title}
         </h2>
         <p

@@ -62,7 +62,8 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
 
   // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44/F47)
   const lineNettoOre = Math.round(
-    Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100) / 100
+    (Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100)) /
+      100,
   )
 
   return (
@@ -80,7 +81,9 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
               placeholder="Konto"
               aria-label="Konto"
               value={line.account_number ?? ''}
-              onChange={(e) => onUpdate(index, { account_number: e.target.value || null })}
+              onChange={(e) =>
+                onUpdate(index, { account_number: e.target.value || null })
+              }
               data-testid={`invoice-line-${index}-account`}
               className="block w-20 rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
@@ -138,7 +141,13 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           ))}
         </select>
       </td>
-      <td className="px-2 py-2 text-right text-sm" data-testid={`line-net-ore-${index}`} data-value={lineNettoOre}>{formatKr(lineNettoOre)}</td>
+      <td
+        className="px-2 py-2 text-right text-sm"
+        data-testid={`line-net-ore-${index}`}
+        data-value={lineNettoOre}
+      >
+        {formatKr(lineNettoOre)}
+      </td>
       <td className="px-2 py-2 text-center">
         <button
           type="button"

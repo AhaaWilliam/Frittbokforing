@@ -129,7 +129,11 @@ export function generatePain001(
   const payments = getPaymentsForBatch(db, batchId, batch.batch_type)
 
   if (payments.length === 0) {
-    return { success: false, error: 'Inga betalningar i batchen', code: 'VALIDATION_ERROR' }
+    return {
+      success: false,
+      error: 'Inga betalningar i batchen',
+      code: 'VALIDATION_ERROR',
+    }
   }
 
   const msgId = randomUUID()
@@ -166,7 +170,11 @@ export function generatePain001(
   dbtr.ele('Nm').txt(company.name)
 
   const dbtrAcct = pmtInf.ele('DbtrAcct')
-  dbtrAcct.ele('Id').ele('Othr').ele('Id').txt(normalizeBankgiro(company.bankgiro))
+  dbtrAcct
+    .ele('Id')
+    .ele('Othr')
+    .ele('Id')
+    .txt(normalizeBankgiro(company.bankgiro))
 
   // Credit Transfer Transactions
   for (const p of payments) {
@@ -185,11 +193,19 @@ export function generatePain001(
     // Creditor Account
     const cdtrAcct = txInf.ele('CdtrAcct')
     if (p.bankgiro) {
-      cdtrAcct.ele('Id').ele('Othr').ele('Id').txt(normalizeBankgiro(p.bankgiro))
+      cdtrAcct
+        .ele('Id')
+        .ele('Othr')
+        .ele('Id')
+        .txt(normalizeBankgiro(p.bankgiro))
     } else if (p.plusgiro) {
       cdtrAcct.ele('Id').ele('Othr').ele('Id').txt(p.plusgiro)
     } else if (p.bank_account && p.bank_clearing) {
-      cdtrAcct.ele('Id').ele('Othr').ele('Id').txt(p.bank_clearing + p.bank_account)
+      cdtrAcct
+        .ele('Id')
+        .ele('Othr')
+        .ele('Id')
+        .txt(p.bank_clearing + p.bank_account)
     }
 
     // Remittance Information

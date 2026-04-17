@@ -17,7 +17,10 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import { checkChronology } from '../chronology-guard'
-import { classifyBankFeeTx, type FeeClassification } from './bank-fee-classifier'
+import {
+  classifyBankFeeTx,
+  type FeeClassification,
+} from './bank-fee-classifier'
 import type { ErrorCode, IpcResult } from '../../../shared/types'
 
 // ═══ Types ═══
@@ -81,7 +84,9 @@ export function _createBankFeeEntryTx(
 
   // 2. Hämta company + fiscal-year från bank_statement
   const stmt = db
-    .prepare('SELECT company_id, fiscal_year_id FROM bank_statements WHERE id = ?')
+    .prepare(
+      'SELECT company_id, fiscal_year_id FROM bank_statements WHERE id = ?',
+    )
     .get(tx.bank_statement_id) as BankStatementRow | undefined
   if (!stmt) {
     throw {
@@ -162,15 +167,36 @@ export function _createBankFeeEntryTx(
   if (type === 'bank_fee') {
     // D 6570, K 1930
     insertLine.run(journalEntryId, 1, '6570', absAmount, 0, description)
-    insertLine.run(journalEntryId, 2, input.payment_account, 0, absAmount, description)
+    insertLine.run(
+      journalEntryId,
+      2,
+      input.payment_account,
+      0,
+      absAmount,
+      description,
+    )
   } else if (type === 'interest_income') {
     // D 1930, K 8310
-    insertLine.run(journalEntryId, 1, input.payment_account, absAmount, 0, description)
+    insertLine.run(
+      journalEntryId,
+      1,
+      input.payment_account,
+      absAmount,
+      0,
+      description,
+    )
     insertLine.run(journalEntryId, 2, '8310', 0, absAmount, description)
   } else {
     // interest_expense: D 8410, K 1930
     insertLine.run(journalEntryId, 1, '8410', absAmount, 0, description)
-    insertLine.run(journalEntryId, 2, input.payment_account, 0, absAmount, description)
+    insertLine.run(
+      journalEntryId,
+      2,
+      input.payment_account,
+      0,
+      absAmount,
+      description,
+    )
   }
 
   // 9. Boka verifikatet (triggers validerar balans + period)
@@ -241,7 +267,8 @@ export function createBankFeeEntry(
       if (!classification) {
         throw {
           code: 'VALIDATION_ERROR' as ErrorCode,
-          error: 'Transaktionen kan inte auto-klassificeras som bankavgift/ränta.',
+          error:
+            'Transaktionen kan inte auto-klassificeras som bankavgift/ränta.',
           field: 'bank_transaction_id',
         }
       }

@@ -1,19 +1,22 @@
 import { z } from 'zod'
 import { SaveDraftInputSchema } from '../../../shared/ipc-schemas'
-import { MAX_QTY_INVOICE, ERR_MSG_MAX_QTY_INVOICE } from '../../../shared/constants'
+import {
+  MAX_QTY_INVOICE,
+  ERR_MSG_MAX_QTY_INVOICE,
+} from '../../../shared/constants'
 import { toOre } from '../format'
 
 export const InvoiceLineFormSchema = z.object({
   temp_id: z.string(),
   product_id: z.number().nullable(),
   description: z.string(),
-  quantity: z.number()
+  quantity: z
+    .number()
     .min(0.01, { message: 'Antal måste vara minst 0,01' })
     .max(MAX_QTY_INVOICE, { message: ERR_MSG_MAX_QTY_INVOICE })
-    .refine(
-      (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9,
-      { message: 'Quantity kan ha högst 2 decimaler' },
-    ),
+    .refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9, {
+      message: 'Quantity kan ha högst 2 decimaler',
+    }),
   unit_price_kr: z.number(),
   vat_code_id: z.number(),
   vat_rate: z.number(),
@@ -24,9 +27,13 @@ export const InvoiceLineFormSchema = z.object({
 export type InvoiceLineForm = z.infer<typeof InvoiceLineFormSchema>
 
 export const InvoiceFormStateSchema = z.object({
-  _customer: z.object({ id: z.number(), name: z.string() }).nullable()
-    .refine(v => v !== null, 'Välj en kund'),
-  invoice_type: z.enum(['customer_invoice', 'credit_note']).default('customer_invoice'),
+  _customer: z
+    .object({ id: z.number(), name: z.string() })
+    .nullable()
+    .refine((v) => v !== null, 'Välj en kund'),
+  invoice_type: z
+    .enum(['customer_invoice', 'credit_note'])
+    .default('customer_invoice'),
   credits_invoice_id: z.number().nullable(),
   invoiceDate: z.string().min(1, 'Välj fakturadatum'),
   paymentTerms: z.number(),
@@ -72,7 +79,7 @@ export function transformInvoiceForm(
       unit_price_ore: toOre(line.unit_price_kr),
       vat_code_id: line.vat_code_id,
       sort_order: i,
-      account_number: line.product_id ? null : (line.account_number || null),
+      account_number: line.product_id ? null : line.account_number || null,
     })),
   }
 }
@@ -81,7 +88,9 @@ function newTempId(): string {
   return `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function makeEmptyInvoiceLine(defaultVatCodeId: number): InvoiceLineForm {
+export function makeEmptyInvoiceLine(
+  defaultVatCodeId: number,
+): InvoiceLineForm {
   return {
     temp_id: newTempId(),
     product_id: null,

@@ -95,7 +95,11 @@ export function createProduct(
       .prepare('SELECT * FROM products WHERE id = ?')
       .get(Number(result.lastInsertRowid)) as Product
 
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: product }
   } catch (err) {
     log.error('[product-service] createProduct failed:', err)
@@ -164,7 +168,11 @@ export function updateProduct(
     const updated = db
       .prepare('SELECT * FROM products WHERE id = ?')
       .get(id) as Product
-    try { rebuildSearchIndex(db) } catch { /* log only */ }
+    try {
+      rebuildSearchIndex(db)
+    } catch {
+      /* log only */
+    }
     return { success: true, data: updated }
   } catch (err) {
     log.error('[product-service] updateProduct failed:', err)

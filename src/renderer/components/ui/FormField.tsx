@@ -36,7 +36,10 @@ export function FormField<TForm extends object>({
 
   return (
     <div>
-      <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+      <label
+        htmlFor={fieldId}
+        className="block text-sm font-medium text-foreground mb-1"
+      >
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
@@ -45,7 +48,9 @@ export function FormField<TForm extends object>({
         data-testid={fieldId}
         type={type}
         value={String(form.getField(name) ?? '')}
-        onChange={(e) => form.setField(name, e.target.value as TForm[typeof name])}
+        onChange={(e) =>
+          form.setField(name, e.target.value as TForm[typeof name])
+        }
         placeholder={placeholder}
         disabled={disabled}
         aria-invalid={error ? true : undefined}
@@ -53,9 +58,13 @@ export function FormField<TForm extends object>({
         className={inputClass}
       />
       {error && (
-        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">{error}</p>
+        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">
+          {error}
+        </p>
       )}
-      {hint && !error && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {hint && !error && (
+        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+      )}
     </div>
   )
 }

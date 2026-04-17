@@ -4,7 +4,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
-import { createCompany, updateCompany } from '../src/main/services/company-service'
+import {
+  createCompany,
+  updateCompany,
+} from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import {
   validateBankgiroChecksum,
@@ -49,7 +52,9 @@ beforeAll(() => {
   // Add bankgiro to company
   db.prepare("UPDATE companies SET bankgiro = '1234-5678' WHERE id = 1").run()
 
-  fyId = (db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }).id
+  fyId = (
+    db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
+  ).id
 
   // Create supplier with bankgiro
   const supplier = createCounterparty(db, {
@@ -63,22 +68,38 @@ beforeAll(() => {
 
   // Create a payment batch with an expense payment
   // First create a minimal expense + payment for the batch
-  const vatCode = db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1' LIMIT 1").get() as { id: number }
+  const vatCode = db
+    .prepare("SELECT id FROM vat_codes WHERE code = 'IP1' LIMIT 1")
+    .get() as { id: number }
 
   // Insert expense directly (minimal for test)
-  db.prepare(`INSERT INTO expenses (counterparty_id, fiscal_year_id, expense_date, due_date, status, supplier_invoice_number, total_amount_ore, paid_amount_ore) VALUES (?, ?, '2025-02-01', '2025-03-01', 'unpaid', 'INV-001', 12500, 12500)`).run(supplierId, fyId)
-  const expenseId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  db.prepare(
+    `INSERT INTO expenses (counterparty_id, fiscal_year_id, expense_date, due_date, status, supplier_invoice_number, total_amount_ore, paid_amount_ore) VALUES (?, ?, '2025-02-01', '2025-03-01', 'unpaid', 'INV-001', 12500, 12500)`,
+  ).run(supplierId, fyId)
+  const expenseId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Create journal entry for expense
-  db.prepare(`INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number, verification_series, journal_date, description, status, source_type) VALUES (1, ?, 1, 'B', '2025-02-01', 'Test expense', 'booked', 'auto_expense')`).run(fyId)
-  const jeId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  db.prepare(
+    `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_number, verification_series, journal_date, description, status, source_type) VALUES (1, ?, 1, 'B', '2025-02-01', 'Test expense', 'booked', 'auto_expense')`,
+  ).run(fyId)
+  const jeId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Create payment batch
-  db.prepare(`INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number, status) VALUES (?, 'expense', '2025-02-15', '1930', 'completed')`).run(fyId)
-  const batchId = (db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }).id
+  db.prepare(
+    `INSERT INTO payment_batches (fiscal_year_id, batch_type, payment_date, account_number, status) VALUES (?, 'expense', '2025-02-15', '1930', 'completed')`,
+  ).run(fyId)
+  const batchId = (
+    db.prepare('SELECT last_insert_rowid() as id').get() as { id: number }
+  ).id
 
   // Create expense payment linked to batch
-  db.prepare(`INSERT INTO expense_payments (expense_id, amount_ore, payment_date, payment_method, account_number, journal_entry_id, payment_batch_id) VALUES (?, 12500, '2025-02-15', 'bankgiro', '1930', ?, ?)`).run(expenseId, jeId, batchId)
+  db.prepare(
+    `INSERT INTO expense_payments (expense_id, amount_ore, payment_date, payment_method, account_number, journal_entry_id, payment_batch_id) VALUES (?, 12500, '2025-02-15', 'bankgiro', '1930', ?, ?)`,
+  ).run(expenseId, jeId, batchId)
 })
 
 afterAll(() => {
@@ -180,7 +201,15 @@ describe('S46: pain.001 export', () => {
 
   it('P9: markBatchExported updates payment_batches', () => {
     markBatchExported(db, 1, 'pain001', '/tmp/test.xml')
-    const batch = db.prepare('SELECT exported_at, export_format, export_filename FROM payment_batches WHERE id = 1').get() as { exported_at: string; export_format: string; export_filename: string }
+    const batch = db
+      .prepare(
+        'SELECT exported_at, export_format, export_filename FROM payment_batches WHERE id = 1',
+      )
+      .get() as {
+      exported_at: string
+      export_format: string
+      export_filename: string
+    }
     expect(batch.export_format).toBe('pain001')
     expect(batch.export_filename).toBe('/tmp/test.xml')
     expect(batch.exported_at).not.toBeNull()
@@ -198,8 +227,10 @@ describe('S46: pain.001 export', () => {
   // ═══ Migration ═══
 
   it('P11: counterparty payment columns exist', () => {
-    const info = db.prepare("PRAGMA table_info('counterparties')").all() as Array<{ name: string }>
-    const cols = info.map(c => c.name)
+    const info = db
+      .prepare("PRAGMA table_info('counterparties')")
+      .all() as Array<{ name: string }>
+    const cols = info.map((c) => c.name)
     expect(cols).toContain('bankgiro')
     expect(cols).toContain('plusgiro')
     expect(cols).toContain('bank_account')
@@ -207,8 +238,10 @@ describe('S46: pain.001 export', () => {
   })
 
   it('P12: payment_batches export columns exist', () => {
-    const info = db.prepare("PRAGMA table_info('payment_batches')").all() as Array<{ name: string }>
-    const cols = info.map(c => c.name)
+    const info = db
+      .prepare("PRAGMA table_info('payment_batches')")
+      .all() as Array<{ name: string }>
+    const cols = info.map((c) => c.name)
     expect(cols).toContain('exported_at')
     expect(cols).toContain('export_format')
     expect(cols).toContain('export_filename')

@@ -17,19 +17,13 @@ import {
   updateManualEntryDraft,
   finalizeManualEntry,
 } from '../src/main/services/manual-entry-service'
-import {
-  createNewFiscalYear,
-} from '../src/main/services/fiscal-service'
+import { createNewFiscalYear } from '../src/main/services/fiscal-service'
 import {
   calculateNetResult,
   bookYearEndResult,
 } from '../src/main/services/opening-balance-service'
-import {
-  saveExpenseDraft,
-} from '../src/main/services/expense-service'
-import {
-  createAccount,
-} from '../src/main/services/account-service'
+import { saveExpenseDraft } from '../src/main/services/expense-service'
+import { createAccount } from '../src/main/services/account-service'
 import {
   mapUniqueConstraintError,
   COUNTERPARTY_UNIQUE_MAPPINGS,
@@ -67,13 +61,21 @@ const VALID_COMPANY = {
 
 function seedCompanyAndFY() {
   createCompany(db, VALID_COMPANY)
-  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as { id: number }
-  const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
+  const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
+    id: number
+  }
   return { fiscalYearId: fy.id, companyId: company.id }
 }
 
-beforeEach(() => { db = createTestDb() })
-afterEach(() => { db.close() })
+beforeEach(() => {
+  db = createTestDb()
+})
+afterEach(() => {
+  db.close()
+})
 
 // ═══════════════════════════════════════════════════════════
 // error-helpers.ts — mapUniqueConstraintError
@@ -122,15 +124,22 @@ describe('mapUniqueConstraintError', () => {
   })
 
   it('returns null for non-object errors', () => {
-    expect(mapUniqueConstraintError(null, COUNTERPARTY_UNIQUE_MAPPINGS)).toBeNull()
-    expect(mapUniqueConstraintError('string error', COUNTERPARTY_UNIQUE_MAPPINGS)).toBeNull()
-    expect(mapUniqueConstraintError(undefined, COUNTERPARTY_UNIQUE_MAPPINGS)).toBeNull()
+    expect(
+      mapUniqueConstraintError(null, COUNTERPARTY_UNIQUE_MAPPINGS),
+    ).toBeNull()
+    expect(
+      mapUniqueConstraintError('string error', COUNTERPARTY_UNIQUE_MAPPINGS),
+    ).toBeNull()
+    expect(
+      mapUniqueConstraintError(undefined, COUNTERPARTY_UNIQUE_MAPPINGS),
+    ).toBeNull()
   })
 
   it('maps compound constraint (expense supplier_invoice_number)', () => {
     const err = {
       code: 'SQLITE_CONSTRAINT_UNIQUE',
-      message: 'UNIQUE constraint failed: expenses.counterparty_id, expenses.supplier_invoice_number',
+      message:
+        'UNIQUE constraint failed: expenses.counterparty_id, expenses.supplier_invoice_number',
     }
     const result = mapUniqueConstraintError(err, EXPENSE_UNIQUE_MAPPINGS)
     expect(result).toEqual({
@@ -245,7 +254,9 @@ describe('manual-entry-service structured errors', () => {
 
   it('finalizeManualEntry returns YEAR_IS_CLOSED for closed fiscal year', () => {
     // Close the fiscal year
-    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(fiscalYearId)
+    db.prepare('UPDATE fiscal_years SET is_closed = 1 WHERE id = ?').run(
+      fiscalYearId,
+    )
 
     const draft = saveManualEntryDraft(db, {
       fiscal_year_id: fiscalYearId,
@@ -286,7 +297,9 @@ describe('fiscal-service structured errors', () => {
     let thrown: unknown = null
     try {
       createNewFiscalYear(db, ctx.companyId, ctx.fiscalYearId)
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('DUPLICATE_FISCAL_YEAR')
   })
@@ -314,7 +327,9 @@ describe('fiscal-service structured errors', () => {
         confirmBookResult: true,
         netResultOre: 99999, // Wrong!
       })
-    } catch (err) { thrown = err }
+    } catch (err) {
+      thrown = err
+    }
     expect(thrown).toBeTruthy()
     expect((thrown as { code: string }).code).toBe('STALE_DATA')
   })

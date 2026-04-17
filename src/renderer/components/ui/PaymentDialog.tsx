@@ -28,9 +28,7 @@ export function PaymentDialog({
   const remainingKr = (remaining / 100).toFixed(2)
 
   const [amountStr, setAmountStr] = useState(remainingKr)
-  const [paymentDate, setPaymentDate] = useState(
-    todayLocal(),
-  )
+  const [paymentDate, setPaymentDate] = useState(todayLocal())
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [errors, setErrors] = useState<{ amount?: string; date?: string }>({})
 
@@ -76,8 +74,15 @@ export function PaymentDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title" className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
-        <h2 id="payment-dialog-title" className="mb-4 text-base font-semibold">{title}</h2>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-dialog-title"
+        className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl"
+      >
+        <h2 id="payment-dialog-title" className="mb-4 text-base font-semibold">
+          {title}
+        </h2>
 
         <div className="mb-4 rounded-md border px-3 py-2 text-sm text-muted-foreground space-y-1">
           <div className="flex justify-between">
@@ -96,7 +101,10 @@ export function PaymentDialog({
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="payment-amount" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="payment-amount"
+              className="mb-1 block text-sm font-medium"
+            >
               Belopp (kr)
             </label>
             <input
@@ -108,12 +116,19 @@ export function PaymentDialog({
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
             {errors.amount && (
-              <p role="alert" className="mt-1 text-xs text-red-600">{errors.amount}</p>
+              <p role="alert" className="mt-1 text-xs text-red-600">
+                {errors.amount}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="payment-date" className="mb-1 block text-sm font-medium">Datum</label>
+            <label
+              htmlFor="payment-date"
+              className="mb-1 block text-sm font-medium"
+            >
+              Datum
+            </label>
             <input
               id="payment-date"
               type="date"
@@ -122,12 +137,17 @@ export function PaymentDialog({
               className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
             {errors.date && (
-              <p role="alert" className="mt-1 text-xs text-red-600">{errors.date}</p>
+              <p role="alert" className="mt-1 text-xs text-red-600">
+                {errors.date}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="payment-bank-fee" className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="payment-bank-fee"
+              className="mb-1 block text-sm font-medium"
+            >
               Bankavgift (kr)
             </label>
             <input
