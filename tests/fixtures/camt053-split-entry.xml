@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>M</MsgId><CreDtTm>2026-04-15T10:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>STMT-SPLIT</Id>
+      <CreDtTm>2026-04-15T10:00:00</CreDtTm>
+      <Acct><Id><IBAN>SE4550000000058398257466</IBAN></Id><Ccy>SEK</Ccy></Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">1000.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-01</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">1500.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-15</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="SEK">500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-05</Dt></BookgDt>
+        <ValDt><Dt>2026-04-05</Dt></ValDt>
+        <AcctSvcrRef>REF-SPLIT</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties><Dbtr><Nm>Part A</Nm></Dbtr></RltdPties>
+            <RmtInf><Ustrd>Del 1</Ustrd></RmtInf>
+          </TxDtls>
+          <TxDtls>
+            <RltdPties><Dbtr><Nm>Part B</Nm></Dbtr></RltdPties>
+            <RmtInf><Ustrd>Del 2</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

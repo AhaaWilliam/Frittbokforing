@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>MSG-001</MsgId>
+      <CreDtTm>2026-04-15T10:00:00</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>STMT-2026-04</Id>
+      <CreDtTm>2026-04-15T10:00:00</CreDtTm>
+      <Acct>
+        <Id><IBAN>SE4550000000058398257466</IBAN></Id>
+        <Ccy>SEK</Ccy>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">10000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-01</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">11500.50</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-15</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="SEK">2500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-05</Dt></BookgDt>
+        <ValDt><Dt>2026-04-05</Dt></ValDt>
+        <AcctSvcrRef>REF-A-001</AcctSvcrRef>
+        <BkTxCd><Prtry><Cd>TRF</Cd></Prtry></BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties>
+              <Dbtr><Nm>Acme AB</Nm></Dbtr>
+              <DbtrAcct><Id><IBAN>SE3550000000054910000003</IBAN></Id></DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Ustrd>Faktura 2026-001</Ustrd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">1200.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-10</Dt></BookgDt>
+        <ValDt><Dt>2026-04-10</Dt></ValDt>
+        <AcctSvcrRef>REF-A-002</AcctSvcrRef>
+        <NtryDtls>
+          <TxDtls>
+            <RltdPties>
+              <Cdtr><Nm>Telenor Sverige AB</Nm></Cdtr>
+            </RltdPties>
+            <RmtInf><Ustrd>Mobilabonnemang</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">200.50</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-04-12</Dt></BookgDt>
+        <ValDt><Dt>2026-04-13</Dt></ValDt>
+        <AcctSvcrRef>REF-A-003</AcctSvcrRef>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>
