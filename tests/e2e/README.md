@@ -2,6 +2,25 @@
 
 End-to-end tests that exercise the full stack: renderer UI, IPC layer, main process services, and SQLite database.
 
+## Körning: använd `npm run test:e2e`, inte direkt `npx playwright test`
+
+`better-sqlite3` är en native Node-modul som måste byggas för Electron-ABI
+före E2E och åter till Node-ABI för vitest. `npm run test:e2e*` går via
+`scripts/run-e2e.mjs` som:
+
+1. Rebuild för Electron-ABI
+2. Kör playwright med pass-through args
+3. Rebuild tillbaka till Node-ABI (alltid, även vid test-failure eller Ctrl+C)
+4. Smoketest att better-sqlite3 faktiskt laddas i Node-ABI
+
+**Direkt `npx playwright test` bypassar wrappern** — din arbetsträd blir
+kvar i Electron-ABI efter körningen, och nästa vitest kraschar med
+`NODE_MODULE_VERSION`-fel. Om du gjorde det: kör `npm rebuild better-sqlite3`
+manuellt. Se [ADR 001](../../docs/adr/001-sqlite-backend.md) för bakgrund.
+
+IDE-integrerade playwright-körningar (VS Code Playwright extension)
+bypassar också wrappern. Samma regel: rebuild manuellt efter körning.
+
 ## Architecture (M115, M116, M148, M150, M151)
 
 **M115:** E2E tests run against the dev-built Electron app via Playwright. Each test file gets its own temp-db-path via `FRITT_DB_PATH` env. Data is seeded via IPC calls through the renderer. UI interactions are used only for what's being tested, not for setup.
@@ -31,6 +50,9 @@ End-to-end tests that exercise the full stack: renderer UI, IPC layer, main proc
 - Manual entry form: "Bokför" button — use `getByRole('button', { name: 'Bokför' })` to avoid text collision with nav/headings
 - Payment dialog: "Registrera" submit button
 - Invoice list: `button[title="Registrera betalning"]` for per-row pay action
+- Fixed assets page: `page-fixed-assets`, `fa-create`, `fa-execute-period`, `fa-list`, `fa-row-{id}`, `fa-toggle-{id}`, `fa-detail-row-{id}`, `fa-dispose-{id}`, `fa-delete-{id}`, `fa-edit-{id}`
+- Fixed asset form dialog: `fixed-asset-form-dialog`, `fa-name`, `fa-cost`, `fa-submit`
+- Pagination: `pag-invoices-position`, `pag-invoices-next`, `pag-invoices-prev`, `pag-expenses-position`, `pag-expenses-next`, `pag-expenses-prev` — state synced to URL query `?invoices_page=N` / `?expenses_page=N` (Sprint C B1)
 
 ## How to run
 

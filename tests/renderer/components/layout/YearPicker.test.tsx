@@ -38,7 +38,7 @@ describe('formatFiscalYearLabel', () => {
 describe('YearPicker', () => {
   it('renders fiscal year options plus create option', async () => {
     // Default renderWithProviders gives 1 FY
-    await renderWithProviders(<YearPicker />, { axeCheck: false })
+    await renderWithProviders(<YearPicker />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('2026')).toBeInTheDocument()
@@ -53,7 +53,7 @@ describe('YearPicker', () => {
   it('closed year has amber styling on select', async () => {
     await renderWithProviders(<YearPicker />, {
       fiscalYear: { id: 1, label: '2026', is_closed: 1 },
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
     })
 
     await waitFor(() => {
@@ -65,7 +65,7 @@ describe('YearPicker', () => {
   it('closed year shows lock icon and read-only text', async () => {
     await renderWithProviders(<YearPicker />, {
       fiscalYear: { id: 1, label: '2026', is_closed: 1 },
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
     })
 
     await waitFor(() => {
@@ -74,7 +74,7 @@ describe('YearPicker', () => {
   })
 
   it('open year has no amber styling or lock text', async () => {
-    await renderWithProviders(<YearPicker />, { axeCheck: false })
+    await renderWithProviders(<YearPicker />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       const select = screen.getByDisplayValue('2026')
@@ -86,7 +86,7 @@ describe('YearPicker', () => {
   it('closed year option shows "(stängt)" suffix', async () => {
     await renderWithProviders(<YearPicker />, {
       fiscalYear: { id: 1, label: '2026', is_closed: 1 },
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
     })
 
     await waitFor(() => {
@@ -98,13 +98,13 @@ describe('YearPicker', () => {
   it('returns null when no fiscal years', async () => {
     const { container } = await renderWithProviders(<YearPicker />, {
       fiscalYear: 'none',
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
     })
     expect(container.querySelector('[data-testid="year-picker"]')).toBeNull()
   })
 
   it('"+ Skapa nytt räkenskapsår" option exists', async () => {
-    await renderWithProviders(<YearPicker />, { axeCheck: false })
+    await renderWithProviders(<YearPicker />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('+ Skapa nytt räkenskapsår')).toBeInTheDocument()

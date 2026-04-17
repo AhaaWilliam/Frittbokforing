@@ -9,6 +9,7 @@ import type {
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useBulkPayInvoices, useDebouncedSearch, useCreateCreditNoteDraft } from '../../lib/hooks'
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
+import { usePageParam } from '../../lib/use-page-param'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -83,8 +84,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     'mod+k': () => searchRef.current?.focus(),
   })
 
-  // Sprint 57 C2b: pagination-state (Beslut 11 + 12)
-  const [page, setPage] = useState(0)
+  // Sprint 57 C2b: pagination-state (Beslut 11 + 12); Sprint C B1: URL-sync
+  const [page, setPage] = usePageParam('invoices_page', 0)
   const prevFilters = useRef({ statusFilter, debouncedSearch })
 
   useEffect(() => {
@@ -98,10 +99,16 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }, [statusFilter, debouncedSearch])
 
+  const prevFyId = useRef(activeFiscalYear?.id)
   useEffect(() => {
-    setPage(0)
-    setSelectedIds(new Set())
-  }, [activeFiscalYear?.id])
+    if (prevFyId.current !== undefined && prevFyId.current !== activeFiscalYear?.id) {
+      setPage(0)
+    }
+    if (prevFyId.current !== activeFiscalYear?.id) {
+      setSelectedIds(new Set())
+      prevFyId.current = activeFiscalYear?.id
+    }
+  }, [activeFiscalYear?.id, setPage])
 
   const response = useInvoiceList(activeFiscalYear?.id, {
     status: statusFilter,

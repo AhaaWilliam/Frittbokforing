@@ -923,6 +923,13 @@ export const DepreciationCreateAssetSchema = z
   })
   .strict()
 
+export const DepreciationUpdateAssetSchema = z
+  .object({
+    id: z.number().int().positive(),
+    input: DepreciationCreateAssetSchema,
+  })
+  .strict()
+
 export const DepreciationListSchema = z
   .object({
     fiscal_year_id: z.number().int().positive().optional(),
@@ -1166,6 +1173,7 @@ export const channelMap = {
 
   // Depreciation (Sprint 53 F62)
   'depreciation:create-asset': DepreciationCreateAssetSchema,
+  'depreciation:update-asset': DepreciationUpdateAssetSchema,
   'depreciation:list': DepreciationListSchema,
   'depreciation:get': DepreciationIdSchema,
   'depreciation:dispose': DepreciationDisposeSchema,

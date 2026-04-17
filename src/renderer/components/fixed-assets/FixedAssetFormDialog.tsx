@@ -1,30 +1,62 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { DEPRECIATION_DEFAULTS, findDepreciationDefaults } from '../../../shared/depreciation-defaults'
-import { useCreateFixedAsset } from '../../lib/hooks'
-import type { CreateFixedAssetInput, DepreciationMethod } from '../../../shared/types'
+import { useCreateFixedAsset, useUpdateFixedAsset } from '../../lib/hooks'
+import type {
+  CreateFixedAssetInput,
+  DepreciationMethod,
+  FixedAssetWithAccumulation,
+} from '../../../shared/types'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
+  mode: 'create' | 'edit'
+  initialAsset?: FixedAssetWithAccumulation
 }
 
-/**
- * Minimal inline-dialog för att skapa en anläggningstillgång.
- * Form använder `_kr`-suffix i state och konverterar till öre vid submit (M136).
- */
-export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
+export function FixedAssetFormDialog({ open, onOpenChange, mode, initialAsset }: Props) {
   const createMutation = useCreateFixedAsset()
-  const [name, setName] = useState('')
-  const [acquisitionDate, setAcquisitionDate] = useState(new Date().toISOString().slice(0, 10))
-  const [costKr, setCostKr] = useState('')
-  const [residualKr, setResidualKr] = useState('0')
-  const [months, setMonths] = useState('36')
-  const [method, setMethod] = useState<DepreciationMethod>('linear')
-  const [decliningRatePct, setDecliningRatePct] = useState('30')
-  const [assetAccount, setAssetAccount] = useState('1220')
-  const [accAccount, setAccAccount] = useState('1229')
-  const [expAccount, setExpAccount] = useState('7832')
+  const updateMutation = useUpdateFixedAsset()
+
+  const [name, setName] = useState(() =>
+    mode === 'edit' && initialAsset ? initialAsset.name : '',
+  )
+  const [acquisitionDate, setAcquisitionDate] = useState(() =>
+    mode === 'edit' && initialAsset
+      ? initialAsset.acquisition_date
+      : new Date().toISOString().slice(0, 10),
+  )
+  const [costKr, setCostKr] = useState(() =>
+    mode === 'edit' && initialAsset
+      ? (initialAsset.acquisition_cost_ore / 100).toFixed(2)
+      : '',
+  )
+  const [residualKr, setResidualKr] = useState(() =>
+    mode === 'edit' && initialAsset
+      ? (initialAsset.residual_value_ore / 100).toFixed(2)
+      : '0',
+  )
+  const [months, setMonths] = useState(() =>
+    mode === 'edit' && initialAsset ? String(initialAsset.useful_life_months) : '36',
+  )
+  const [method, setMethod] = useState<DepreciationMethod>(() =>
+    mode === 'edit' && initialAsset ? initialAsset.method : 'linear',
+  )
+  const [decliningRatePct, setDecliningRatePct] = useState(() =>
+    mode === 'edit' && initialAsset?.declining_rate_bp
+      ? String(initialAsset.declining_rate_bp / 100)
+      : '30',
+  )
+  const [assetAccount, setAssetAccount] = useState(() =>
+    mode === 'edit' && initialAsset ? initialAsset.account_asset : '1220',
+  )
+  const [accAccount, setAccAccount] = useState(() =>
+    mode === 'edit' && initialAsset ? initialAsset.account_accumulated_depreciation : '1229',
+  )
+  const [expAccount, setExpAccount] = useState(() =>
+    mode === 'edit' && initialAsset ? initialAsset.account_depreciation_expense : '7832',
+  )
   const [formError, setFormError] = useState<string | null>(null)
 
   function resetForm() {
@@ -43,10 +75,12 @@ export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
 
   function handleAssetAccountChange(value: string) {
     setAssetAccount(value)
-    const defaults = findDepreciationDefaults(value)
-    if (defaults) {
-      setAccAccount(defaults.accumulated)
-      setExpAccount(defaults.expense)
+    if (mode === 'create') {
+      const defaults = findDepreciationDefaults(value)
+      if (defaults) {
+        setAccAccount(defaults.accumulated)
+        setExpAccount(defaults.expense)
+      }
     }
   }
 
@@ -81,17 +115,29 @@ export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
     }
 
     try {
-      const r = await createMutation.mutateAsync(payload)
-      toast.success(`Tillgång skapad — ${r.scheduleCount} schema-rader genererade`)
-      resetForm()
+      if (mode === 'edit' && initialAsset) {
+        const r = await updateMutation.mutateAsync({ id: initialAsset.id, input: payload })
+        toast.success(`Tillgång uppdaterad — ${r.scheduleCount} schema-rader regenererade`)
+      } else {
+        const r = await createMutation.mutateAsync(payload)
+        toast.success(`Tillgång skapad — ${r.scheduleCount} schema-rader genererade`)
+        resetForm()
+      }
       onOpenChange(false)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Kunde inte skapa tillgång'
+      const msg = err instanceof Error ? err.message : 'Kunde inte spara tillgång'
       setFormError(msg)
     }
   }
 
   if (!open) return null
+
+  const isEdit = mode === 'edit'
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const title = isEdit && initialAsset ? `Redigera ${initialAsset.name}` : 'Ny anläggningstillgång'
+  const submitLabel = isPending
+    ? isEdit ? 'Sparar…' : 'Skapar…'
+    : isEdit ? 'Spara ändringar' : 'Skapa tillgång'
 
   return (
     <div
@@ -100,13 +146,14 @@ export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
       aria-labelledby="fixed-asset-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
       onClick={() => onOpenChange(false)}
+      data-testid="fixed-asset-form-dialog"
     >
       <div
         className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="fixed-asset-dialog-title" className="mb-4 text-lg font-semibold">
-          Ny anläggningstillgång
+          {title}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -210,8 +257,9 @@ export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
           <fieldset className="rounded-md border p-3">
             <legend className="px-1 text-sm font-medium">Bokföringskonton</legend>
             <p className="mb-2 text-xs text-muted-foreground">
-              Välj kontoklass från BAS-kontoplanen. Defaults sätts automatiskt via{' '}
-              {DEPRECIATION_DEFAULTS.length} vanliga mappningar.
+              {isEdit
+                ? 'Att byta BAS-konto rekommenderas bara om ursprungligt konto blivit inaktivt.'
+                : `Välj kontoklass från BAS-kontoplanen. Defaults sätts automatiskt via ${DEPRECIATION_DEFAULTS.length} vanliga mappningar.`}
             </p>
             <div className="grid grid-cols-3 gap-2">
               <div>
@@ -266,11 +314,11 @@ export function CreateFixedAssetDialog({ open, onOpenChange }: Props) {
             </button>
             <button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={isPending}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
               data-testid="fa-submit"
             >
-              {createMutation.isPending ? 'Skapar…' : 'Skapa tillgång'}
+              {submitLabel}
             </button>
           </div>
         </form>

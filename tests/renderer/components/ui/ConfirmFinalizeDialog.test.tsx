@@ -29,7 +29,7 @@ describe('ConfirmFinalizeDialog', () => {
   it('renders title and permanent action warning', async () => {
     await renderWithProviders(
       <ConfirmFinalizeDialog {...DEFAULT_PROPS} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test above
     )
     expect(screen.getByText('Bokför verifikation')).toBeInTheDocument()
     expect(
@@ -40,7 +40,7 @@ describe('ConfirmFinalizeDialog', () => {
   it('shows loading state when isLoading=true', async () => {
     await renderWithProviders(
       <ConfirmFinalizeDialog {...DEFAULT_PROPS} isLoading={true} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test above
     )
     const confirmBtn = screen.getByRole('button', { name: /Bokför/ })
     expect(confirmBtn).toBeDisabled()

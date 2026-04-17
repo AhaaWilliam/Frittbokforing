@@ -41,7 +41,7 @@ function renderDetail(overrides?: Partial<typeof DEFAULT_PROPS>) {
   mockProductGet()
   // CustomerPriceTable uses useCounterparties
   mockIpcResponse('counterparty:list', { success: true, data: [] })
-  return renderWithProviders(<ProductDetail {...props} />, { axeCheck: false })
+  return renderWithProviders(<ProductDetail {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('ProductDetail', () => {

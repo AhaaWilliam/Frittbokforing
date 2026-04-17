@@ -80,9 +80,7 @@ describe('SuggestedMatchesPanel (S57 A4)', () => {
     const { suggestBankMatches } = setupApi({
       suggestions: [{ bank_transaction_id: 1, candidates: [makeCandidate()] }],
     })
-    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />, {
-      axeCheck: false,
-    })
+    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />)
 
     // Initialt — stängd, ingen IPC
     expect(suggestBankMatches).not.toHaveBeenCalled()
@@ -101,9 +99,7 @@ describe('SuggestedMatchesPanel (S57 A4)', () => {
     setupApi({
       suggestions: [{ bank_transaction_id: 1, candidates: [] }],
     })
-    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />, {
-      axeCheck: false,
-    })
+    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />)
     await userEvent.click(screen.getByText('Föreslå matchningar'))
     await waitFor(() => {
       expect(screen.getByTestId('suggested-matches-empty')).toBeDefined()
@@ -138,9 +134,7 @@ describe('SuggestedMatchesPanel (S57 A4)', () => {
       matchImpl,
     })
 
-    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />, {
-      axeCheck: false,
-    })
+    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />)
     await userEvent.click(screen.getByText('Föreslå matchningar'))
     await waitFor(() => {
       expect(screen.getByTestId('suggested-matches-accept-all-high')).toBeDefined()
@@ -181,9 +175,7 @@ describe('SuggestedMatchesPanel (S57 A4)', () => {
       matchImpl,
     })
 
-    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />, {
-      axeCheck: false,
-    })
+    await renderWithProviders(<SuggestedMatchesPanel statementId={10} />)
     await userEvent.click(screen.getByText('Föreslå matchningar'))
     await waitFor(() => {
       expect(screen.getByTestId('suggested-matches-accept-all-high')).toBeDefined()

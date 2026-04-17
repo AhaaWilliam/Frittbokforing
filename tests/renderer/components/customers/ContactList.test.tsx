@@ -90,7 +90,7 @@ function renderList(props?: Partial<React.ComponentProps<typeof ContactList>>) {
   mockIpcResponse('counterparty:list', { success: true, data: CUSTOMERS })
   return renderWithProviders(
     <ContactList {...defaultProps} {...props} />,
-    { axeCheck: false },
+    { axeCheck: false }, // M133 exempt — dedicated axe test below
   )
 }
 
@@ -134,7 +134,7 @@ describe('ContactList', () => {
         onSelect={vi.fn()}
         search=""
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in outer describe
     )
     await waitFor(() => {
       expect(screen.getByText(/Inga kunder/)).toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('ContactList', () => {
         onSelect={vi.fn()}
         search=""
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in outer describe
     )
     await waitFor(() => {
       expect(screen.getByText(/Inga leverantörer/)).toBeInTheDocument()

@@ -21,7 +21,6 @@ describe('Pagination (S57 C2a)', () => {
         testIdPrefix="pag-test"
         onPageChange={vi.fn()}
       />,
-      { axeCheck: false },
     )
     expect(screen.getByTestId('pag-test-summary').textContent).toBe(
       'Visar 51–100 av 127 fakturor',
@@ -38,7 +37,6 @@ describe('Pagination (S57 C2a)', () => {
         testIdPrefix="pag-a"
         onPageChange={vi.fn()}
       />,
-      { axeCheck: false },
     )
     expect(screen.getByTestId('pag-a-prev')).toBeDisabled()
     expect(screen.getByTestId('pag-a-next')).not.toBeDisabled()
@@ -52,7 +50,6 @@ describe('Pagination (S57 C2a)', () => {
         testIdPrefix="pag-b"
         onPageChange={vi.fn()}
       />,
-      { axeCheck: false },
     )
     expect(screen.getByTestId('pag-b-prev')).not.toBeDisabled()
     expect(screen.getByTestId('pag-b-next')).toBeDisabled()
@@ -68,7 +65,6 @@ describe('Pagination (S57 C2a)', () => {
         testIdPrefix="pag-empty"
         onPageChange={vi.fn()}
       />,
-      { axeCheck: false },
     )
     expect(screen.getByTestId('pag-empty-summary').textContent).toBe(
       'Visar 0–0 av 0 fakturor',
@@ -87,7 +83,6 @@ describe('Pagination (S57 C2a)', () => {
         testIdPrefix="pag-c"
         onPageChange={onPageChange}
       />,
-      { axeCheck: false },
     )
     await userEvent.click(screen.getByTestId('pag-c-next'))
     expect(onPageChange).toHaveBeenCalledWith(1)

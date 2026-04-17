@@ -38,7 +38,7 @@ describe('PeriodList', () => {
   it('renders 12 month names', async () => {
     const periods = makeAllPeriods(3)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Januari')).toBeInTheDocument()
@@ -51,7 +51,7 @@ describe('PeriodList', () => {
   it('closed months show "Klar" badge', async () => {
     const periods = makeAllPeriods(2)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Januari')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('PeriodList', () => {
   it('open months show "Öppen" badge', async () => {
     const periods = makeAllPeriods(2)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Januari')).toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('PeriodList', () => {
   it('close button only on firstOpenIndex', async () => {
     const periods = makeAllPeriods(2) // Jan-Feb closed, Mar is first open
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Januari')).toBeInTheDocument()
@@ -89,7 +89,7 @@ describe('PeriodList', () => {
   it('reopen button only on lastClosedIndex', async () => {
     const periods = makeAllPeriods(3) // Jan-Mar closed
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Januari')).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe('PeriodList', () => {
   it('close click opens confirmation dialog', async () => {
     const periods = makeAllPeriods(0) // All open, Jan is first
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Stäng januari/i)).toBeInTheDocument()
@@ -119,7 +119,7 @@ describe('PeriodList', () => {
   it('cancel closes confirmation dialog', async () => {
     const periods = makeAllPeriods(0)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Stäng januari/i)).toBeInTheDocument()
@@ -139,7 +139,7 @@ describe('PeriodList', () => {
   it('all-closed banner shows when every period is closed', async () => {
     const periods = makeAllPeriods(12)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    await renderWithProviders(<PeriodList />, { axeCheck: false })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Alla månader för 2026 är stängda/)).toBeInTheDocument()
@@ -148,7 +148,7 @@ describe('PeriodList', () => {
 
   it('returns null when no periods', async () => {
     mockIpcResponse('fiscal-period:list', { success: true, data: [] })
-    const { container } = await renderWithProviders(<PeriodList />, { axeCheck: false })
+    const { container } = await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     // Give time for query to resolve
     await waitFor(() => {})
@@ -161,7 +161,7 @@ describe('PeriodList', () => {
 
     await renderWithProviders(<PeriodList />, {
       fiscalYear: { id: 1, label: '2026', is_closed: 1 },
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
     })
 
     await waitFor(() => {

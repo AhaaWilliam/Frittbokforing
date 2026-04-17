@@ -80,7 +80,7 @@ beforeEach(() => {
 
 describe('PageAgingReport', () => {
   it('renders title and receivables tab by default', async () => {
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Åldersanalys')).toBeInTheDocument()
@@ -90,7 +90,7 @@ describe('PageAgingReport', () => {
   })
 
   it('shows receivables bucket with items', async () => {
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Acme AB')).toBeInTheDocument()
@@ -100,7 +100,7 @@ describe('PageAgingReport', () => {
   })
 
   it('shows total remaining', async () => {
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Totalt utestående/)).toBeInTheDocument()
@@ -108,7 +108,7 @@ describe('PageAgingReport', () => {
   })
 
   it('switches to payables tab', async () => {
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Kundfordringar')).toBeInTheDocument()
@@ -126,7 +126,7 @@ describe('PageAgingReport', () => {
 
   it('empty report shows "Inga utestående poster"', async () => {
     mockIpcResponse('aging:receivables', { success: true, data: EMPTY_REPORT })
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Inga utestående poster/)).toBeInTheDocument()
@@ -134,7 +134,7 @@ describe('PageAgingReport', () => {
   })
 
   it('shows as_of_date disclaimer', async () => {
-    await renderWithProviders(<PageAgingReport />, { axeCheck: false })
+    await renderWithProviders(<PageAgingReport />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText(/Per datum: 2026-06-15/)).toBeInTheDocument()

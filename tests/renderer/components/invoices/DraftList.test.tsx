@@ -39,7 +39,7 @@ beforeEach(() => {
 
 function renderList(onSelect = vi.fn()) {
   mockIpcResponse('invoice:list-drafts', { success: true, data: DRAFTS })
-  return renderWithProviders(<DraftList onSelect={onSelect} />, { axeCheck: false })
+  return renderWithProviders(<DraftList onSelect={onSelect} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('DraftList', () => {
@@ -66,7 +66,7 @@ describe('DraftList', () => {
 
   it('empty list shows empty message', async () => {
     mockIpcResponse('invoice:list-drafts', { success: true, data: [] })
-    await renderWithProviders(<DraftList onSelect={vi.fn()} />, { axeCheck: false })
+    await renderWithProviders(<DraftList onSelect={vi.fn()} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText(/Inga utkast/)).toBeInTheDocument()
     })

@@ -55,7 +55,7 @@ beforeEach(() => {
 
 function renderForm(overrides?: { product?: Product; onClose?: () => void; onSaved?: (id: number) => void }) {
   const props = { ...DEFAULT_PROPS, ...overrides }
-  return renderWithProviders(<ProductForm {...props} />, { axeCheck: false })
+  return renderWithProviders(<ProductForm {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('ProductForm', () => {

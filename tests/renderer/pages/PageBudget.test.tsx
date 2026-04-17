@@ -50,7 +50,7 @@ beforeEach(() => {
 
 describe('PageBudget', () => {
   it('R1: renders Budget tab with 11 input rows', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })
@@ -60,7 +60,7 @@ describe('PageBudget', () => {
   })
 
   it('R2: renders period column headers P1-P12 + Helår', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('P1')).toBeDefined()
       expect(screen.getByText('P12')).toBeDefined()
@@ -69,7 +69,7 @@ describe('PageBudget', () => {
   })
 
   it('R3: renders group headers', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Rörelseintäkter')).toBeDefined()
       expect(screen.getByText('Rörelsekostnader')).toBeDefined()
@@ -78,7 +78,7 @@ describe('PageBudget', () => {
   })
 
   it('R4: tab switch to Avvikelse renders variance grid', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })
@@ -94,7 +94,7 @@ describe('PageBudget', () => {
   })
 
   it('R5: budget cells are editable inputs', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })
@@ -105,7 +105,7 @@ describe('PageBudget', () => {
   })
 
   it('R6: Spara button calls saveBudgetTargets', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })
@@ -127,7 +127,7 @@ describe('PageBudget', () => {
 
   it('R7: "Kopiera från förra året" disabled without previous FY', async () => {
     // Only 1 FY, no previous
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })
@@ -139,7 +139,7 @@ describe('PageBudget', () => {
   it('R8: "Kopiera från förra året" enabled with previous FY', async () => {
     // Override fiscal-year:list AFTER renderWithProviders sets its default
     // to include two FYs — the useFiscalYears hook will get both
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     // Re-mock to include 2 FYs and refetch
     mockIpcResponse('fiscal-year:list', {
       success: true,
@@ -157,7 +157,7 @@ describe('PageBudget', () => {
   })
 
   it('R9: Print button visible in Avvikelse tab', async () => {
-    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' })
+    await renderWithProviders(<PageBudget />, { axeCheck: false, initialRoute: '/budget' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Nettoomsättning')).toBeDefined()
     })

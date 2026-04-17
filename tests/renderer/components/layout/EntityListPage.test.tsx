@@ -53,7 +53,7 @@ describe('EntityListPage — sub-view', () => {
           edit: () => <StubForm />,
         }}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -75,7 +75,7 @@ describe('EntityListPage — sub-view', () => {
           edit: () => <StubForm />,
         }}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -97,7 +97,7 @@ describe('EntityListPage — sub-view', () => {
           edit: (id) => <div data-testid="edit-form">Edit {id}</div>,
         }}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -121,7 +121,7 @@ describe('EntityListPage — sub-view', () => {
       />,
       {
         fiscalYear: { id: 1, label: '2026', is_closed: 1 },
-        axeCheck: false,
+        axeCheck: false, // M133 exempt — dedicated axe test in describe-block
       },
     )
 
@@ -145,7 +145,7 @@ describe('EntityListPage — sub-view', () => {
           view: (id) => <div data-testid="view-detail">View {id}</div>,
         }}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -186,7 +186,7 @@ describe('EntityListPage — master-detail', () => {
         renderDetail={({ id }) => <StubDetail id={id} />}
         renderForm={() => <StubForm />}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -210,7 +210,7 @@ describe('EntityListPage — master-detail', () => {
         renderDetail={({ id }) => <StubDetail id={id} />}
         renderForm={() => <StubForm />}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {
@@ -232,7 +232,7 @@ describe('EntityListPage — master-detail', () => {
         renderDetail={({ id }) => <StubDetail id={id} />}
         renderForm={() => <StubForm />}
       />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in describe-block
     )
 
     await waitFor(() => {

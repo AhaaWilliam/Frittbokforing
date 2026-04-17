@@ -418,6 +418,10 @@ interface ElectronAPI {
   createFixedAsset: (
     data: import('../shared/types').CreateFixedAssetInput,
   ) => Promise<IpcResult<{ id: number; scheduleCount: number }>>
+  updateFixedAsset: (data: {
+    id: number
+    input: import('../shared/types').UpdateFixedAssetInput
+  }) => Promise<IpcResult<{ scheduleCount: number }>>
   listFixedAssets: (data: { fiscal_year_id?: number }) => Promise<
     IpcResult<import('../shared/types').FixedAssetWithAccumulation[]>
   >

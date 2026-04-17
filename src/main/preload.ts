@@ -271,6 +271,21 @@ contextBridge.exposeInMainWorld('api', {
     account_accumulated_depreciation: string
     account_depreciation_expense: string
   }) => ipcRenderer.invoke('depreciation:create-asset', data),
+  updateFixedAsset: (data: {
+    id: number
+    input: {
+      name: string
+      acquisition_date: string
+      acquisition_cost_ore: number
+      residual_value_ore: number
+      useful_life_months: number
+      method: 'linear' | 'declining'
+      declining_rate_bp?: number
+      account_asset: string
+      account_accumulated_depreciation: string
+      account_depreciation_expense: string
+    }
+  }) => ipcRenderer.invoke('depreciation:update-asset', data),
   listFixedAssets: (data: { fiscal_year_id?: number }) =>
     ipcRenderer.invoke('depreciation:list', data),
   getFixedAsset: (data: { id: number }) =>

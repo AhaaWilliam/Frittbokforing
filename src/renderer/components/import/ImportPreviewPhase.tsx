@@ -51,7 +51,7 @@ export function ImportPreviewPhase({
           ) : (
             <>
               <XCircle className="h-5 w-5 text-red-600" />
-              <span className="font-medium text-red-700">
+              <span role="alert" className="font-medium text-red-700">
                 {errors.length} blockerande fel
               </span>
             </>

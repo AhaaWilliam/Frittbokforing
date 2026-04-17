@@ -43,7 +43,7 @@ function renderList(onNavigate = vi.fn()) {
     success: true,
     data: { items: INVOICE_ITEMS, counts: COUNTS },
   })
-  return renderWithProviders(<InvoiceList onNavigate={onNavigate} />, { axeCheck: false })
+  return renderWithProviders(<InvoiceList onNavigate={onNavigate} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 beforeEach(() => {

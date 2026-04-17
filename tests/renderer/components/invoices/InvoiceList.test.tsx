@@ -126,7 +126,7 @@ describe('InvoiceList', () => {
           total_items: 0,
         },
       })
-      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false }) // M133 exempt — dedicated axe test in outer describe
       await waitFor(() => {
         expect(screen.getByTestId('pag-invoices-summary').textContent).toBe(
           'Visar 0–0 av 0 fakturor',
@@ -145,7 +145,7 @@ describe('InvoiceList', () => {
           total_items: 127,
         },
       })
-      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false }) // M133 exempt — dedicated axe test in outer describe
 
       await waitFor(() => {
         expect(screen.getByText('Kund Alpha')).toBeDefined()
@@ -182,10 +182,28 @@ describe('InvoiceList', () => {
           total_items: 127,
         },
       })
-      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false }) // M133 exempt — dedicated axe test in outer describe
       await waitFor(() => {
         // sida 1 av 3 (127 / 50 = 3 sidor)
         expect(screen.getByTestId('pag-invoices-position').textContent).toBe('Sida 1 / 3')
+      })
+    })
+
+    it('läser initial sida från URL query-param (Sprint C B1)', async () => {
+      mockIpcResponse('invoice:list', {
+        success: true,
+        data: {
+          items: INVOICE_ITEMS,
+          counts: COUNTS,
+          total_items: 127,
+        },
+      })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, {
+        axeCheck: false, // M133 exempt — dedicated axe test in outer describe
+        initialRoute: '/income?invoices_page=2',
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId('pag-invoices-position').textContent).toBe('Sida 3 / 3')
       })
     })
   })

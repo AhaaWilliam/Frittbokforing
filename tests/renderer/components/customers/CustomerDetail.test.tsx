@@ -46,7 +46,7 @@ function mockCounterpartyGet(data: Counterparty | null = COUNTERPARTY) {
 function renderDetail(overrides?: Partial<typeof DEFAULT_PROPS>) {
   const props = { ...DEFAULT_PROPS, onEdit: vi.fn(), ...overrides }
   mockCounterpartyGet()
-  return renderWithProviders(<CustomerDetail {...props} />, { axeCheck: false })
+  return renderWithProviders(<CustomerDetail {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('CustomerDetail', () => {
@@ -78,7 +78,7 @@ describe('CustomerDetail', () => {
     mockCounterpartyGet(partial)
     await renderWithProviders(
       <CustomerDetail {...DEFAULT_PROPS} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in outer describe
     )
     await waitFor(() => {
       expect(screen.getByText('Acme AB')).toBeInTheDocument()

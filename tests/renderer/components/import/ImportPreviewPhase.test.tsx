@@ -64,7 +64,7 @@ beforeEach(() => {
 
 describe('ImportPreviewPhase konflikt-sektion (S57 B3b)', () => {
   it('inga conflicts → ingen konflikt-sektion renderas', async () => {
-    await renderWithProviders(<Wrapper conflicts={[]} />, { axeCheck: false })
+    await renderWithProviders(<Wrapper conflicts={[]} />)
     expect(screen.queryByTestId('sie4-conflicts-section')).toBeNull()
     // Importera-knappen är aktiv
     expect(screen.getByTestId('sie4-import-btn')).not.toBeDisabled()
@@ -82,7 +82,6 @@ describe('ImportPreviewPhase konflikt-sektion (S57 B3b)', () => {
           },
         ]}
       />,
-      { axeCheck: false },
     )
     expect(screen.getByTestId('sie4-conflicts-section')).toBeDefined()
     const keepRadio = screen.getByTestId('conflict-1930-keep') as HTMLInputElement
@@ -102,7 +101,6 @@ describe('ImportPreviewPhase konflikt-sektion (S57 B3b)', () => {
           },
         ]}
       />,
-      { axeCheck: false },
     )
     await userEvent.click(screen.getByTestId('conflict-1930-skip'))
     expect(screen.getByTestId('conflict-1930-invalid-skip')).toBeDefined()
@@ -121,7 +119,6 @@ describe('ImportPreviewPhase konflikt-sektion (S57 B3b)', () => {
           },
         ]}
       />,
-      { axeCheck: false },
     )
     await userEvent.click(screen.getByTestId('conflict-9999-skip'))
     expect(screen.queryByTestId('conflict-9999-invalid-skip')).toBeNull()

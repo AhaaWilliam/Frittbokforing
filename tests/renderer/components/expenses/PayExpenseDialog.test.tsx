@@ -48,7 +48,7 @@ afterEach(() => {
 
 function renderDialog(overrides?: Partial<typeof DEFAULT_PROPS>) {
   const props = { ...DEFAULT_PROPS, onClose: vi.fn(), onSuccess: vi.fn(), ...overrides }
-  return renderWithProviders(<PayExpenseDialog {...props} />, { axeCheck: false })
+  return renderWithProviders(<PayExpenseDialog {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('PayExpenseDialog', () => {

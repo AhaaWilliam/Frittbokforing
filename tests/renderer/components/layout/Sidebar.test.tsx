@@ -53,7 +53,7 @@ beforeEach(() => {
 describe('Sidebar', () => {
   it('renders company name and fiscal_rule K2', async () => {
     const company = makeCompany({ name: 'Mitt Företag AB', fiscal_rule: 'K2' })
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Mitt Företag AB')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('Sidebar', () => {
 
   it('renders K3 label', async () => {
     const company = makeCompany({ fiscal_rule: 'K3' })
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Fullständig (K3)')).toBeInTheDocument()
@@ -72,7 +72,7 @@ describe('Sidebar', () => {
 
   it('renders all nav sections', async () => {
     const company = makeCompany()
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Hantera')).toBeInTheDocument()
@@ -86,7 +86,7 @@ describe('Sidebar', () => {
 
   it('renders nav links with correct testIds', async () => {
     const company = makeCompany()
-    const { container } = await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    const { container } = await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByText('Översikt')).toBeInTheDocument()
@@ -106,7 +106,7 @@ describe('Sidebar', () => {
 
   it('renders YearPicker child', async () => {
     const company = makeCompany()
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByTestId('year-picker')).toBeInTheDocument()
@@ -115,7 +115,7 @@ describe('Sidebar', () => {
 
   it('renders GlobalSearch child', async () => {
     const company = makeCompany()
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false })
+    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Sök/)).toBeInTheDocument()

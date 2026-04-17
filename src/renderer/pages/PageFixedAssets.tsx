@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react'
-import { ChevronDown, ChevronRight, Plus, Play, Trash2, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Plus, Play, Trash2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import {
@@ -10,9 +10,10 @@ import {
 } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
-import { CreateFixedAssetDialog } from '../components/fixed-assets/CreateFixedAssetDialog'
+import { FixedAssetFormDialog } from '../components/fixed-assets/FixedAssetFormDialog'
 import { FixedAssetDetailPanel } from '../components/fixed-assets/FixedAssetDetailPanel'
 import { DisposeDialog } from '../components/fixed-assets/DisposeDialog'
+import type { FixedAssetWithAccumulation } from '../../shared/types'
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Aktiv',
@@ -27,6 +28,7 @@ function fmtKr(ore: number): string {
 export function PageFixedAssets() {
   const { activeFiscalYear } = useFiscalYearContext()
   const [showCreate, setShowCreate] = useState(false)
+  const [editingAsset, setEditingAsset] = useState<FixedAssetWithAccumulation | null>(null)
   const [disposingAsset, setDisposingAsset] = useState<{ id: number; name: string } | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
@@ -100,7 +102,7 @@ export function PageFixedAssets() {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden" data-testid="page-fixed-assets">
       <PageHeader
         title="Anläggningstillgångar"
         action={
@@ -194,13 +196,27 @@ export function PageFixedAssets() {
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-right">
+                    {a.status === 'active' && a.schedules_executed === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingAsset(a)}
+                        aria-label={`Redigera ${a.name}`}
+                        title="Redigera"
+                        data-testid={`fa-edit-${a.id}`}
+                        className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                     {a.status === 'active' && (
                       <button
                         type="button"
                         onClick={() => handleDispose(a.id, a.name)}
                         disabled={disposeMutation.isPending}
                         className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                        aria-label={`Avyttra ${a.name}`}
                         title="Avyttra"
+                        data-testid={`fa-dispose-${a.id}`}
                       >
                         <XCircle className="h-3.5 w-3.5" />
                       </button>
@@ -211,7 +227,9 @@ export function PageFixedAssets() {
                         onClick={() => handleDelete(a.id, a.name)}
                         disabled={deleteMutation.isPending}
                         className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                        aria-label={`Radera ${a.name}`}
                         title="Radera"
+                        data-testid={`fa-delete-${a.id}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -233,7 +251,18 @@ export function PageFixedAssets() {
         )}
       </div>
 
-      <CreateFixedAssetDialog open={showCreate} onOpenChange={setShowCreate} />
+      <FixedAssetFormDialog
+        key={editingAsset ? `edit-${editingAsset.id}` : 'create'}
+        open={showCreate || editingAsset !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setShowCreate(false)
+            setEditingAsset(null)
+          }
+        }}
+        mode={editingAsset ? 'edit' : 'create'}
+        initialAsset={editingAsset ?? undefined}
+      />
       {disposingAsset && (
         <DisposeDialog
           assetName={disposingAsset.name}

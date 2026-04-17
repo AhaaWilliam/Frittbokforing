@@ -7,6 +7,7 @@ import type {
   IpcResult,
   ErrorCode,
   CreateFixedAssetInput,
+  UpdateFixedAssetInput,
   FixedAsset,
   FixedAssetWithAccumulation,
   FixedAssetWithSchedule,
@@ -86,10 +87,10 @@ function computePeriods(
 
 // ═══ CRUD ═══
 
-export function createFixedAsset(
-  db: Database.Database,
+function validateFixedAssetInput(
   input: CreateFixedAssetInput,
-): IpcResult<{ id: number; scheduleCount: number }> {
+  db: Database.Database,
+): { success: false; code: ErrorCode; error: string; field?: string } | null {
   if (input.acquisition_cost_ore < 0) {
     return { success: false, code: 'VALIDATION_ERROR', error: 'Anskaffningsvärde får inte vara negativt', field: 'acquisition_cost_ore' }
   }
@@ -132,6 +133,38 @@ export function createFixedAsset(
     return { success: false, code: 'VALIDATION_ERROR', error: 'Kontot kunde inte valideras' }
   }
 
+  return null
+}
+
+function validateAccountChange(
+  db: Database.Database,
+  accounts: string[],
+): { success: false; code: ErrorCode; error: string; field?: string } | null {
+  for (const value of accounts) {
+    const exists = db.prepare('SELECT 1 FROM accounts WHERE account_number = ?').get(value)
+    if (!exists) {
+      return { success: false, code: 'ACCOUNT_NOT_FOUND', error: `Konto ${value} finns inte` }
+    }
+  }
+  try {
+    validateAccountsActive(db, accounts)
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, code: e.code, error: e.error, field: e.field }
+    }
+    return { success: false, code: 'VALIDATION_ERROR', error: 'Kontot kunde inte valideras' }
+  }
+  return null
+}
+
+export function createFixedAsset(
+  db: Database.Database,
+  input: CreateFixedAssetInput,
+): IpcResult<{ id: number; scheduleCount: number }> {
+  const inputError = validateFixedAssetInput(input, db)
+  if (inputError) return inputError
+
   return db.transaction(() => {
     const now = todayLocalFromNow()
     const companyId = (db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number } | undefined)?.id
@@ -165,6 +198,95 @@ export function createFixedAsset(
     const assetId = Number(result.lastInsertRowid)
     const scheduleCount = insertSchedule(db, assetId, input)
     return { success: true as const, data: { id: assetId, scheduleCount } }
+  })()
+}
+
+export function updateFixedAsset(
+  db: Database.Database,
+  id: number,
+  input: UpdateFixedAssetInput,
+): IpcResult<{ scheduleCount: number }> {
+  const inputError = validateFixedAssetInput(input, db)
+  if (inputError) {
+    // validateFixedAssetInput also runs account existence + active checks;
+    // for edit-mode we want to allow unchanged-but-inactive accounts. So
+    // re-run with finer guards inside the transaction below.
+    // Only propagate value-check failures (non-account) immediately.
+    if (
+      inputError.code !== 'ACCOUNT_NOT_FOUND' &&
+      inputError.code !== 'INACTIVE_ACCOUNT'
+    ) {
+      return inputError
+    }
+  }
+
+  return db.transaction(() => {
+    const asset = db.prepare('SELECT * FROM fixed_assets WHERE id = ?').get(id) as FixedAsset | undefined
+    if (!asset) {
+      return { success: false as const, code: 'NOT_FOUND' as const, error: 'Anläggningstillgång hittades inte' }
+    }
+
+    if (asset.status !== 'active') {
+      return {
+        success: false as const,
+        code: 'VALIDATION_ERROR' as const,
+        error: 'Endast aktiva tillgångar kan redigeras',
+      }
+    }
+
+    const nonPendingCount = (db
+      .prepare(
+        `SELECT COUNT(*) as n FROM depreciation_schedules
+         WHERE fixed_asset_id = ? AND status IN ('executed', 'skipped')`,
+      )
+      .get(id) as { n: number }).n
+    if (nonPendingCount > 0) {
+      return {
+        success: false as const,
+        code: 'HAS_EXECUTED_SCHEDULES' as const,
+        error: `Kan inte redigera tillgång med historik (${nonPendingCount} bokförda eller överhoppade rader). Avyttra eller radera och återskapa om attributen behöver ändras.`,
+      }
+    }
+
+    const changedAccounts: string[] = []
+    if (input.account_asset !== asset.account_asset) changedAccounts.push(input.account_asset)
+    if (input.account_accumulated_depreciation !== asset.account_accumulated_depreciation)
+      changedAccounts.push(input.account_accumulated_depreciation)
+    if (input.account_depreciation_expense !== asset.account_depreciation_expense)
+      changedAccounts.push(input.account_depreciation_expense)
+
+    if (changedAccounts.length > 0) {
+      const accountError = validateAccountChange(db, changedAccounts)
+      if (accountError) return accountError
+    }
+
+    db.prepare('DELETE FROM depreciation_schedules WHERE fixed_asset_id = ?').run(id)
+
+    db.prepare(`
+      UPDATE fixed_assets SET
+        name = ?, acquisition_date = ?, acquisition_cost_ore = ?,
+        residual_value_ore = ?, useful_life_months = ?, method = ?,
+        declining_rate_bp = ?, account_asset = ?,
+        account_accumulated_depreciation = ?, account_depreciation_expense = ?,
+        updated_at = ?
+      WHERE id = ?
+    `).run(
+      input.name,
+      input.acquisition_date,
+      input.acquisition_cost_ore,
+      input.residual_value_ore,
+      input.useful_life_months,
+      input.method,
+      input.declining_rate_bp ?? null,
+      input.account_asset,
+      input.account_accumulated_depreciation,
+      input.account_depreciation_expense,
+      todayLocalFromNow(),
+      id,
+    )
+
+    const scheduleCount = insertSchedule(db, id, input)
+    return { success: true as const, data: { scheduleCount } }
   })()
 }
 

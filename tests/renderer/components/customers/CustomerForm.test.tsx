@@ -18,7 +18,7 @@ beforeEach(() => {
 
 function renderForm(overrides?: { counterparty?: Counterparty; defaultType?: 'customer' | 'supplier'; onClose?: () => void; onSaved?: (id: number) => void }) {
   const props = { ...DEFAULT_PROPS, ...overrides }
-  return renderWithProviders(<CustomerForm {...props} />, { axeCheck: false })
+  return renderWithProviders(<CustomerForm {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('CustomerForm', () => {

@@ -52,6 +52,7 @@ export type ErrorCode =
   | 'PERIOD_CLOSED'
   | 'NOT_MATCHED'
   | 'BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED'
+  | 'HAS_EXECUTED_SCHEDULES'
   | 'UNEXPECTED_ERROR'
 
 // === Page navigation ===
@@ -961,6 +962,8 @@ export interface CreateFixedAssetInput {
   account_accumulated_depreciation: string
   account_depreciation_expense: string
 }
+
+export type UpdateFixedAssetInput = CreateFixedAssetInput
 
 export interface DepreciationSchedule {
   id: number

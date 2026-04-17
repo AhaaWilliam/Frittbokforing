@@ -131,6 +131,7 @@ import {
 } from './services/budget-service'
 import {
   createFixedAsset,
+  updateFixedAsset,
   listFixedAssets,
   getFixedAsset,
   disposeFixedAsset,
@@ -224,6 +225,7 @@ import {
   BudgetVarianceSchema,
   BudgetCopySchema,
   DepreciationCreateAssetSchema,
+  DepreciationUpdateAssetSchema,
   DepreciationListSchema,
   DepreciationIdSchema,
   DepreciationDisposeSchema,
@@ -973,6 +975,10 @@ export function registerIpcHandlers(): void {
   // === Depreciation (Sprint 53 F62) ===
   ipcMain.handle('depreciation:create-asset', wrapIpcHandler(DepreciationCreateAssetSchema, (data) =>
     createFixedAsset(db, data),
+  ))
+
+  ipcMain.handle('depreciation:update-asset', wrapIpcHandler(DepreciationUpdateAssetSchema, (data) =>
+    updateFixedAsset(db, data.id, data.input),
   ))
 
   ipcMain.handle('depreciation:list', wrapIpcHandler(DepreciationListSchema, (data) =>

@@ -1024,6 +1024,13 @@ export function useCreateFixedAsset() {
   >((data) => window.api.createFixedAsset(data), { invalidateAll: true })
 }
 
+export function useUpdateFixedAsset() {
+  return useIpcMutation<
+    { id: number; input: import('../../shared/types').UpdateFixedAssetInput },
+    { scheduleCount: number }
+  >((data) => window.api.updateFixedAsset(data), { invalidateAll: true })
+}
+
 export function useDisposeFixedAsset() {
   return useIpcMutation<
     {

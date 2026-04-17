@@ -64,7 +64,7 @@ beforeEach(() => {
 
 describe('PageAccruals', () => {
   it('R1: renders schedule cards', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Förutbetald hyra')).toBeDefined()
       expect(screen.getByText('Upplupen lön')).toBeDefined()
@@ -72,7 +72,7 @@ describe('PageAccruals', () => {
   })
 
   it('R2: shows type badges', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Förutbetald kostnad')).toBeDefined()
       expect(screen.getByText('Upplupen kostnad')).toBeDefined()
@@ -80,28 +80,28 @@ describe('PageAccruals', () => {
   })
 
   it('R3: shows progress (2 av 6 perioder körda)', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('2 av 6 perioder körda')).toBeDefined()
     })
   })
 
   it('R4: shows execute button for next period', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Kör P3')).toBeDefined()
     })
   })
 
   it('R5: inactive schedule shows "Inaktiv" text', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Inaktiv')).toBeDefined()
     })
   })
 
   it('R6: "Ny periodisering" button opens create dialog', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText('Ny periodisering')).toBeDefined()
     })
@@ -113,7 +113,7 @@ describe('PageAccruals', () => {
   })
 
   it('R7: create dialog has type dropdown with 4 options', async () => {
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => screen.getByText('Ny periodisering'))
     await userEvent.click(screen.getByText('Ny periodisering'))
     await waitFor(() => {
@@ -124,7 +124,7 @@ describe('PageAccruals', () => {
 
   it('R8: execute button calls executeAccrual', async () => {
     mockIpcResponse('accrual:execute', { success: true, data: { journalEntryId: 100 } })
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => screen.getByText('Kör P3'))
 
     await userEvent.click(screen.getByText('Kör P3'))
@@ -138,7 +138,7 @@ describe('PageAccruals', () => {
 
   it('R9: empty state when no schedules', async () => {
     mockIpcResponse('accrual:list', { success: true, data: [] })
-    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' })
+    await renderWithProviders(<PageAccruals />, { axeCheck: false, initialRoute: '/accruals' }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByText(/inga periodiseringsscheman/i)).toBeDefined()
     })

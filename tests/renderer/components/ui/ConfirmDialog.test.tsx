@@ -23,7 +23,7 @@ function renderDialog(overrides?: Partial<typeof DEFAULT_PROPS>) {
   // Reset mocks for each render
   props.onOpenChange = overrides?.onOpenChange ?? vi.fn()
   props.onConfirm = overrides?.onConfirm ?? vi.fn()
-  return renderWithProviders(<ConfirmDialog {...props} />, { axeCheck: false })
+  return renderWithProviders(<ConfirmDialog {...props} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
 
 describe('ConfirmDialog', () => {

@@ -21,12 +21,12 @@ beforeEach(() => {
 
 describe('GlobalSearch', () => {
   it('renders input with placeholder', async () => {
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     expect(screen.getByPlaceholderText(/Sök.*Ctrl\+K/)).toBeInTheDocument()
   })
 
   it('typing < 2 chars does not open dropdown', async () => {
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
       fireEvent.change(input, { target: { value: 'A' } })
@@ -36,7 +36,7 @@ describe('GlobalSearch', () => {
 
   it('typing >= 2 chars opens dropdown with results after debounce', async () => {
     mockIpcResponse('search:global', { success: true, data: MOCK_RESULTS })
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
@@ -52,7 +52,7 @@ describe('GlobalSearch', () => {
 
   it('results grouped with type headers', async () => {
     mockIpcResponse('search:global', { success: true, data: MOCK_RESULTS })
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
@@ -69,7 +69,7 @@ describe('GlobalSearch', () => {
 
   it('Escape closes dropdown', async () => {
     mockIpcResponse('search:global', { success: true, data: MOCK_RESULTS })
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
@@ -90,7 +90,7 @@ describe('GlobalSearch', () => {
 
   it('empty results shows "Inga resultat" message', async () => {
     mockIpcResponse('search:global', { success: true, data: { results: [], total_count: 0 } })
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
@@ -105,7 +105,7 @@ describe('GlobalSearch', () => {
 
   it('ArrowDown navigates results', async () => {
     mockIpcResponse('search:global', { success: true, data: MOCK_RESULTS })
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     const input = screen.getByPlaceholderText(/Sök/)
     await act(async () => {
@@ -129,12 +129,12 @@ describe('GlobalSearch', () => {
   })
 
   it('has ARIA combobox role', async () => {
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
   it('input has role="searchbox"', async () => {
-    await renderWithProviders(<GlobalSearch />, { axeCheck: false })
+    await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
   })
 

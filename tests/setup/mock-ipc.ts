@@ -173,6 +173,14 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   // Settings
   getSetting: 'settings:get',
   setSetting: 'settings:set',
+  // Depreciation
+  createFixedAsset: 'depreciation:create-asset',
+  updateFixedAsset: 'depreciation:update-asset',
+  listFixedAssets: 'depreciation:list',
+  getFixedAsset: 'depreciation:get',
+  disposeFixedAsset: 'depreciation:dispose',
+  deleteFixedAsset: 'depreciation:delete',
+  executeDepreciationPeriod: 'depreciation:execute-period',
 }
 
 // ── Override storage ──────────────────────────────────────────────────

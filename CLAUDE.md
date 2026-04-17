@@ -300,13 +300,35 @@ ska definieras i `src/shared/constants.ts`, inte hårdkodas i schema-filerna.
 **M133.** `axeCheck: false` tillåts inte i testfiler utan dokumenterad
 undantagsmarkering. Verifieras via `npm run check:m133`.
 
-**Scope:** Fångar enbart `axeCheck: false`-återinförsel. Explicit undantag
-för infrastruktur-filer (render-with-providers.tsx som definierar/testar
-flaggan). AST-baserad utökning (error-`<p>` utan `role="alert"`) planerad
-som F49-b men inte implementerad — grep-regex kan inte matcha multi-line
-JSX pålitligt.
+**Scope (grep):** Fångar `axeCheck: false`-återinförsel. Explicit undantag
+för infrastruktur-filer (`render-with-providers.tsx` som definierar/testar
+flaggan) och filer med dedikerade axe-tester som vill slippa dubbelköra.
 
-**Referens:** Sprint 22c (F49), `scripts/check-m133.mjs`.
+**Scope (AST, F49-b):** `npm run check:m133-ast` fångar inline
+error-rendering i `src/renderer/**/*.tsx` som saknar `role="alert"`.
+Heuristik: JSX-element `<p>`, `<span>`, `<div>` med direkt-barn
+`JsxExpression` som refererar `errors` / `formErrors` / `fieldErrors`
+via `PropertyAccessExpression` utan inbäddad JSX. Använder TypeScript
+compiler API (ingen ny devDep).
+
+**Escape hatch-konvention (båda checkarna):** `// M133 exempt` (versaler,
+mellanslag, inget bindestreck mellan M133 och exempt) på samma rad som
+`axeCheck: false` eller JSX-elementets startrad. **Ingen variant** —
+ingen `// m133-ok`, ingen annan stavning. Format:
+```tsx
+await renderWithProviders(<Foo />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+```
+
+**Självtest:** `npm run check:m133-ast` kör alltid `--self-test` först
+(chainad i script) innan produktionsscanning. Self-test validerar
+detektor-logiken mot in-memory-fixtures (positiv, negativ, exempt,
+unrelated `err.message`, nested conditional, role-expression). Gate
+failar vid regression i heuristiken även om ingen produktionsfil är
+felbeskriven — brytning av scanSource är lika blockerande som verklig
+a11y-violation.
+
+**Referens:** Sprint 22c (F49), Sprint B (F49-b).
+`scripts/check-m133.mjs` + `scripts/check-m133-ast.mjs`.
 
 ## 39. BR årets resultat via result-service (M134)
 
@@ -782,6 +804,14 @@ visar den som disabled med tooltip. Batch-unmatch är backlog.
 
 **Referens:** Sprint A / S58 F66-e — `bank-unmatch-service.ts`,
 `tests/session-58-bank-unmatch.test.ts`.
+
+## Architecture Decision Records
+
+Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.
+Läs relevant ADR **innan** du föreslår en ändring som påverkar underliggande
+antaganden (t.ex. byte av native deps, transaktionsmodell).
+
+- [ADR 001 — SQLite-backend (`better-sqlite3` bevaras)](docs/adr/001-sqlite-backend.md)
 
 ## Projektstatus
 
