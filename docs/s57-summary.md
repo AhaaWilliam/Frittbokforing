@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Vitest | 2380 | 2402 | +22 |
 | Testfiler | 232 | 236 | +4 |
-| Playwright | 50 | 54 (4 nya specs registrerade) | +4 |
+| Playwright | 50 | 55 (5 nya specs registrerade) | +5 |
 | PRAGMA user_version | 40 | 40 | 0 (ingen migration) |
 | Tabeller | 36 | 36 | 0 |
 | IPC-kanaler | — | +1 (`__test:getCounterpartyById`) | — |
@@ -26,12 +26,13 @@
   loopen och pausar `useSuggestBankMatches` via `enabled: !pending` så att
   mid-loop-invalidation inte påverkar UI:t. Per-candidate-knappar disablas
   också under bulk. Failures samlas och visas inline + via toast. **4 RTL.**
-- **A5** — 2 E2E-specs:
+- **A5** — 3 E2E-specs:
   `bank-statement-auto-match.spec.ts` (happy: bulk-accept HIGH skapar
-  A-serie-verifikat) och `bank-statement-auto-match-empty.spec.ts` (empty:
-  inga förslag). Partial-failure-spec (3:e) sköts upp — kräver
-  test-API för att simulera mid-batch-failure (period-stängning eller
-  invoice-status-flip), tas vid behov.
+  A-serie-verifikat), `bank-statement-auto-match-empty.spec.ts` (empty:
+  inga förslag), `bank-statement-auto-match-partial.spec.ts`
+  (partial-failure: invoice#2 flippas till 'paid' via
+  `__testApi.setInvoiceStatus` efter cache-warmup → 2 av 3 accepterade,
+  failure-lista synlig).
 
 ### B. F63-polish-b UI
 
@@ -88,11 +89,6 @@
 
 ## Beslut som avvek från ursprungspromptet
 
-- **A5 partial-failure-spec uppskjutet** — bulk-accept partial-failure
-  E2E-spec kräver test-API för att simulera per-rad-fel mid-batch
-  (period-stängning eller invoice-status-flip). Funktionen är täckt av
-  RTL-test 3 i A4 (mock-baserad). Uppskjutet — F-item om behov uppstår.
-  **Effekt:** Playwright +4 istället för +5.
 - **InvoiceList-pagination "first-render-guard"-test fast värde-jämförelse**
   — Beslut 11 ändrades från `useRef<boolean>` till `useRef<{ values }>`
   som jämför mot föregående värden. Implicit-testat via FY-byte-test

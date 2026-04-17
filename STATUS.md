@@ -6,7 +6,7 @@ Session S57 (2026-04-17). Stänger UI/E2E-skulden från S56-PARTIAL och
 lägger till F66-c (IBAN ↔ counterparty auto-update).
 
 **Testbaslinje:** 2380 → 2402 vitest (+22). 232 → 236 testfiler (+4).
-**Playwright:** 50 → 54 (+4 nya specs registrerade).
+**Playwright:** 50 → 55 (+5 nya specs registrerade).
 **PRAGMA user_version:** 40 (oförändrat — ingen migration).
 **Tabeller:** 36 (oförändrat). **IPC-kanaler:** +1 test-only
 (`__test:getCounterpartyById`). **Nya M-principer:** inga.
@@ -15,7 +15,7 @@ lägger till F66-c (IBAN ↔ counterparty auto-update).
 
 - **A4** SuggestedMatchesPanel + bulk-accept (snapshot + suggester-pause)
   + 4 RTL.
-- **A5** 2 E2E-specs (happy + empty); partial-failure-spec uppskjuten.
+- **A5** 3 E2E-specs (happy + empty + partial-failure via setInvoiceStatus).
 - **B3a** validate-handler exponerar `conflicts[]`, schema utökad med
   `conflict_resolutions`, server-side filter av främmande nycklar.
 - **B3b** ImportPreviewPhase konflikt-sektion + V6 invariant-blockad
