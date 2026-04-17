@@ -1,5 +1,45 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint C -- F62-d Asset-redigering + B1 URL-pagination ✅ KLAR
+
+Session SC (2026-04-17). Två små oberoende features: asset-edit
+(F62-d från Sprint 53-backlog) och URL-state för pagination (B1 från
+Sprint 57-backlog). Noll nya affärsinvarianter.
+
+**Testbaslinje:** 2437 → **2471 vitest (+34)**. 240 → 243 testfiler (+3).
+**Playwright:** 58 → **60 specs (+2)**; full E2E: 61 passed / 5 failed
+(alla 5 pre-existing backlog från S57/S58, orörda).
+**PRAGMA user_version:** 41 (oförändrat).
+**Nya IPC-kanaler:** +1 (`depreciation:update-asset`).
+**Nya M-principer:** inga.
+**Nya ErrorCodes:** `HAS_EXECUTED_SCHEDULES`.
+
+### Levererat
+
+- **A F62-d** `updateFixedAsset` — pristine-guard inuti `db.transaction()`
+  (status='active' + 0 executed/skipped schedules), regenererar schedules,
+  bevarar id + created_at. +14 system.
+- **A.5** Validerings-refaktor: `validateFixedAssetInput` +
+  `validateAccountChange`. Edit skippar aktiv-check för oförändrade konton
+  (UX-flykt om tidigare giltigt konto inaktiverats).
+- **A.4** `CreateFixedAssetDialog` → `FixedAssetFormDialog` med
+  `mode: 'create' | 'edit'`. Edit-knapp (Pencil) i PageFixedAssets,
+  synlig endast när `status='active' && schedules_executed===0`. +9 RTL.
+- **B B1** `usePageParam`-hook + adoption i InvoiceList/ExpenseList.
+  URL-sync via `getHashParams/setHashParams` (replaceState). +10 hook +
+  1 integration.
+- **Biprodukt:** FY-effect i InvoiceList/ExpenseList refaktorerad till
+  ref-baserad prev-jämförelse — tidigare återställde page=0 vid mount.
+- **E2E:** 2 specs (depreciation-update T1+T2, pagination-url-state
+  direkt-URL + back-button).
+
+Se `docs/sprint-c-summary.md`.
+
+**Infrastruktur-fix:** Pre-existing `data-testid="page-fixed-assets"`
+(från Sprint B) orsakade strict-mode-violation mot AppShells
+`page-${page}`. Commit `d70ab14` tog bort duplikaten — återställde
+`depreciation-execute`-spec som annars failade i full-suite.
+
 ## Sprint A / S58 -- Bank-MVP stängning (F66-d + F66-e) ✅ KLAR
 
 Session S58 (2026-04-17). Stänger bank-reconciliation-storyn från S55–S57
