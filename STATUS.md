@@ -1,5 +1,70 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint E -- Tiered backlog-cleanup: T1 WONTFIX + T2 filter-URL + T3 eskalering ✅ KLAR
+
+Session SE (2026-04-17). Tiered cleanup-sprint: T1 (dokumentation) + T2
+(scope-säkert) + T3 (eskalering). Noll migrationer, noll nya M-principer,
+noll nya IPC-kanaler, noll nya ErrorCodes.
+
+**Testbaslinje:** 2475 → **2494 vitest (+19)**. 246 → 249 testfiler (+3).
+**Playwright:** 41 → **42 specfiler (+1)**, 66 → **67 test()-kallor (+1)**.
+Full E2E: 66p/0f → **67p/0f**.
+**PRAGMA user_version:** 41 (oförändrat).
+**Nya IPC-kanaler:** 0. **Nya M-principer:** 0. **Nya ErrorCodes:** 0.
+
+**Baseline-rättelse:** Sprint D-summary angav 65 specfiler / 102 test() —
+post-SD-verifiering visade 41/66. Felmätning i SD-tabell, ingen förlorad
+test.
+
+### Levererat
+
+**T1.a — WONTFIX-dokumentation.** `bank-statement-service.ts:229-233` fick
+dokumenterande kommentar om latent IpcResult-mönster (oreachable i
+produktion — alla inre fel returneras som kompletta `IpcResult`-objekt
+från transactionen). Defense-in-depth utan reachability-test lägger
+kodvariant utan värde.
+
+**T2.a — Filter-state i URL (InvoiceList + ExpenseList).** Ny
+`useFilterParam`-hook i `src/renderer/lib/use-filter-param.ts` med
+whitelist-validering. Ogiltiga URL-värden strippas vid mount. Andra
+params bevaras. URL-init triggar **inte** page-reset (verifierat via
+`prevFilters`-ref initialisering).
+- Invoice: 4 statusvärden (`draft | unpaid | paid | overdue`)
+- Expense: 5 statusvärden (inkl. `partial`)
+- 19 nya tester: 11 hook + 4 invoice-integration + 4 expense-integration +
+  1 E2E (`tests/e2e/filter-url-state.spec.ts`)
+- Ingen ny data-testid — E2E använder text-selector
+
+### Skippat med motivering (per pre-flight)
+
+**T2.b sort-URL:** 0 träffar på sort-mönster i renderer. Backend stödjer
+`sort_by`/`sort_order` men UI exponerar inte.
+
+**T2.c F49-c keyboard-navigation:** `s22b-f49-strategy.md:381-393` listar
+"Layout-refaktor för keyboard-navigation" som explicit non-goal för F49.
+Ingen scope-definition → eskalerat som T3.g.
+
+### Eskalerat till T3 (dokumenterade, INTE implementerade)
+
+- **T3.a** F62-e asset-edit efter körd avskrivning (ADR + revisor-samråd)
+- **T3.b** batch-unmatch (UX-design för partial vs total)
+- **T3.c** konfigurerbara BkTxCd-mappningar (DB-tabell rekommenderad per M153)
+- **T3.d** camt.054 / MT940 / BGC-retur-fil (H2 2026)
+- **T3.e** precis RQ-invalidation för 5 depreciation-hooks (ny, ersätter
+  tidigare felaktigt scopad T1.b)
+- **T3.g** F49-c keyboard-navigation scope-definition (UX-spec krävs)
+
+Sprint F-prioritetsordning: T3.e → T3.b → T3.a → T3.c/T3.d (H2).
+
+### Noterad lint-skuld
+
+Repoet har 4518 pre-existerande prettier-/unused-vars-fel utanför Sprint E
+scope. Mina nya filer är lint-rena (`npx eslint <filer>` exit 0), men full
+`npm run lint` failar. Rekommendation: lint-baseline-städning som egen
+backlog-item innan `npm run lint` används som acceptance-gate.
+
+Se `docs/sprint-e-summary.md` för detaljer.
+
 ## Sprint D -- Backlog-cleanup: E2E-failures + M100-avvikelser ✅ KLAR
 
 Session SD (2026-04-17). Ren städsprint: stänger 5 pre-existing E2E-failures

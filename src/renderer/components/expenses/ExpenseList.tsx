@@ -7,8 +7,16 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useExpenses, useFinalizeExpense, usePayExpense, useBulkPayExpenses, useDebouncedSearch, useCreateExpenseCreditNoteDraft } from '../../lib/hooks'
+import {
+  useExpenses,
+  useFinalizeExpense,
+  usePayExpense,
+  useBulkPayExpenses,
+  useDebouncedSearch,
+  useCreateExpenseCreditNoteDraft,
+} from '../../lib/hooks'
 import { usePageParam } from '../../lib/use-page-param'
+import { useFilterParam } from '../../lib/use-filter-param'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -21,12 +29,21 @@ import { Pagination } from '../ui/Pagination'
 
 const PAGE_SIZE = 50
 
+const EXPENSE_STATUSES = [
+  'draft',
+  'unpaid',
+  'partial',
+  'paid',
+  'overdue',
+] as const
+type ExpenseStatus = (typeof EXPENSE_STATUSES)[number]
+
 interface ExpenseListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
 }
 
 const STATUS_FILTERS: {
-  key: string | undefined
+  key: ExpenseStatus | undefined
   label: string
   countKey: keyof ExpenseStatusCounts
 }[] = [
@@ -51,8 +68,9 @@ const STATUS_BADGE: Record<
 
 export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    undefined,
+  const [statusFilter, setStatusFilter] = useFilterParam<ExpenseStatus>(
+    'expenses_status',
+    EXPENSE_STATUSES,
   )
   const { search, debouncedSearch, setSearch } = useDebouncedSearch()
   const searchRef = useRef<HTMLInputElement>(null)
@@ -70,7 +88,9 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const finalizeMutation = useFinalizeExpense()
   const payMutation = usePayExpense()
   const bulkPayMutation = useBulkPayExpenses()
-  const creditNoteMutation = useCreateExpenseCreditNoteDraft(activeFiscalYear?.id)
+  const creditNoteMutation = useCreateExpenseCreditNoteDraft(
+    activeFiscalYear?.id,
+  )
 
   useKeyboardShortcuts({
     'mod+k': () => searchRef.current?.focus(),
@@ -93,7 +113,10 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
 
   const prevFyId = useRef(activeFiscalYear?.id)
   useEffect(() => {
-    if (prevFyId.current !== undefined && prevFyId.current !== activeFiscalYear?.id) {
+    if (
+      prevFyId.current !== undefined &&
+      prevFyId.current !== activeFiscalYear?.id
+    ) {
       setPage(0)
     }
     if (prevFyId.current !== activeFiscalYear?.id) {
@@ -110,7 +133,8 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   })
 
   const isLoading = response.isLoading
-  const totalItems = (response.data as { total_items?: number } | undefined)?.total_items ?? 0
+  const totalItems =
+    (response.data as { total_items?: number } | undefined)?.total_items ?? 0
 
   let items: ExpenseListItem[] = []
   let counts: ExpenseStatusCounts = {
@@ -161,13 +185,16 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
     }
   }
 
-  const isSelectable = useCallback((item: ExpenseListItem) =>
-    ['unpaid', 'partial', 'overdue'].includes(item.status), [])
+  const isSelectable = useCallback(
+    (item: ExpenseListItem) =>
+      ['unpaid', 'partial', 'overdue'].includes(item.status),
+    [],
+  )
 
   const selectableItems = items.filter(isSelectable)
 
   function toggleSelect(id: number) {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -179,14 +206,23 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
     if (selectedIds.size === selectableItems.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(selectableItems.map(i => i.id)))
+      setSelectedIds(new Set(selectableItems.map((i) => i.id)))
     }
   }
 
-  async function handleBulkPay(payments: Array<{ id: number; amount_ore: number }>, date: string, accountNumber: string, bankFeeOre: number | undefined, userNote: string | undefined) {
+  async function handleBulkPay(
+    payments: Array<{ id: number; amount_ore: number }>,
+    date: string,
+    accountNumber: string,
+    bankFeeOre: number | undefined,
+    userNote: string | undefined,
+  ) {
     try {
       const result = await bulkPayMutation.mutateAsync({
-        payments: payments.map(p => ({ expense_id: p.id, amount_ore: p.amount_ore })),
+        payments: payments.map((p) => ({
+          expense_id: p.id,
+          amount_ore: p.amount_ore,
+        })),
         payment_date: date,
         account_number: accountNumber,
         bank_fee_ore: bankFeeOre,
@@ -198,11 +234,15 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
       if (result.failed.length === 0) {
         toast.success(`${result.succeeded.length} betalningar registrerade`)
       } else {
-        toast.warning(`${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`)
+        toast.warning(
+          `${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`,
+        )
       }
     } catch (err) {
       console.error('Bulk pay failed:', err)
-      toast.error(err instanceof Error ? err.message : 'Bulk-betalning misslyckades')
+      toast.error(
+        err instanceof Error ? err.message : 'Bulk-betalning misslyckades',
+      )
     }
   }
 
@@ -308,7 +348,10 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                 <th className="px-3 py-3 w-8">
                   <input
                     type="checkbox"
-                    checked={selectableItems.length > 0 && selectedIds.size === selectableItems.length}
+                    checked={
+                      selectableItems.length > 0 &&
+                      selectedIds.size === selectableItems.length
+                    }
                     onChange={toggleSelectAll}
                     className="h-4 w-4 rounded border-gray-300"
                   />
@@ -335,7 +378,10 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                     onClick={() => handleRowClick(item)}
                     className="cursor-pointer border-b transition-colors hover:bg-muted/50"
                   >
-                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                    <td
+                      className="px-3 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {isSelectable(item) ? (
                         <input
                           type="checkbox"
@@ -356,11 +402,12 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                           Kredit
                         </span>
                       )}
-                      {!!item.has_credit_note && item.expense_type !== 'credit_note' && (
-                        <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                          Krediterad
-                        </span>
-                      )}
+                      {!!item.has_credit_note &&
+                        item.expense_type !== 'credit_note' && (
+                          <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                            Krediterad
+                          </span>
+                        )}
                     </td>
                     <td className="px-4 py-3">
                       {item.supplier_invoice_number || '\u2014'}
@@ -418,29 +465,36 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                             Betala
                           </button>
                         )}
-                        {item.status !== 'draft' && item.expense_type !== 'credit_note' && !item.has_credit_note && (
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              if (!activeFiscalYear) return
-                              try {
-                                const result = await creditNoteMutation.mutateAsync({
-                                  original_expense_id: item.id,
-                                  fiscal_year_id: activeFiscalYear.id,
-                                })
-                                onNavigate({ edit: result.id })
-                                toast.success('Kreditnota-utkast skapat')
-                              } catch (err) {
-                                toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditnota')
-                              }
-                            }}
-                            title="Skapa kreditnota"
-                            className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
-                          >
-                            Kreditera
-                          </button>
-                        )}
+                        {item.status !== 'draft' &&
+                          item.expense_type !== 'credit_note' &&
+                          !item.has_credit_note && (
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!activeFiscalYear) return
+                                try {
+                                  const result =
+                                    await creditNoteMutation.mutateAsync({
+                                      original_expense_id: item.id,
+                                      fiscal_year_id: activeFiscalYear.id,
+                                    })
+                                  onNavigate({ edit: result.id })
+                                  toast.success('Kreditnota-utkast skapat')
+                                } catch (err) {
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Kunde inte skapa kreditnota',
+                                  )
+                                }
+                              }}
+                              title="Skapa kreditnota"
+                              className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+                            >
+                              Kreditera
+                            </button>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -499,8 +553,8 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
         onOpenChange={setShowBulkDialog}
         title={`Bulk-betalning (${selectedIds.size} kostnader)`}
         rows={items
-          .filter(i => selectedIds.has(i.id))
-          .map(i => ({
+          .filter((i) => selectedIds.has(i.id))
+          .map((i) => ({
             id: i.id,
             label: i.supplier_invoice_number || i.description,
             counterparty: i.counterparty_name,

@@ -7,9 +7,17 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useInvoiceList, useFinalizeInvoice, usePayInvoice, useBulkPayInvoices, useDebouncedSearch, useCreateCreditNoteDraft } from '../../lib/hooks'
+import {
+  useInvoiceList,
+  useFinalizeInvoice,
+  usePayInvoice,
+  useBulkPayInvoices,
+  useDebouncedSearch,
+  useCreateCreditNoteDraft,
+} from '../../lib/hooks'
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
 import { usePageParam } from '../../lib/use-page-param'
+import { useFilterParam } from '../../lib/use-filter-param'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -23,12 +31,15 @@ import { Pagination } from '../ui/Pagination'
 
 const PAGE_SIZE = 50
 
+const INVOICE_STATUSES = ['draft', 'unpaid', 'paid', 'overdue'] as const
+type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
+
 interface InvoiceListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
 }
 
 const STATUS_FILTERS: {
-  key: string | undefined
+  key: InvoiceStatus | undefined
   label: string
   countKey: keyof InvoiceStatusCounts
 }[] = [
@@ -51,8 +62,9 @@ const STATUS_BADGE: Record<
 
 export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    undefined,
+  const [statusFilter, setStatusFilter] = useFilterParam<InvoiceStatus>(
+    'invoices_status',
+    INVOICE_STATUSES,
   )
   const { search, debouncedSearch, setSearch } = useDebouncedSearch()
   const searchRef = useRef<HTMLInputElement>(null)
@@ -68,7 +80,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
   const [batchPdfExporting, setBatchPdfExporting] = useState(false)
-  const [batchPdfResult, setBatchPdfResult] = useState<{ succeeded: number; failed: Array<{ invoiceId: number; error: string }> } | null>(null)
+  const [batchPdfResult, setBatchPdfResult] = useState<{
+    succeeded: number
+    failed: Array<{ invoiceId: number; error: string }>
+  } | null>(null)
 
   const finalizeMutation = useFinalizeInvoice(activeFiscalYear?.id)
   const payMutation = usePayInvoice()
@@ -76,8 +91,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const creditNoteMutation = useCreateCreditNoteDraft(activeFiscalYear?.id)
 
   // PDF hooks
-  const generatePdfMutation = useIpcMutation(
-    (data: { invoiceId: number }) => window.api.generateInvoicePdf(data),
+  const generatePdfMutation = useIpcMutation((data: { invoiceId: number }) =>
+    window.api.generateInvoicePdf(data),
   )
 
   useKeyboardShortcuts({
@@ -101,7 +116,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
 
   const prevFyId = useRef(activeFiscalYear?.id)
   useEffect(() => {
-    if (prevFyId.current !== undefined && prevFyId.current !== activeFiscalYear?.id) {
+    if (
+      prevFyId.current !== undefined &&
+      prevFyId.current !== activeFiscalYear?.id
+    ) {
       setPage(0)
     }
     if (prevFyId.current !== activeFiscalYear?.id) {
@@ -118,7 +136,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   })
 
   const isLoading = response.isLoading
-  const totalItems = (response.data as { total_items?: number } | undefined)?.total_items ?? 0
+  const totalItems =
+    (response.data as { total_items?: number } | undefined)?.total_items ?? 0
 
   // Extract items and counts from the IpcResult
   let items: InvoiceListItem[] = []
@@ -150,7 +169,11 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }
 
-  async function handlePayment(amount: number, date: string, bankFeeOre?: number) {
+  async function handlePayment(
+    amount: number,
+    date: string,
+    bankFeeOre?: number,
+  ) {
     if (!payItem) return
     try {
       await payMutation.mutateAsync({
@@ -171,13 +194,15 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }
 
-  const isSelectable = useCallback((item: InvoiceListItem) =>
-    item.status !== 'draft', [])
+  const isSelectable = useCallback(
+    (item: InvoiceListItem) => item.status !== 'draft',
+    [],
+  )
 
   const selectableItems = items.filter(isSelectable)
 
   function toggleSelect(id: number) {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
@@ -189,14 +214,23 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     if (selectedIds.size === selectableItems.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(selectableItems.map(i => i.id)))
+      setSelectedIds(new Set(selectableItems.map((i) => i.id)))
     }
   }
 
-  async function handleBulkPay(payments: Array<{ id: number; amount_ore: number }>, date: string, accountNumber: string, bankFeeOre: number | undefined, userNote: string | undefined) {
+  async function handleBulkPay(
+    payments: Array<{ id: number; amount_ore: number }>,
+    date: string,
+    accountNumber: string,
+    bankFeeOre: number | undefined,
+    userNote: string | undefined,
+  ) {
     try {
       const result = await bulkPayMutation.mutateAsync({
-        payments: payments.map(p => ({ invoice_id: p.id, amount_ore: p.amount_ore })),
+        payments: payments.map((p) => ({
+          invoice_id: p.id,
+          amount_ore: p.amount_ore,
+        })),
         payment_date: date,
         account_number: accountNumber,
         bank_fee_ore: bankFeeOre,
@@ -208,11 +242,15 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       if (result.failed.length === 0) {
         toast.success(`${result.succeeded.length} betalningar registrerade`)
       } else {
-        toast.warning(`${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`)
+        toast.warning(
+          `${result.succeeded.length} av ${result.succeeded.length + result.failed.length} genomförda`,
+        )
       }
     } catch (err) {
       console.error('Bulk pay failed:', err)
-      toast.error(err instanceof Error ? err.message : 'Bulk-betalning misslyckades')
+      toast.error(
+        err instanceof Error ? err.message : 'Bulk-betalning misslyckades',
+      )
     }
   }
 
@@ -222,8 +260,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       if (!dirResponse.success || !dirResponse.data) return
       const directory = dirResponse.data.directory
 
-      const selectedItems = items.filter(i => selectedIds.has(i.id))
-      const invoices = selectedItems.map(i => ({
+      const selectedItems = items.filter((i) => selectedIds.has(i.id))
+      const invoices = selectedItems.map((i) => ({
         invoiceId: i.id,
         fileName: `Faktura_${i.invoice_number}_${i.counterparty_name.replace(/[^a-zA-ZåäöÅÄÖ0-9]/g, '_')}.pdf`,
       }))
@@ -244,11 +282,15 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       if (result.failed.length === 0) {
         toast.success(`${result.succeeded} PDF:er exporterade`)
       } else {
-        toast.warning(`${result.succeeded} av ${result.succeeded + result.failed.length} exporterade`)
+        toast.warning(
+          `${result.succeeded} av ${result.succeeded + result.failed.length} exporterade`,
+        )
       }
     } catch (error) {
       setBatchPdfExporting(false)
-      toast.error(error instanceof Error ? error.message : 'PDF-export misslyckades')
+      toast.error(
+        error instanceof Error ? error.message : 'PDF-export misslyckades',
+      )
     }
   }
 
@@ -334,8 +376,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
           <span className="text-sm font-medium">{selectedIds.size} valda</span>
           {items
-            .filter(i => selectedIds.has(i.id))
-            .every(i => ['unpaid', 'partial', 'overdue'].includes(i.status)) && (
+            .filter((i) => selectedIds.has(i.id))
+            .every((i) =>
+              ['unpaid', 'partial', 'overdue'].includes(i.status),
+            ) && (
             <button
               type="button"
               onClick={() => setShowBulkDialog(true)}
@@ -387,7 +431,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                 <th className="px-3 py-3 w-8">
                   <input
                     type="checkbox"
-                    checked={selectableItems.length > 0 && selectedIds.size === selectableItems.length}
+                    checked={
+                      selectableItems.length > 0 &&
+                      selectedIds.size === selectableItems.length
+                    }
                     onChange={toggleSelectAll}
                     className="h-4 w-4 rounded border-gray-300"
                   />
@@ -413,7 +460,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                     onClick={() => handleRowClick(item)}
                     className="cursor-pointer border-b transition-colors hover:bg-muted/50"
                   >
-                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                    <td
+                      className="px-3 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {isSelectable(item) ? (
                         <input
                           type="checkbox"
@@ -432,11 +482,12 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                           Kredit
                         </span>
                       )}
-                      {!!item.has_credit_note && item.invoice_type !== 'credit_note' && (
-                        <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-                          Krediterad
-                        </span>
-                      )}
+                      {!!item.has_credit_note &&
+                        item.invoice_type !== 'credit_note' && (
+                          <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                            Krediterad
+                          </span>
+                        )}
                     </td>
                     <td className="px-4 py-3">{item.invoice_date}</td>
                     <td className="px-4 py-3">{item.counterparty_name}</td>
@@ -493,29 +544,36 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
                             Betala
                           </button>
                         )}
-                        {item.status !== 'draft' && item.invoice_type !== 'credit_note' && !item.has_credit_note && (
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              if (!activeFiscalYear) return
-                              try {
-                                const result = await creditNoteMutation.mutateAsync({
-                                  original_invoice_id: item.id,
-                                  fiscal_year_id: activeFiscalYear.id,
-                                })
-                                onNavigate({ edit: result.id })
-                                toast.success('Kreditfaktura-utkast skapat')
-                              } catch (err) {
-                                toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditfaktura')
-                              }
-                            }}
-                            title="Skapa kreditfaktura"
-                            className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
-                          >
-                            Kreditera
-                          </button>
-                        )}
+                        {item.status !== 'draft' &&
+                          item.invoice_type !== 'credit_note' &&
+                          !item.has_credit_note && (
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!activeFiscalYear) return
+                                try {
+                                  const result =
+                                    await creditNoteMutation.mutateAsync({
+                                      original_invoice_id: item.id,
+                                      fiscal_year_id: activeFiscalYear.id,
+                                    })
+                                  onNavigate({ edit: result.id })
+                                  toast.success('Kreditfaktura-utkast skapat')
+                                } catch (err) {
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Kunde inte skapa kreditfaktura',
+                                  )
+                                }
+                              }}
+                              title="Skapa kreditfaktura"
+                              className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+                            >
+                              Kreditera
+                            </button>
+                          )}
                         {item.status !== 'draft' && (
                           <button
                             type="button"
@@ -586,8 +644,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         onOpenChange={setShowBulkDialog}
         title={`Bulk-betalning (${selectedIds.size} fakturor)`}
         rows={items
-          .filter(i => selectedIds.has(i.id))
-          .map(i => ({
+          .filter((i) => selectedIds.has(i.id))
+          .map((i) => ({
             id: i.id,
             label: i.invoice_number || `#${i.id}`,
             counterparty: i.counterparty_name,

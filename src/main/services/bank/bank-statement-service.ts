@@ -94,7 +94,12 @@ export function importBankStatement(
       parsed = parseCamt053(input.xml_content)
     } catch (err) {
       if (err instanceof Camt053ParseError) {
-        return { success: false, code: 'VALIDATION_ERROR', error: err.message, field: err.field }
+        return {
+          success: false,
+          code: 'VALIDATION_ERROR',
+          error: err.message,
+          field: err.field,
+        }
       }
       throw err
     }
@@ -125,7 +130,10 @@ export function importBankStatement(
           field: 'fiscal_year_id',
         }
       }
-      if (parsed.statement_date < fy.start_date || parsed.statement_date > fy.end_date) {
+      if (
+        parsed.statement_date < fy.start_date ||
+        parsed.statement_date > fy.end_date
+      ) {
         return {
           success: false as const,
           code: 'VALIDATION_ERROR' as const,
@@ -135,7 +143,10 @@ export function importBankStatement(
       }
 
       // Opening + SUM = closing
-      const sum = parsed.transactions.reduce((acc, tx) => acc + tx.amount_ore, 0)
+      const sum = parsed.transactions.reduce(
+        (acc, tx) => acc + tx.amount_ore,
+        0,
+      )
       if (parsed.opening_balance_ore + sum !== parsed.closing_balance_ore) {
         return {
           success: false as const,
@@ -215,6 +226,11 @@ export function importBankStatement(
       }
     })()
   } catch (err) {
+    // Sprint E T1.a — Latent / WONTFIX: importBankStatement returnerar alla
+    // inre fel som kompletta IpcResult-objekt från sin transaction, så denna
+    // gren är oreachable idag. Om en framtida callpath börjar kasta
+    // strukturerat {code,error} från transactionen, applicera F7f-paritet
+    // (se bank-match-service.ts) och lägg till regressionstest.
     if (err && typeof err === 'object' && 'code' in err) {
       return err as IpcResult<ImportBankStatementResult>
     }
