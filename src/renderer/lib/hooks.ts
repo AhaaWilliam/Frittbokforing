@@ -473,6 +473,8 @@ export function useInvoiceList(
     search?: string
     sort_by?: string
     sort_order?: string
+    limit?: number
+    offset?: number
   } = {},
 ) {
   return useIpcQuery(
@@ -658,16 +660,22 @@ export function useExpenses(
     search?: string
     sort_by?: string
     sort_order?: 'asc' | 'desc'
+    limit?: number
+    offset?: number
   },
 ) {
   return useIpcQuery(
-    queryKeys.expenses(
-      fiscalYearId!,
-      filters?.status,
-      filters?.search,
-      filters?.sort_by,
-      filters?.sort_order,
-    ),
+    [
+      ...queryKeys.expenses(
+        fiscalYearId!,
+        filters?.status,
+        filters?.search,
+        filters?.sort_by,
+        filters?.sort_order,
+      ),
+      filters?.limit ?? null,
+      filters?.offset ?? null,
+    ],
     () =>
       window.api.listExpenses({
         fiscal_year_id: fiscalYearId!,

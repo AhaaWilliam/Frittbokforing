@@ -114,4 +114,79 @@ describe('InvoiceList', () => {
       expect(screen.getByText(/krediterad/i)).toBeDefined()
     })
   })
+
+  // Sprint 57 C3: Pagination-integration
+  describe('Pagination (S57 C3)', () => {
+    it('tom lista visar "Visar 0–0 av 0", båda knappar disabled', async () => {
+      mockIpcResponse('invoice:list', {
+        success: true,
+        data: {
+          items: [],
+          counts: { total: 0, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 },
+          total_items: 0,
+        },
+      })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+      await waitFor(() => {
+        expect(screen.getByTestId('pag-invoices-summary').textContent).toBe(
+          'Visar 0–0 av 0 fakturor',
+        )
+      })
+      expect(screen.getByTestId('pag-invoices-prev')).toBeDisabled()
+      expect(screen.getByTestId('pag-invoices-next')).toBeDisabled()
+    })
+
+    it('selection-bevarande över page-byte (M112 regression-skydd)', async () => {
+      mockIpcResponse('invoice:list', {
+        success: true,
+        data: {
+          items: INVOICE_ITEMS,
+          counts: COUNTS,
+          total_items: 127,
+        },
+      })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+
+      await waitFor(() => {
+        expect(screen.getByText('Kund Alpha')).toBeDefined()
+      })
+
+      // Välj raden för id=1 (Kund Alpha, unpaid)
+      const checkboxes = screen.getAllByRole('checkbox')
+      // [0] = select-all i thead, [1..] = per rad (selectable)
+      const rowCheckboxes = checkboxes.slice(1)
+      await userEvent.click(rowCheckboxes[0])
+      expect(screen.getByText('1 valda')).toBeDefined()
+
+      // Klick nästa sida
+      await userEvent.click(screen.getByTestId('pag-invoices-next'))
+      // Efter page-byte: "X valda" ska fortfarande visas
+      await waitFor(() => {
+        expect(screen.getByText('1 valda')).toBeDefined()
+      })
+
+      // Tillbaka till page 0 — checkbox ska fortfarande vara checked
+      await userEvent.click(screen.getByTestId('pag-invoices-prev'))
+      await waitFor(() => {
+        const firstRowCheckbox = screen.getAllByRole('checkbox')[1] as HTMLInputElement
+        expect(firstRowCheckbox.checked).toBe(true)
+      })
+    })
+
+    it('tabellen visar pagineringsknappar med korrekt position', async () => {
+      mockIpcResponse('invoice:list', {
+        success: true,
+        data: {
+          items: INVOICE_ITEMS,
+          counts: COUNTS,
+          total_items: 127,
+        },
+      })
+      await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />, { axeCheck: false })
+      await waitFor(() => {
+        // sida 1 av 3 (127 / 50 = 3 sidor)
+        expect(screen.getByTestId('pag-invoices-position').textContent).toBe('Sida 1 / 3')
+      })
+    })
+  })
 })

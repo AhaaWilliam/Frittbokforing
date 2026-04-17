@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Search, FileDown, CheckCircle, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import type {
@@ -18,6 +18,9 @@ import { PaymentDialog } from '../ui/PaymentDialog'
 import { BulkPaymentDialog, type BulkPaymentRow } from '../ui/BulkPaymentDialog'
 import { BulkPaymentResultDialog } from '../ui/BulkPaymentResultDialog'
 import { BatchPdfExportDialog } from '../ui/BatchPdfExportDialog'
+import { Pagination } from '../ui/Pagination'
+
+const PAGE_SIZE = 50
 
 interface InvoiceListProps {
   onNavigate: (view: 'form' | { edit: number } | { view: number }) => void
@@ -80,12 +83,35 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     'mod+k': () => searchRef.current?.focus(),
   })
 
+  // Sprint 57 C2b: pagination-state (Beslut 11 + 12)
+  const [page, setPage] = useState(0)
+  const prevFilters = useRef({ statusFilter, debouncedSearch })
+
+  useEffect(() => {
+    const prev = prevFilters.current
+    if (
+      prev.statusFilter !== statusFilter ||
+      prev.debouncedSearch !== debouncedSearch
+    ) {
+      setPage(0)
+      prevFilters.current = { statusFilter, debouncedSearch }
+    }
+  }, [statusFilter, debouncedSearch])
+
+  useEffect(() => {
+    setPage(0)
+    setSelectedIds(new Set())
+  }, [activeFiscalYear?.id])
+
   const response = useInvoiceList(activeFiscalYear?.id, {
     status: statusFilter,
     search: debouncedSearch || undefined,
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
   })
 
   const isLoading = response.isLoading
+  const totalItems = (response.data as { total_items?: number } | undefined)?.total_items ?? 0
 
   // Extract items and counts from the IpcResult
   let items: InvoiceListItem[] = []
@@ -503,6 +529,18 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Sprint 57 C2b: Pagination — visas alltid när fiscal year är valt */}
+      {activeFiscalYear && !isLoading && (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          label="fakturor"
+          testIdPrefix="pag-invoices"
+        />
       )}
 
       <ConfirmFinalizeDialog
