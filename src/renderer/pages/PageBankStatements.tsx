@@ -13,6 +13,7 @@ import {
 import { useRoute, useNavigate, Link } from '../lib/router'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { SuggestedMatchesPanel } from '../components/bank/SuggestedMatchesPanel'
 
 function fmtKr(ore: number): string {
   const sign = ore < 0 ? '-' : ''
@@ -191,6 +192,7 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
             </div>
           </div>
         </div>
+        <SuggestedMatchesPanel statementId={statementId} />
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs uppercase text-muted-foreground">
