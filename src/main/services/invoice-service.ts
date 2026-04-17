@@ -784,8 +784,11 @@ export function listInvoices(
     search?: string
     sort_by?: string
     sort_order?: string
+    /** Sprint 56 F67: pagination. Default 50. */
+    limit?: number
+    offset?: number
   },
-): { items: InvoiceListItem[]; counts: InvoiceStatusCounts } {
+): { items: InvoiceListItem[]; counts: InvoiceStatusCounts; total_items: number } {
   refreshInvoiceStatuses(db)
 
   // Status counts
@@ -839,6 +842,20 @@ export function listInvoices(
     sortColumnMap[input.sort_by || 'invoice_date'] || 'i.invoice_date'
   const sortDir = input.sort_order === 'asc' ? 'ASC' : 'DESC'
 
+  // Sprint 56 F67: total_items reflekterar aktiva filter (search + status), inte FY-totalt
+  const totalItemsRow = db
+    .prepare(
+      `SELECT COUNT(*) AS c
+       FROM invoices i
+       LEFT JOIN counterparties c ON i.counterparty_id = c.id
+       WHERE ${conditions.join(' AND ')}`,
+    )
+    .get(...params) as { c: number }
+  const total_items = totalItemsRow.c
+
+  const limit = input.limit ?? 50
+  const offset = input.offset ?? 0
+
   const items = db
     .prepare(
       `SELECT
@@ -855,11 +872,12 @@ export function listInvoices(
     LEFT JOIN counterparties c ON i.counterparty_id = c.id
     LEFT JOIN journal_entries je ON i.journal_entry_id = je.id
     WHERE ${conditions.join(' AND ')}
-    ORDER BY ${sortCol} ${sortDir}`,
+    ORDER BY ${sortCol} ${sortDir}
+    LIMIT ? OFFSET ?`,
     )
-    .all(...params) as InvoiceListItem[]
+    .all(...params, limit, offset) as InvoiceListItem[]
 
-  return { items, counts }
+  return { items, counts, total_items }
 }
 
 // ═══════════════════════════════════════════════════════════

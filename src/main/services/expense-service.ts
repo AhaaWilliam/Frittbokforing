@@ -1098,10 +1098,14 @@ export function listExpenses(
     search?: string
     sort_by?: string
     sort_order?: string
+    /** Sprint 56 F67: pagination. Default 50. */
+    limit?: number
+    offset?: number
   },
 ): {
   expenses: ExpenseListItem[]
   counts: ExpenseStatusCounts
+  total_items: number
 } {
   refreshExpenseStatuses(db)
 
@@ -1158,6 +1162,20 @@ export function listExpenses(
     sortColumnMap[input.sort_by || 'expense_date'] || 'e.expense_date'
   const sortDir = input.sort_order === 'asc' ? 'ASC' : 'DESC'
 
+  // Sprint 56 F67: total_items reflekterar aktiva filter
+  const totalItemsRow = db
+    .prepare(
+      `SELECT COUNT(*) AS c
+       FROM expenses e
+       LEFT JOIN counterparties c ON e.counterparty_id = c.id
+       WHERE ${conditions.join(' AND ')}`,
+    )
+    .get(...params) as { c: number }
+  const total_items = totalItemsRow.c
+
+  const limit = input.limit ?? 50
+  const offset = input.offset ?? 0
+
   const rows = db
     .prepare(
       `SELECT
@@ -1173,9 +1191,10 @@ export function listExpenses(
     LEFT JOIN counterparties c ON e.counterparty_id = c.id
     LEFT JOIN journal_entries je ON e.journal_entry_id = je.id
     WHERE ${conditions.join(' AND ')}
-    ORDER BY ${sortCol} ${sortDir}`,
+    ORDER BY ${sortCol} ${sortDir}
+    LIMIT ? OFFSET ?`,
     )
-    .all(...params) as (ExpenseListItem & { total_paid: number })[]
+    .all(...params, limit, offset) as (ExpenseListItem & { total_paid: number })[]
 
   // Compute remaining in TypeScript
   const expenses: ExpenseListItem[] = rows.map((row) => ({
@@ -1183,7 +1202,7 @@ export function listExpenses(
     remaining: row.total_amount_ore - row.total_paid,
   }))
 
-  return { expenses, counts }
+  return { expenses, counts, total_items }
 }
 
 // ════════════════════════════════════════════════════════════

@@ -380,6 +380,9 @@ export const InvoiceListInputSchema = z
       ])
       .default('invoice_date'),
     sort_order: z.enum(['asc', 'desc']).default('desc'),
+    /** Sprint 56 F67: pagination. Default 50, max 200. */
+    limit: z.number().int().min(1).max(200).default(50),
+    offset: z.number().int().min(0).default(0),
   })
   .strict()
 
@@ -710,6 +713,9 @@ export const ListExpensesSchema = z
       ])
       .default('expense_date'),
     sort_order: z.enum(['asc', 'desc']).default('desc'),
+    /** Sprint 56 F67: pagination. */
+    limit: z.number().int().min(1).max(200).default(50),
+    offset: z.number().int().min(0).default(0),
   })
   .strict()
 
