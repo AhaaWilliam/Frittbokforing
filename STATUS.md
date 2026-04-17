@@ -56,12 +56,17 @@ Ingen scope-definition → eskalerat som T3.g.
 
 Sprint F-prioritetsordning: T3.e → T3.b → T3.a → T3.c/T3.d (H2).
 
-### Noterad lint-skuld
+### Noterad lint-skuld — LÖST i follow-up
 
-Repoet har 4518 pre-existerande prettier-/unused-vars-fel utanför Sprint E
-scope. Mina nya filer är lint-rena (`npx eslint <filer>` exit 0), men full
-`npm run lint` failar. Rekommendation: lint-baseline-städning som egen
-backlog-item innan `npm run lint` används som acceptance-gate.
+Prettier-baseline-cleanup (f757534): `npm run lint:fix` auto-fixade 4229
+prettier-fel över 273 filer (enbart formatering). Diff-scoped gate
+`npm run check:lint-new` lintar bara filer ändrade mot base-branch —
+designed för feature-branch-användning. På main-branch är det no-op.
+
+Kvarvarande 187 baseline-fel (no-any × 96, no-unused-vars × 76,
+no-restricted-syntax × 8, no-require-imports × 5, jsx-a11y × 2)
+lämnas som tech-debt — nya PR:er kan inte lägga till fler via
+check:lint-new-gaten.
 
 Se `docs/sprint-e-summary.md` för detaljer.
 

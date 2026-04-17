@@ -32,6 +32,7 @@
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "dump:source": "node scripts/dump-source.mjs",
     "check:m131": "bash scripts/m131-check.sh",
+    "check:lint-new": "node scripts/check-lint-new.mjs",
     "check:m133": "node scripts/check-m133.mjs",
     "check:m133-ast": "node scripts/check-m133-ast.mjs --self-test && node scripts/check-m133-ast.mjs",
     "check:m153": "node scripts/check-m153.mjs"
