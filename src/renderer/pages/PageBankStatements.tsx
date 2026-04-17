@@ -9,11 +9,13 @@ import {
   useMatchBankTransaction,
   useInvoiceList,
   useExpenses,
+  useUnmatchBankTransaction,
 } from '../lib/hooks'
 import { useRoute, useNavigate, Link } from '../lib/router'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { SuggestedMatchesPanel } from '../components/bank/SuggestedMatchesPanel'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
 function fmtKr(ore: number): string {
   const sign = ore < 0 ? '-' : ''
@@ -144,6 +146,25 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
   const { data, isLoading } = useBankStatement(statementId)
   const navigate = useNavigate()
   const [matchingTxId, setMatchingTxId] = useState<number | null>(null)
+  const [unmatchingTxId, setUnmatchingTxId] = useState<number | null>(null)
+  const unmatchMutation = useUnmatchBankTransaction()
+
+  async function handleUnmatch(txId: number) {
+    try {
+      const r = await unmatchMutation.mutateAsync({ bank_transaction_id: txId })
+      const res = r as { success?: boolean; error?: string; code?: string; data?: { correction_journal_entry_id: number } }
+      if (res.success === false) {
+        const msg = errorMessage(res.code, res.error)
+        toast.error(msg)
+      } else {
+        toast.success(`Match reverserad — korrigeringsverifikat skapat`)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ångra misslyckades')
+    } finally {
+      setUnmatchingTxId(null)
+    }
+  }
 
   if (isLoading) return <LoadingSpinner />
   if (!data) {
@@ -235,6 +256,22 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                       Matcha
                     </button>
                   )}
+                  {tx.reconciliation_status === 'matched' && (
+                    <button
+                      type="button"
+                      disabled={tx.payment_batch_id !== null}
+                      onClick={() => tx.payment_batch_id === null && setUnmatchingTxId(tx.id)}
+                      title={
+                        tx.payment_batch_id !== null
+                          ? 'Batch-betalningar kan inte unmatchas per rad'
+                          : undefined
+                      }
+                      className="text-xs text-red-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed disabled:no-underline"
+                      data-testid={`bank-unmatch-${tx.id}`}
+                    >
+                      Ångra
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -248,8 +285,32 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
           onClose={() => setMatchingTxId(null)}
         />
       )}
+      <ConfirmDialog
+        open={unmatchingTxId !== null}
+        onOpenChange={(open) => !open && setUnmatchingTxId(null)}
+        title="Ångra match"
+        description="Detta skapar ett korrigeringsverifikat i C-serien som reverserar betalningen. Ursprungsverifikatet låses mot ytterligare ändringar. Fortsätt?"
+        confirmLabel="Ångra match"
+        variant="danger"
+        onConfirm={() => unmatchingTxId !== null && handleUnmatch(unmatchingTxId)}
+      />
     </div>
   )
+}
+
+function errorMessage(code: string | undefined, fallback: string | undefined): string {
+  switch (code) {
+    case 'NOT_MATCHED':
+      return 'Transaktionen är inte matchad.'
+    case 'BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED':
+      return 'Batch-betalningar kan inte unmatchas per rad.'
+    case 'PERIOD_CLOSED':
+      return 'Perioden är stängd — öppna den först.'
+    case 'ENTRY_ALREADY_CORRECTED':
+      return 'Verifikatet är redan korrigerat.'
+    default:
+      return fallback ?? 'Ångra misslyckades.'
+  }
 }
 
 function MatchDialog({

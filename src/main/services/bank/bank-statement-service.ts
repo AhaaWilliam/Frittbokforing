@@ -58,6 +58,8 @@ export interface BankTransactionRow {
   counterparty_name: string | null
   bank_transaction_code: string | null
   reconciliation_status: 'unmatched' | 'matched' | 'excluded'
+  /** S58 F66-e: payment_batch_id från kopplad payment-rad om matchen är en batch-betalning. UI döljer/disabler Ångra i detta fall. */
+  payment_batch_id: number | null
 }
 
 export interface BankStatementDetail {
@@ -260,12 +262,16 @@ export function getBankStatement(
 
   const transactions = db
     .prepare(
-      `SELECT id, bank_statement_id, booking_date, value_date, amount_ore,
-              transaction_reference, remittance_info, counterparty_iban,
-              counterparty_name, bank_transaction_code, reconciliation_status
-         FROM bank_transactions
-        WHERE bank_statement_id = ?
-        ORDER BY value_date, id`,
+      `SELECT bt.id, bt.bank_statement_id, bt.booking_date, bt.value_date, bt.amount_ore,
+              bt.transaction_reference, bt.remittance_info, bt.counterparty_iban,
+              bt.counterparty_name, bt.bank_transaction_code, bt.reconciliation_status,
+              COALESCE(ip.payment_batch_id, ep.payment_batch_id) AS payment_batch_id
+         FROM bank_transactions bt
+         LEFT JOIN bank_reconciliation_matches brm ON brm.bank_transaction_id = bt.id
+         LEFT JOIN invoice_payments ip ON ip.id = brm.invoice_payment_id
+         LEFT JOIN expense_payments ep ON ep.id = brm.expense_payment_id
+        WHERE bt.bank_statement_id = ?
+        ORDER BY bt.value_date, bt.id`,
     )
     .all(statementId) as BankTransactionRow[]
 
