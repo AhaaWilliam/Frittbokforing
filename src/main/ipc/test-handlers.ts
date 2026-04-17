@@ -68,6 +68,11 @@ export function registerTestHandlers(db: Database.Database): void {
     return { ok: true }
   })
 
+  // S57 D2: F66-c E2E helper — read raw counterparty row to assert bank_account.
+  ipcMain.handle('__test:getCounterpartyById', (_event, id: number) => {
+    return db.prepare('SELECT * FROM counterparties WHERE id = ?').get(id) ?? null
+  })
+
   ipcMain.handle('__test:createFiscalYear', (_event, opts: {
     companyId: number
     startDate: string
