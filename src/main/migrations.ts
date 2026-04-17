@@ -1373,6 +1373,14 @@ END;`,
   // 'auto_amount_ref','auto_iban'). Pre-flight whitelist (K2), explicit kolumnlista (K1),
   // M141 cross-table-trigger-inventering (K3). Inga inkommande FK → ingen FK-OFF behövs.
   { sql: '-- Migration 040: F66-b match_method-enum (se programmatic)', programmatic: migration040Programmatic },
+  // Sprint A / S58: F66-d — bank-fee-reconciliation + BkTxCd-fält.
+  // (1) bank_reconciliation_matches: utöka match_method-enum med auto_fee/auto_interest_*,
+  //     lägg till fee_journal_entry_id, utöka matched_entity_type med 'bank_fee',
+  //     uppdatera exactly-one-of CHECK. (2) bank_transactions: tre nya BkTxCd-kolumner.
+  // M122 table-recreate på bank_reconciliation_matches (inga inkommande FK → ingen FK-OFF).
+  // Pre-flight: Q1 match_method-whitelist, Q2 exactly-one-of på befintlig data, Q3 M141
+  // cross-table-trigger-inventering (informativ).
+  { sql: '-- Migration 041: S58 F66-d bank-fee-reconciliation (se programmatic)', programmatic: migration041Programmatic },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -1488,6 +1496,147 @@ function migration040Programmatic(db: import('better-sqlite3').Database): void {
     .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bank_match_entity'")
     .get()
   if (!idx) throw new Error('Migration 040 failed: idx_bank_match_entity saknas')
+}
+
+/**
+ * Migration 041: Sprint A/S58 F66-d — bank-fee-reconciliation + BkTxCd-fält.
+ *
+ * Del 1: bank_reconciliation_matches table-recreate (M122-mönster men utan
+ * FK-OFF eftersom tabellen saknar inkommande FK).
+ *   - Utöka match_method-enum med 'auto_fee', 'auto_interest_income', 'auto_interest_expense'
+ *   - Lägg till fee_journal_entry_id INTEGER REFERENCES journal_entries(id) ON DELETE RESTRICT
+ *   - Utöka matched_entity_type-enum med 'bank_fee' (matched_entity_id blir nullable)
+ *   - Uppdatera exactly-one-of CHECK
+ *
+ * Del 2: bank_transactions ALTER TABLE ADD COLUMN x 3 (nullable).
+ *   - bank_tx_domain, bank_tx_family, bank_tx_subfamily (ISO 20022 BkTxCd)
+ *
+ * Pre-flight:
+ *   Q1: befintlig match_method måste vara delmängd av 040-whitelist
+ *   Q2: befintlig data måste uppfylla exactly-one-of (skyddar mot att nya CHECK failar vid INSERT)
+ *   Q3: M141 cross-table trigger-inventering (informativ)
+ */
+function migration041Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: om fee_journal_entry_id finns → redan kört
+  const brmCols = getTableColumns(db, 'bank_reconciliation_matches')
+  if (brmCols.has('fee_journal_entry_id')) return
+
+  // Q1: match_method-whitelist (befintlig S56-whitelist)
+  const distinctMethods = db
+    .prepare('SELECT DISTINCT match_method FROM bank_reconciliation_matches')
+    .all() as { match_method: string }[]
+  const allowedMethods = [
+    'manual',
+    'auto_amount_exact',
+    'auto_amount_date',
+    'auto_amount_ref',
+    'auto_iban',
+  ]
+  for (const row of distinctMethods) {
+    if (!allowedMethods.includes(row.match_method)) {
+      throw new Error(
+        `Migration 041 pre-flight Q1: bank_reconciliation_matches har match_method '${row.match_method}' utanför whitelist ${JSON.stringify(allowedMethods)}.`,
+      )
+    }
+  }
+
+  // Q2: exactly-one-of på befintlig data
+  const q2 = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM bank_reconciliation_matches
+       WHERE NOT (
+         (matched_entity_type = 'invoice' AND invoice_payment_id IS NOT NULL AND expense_payment_id IS NULL AND matched_entity_id IS NOT NULL)
+         OR
+         (matched_entity_type = 'expense' AND expense_payment_id IS NOT NULL AND invoice_payment_id IS NULL AND matched_entity_id IS NOT NULL)
+       )`,
+    )
+    .get() as { n: number }
+  if (q2.n > 0) {
+    throw new Error(
+      `Migration 041 pre-flight Q2: ${q2.n} rad(er) i bank_reconciliation_matches uppfyller inte exactly-one-of. Undersök innan migrationen kan köras.`,
+    )
+  }
+
+  // Q3: M141 cross-table trigger-inventering (informativ — dokumenterar läget)
+  const crossTriggers = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND sql LIKE '%bank_reconciliation_matches%' AND tbl_name != 'bank_reconciliation_matches'",
+    )
+    .all() as { name: string }[]
+  if (crossTriggers.length > 0) {
+    throw new Error(
+      `Migration 041 M141 pre-flight: oväntad cross-table trigger refererar bank_reconciliation_matches: ${crossTriggers.map((t) => t.name).join(', ')}`,
+    )
+  }
+
+  // Del 1: bank_reconciliation_matches table-recreate
+  db.exec(`
+    CREATE TABLE bank_reconciliation_matches_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bank_transaction_id INTEGER NOT NULL UNIQUE REFERENCES bank_transactions(id) ON DELETE CASCADE,
+      matched_entity_type TEXT NOT NULL,
+      matched_entity_id INTEGER,
+      invoice_payment_id INTEGER REFERENCES invoice_payments(id) ON DELETE RESTRICT,
+      expense_payment_id INTEGER REFERENCES expense_payments(id) ON DELETE RESTRICT,
+      fee_journal_entry_id INTEGER REFERENCES journal_entries(id) ON DELETE RESTRICT,
+      match_method TEXT NOT NULL DEFAULT 'manual',
+      matched_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (matched_entity_type IN ('invoice','expense','bank_fee')),
+      CHECK (match_method IN (
+        'manual','auto_amount_exact','auto_amount_date','auto_amount_ref','auto_iban',
+        'auto_fee','auto_interest_income','auto_interest_expense'
+      )),
+      CHECK (
+        (matched_entity_type = 'invoice' AND invoice_payment_id IS NOT NULL AND expense_payment_id IS NULL AND fee_journal_entry_id IS NULL AND matched_entity_id IS NOT NULL)
+        OR
+        (matched_entity_type = 'expense' AND expense_payment_id IS NOT NULL AND invoice_payment_id IS NULL AND fee_journal_entry_id IS NULL AND matched_entity_id IS NOT NULL)
+        OR
+        (matched_entity_type = 'bank_fee' AND fee_journal_entry_id IS NOT NULL AND invoice_payment_id IS NULL AND expense_payment_id IS NULL AND matched_entity_id IS NULL)
+      )
+    );
+
+    INSERT INTO bank_reconciliation_matches_new (
+      id, bank_transaction_id, matched_entity_type, matched_entity_id,
+      invoice_payment_id, expense_payment_id, fee_journal_entry_id, match_method, matched_at
+    )
+    SELECT
+      id, bank_transaction_id, matched_entity_type, matched_entity_id,
+      invoice_payment_id, expense_payment_id, NULL, match_method, matched_at
+    FROM bank_reconciliation_matches;
+
+    DROP TABLE bank_reconciliation_matches;
+    ALTER TABLE bank_reconciliation_matches_new RENAME TO bank_reconciliation_matches;
+
+    CREATE INDEX idx_bank_match_entity
+      ON bank_reconciliation_matches(matched_entity_type, matched_entity_id);
+    CREATE INDEX idx_brm_fee_entry
+      ON bank_reconciliation_matches(fee_journal_entry_id) WHERE fee_journal_entry_id IS NOT NULL;
+
+    -- Del 2: bank_transactions BkTxCd-fält (ISO 20022 Domn/Fmly/SubFmlyCd)
+    ALTER TABLE bank_transactions ADD COLUMN bank_tx_domain TEXT;
+    ALTER TABLE bank_transactions ADD COLUMN bank_tx_family TEXT;
+    ALTER TABLE bank_transactions ADD COLUMN bank_tx_subfamily TEXT;
+  `)
+
+  // Verify
+  const sqlNew = (
+    db
+      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='bank_reconciliation_matches'")
+      .get() as { sql: string }
+  ).sql
+  if (!sqlNew.includes('fee_journal_entry_id')) {
+    throw new Error('Migration 041 failed: fee_journal_entry_id saknas i bank_reconciliation_matches')
+  }
+  if (!sqlNew.includes("'auto_fee'")) {
+    throw new Error('Migration 041 failed: auto_fee saknas i match_method CHECK')
+  }
+  if (!sqlNew.includes("'bank_fee'")) {
+    throw new Error('Migration 041 failed: bank_fee saknas i matched_entity_type CHECK')
+  }
+  const btCols = getTableColumns(db, 'bank_transactions')
+  if (!btCols.has('bank_tx_domain') || !btCols.has('bank_tx_family') || !btCols.has('bank_tx_subfamily')) {
+    throw new Error('Migration 041 failed: BkTxCd-kolumner saknas på bank_transactions')
+  }
 }
 
 /**
