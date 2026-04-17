@@ -56,6 +56,17 @@ const AXE_OPTIONS: axe.RunOptions = {
   },
 }
 
+// axe-core has global state — serializing via a per-worker chain avoids
+// "Axe is already running" when parallel tests in the same file overlap
+// (e.g. one test still awaiting an unrelated promise while the next starts).
+let axeChain: Promise<AxeResults | null> = Promise.resolve(null)
+function runAxeSerialized(container: Element): Promise<AxeResults> {
+  const next = axeChain.then(() => axe.run(container, AXE_OPTIONS))
+  // Swallow errors in the chain so a failing test doesn't poison the queue.
+  axeChain = next.catch(() => null)
+  return next
+}
+
 // ── Options ───────────────────────────────────────────────────────────
 
 interface RenderWithProvidersOptions {
@@ -131,9 +142,11 @@ export async function renderWithProviders(
   const result = render(ui, { wrapper: Wrapper })
 
   // ── Axe a11y check ──────────────────────────────────────────────────
+  // axe-core uses global state; parallel tests collide with "already running".
+  // Serialize per-worker via a module-level promise chain.
   let axeResults: AxeResults | null = null
   if (axeCheck) {
-    axeResults = await axe.run(result.container, AXE_OPTIONS)
+    axeResults = await runAxeSerialized(result.container)
     if (axeResults && axeResults.violations.length > 0) {
       const msg = axeResults.violations
         .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  targets: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
