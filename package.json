@@ -32,7 +32,8 @@
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'tests/**/*.ts'",
     "dump:source": "node scripts/dump-source.mjs",
     "check:m131": "bash scripts/m131-check.sh",
-    "check:m133": "node scripts/check-m133.mjs"
+    "check:m133": "node scripts/check-m133.mjs",
+    "check:m153": "node scripts/check-m153.mjs"
   },
   "keywords": [
     "bokföring",
