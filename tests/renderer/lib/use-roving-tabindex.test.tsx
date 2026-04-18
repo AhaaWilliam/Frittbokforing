@@ -7,11 +7,17 @@ import { useRovingTabindex } from '../../../src/renderer/lib/use-roving-tabindex
 function TestList({
   count,
   onSelect,
+  onToggleSelect,
 }: {
   count: number
   onSelect?: (idx: number) => void
+  onToggleSelect?: (idx: number) => void
 }) {
-  const { activeIdx, getRowProps } = useRovingTabindex(count, onSelect)
+  const { activeIdx, getRowProps } = useRovingTabindex(
+    count,
+    onSelect,
+    onToggleSelect,
+  )
   return (
     <>
       <div data-testid="active-idx">{activeIdx}</div>
@@ -104,6 +110,38 @@ describe('useRovingTabindex', () => {
     // Should not throw
     await userEvent.keyboard('{Enter}')
     expect(screen.getByTestId('active-idx').textContent).toBe('0')
+  })
+
+  it('Sprint R: Space triggar onToggleSelect med idx', async () => {
+    const onToggleSelect = vi.fn()
+    render(<TestList count={3} onToggleSelect={onToggleSelect} />)
+    screen.getByTestId('row-0').focus()
+    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.keyboard(' ')
+    expect(onToggleSelect).toHaveBeenCalledWith(1)
+  })
+
+  it('Sprint R: utan onToggleSelect är Space no-op (ingen throw)', async () => {
+    render(<TestList count={3} />)
+    screen.getByTestId('row-0').focus()
+    await userEvent.keyboard(' ')
+    expect(screen.getByTestId('active-idx').textContent).toBe('0')
+  })
+
+  it('Sprint R: Space preventDefault (ingen scroll-default)', async () => {
+    const onToggleSelect = vi.fn()
+    render(<TestList count={3} onToggleSelect={onToggleSelect} />)
+    const row0 = screen.getByTestId('row-0')
+    row0.focus()
+    const event = new KeyboardEvent('keydown', {
+      key: ' ',
+      bubbles: true,
+      cancelable: true,
+    })
+    row0.dispatchEvent(event)
+    // userEvent-biblioteket preventar default; verifiera att callback fick idx=0
+    await userEvent.keyboard(' ')
+    expect(onToggleSelect).toHaveBeenCalledWith(0)
   })
 
   it('onFocus synkar activeIdx (klick på annan rad)', async () => {

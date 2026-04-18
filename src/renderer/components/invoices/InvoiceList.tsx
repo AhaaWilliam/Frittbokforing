@@ -310,11 +310,19 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }
 
-  // Sprint J F49-c2: roving-tabindex för rad-keyboard-navigation
-  const { getRowProps } = useRovingTabindex(items.length, (idx) => {
-    const item = items[idx]
-    if (item) handleRowClick(item)
-  })
+  // Sprint J F49-c2: roving-tabindex för rad-keyboard-navigation.
+  // Sprint R F49-c polish: Space togglar bulk-selektion för rad om selektbar.
+  const { getRowProps } = useRovingTabindex(
+    items.length,
+    (idx) => {
+      const item = items[idx]
+      if (item) handleRowClick(item)
+    },
+    (idx) => {
+      const item = items[idx]
+      if (item && isSelectable(item)) toggleSelect(item.id)
+    },
+  )
 
   async function handleGeneratePdf(
     e: React.MouseEvent,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * Sprint J (F49-c2) — Roving-tabindex för tabell-rad-navigering.
+ * Sprint R (F49-c polish) — Space togglar rad-selektion om callback ges.
  *
  * Spec: docs/f49c-keyboard-nav-spec.md § 4 (Alt B).
  *
@@ -11,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * - ↑↓ flyttar aktiv index + fokuserar ny rad
  * - Home/End hoppar till första/sista raden
  * - Enter triggar onSelect(idx) (t.ex. navigera till detaljvy)
+ * - Space triggar onToggleSelect(idx) om satt (togglar bulk-checkbox)
  * - Tab lämnar listan direkt (bara activeIdx är tabbar-bar)
  * - onFocus-bubbling från klick/fokus i raden synkar activeIdx
  *
@@ -27,6 +29,7 @@ export interface RovingRowProps {
 export function useRovingTabindex(
   rowCount: number,
   onSelect?: (idx: number) => void,
+  onToggleSelect?: (idx: number) => void,
 ): {
   activeIdx: number
   getRowProps: (idx: number) => RovingRowProps
@@ -62,9 +65,15 @@ export function useRovingTabindex(
       } else if (e.key === 'Enter' && onSelect) {
         e.preventDefault()
         onSelect(idx)
+      } else if (e.key === ' ' && onToggleSelect) {
+        // Sprint R F49-c polish: Space togglar bulk-selektion på rad.
+        // Space default-beteende (scroll) hindras. Selektions-callback
+        // ignoreras om raden inte är selektbar — callback-ägaren avgör.
+        e.preventDefault()
+        onToggleSelect(idx)
       }
     },
-    [rowCount, focusRow, onSelect],
+    [rowCount, focusRow, onSelect, onToggleSelect],
   )
 
   const getRowProps = useCallback(
