@@ -6,7 +6,6 @@ import type {
   CustomerPrice,
   PriceResult,
   IpcResult,
-  ErrorCode,
 } from '../../shared/types'
 import {
   CreateProductInputSchema,

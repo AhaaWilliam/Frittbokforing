@@ -15,7 +15,6 @@ import Database from 'better-sqlite3'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { vi } from 'vitest'
 import { migrations } from '../../../src/main/migrations'
 import { registerCustomFunctions } from '../../../src/main/db-functions'
 
@@ -118,11 +117,8 @@ import type {
   Counterparty,
   Product,
   VatCode,
-  Invoice,
   InvoicePayment,
-  Expense,
   ExpensePayment,
-  ManualEntry,
   JournalEntry,
 } from '../../../src/shared/types'
 

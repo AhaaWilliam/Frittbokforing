@@ -1,7 +1,7 @@
 /**
  * Session 44: Budget — service-level tests for budget-service.ts
  */
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
 import { createCompany } from '../src/main/services/company-service'

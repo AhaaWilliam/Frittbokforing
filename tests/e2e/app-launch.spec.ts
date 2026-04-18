@@ -19,7 +19,7 @@ test('Electron-app startar med tom db och visar onboarding', async () => {
 })
 
 test('hash-router navigation från Playwright fungerar', async () => {
-  const { app, window, cleanup } = await launchAppWithFreshDb()
+  const { window, cleanup } = await launchAppWithFreshDb()
   try {
     // Seed company via IPC so app shows AppShell
     await seedCompanyViaIPC(window)

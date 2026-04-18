@@ -5,6 +5,7 @@ import {
   findDepreciationDefaults,
 } from '../../../shared/depreciation-defaults'
 import { useCreateFixedAsset, useUpdateFixedAsset } from '../../lib/hooks'
+import { todayLocal } from '../../../shared/date-utils'
 import type {
   CreateFixedAssetInput,
   DepreciationMethod,
@@ -33,7 +34,7 @@ export function FixedAssetFormDialog({
   const [acquisitionDate, setAcquisitionDate] = useState(() =>
     mode === 'edit' && initialAsset
       ? initialAsset.acquisition_date
-      : new Date().toISOString().slice(0, 10),
+      : todayLocal(),
   )
   const [costKr, setCostKr] = useState(() =>
     mode === 'edit' && initialAsset
@@ -75,7 +76,7 @@ export function FixedAssetFormDialog({
 
   function resetForm() {
     setName('')
-    setAcquisitionDate(new Date().toISOString().slice(0, 10))
+    setAcquisitionDate(todayLocal())
     setCostKr('')
     setResidualKr('0')
     setMonths('36')

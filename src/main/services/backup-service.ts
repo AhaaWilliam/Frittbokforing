@@ -2,9 +2,8 @@ import { dialog, BrowserWindow, app } from 'electron'
 import BetterSqlite3 from 'better-sqlite3'
 import type Database from 'better-sqlite3'
 import fs from 'fs'
-import path from 'path'
 import { getE2EFilePath } from '../utils/e2e-helpers'
-import { getNow, todayLocalFromNow } from '../utils/now'
+import { todayLocalFromNow, localTimestampFromNow } from '../utils/now'
 import { migrations } from '../migrations'
 import { closeDb, getDbPath } from '../db'
 import log from 'electron-log/main'
@@ -176,7 +175,7 @@ export async function restoreBackup(
 
   const dbPath = getDbPath()
   const restoringPath = `${dbPath}.restoring`
-  const timestamp = getNow().toISOString().slice(0, 19).replace(/[:.]/g, '-')
+  const timestamp = localTimestampFromNow().replace(/[:.]/g, '-')
   const preRestorePath = `${dbPath}.pre-restore-${timestamp}.db`
 
   try {

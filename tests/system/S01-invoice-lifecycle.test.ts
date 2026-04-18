@@ -19,7 +19,6 @@ import {
   destroyTemplateDb,
   seedCustomer,
   seedProduct,
-  seedAndFinalizeInvoice,
   getVatCode25Out,
   getVatCode12Out,
   getVatCodeExempt,

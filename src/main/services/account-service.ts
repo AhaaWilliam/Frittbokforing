@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3'
-import type { Account, IpcResult, ErrorCode } from '../../shared/types'
+import type { Account, IpcResult } from '../../shared/types'
 import {
   mapUniqueConstraintError,
   ACCOUNT_UNIQUE_MAPPINGS,

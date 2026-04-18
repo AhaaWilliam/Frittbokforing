@@ -7,6 +7,7 @@
  */
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
+import path from 'path'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
 import { seedCustomer, seedAndFinalizeInvoice } from './helpers/seed'
 
@@ -67,7 +68,7 @@ test('PDF batch export: markera 2 fakturor → 2 PDF:er på disk', async () => {
       .filter((f) => f.endsWith('.pdf'))
     expect(afterPdfs.length).toBe(2)
     for (const f of afterPdfs) {
-      const stat = fs.statSync(require('path').join(ctx.downloadDir, f))
+      const stat = fs.statSync(path.join(ctx.downloadDir, f))
       expect(stat.size).toBeGreaterThan(0)
     }
   } finally {

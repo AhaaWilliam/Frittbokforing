@@ -50,7 +50,7 @@ describe('Dashboard, Rapporter & Prognoser — konsistens', () => {
       ctx.db,
       ctx.seed.fiscalYearId,
     )
-    const rr = ctx.reportService.getIncomeStatement(
+    const _rr = ctx.reportService.getIncomeStatement(
       ctx.db,
       ctx.seed.fiscalYearId,
     )

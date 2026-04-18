@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest'
 import {
   transformExpenseForm,
   ExpenseFormStateSchema,
-  EXPENSE_DEFAULTS,
   type ExpenseFormState,
 } from '../../../../src/renderer/lib/form-schemas/expense'
 

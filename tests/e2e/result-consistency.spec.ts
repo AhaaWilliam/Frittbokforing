@@ -8,7 +8,7 @@
  * Locale-oberoende assertion via data-raw-ore attribute.
  */
 import { test, expect } from '@playwright/test'
-import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
+import { launchAppWithFreshDb } from './helpers/launch-app'
 
 /**
  * Seed a manual entry (draft + finalize) via IPC.
@@ -41,7 +41,7 @@ async function seedAndFinalizeManualEntry(
       fiscal_year_id: opts.fiscalYearId,
       entry_date: opts.date,
       description: opts.description,
-      lines: opts.lines.map((l, i) => ({
+      lines: opts.lines.map((l) => ({
         ...l,
         description: '',
       })),

@@ -10,7 +10,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { createTestDb } from './helpers/create-test-db'
-import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
 import {

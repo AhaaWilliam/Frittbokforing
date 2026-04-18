@@ -137,7 +137,7 @@ describe('Finansiella invarianter', () => {
     }
 
     // Each series: numbers should be 1, 2, 3... without gaps
-    for (const [series, numbers] of bySeriesMap) {
+    for (const [, numbers] of bySeriesMap) {
       for (let i = 0; i < numbers.length; i++) {
         expect(numbers[i]).toBe(i + 1)
       }

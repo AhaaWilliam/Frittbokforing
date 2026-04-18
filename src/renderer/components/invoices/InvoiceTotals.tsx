@@ -1,5 +1,5 @@
 import type { InvoiceLineForm } from '../../lib/form-schemas/invoice'
-import { formatKr, toOre } from '../../lib/format'
+import { formatKr } from '../../lib/format'
 
 interface InvoiceTotalsProps {
   lines: InvoiceLineForm[]

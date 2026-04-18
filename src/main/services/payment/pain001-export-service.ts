@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto'
 import { create } from 'xmlbuilder2'
 import type { IpcResult, PaymentExportValidation } from '../../../shared/types'
 import { normalizeBankgiro } from '../../../shared/bankgiro-validation'
-import { getNow } from '../../utils/now'
+import { localTimestampFromNow } from '../../utils/now'
 
 // ═══ Types ═══
 
@@ -44,7 +44,7 @@ function oreToDecimal(ore: number): string {
 }
 
 function todayISO(): string {
-  return getNow().toISOString().slice(0, 19)
+  return localTimestampFromNow()
 }
 
 // ═══ Public API ═══

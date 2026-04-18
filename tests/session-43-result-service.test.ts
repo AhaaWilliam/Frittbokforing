@@ -13,10 +13,7 @@ import {
   validateResultConfigInvariants,
   INCOME_STATEMENT_CONFIG,
 } from '../src/main/services/report/k2-mapping'
-import {
-  getIncomeStatement,
-  getBalanceSheet,
-} from '../src/main/services/report/report-service'
+import { getIncomeStatement } from '../src/main/services/report/report-service'
 import { getDashboardSummary } from '../src/main/services/dashboard-service'
 import { getTaxForecast } from '../src/main/services/tax-service'
 import { bookYearEndResult } from '../src/main/services/opening-balance-service'

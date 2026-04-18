@@ -134,7 +134,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
     initialData,
     onSubmit: async (payload) => {
       if (isEditing && expenseId) {
-        const { fiscal_year_id, ...rest } = payload
+        const { fiscal_year_id: _fy, ...rest } = payload
         await updateDraft.mutateAsync({ id: expenseId, ...rest })
       } else {
         await saveDraft.mutateAsync(payload)

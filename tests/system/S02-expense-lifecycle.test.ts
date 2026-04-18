@@ -18,9 +18,7 @@ import {
   destroyTemplateDb,
   seedSupplier,
   seedAndFinalizeExpense,
-  seedAndPayExpense,
   getVatCode25In,
-  getVatCodeInExempt,
   type SystemTestContext,
 } from './helpers/system-test-context'
 
@@ -257,7 +255,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
 
   it('S02-06: B-serie oberoende av A-serie', () => {
     // Finalisera en kundfaktura → A1
-    const { verificationNumber: vn1 } = seedAndFinalizeExpense(ctx) // wait, this is B-series
+    const { verificationNumber: _vn1 } = seedAndFinalizeExpense(ctx) // wait, this is B-series
 
     // Let me do invoice first for A-series
     const customer = ctx.db

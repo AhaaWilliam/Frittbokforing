@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MAX_QTY_INVOICE,
-  MAX_QTY_EXPENSE,
   ERR_MSG_MAX_QTY_INVOICE,
   ERR_MSG_MAX_QTY_EXPENSE,
 } from '../src/shared/constants'

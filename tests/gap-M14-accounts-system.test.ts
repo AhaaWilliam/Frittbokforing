@@ -5,7 +5,6 @@ import { createCompany } from '../src/main/services/company-service'
 import {
   listAccounts,
   createAccount,
-  updateAccount,
 } from '../src/main/services/account-service'
 
 let db: Database.Database

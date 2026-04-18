@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import { todayLocal } from '../../shared/date-utils'
 import {
   useFixedAssets,
   useExecuteDepreciationPeriod,
@@ -61,7 +62,7 @@ export function PageFixedAssets() {
 
   async function handleExecutePeriod() {
     if (!activeFiscalYear) return
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayLocal()
     const periodEnd =
       today > activeFiscalYear.end_date ? activeFiscalYear.end_date : today
     if (

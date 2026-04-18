@@ -59,20 +59,11 @@ describe('Räkenskapsårsövergång', () => {
     )
 
     // Beräkna nettoresultat
-    const netResult = ctx.openingBalanceService.calculateNetResult(
-      ctx.db,
-      ctx.seed.fiscalYearId,
-    )
+    ctx.openingBalanceService.calculateNetResult(ctx.db, ctx.seed.fiscalYearId)
 
     // Skapa FY2027 (note: createNewFiscalYear does NOT auto-close the previous FY)
     const fy2 = createSecondFiscalYear(ctx)
     expect(fy2.fiscalYear.year_label).toBe('2027')
-
-    // createNewFiscalYear doesn't auto-close — verify FY2026 is still open
-    // (closing is done separately via closeFiscalYear in the UI flow)
-    const fy1 = ctx.db
-      .prepare('SELECT * FROM fiscal_years WHERE id = ?')
-      .get(ctx.seed.fiscalYearId) as any
     // The FY may or may not be closed depending on implementation
     // The important invariant is that IB was created correctly
 

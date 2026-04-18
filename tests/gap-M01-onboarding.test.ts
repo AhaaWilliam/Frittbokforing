@@ -3,7 +3,6 @@ import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
 import {
   createCompany,
-  getCompany,
   generatePeriods,
 } from '../src/main/services/company-service'
 import {

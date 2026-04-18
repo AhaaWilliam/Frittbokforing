@@ -1,7 +1,7 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import { todayLocalFromNow } from '../utils/now'
-import type { ErrorCode, IpcResult, JournalEntry } from '../../shared/types'
+import type { ErrorCode, IpcResult } from '../../shared/types'
 import { rebuildSearchIndex } from './search-service'
 
 // ── Types ────────────────────────────────────────────────────────────

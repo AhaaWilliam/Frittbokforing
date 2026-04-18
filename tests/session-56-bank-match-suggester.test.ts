@@ -19,7 +19,6 @@ import {
   classifyCandidates,
   normalizeIban,
   daysBetween,
-  type MatchCandidate,
 } from '../src/main/services/bank/bank-match-suggester'
 
 interface Seeded {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ExpenseLineForm } from '../../lib/form-schemas/expense'
-import { toOre, formatKr } from '../../lib/format'
+import { formatKr } from '../../lib/format'
 
 interface ExpenseTotalsProps {
   lines: ExpenseLineForm[]

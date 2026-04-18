@@ -11,6 +11,7 @@ import {
   beforeEach,
   afterEach,
 } from 'vitest'
+import * as iconv from 'iconv-lite'
 import {
   type SystemTestContext,
   createTemplateDb,
@@ -126,14 +127,6 @@ function seedExpenseNoVat(
   })
 }
 
-function getInvoiceTotal(invoiceId: number): number {
-  return (
-    ctx.db
-      .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
-      .get(invoiceId) as { total_amount_ore: number }
-  ).total_amount_ore
-}
-
 function getExpenseTotal(expenseId: number): number {
   return (
     ctx.db
@@ -237,7 +230,6 @@ describe('Migration 021: payment_batches + auto_bank_fee', () => {
   })
 
   it('A4: payment_batches CHECK constraints reject invalid values', () => {
-    const companyId = ctx.seed.companyId
     const fyId = ctx.seed.fiscalYearId
     // Invalid batch_type
     expect(() => {
@@ -1496,7 +1488,6 @@ describe('SIE4 export after bulk batch (G1)', () => {
     })
     const buf = Buffer.from(sie4.content)
     // Decode as CP437
-    const iconv = require('iconv-lite') as typeof import('iconv-lite')
     const decoded = iconv.decode(buf, 'cp437')
 
     // Company name with ö survives roundtrip
@@ -1822,7 +1813,6 @@ describe('SIE-PARTIAL1 — SIE4 roundtrip med partial batch', () => {
       fiscalYearId: ctx.seed.fiscalYearId,
     })
     const buf = Buffer.from(sie4.content)
-    const iconv = require('iconv-lite') as typeof import('iconv-lite')
     const decoded = iconv.decode(buf, 'cp437')
 
     // Payment-verifikat existerar i SIE4

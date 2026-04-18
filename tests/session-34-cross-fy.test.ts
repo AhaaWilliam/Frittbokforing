@@ -24,8 +24,6 @@ import {
   seedAndFinalizeInvoice,
   seedAndFinalizeExpense,
   createSecondFiscalYear,
-  getVatCode25Out,
-  getVatCode25In,
   type SystemTestContext,
 } from './system/helpers/system-test-context'
 
@@ -173,7 +171,7 @@ describe('Cross-FY betalning (B7)', () => {
 
   it('Cross-FY: FY2026 stängd → betalning i FY2026 avvisas', () => {
     const { invoiceId } = setupCrossFyInvoice()
-    const fy2 = createFy2027() // FY2026 stängs automatiskt
+    const _fy2 = createFy2027() // FY2026 stängs automatiskt
 
     vi.setSystemTime(new Date('2027-02-01T10:00:00'))
 

@@ -41,9 +41,32 @@ export function getNow(): Date {
  * Replaces bare todayLocal() at main-process callsites.
  */
 export function todayLocalFromNow(): string {
-  const d = getNow()
+  return localDateFromDate(getNow())
+}
+
+/**
+ * Local date (YYYY-MM-DD) från en specifik Date-instans.
+ * Använd för periodStart/periodEnd etc. där tiden inte är "now".
+ * Undviker UTC-risk från .toISOString().slice(0, 10).
+ */
+export function localDateFromDate(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+/**
+ * Local timestamp (YYYY-MM-DDTHH:MM:SS), respekterar FRITT_NOW.
+ * Används för export-header, backup-filnamn, XML-timestamps.
+ */
+export function localTimestampFromNow(): string {
+  const d = getNow()
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  const s = String(d.getSeconds()).padStart(2, '0')
+  return `${y}-${mo}-${day}T${h}:${m}:${s}`
 }

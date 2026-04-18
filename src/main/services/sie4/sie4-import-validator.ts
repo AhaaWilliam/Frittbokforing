@@ -82,13 +82,6 @@ export function validateSieParseResult(
 
   // E1: Unbalanced vouchers
   for (const entry of result.entries) {
-    const totalDebit = entry.transactions
-      .filter((t) => t.amountOre > 0)
-      .reduce((s, t) => s + t.amountOre, 0)
-    const totalCredit = entry.transactions
-      .filter((t) => t.amountOre < 0)
-      .reduce((s, t) => s + Math.abs(t.amountOre), 0)
-
     // SIE4 uses signed amounts: positive = debit, negative = credit
     // Balance check: sum of all amounts should be 0
     const sum = entry.transactions.reduce((s, t) => s + t.amountOre, 0)

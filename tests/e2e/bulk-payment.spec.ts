@@ -90,7 +90,7 @@ test.describe('Bulk-betalning E2E', () => {
   test('2. Drafts icke-selectable, paid selectable (för PDF-export)', async () => {
     const ctx = await launchAppWithFreshDb()
     try {
-      const { companyId, fiscalYearId } = await seedCompanyViaIPC(ctx.window)
+      const { fiscalYearId } = await seedCompanyViaIPC(ctx.window)
       const customerId = await seedCustomer(ctx.window, 'Select Testkund')
 
       // Create 1 unpaid (finalized) invoice
@@ -268,12 +268,7 @@ test.describe('Bulk-betalning E2E', () => {
       ).toBeVisible({ timeout: 5_000 })
 
       // Enter bank fee: 25.00 kr = 2500 öre
-      const bankFeeInput = ctx.window
-        .locator(
-          'label:has-text("Bankavgift") + input, label:has-text("Bankavgift") ~ input',
-        )
-        .first()
-      // Try finding via the label text in the grid
+      // Find bankavgift via placeholder
       const bankFeeField = ctx.window.locator('input[placeholder="0.00"]')
       await bankFeeField.fill('25.00')
 

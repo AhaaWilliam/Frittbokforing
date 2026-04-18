@@ -8,14 +8,10 @@ import {
   updateCounterparty,
   deactivateCounterparty,
 } from '../src/main/services/counterparty-service'
-import {
-  listProducts,
-  createProduct,
-} from '../src/main/services/product-service'
+import { createProduct } from '../src/main/services/product-service'
 import { listVatCodes } from '../src/main/services/vat-service'
 import { listAccounts } from '../src/main/services/account-service'
 import {
-  CreateCounterpartyInputSchema,
   UpdateCounterpartyInputSchema,
   VatNumberSchema,
 } from '../src/main/ipc-schemas'

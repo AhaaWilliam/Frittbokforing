@@ -90,10 +90,7 @@ function AppShellInner({ company }: AppShellProps) {
     <div className="flex h-screen" data-testid="app-ready">
       <SkipLinks />
       <Sidebar company={company} />
-      <main
-        id="main-content"
-        className="flex flex-1 flex-col overflow-hidden"
-      >
+      <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
         <ReadOnlyBanner />
         <div
           className="flex flex-1 flex-col overflow-hidden"

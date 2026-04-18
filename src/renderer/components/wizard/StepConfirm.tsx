@@ -1,8 +1,4 @@
-import type {
-  CreateCompanyInput,
-  IpcResult,
-  Company,
-} from '../../../shared/types'
+import type { CreateCompanyInput } from '../../../shared/types'
 
 interface StepConfirmProps {
   name: string

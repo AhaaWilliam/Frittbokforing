@@ -20,7 +20,6 @@ import {
   payInvoice,
   payInvoicesBulk,
 } from '../../src/main/services/invoice-service'
-import type { BulkPayInvoicesInput } from '../../src/main/services/invoice-service'
 import {
   saveExpenseDraft,
   finalizeExpense,

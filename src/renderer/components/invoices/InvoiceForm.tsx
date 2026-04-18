@@ -97,7 +97,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     initialData,
     onSubmit: async (payload) => {
       if (draft) {
-        const { fiscal_year_id, ...rest } = payload
+        const { fiscal_year_id: _fy, ...rest } = payload
         await updateDraft.mutateAsync({ id: draft.id, ...rest })
       } else {
         await saveDraft.mutateAsync(payload)

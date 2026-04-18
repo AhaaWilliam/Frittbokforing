@@ -9,7 +9,6 @@ import {
   finalizeDraft,
   createCreditNoteDraft,
   getDraft,
-  listInvoices,
 } from '../src/main/services/invoice-service'
 
 let db: Database.Database

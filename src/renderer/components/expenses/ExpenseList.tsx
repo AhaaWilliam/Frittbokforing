@@ -25,7 +25,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
 import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
 import { PaymentDialog } from '../ui/PaymentDialog'
-import { BulkPaymentDialog, type BulkPaymentRow } from '../ui/BulkPaymentDialog'
+import { BulkPaymentDialog } from '../ui/BulkPaymentDialog'
 import { BulkPaymentResultDialog } from '../ui/BulkPaymentResultDialog'
 import { Pagination } from '../ui/Pagination'
 

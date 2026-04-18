@@ -4,10 +4,6 @@ import { createTestDb } from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
-import {
-  saveExpenseDraft,
-  finalizeExpense,
-} from '../src/main/services/expense-service'
 import { getAccountStatement } from '../src/main/services/account-statement-service'
 
 let db: Database.Database
@@ -74,34 +70,6 @@ function bookInvoice(
   if (!draft.success) throw new Error('Draft failed: ' + JSON.stringify(draft))
   const fin = finalizeDraft(testDb, draft.data.id)
   if (!fin.success) throw new Error('Finalize failed: ' + fin.error)
-  return fin.data
-}
-
-function bookExpense(
-  testDb: Database.Database,
-  seed: ReturnType<typeof seedBase>,
-  date: string,
-) {
-  const draft = saveExpenseDraft(testDb, {
-    counterparty_id: seed.supplierCpId,
-    fiscal_year_id: seed.fiscalYearId,
-    expense_date: date,
-    description: 'Kostnad',
-    lines: [
-      {
-        description: 'Test',
-        account_number: '5410',
-        quantity: 1,
-        unit_price_ore: 5000,
-        vat_code_id: seed.inVatCodeId,
-        sort_order: 0,
-      },
-    ],
-  })
-  if (!draft.success)
-    throw new Error('Expense draft failed: ' + JSON.stringify(draft))
-  const fin = finalizeExpense(testDb, draft.data.id)
-  if (!fin.success) throw new Error('Expense finalize failed: ' + fin.error)
   return fin.data
 }
 

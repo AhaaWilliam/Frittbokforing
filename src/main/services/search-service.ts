@@ -115,21 +115,6 @@ function ftsSearch(
   }
 }
 
-function ftsOrFallback<T>(
-  db: Database.Database,
-  entityType: FtsEntityType,
-  trimmed: string,
-  limit: number,
-  fiscalYearId: number | undefined,
-  likeFn: () => T[],
-  ftsFn: (ids: number[]) => T[],
-): T[] {
-  const ids = ftsSearch(db, entityType, trimmed, limit * 2, fiscalYearId)
-  if (ids === null) return likeFn()
-  if (ids.length === 0) return []
-  return ftsFn(ids)
-}
-
 // ── Main search ──────────────────────────────────────────────────────
 
 export function globalSearch(

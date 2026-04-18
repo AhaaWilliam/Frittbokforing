@@ -4,10 +4,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
-import {
-  createCompany,
-  updateCompany,
-} from '../src/main/services/company-service'
+import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import {
   validateBankgiroChecksum,
@@ -68,9 +65,7 @@ beforeAll(() => {
 
   // Create a payment batch with an expense payment
   // First create a minimal expense + payment for the batch
-  const vatCode = db
-    .prepare("SELECT id FROM vat_codes WHERE code = 'IP1' LIMIT 1")
-    .get() as { id: number }
+  db.prepare("SELECT id FROM vat_codes WHERE code = 'IP1' LIMIT 1").get()
 
   // Insert expense directly (minimal for test)
   db.prepare(

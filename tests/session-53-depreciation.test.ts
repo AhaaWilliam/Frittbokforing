@@ -16,7 +16,7 @@ import { calculateResultSummary } from '../src/main/services/result-service'
 import type { CreateFixedAssetInput } from '../src/shared/types'
 
 let db: Database.Database
-let companyId: number
+let _companyId: number
 let fyId: number
 
 const VALID_COMPANY = {
@@ -63,7 +63,7 @@ beforeEach(() => {
   const co = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
     id: number
   }
-  companyId = co.id
+  _companyId = co.id
   const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
     id: number
   }

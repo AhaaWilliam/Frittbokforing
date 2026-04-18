@@ -9,14 +9,12 @@ import {
   saveDraft,
   finalizeDraft,
   payInvoice,
-  listInvoices,
 } from '../src/main/services/invoice-service'
 import {
   saveExpenseDraft,
   finalizeExpense,
   payExpense,
   listExpenses,
-  getExpense,
 } from '../src/main/services/expense-service'
 import { getDashboardSummary } from '../src/main/services/dashboard-service'
 import { getAllJournalEntryLines } from '../src/main/services/export/export-data-queries'
@@ -487,7 +485,7 @@ describe('F11: expenses.paid_amount_ore column and simplified queries', () => {
     // Create 3 invoices: one paid, one partial, one unpaid
     const inv1 = createUnpaidInvoice(db, seed)
     const inv2 = createUnpaidInvoice(db, seed)
-    const inv3 = createUnpaidInvoice(db, seed)
+    const _inv3 = createUnpaidInvoice(db, seed)
 
     const total = (
       db

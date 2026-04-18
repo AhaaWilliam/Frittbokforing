@@ -13,6 +13,7 @@
 import type Database from 'better-sqlite3'
 import type { SieParseResult } from './sie4-import-parser'
 import type { IpcResult } from '../../../shared/types'
+import { localDateFromDate } from '../../utils/now'
 import { rebuildSearchIndex } from '../search-service'
 import { createCompany } from '../company-service'
 
@@ -390,8 +391,8 @@ function seedMonthlyPeriods(
       companyId,
       fiscalYearId,
       periodNumber,
-      periodStart.toISOString().slice(0, 10),
-      periodEnd.toISOString().slice(0, 10),
+      localDateFromDate(periodStart),
+      localDateFromDate(periodEnd),
     )
     periodNumber++
     current = new Date(periodEnd)

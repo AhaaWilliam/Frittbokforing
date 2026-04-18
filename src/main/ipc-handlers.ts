@@ -1325,8 +1325,11 @@ export function registerIpcHandlers(): void {
     saveSettings(settings)
   })
 
-  // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1
+  // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1.
+  // Conditional require undviker att ladda test-handlers i produktion;
+  // top-level import skulle bundla in dem oavsett.
   if (process.env.FRITT_TEST === '1') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { registerTestHandlers } = require('./ipc/test-handlers')
     registerTestHandlers(db)
   }

@@ -18,8 +18,6 @@ import {
   destroyTemplateDb,
   seedCustomer,
   seedAndFinalizeInvoice,
-  seedAndFinalizeExpense,
-  seedManualEntry,
   getVatCode25Out,
   type SystemTestContext,
 } from './helpers/system-test-context'

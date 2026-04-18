@@ -63,7 +63,7 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     const fyId = fyResult.data[0].id
 
     // Seed and finalize invoice (1 line, 125 kr, 25% VAT)
-    const { invoiceId } = await seedAndFinalizeInvoice(window, {
+    await seedAndFinalizeInvoice(window, {
       counterpartyId: customerId,
       fiscalYearId: fyId,
       invoiceDate: '2020-06-15',

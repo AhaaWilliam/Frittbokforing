@@ -21,7 +21,6 @@ import {
 import {
   saveExpenseDraft,
   finalizeExpense,
-  payExpense,
 } from '../src/main/services/expense-service'
 import type { IpcResult } from '../src/shared/types'
 import type { GlobalSearchResponse } from '../src/shared/search-types'

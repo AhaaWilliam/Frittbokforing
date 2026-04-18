@@ -1,5 +1,44 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint L -- Lint-baseline-städ (193 → 95) ✅ KLAR
+
+Session SL (2026-04-18). Backlog-sprint: lint-baseline-städ.
+IBAN-prefix-dispatch eskalerad efter scope-granskning (kräver spec).
+
+**Lint-baseline:** 193 → **95 problems (−98, 51 %)**.
+| Regel | Före → Efter |
+|---|---|
+| no-unused-vars | 76 → 0 |
+| no-require-imports | 5 → 0 |
+| no-restricted-syntax (UTC-risk) | 8 → 0 |
+| jsx-a11y/no-static-element-interactions (rule-not-found) | 6 → 0 |
+| prettier/prettier (auto) | 2 → 0 |
+| **no-explicit-any** (backlog) | **96 → 95** |
+
+**Testbaslinje:** 2576 vitest (oförändrat). 256 testfiler.
+**Playwright:** 45 specfiler, 72 test() (oförändrat).
+**PRAGMA user_version:** 43 (oförändrat).
+**Nya helpers:** `localDateFromDate(d)` + `localTimestampFromNow()`
+i `src/main/utils/now.ts`.
+**Eslint-config:** utvidgade `no-unused-vars`-pattern för `^_`-prefix
+på vars/destructuring/caught-errors.
+**Nya M-principer:** 0. **Nya IPC-kanaler:** 0. **Nya ErrorCodes:** 0.
+**Nya migrationer:** 0.
+
+### Scope-utelämningar
+
+- **IBAN-prefix-dispatch** (P4-scope-lås) — eskalerad; kräver dedikerad
+  spec eftersom "IBAN-prefix-dispatch" kan tolkas tre olika sätt och
+  ingen artikulerad krav existerar.
+- **no-explicit-any cleanup** (95 kvar) — separat sprint med fokus på
+  test-typsäkerhet. `check:lint-new`-gate blockerar nya instanser.
+- **jsx-a11y-plugin installation** — pluginen är ej installerad, så
+  disable-comments var felaktiga. Om plugin aktiveras i framtiden
+  kommer 6 dialog-backdrops behöva `role="button"` eller re-install
+  av disable-kommentarer.
+
+Se `docs/sprint-l-summary.md`.
+
 ## Sprint K -- F49-c3 Dialog focus-trap-härdning ✅ KLAR
 
 Session SK (2026-04-18). Tredje och sista fas av F49-c keyboard-

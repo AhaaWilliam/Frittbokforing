@@ -11,18 +11,12 @@ import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
-import { createProduct } from '../src/main/services/product-service'
 import {
   saveManualEntryDraft,
   updateManualEntryDraft,
   finalizeManualEntry,
 } from '../src/main/services/manual-entry-service'
 import { createNewFiscalYear } from '../src/main/services/fiscal-service'
-import {
-  calculateNetResult,
-  bookYearEndResult,
-} from '../src/main/services/opening-balance-service'
-import { saveExpenseDraft } from '../src/main/services/expense-service'
 import { createAccount } from '../src/main/services/account-service'
 import {
   mapUniqueConstraintError,

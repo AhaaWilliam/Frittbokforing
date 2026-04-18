@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAllAccounts } from '../../lib/hooks'
+import { todayLocal } from '../../../shared/date-utils'
 
 export interface DisposeDialogResult {
   disposed_date: string
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayLocal()
   const [disposedDate, setDisposedDate] = useState(today)
   const [generateEntry, setGenerateEntry] = useState(true)
   const [salePriceKr, setSalePriceKr] = useState('')

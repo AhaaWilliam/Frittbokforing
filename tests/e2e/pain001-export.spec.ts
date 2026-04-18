@@ -13,7 +13,6 @@
  */
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
-import path from 'path'
 import { launchAppWithFreshDb } from './helpers/launch-app'
 
 test('Pain.001 export: batch → XML fil på disk', async () => {

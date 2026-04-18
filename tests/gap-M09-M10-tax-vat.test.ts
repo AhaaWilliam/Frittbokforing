@@ -2,8 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
 import { createCompany } from '../src/main/services/company-service'
-import { createCounterparty } from '../src/main/services/counterparty-service'
-import { createProduct } from '../src/main/services/product-service'
 import { getTaxForecast } from '../src/main/services/tax-service'
 import { getVatReport } from '../src/main/services/vat-report-service'
 

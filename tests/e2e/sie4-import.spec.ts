@@ -7,6 +7,7 @@
  */
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import * as iconv from 'iconv-lite'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
@@ -18,9 +19,7 @@ function buildSie4(lines: string[]): Buffer {
 
 test('SIE4 import (merge strategy): creates accounts and entries', async () => {
   // Write fixture to a known location before launching app
-  const fixtureDir = fs.mkdtempSync(
-    path.join(require('os').tmpdir(), 'sie4-fixture-'),
-  )
+  const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sie4-fixture-'))
   const fixturePath = path.join(fixtureDir, 'test-import.se')
   const sieContent = buildSie4([
     '#FLAGGA 0',
