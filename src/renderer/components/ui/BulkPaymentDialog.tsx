@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
+import { useDialogBehavior } from '../../lib/use-dialog-behavior'
 
 export interface BulkPaymentRow {
   id: number
@@ -36,6 +37,16 @@ export function BulkPaymentDialog({
   const [accountNumber, setAccountNumber] = useState('1930')
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [userNote, setUserNote] = useState('')
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Sprint K (F49-c3): focus-trap + Escape + focus-return.
+  const { onKeyDown } = useDialogBehavior({
+    open,
+    onClose: () => {
+      if (!isLoading) onOpenChange(false)
+    },
+    containerRef: dialogRef,
+  })
 
   useEffect(() => {
     if (open) {
@@ -79,8 +90,13 @@ export function BulkPaymentDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onKeyDown={onKeyDown}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="bulk-payment-title"

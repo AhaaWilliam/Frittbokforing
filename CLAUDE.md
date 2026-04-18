@@ -805,6 +805,50 @@ visar den som disabled med tooltip. Batch-unmatch är backlog.
 **Referens:** Sprint A / S58 F66-e — `bank-unmatch-service.ts`,
 `tests/session-58-bank-unmatch.test.ts`.
 
+## 59. Keyboard-navigation-kontrakt för renderer (M156)
+
+**M156.** Keyboard-navigation i renderer följer fyra pelare:
+
+1. **Skip-links.** `AppShell` renderar tre sr-only-links först i body:
+   `main-content`, `bulk-actions` (conditional via `SkipLinksContext`),
+   `primary-nav`. Tab från body exponerar dem; Enter fokuserar target.
+2. **Roving-tabindex för listor.** Tabell-rader använder
+   `useRovingTabindex`-hook (`src/renderer/lib/use-roving-tabindex.ts`).
+   Enbart aktiv rad har `tabIndex=0`, andra `-1`. ↑↓/Home/End navigerar,
+   Enter aktiverar. Tab lämnar listan. Grid-mönster (ARIA composite) är
+   avvisat — roving räcker för rad-nivå-navigation.
+3. **Dialogs använder `useDialogBehavior`-hook**
+   (`src/renderer/lib/use-dialog-behavior.ts`). Encapsulerar focus-trap
+   (Tab + Shift+Tab cyklar), Escape-close med `e.stopPropagation()`
+   (nested-support), auto-focus på `initialFocusRef` eller första
+   fokuserbara element, focus-return till trigger vid close. Default-
+   fokus: Cancel-knappen för destruktiva operationer, primär-knapp för
+   informativa. Alla 6 modala dialoger i `src/renderer/components/ui/*Dialog*.tsx`
+   använder hooken.
+4. **Enter på list-rad = navigera till detaljvy.** Samma kontrakt som
+   klick. Space reserveras för selektions-checkboxar (nuvarande:
+   browser-default; explicit Space-handler är backlog).
+
+**Dashboard MetricCards** är fokuserbara `<button type="button">` när
+`onClick` är satt (PageOverview). Default Enter/Space-aktivering.
+
+**Form-totals** (`InvoiceTotals`, `ExpenseTotals`) har `aria-live="polite"`
+så screen readers annonserar ändrade belopp vid användarpaus.
+
+**Known limitations (inte buggar):**
+- Om dialogens trigger unmountas medan dialogen är öppen (t.ex. sista
+  faktura raderas medan confirm-dialog visas) hamnar focus på `<body>`
+  efter close. Body-fallback är dokumenterad och accepterad.
+- Rad-action-knappar (Bokför/Betala/PDF etc.) behåller default Tab-
+  behavior inom active row — inte isolerade från rad-level-tabindex.
+
+**Enforcement:** Axe-körning vid varje renderer-test (M133). Nya
+dialoger i `src/renderer/components/ui/*` ska använda `useDialogBehavior`
+— review-regel.
+
+**Korsreferens:** M133 (axe-regression-gate). Sprint I/J/K F49-c1/c2/c3
+leveranser.
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { setupMockIpc } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
 import { ConfirmFinalizeDialog } from '../../../../src/renderer/components/ui/ConfirmFinalizeDialog'
@@ -45,5 +46,40 @@ describe('ConfirmFinalizeDialog', () => {
     const confirmBtn = screen.getByRole('button', { name: /Bokför/ })
     expect(confirmBtn).toBeDisabled()
     expect(confirmBtn).toHaveTextContent('Bokför...')
+  })
+
+  // Sprint K F49-c3: focus-trap + Escape (via useDialogBehavior)
+
+  it('focuses cancel button on open', async () => {
+    await renderWithProviders(
+      <ConfirmFinalizeDialog {...DEFAULT_PROPS} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test above
+    )
+    const cancelBtn = screen.getByRole('button', { name: 'Avbryt' })
+    expect(document.activeElement).toBe(cancelBtn)
+  })
+
+  it('Escape closes dialog via onOpenChange(false)', async () => {
+    const onOpenChange = vi.fn()
+    await renderWithProviders(
+      <ConfirmFinalizeDialog {...DEFAULT_PROPS} onOpenChange={onOpenChange} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test above
+    )
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('Escape blockeras när isLoading=true', async () => {
+    const onOpenChange = vi.fn()
+    await renderWithProviders(
+      <ConfirmFinalizeDialog
+        {...DEFAULT_PROPS}
+        isLoading={true}
+        onOpenChange={onOpenChange}
+      />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test above
+    )
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 })

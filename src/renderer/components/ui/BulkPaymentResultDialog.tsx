@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import type { BulkPaymentResult } from '../../../shared/types'
+import { useDialogBehavior } from '../../lib/use-dialog-behavior'
 
 interface BulkPaymentResultDialogProps {
   open: boolean
@@ -17,6 +18,16 @@ export function BulkPaymentResultDialog({
   batchType,
 }: BulkPaymentResultDialogProps) {
   const [exporting, setExporting] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  // Sprint K (F49-c3): focus-trap + Escape + focus-return.
+  const { onKeyDown } = useDialogBehavior({
+    open,
+    onClose: () => onOpenChange(false),
+    containerRef: dialogRef,
+    initialFocusRef: closeRef,
+  })
 
   if (!open || !result) return null
 
@@ -70,8 +81,13 @@ export function BulkPaymentResultDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onKeyDown={onKeyDown}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="bulk-result-title"
@@ -119,6 +135,7 @@ export function BulkPaymentResultDialog({
             </button>
           )}
           <button
+            ref={closeRef}
             type="button"
             onClick={() => onOpenChange(false)}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"

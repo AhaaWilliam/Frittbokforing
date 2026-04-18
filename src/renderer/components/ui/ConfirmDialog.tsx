@@ -1,4 +1,5 @@
-import { memo, useCallback, useEffect, useRef } from 'react'
+import { memo, useRef } from 'react'
+import { useDialogBehavior } from '../../lib/use-dialog-behavior'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -24,40 +25,14 @@ export const ConfirmDialog = memo(function ConfirmDialog({
   const dialogRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
 
-  // Focus cancel button on open
-  useEffect(() => {
-    if (open) {
-      cancelRef.current?.focus()
-    }
-  }, [open])
-
-  // Escape key closes dialog
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        onOpenChange(false)
-        return
-      }
-      // Focus trap: Tab cycles within dialog
-      if (e.key === 'Tab') {
-        const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled])',
-        )
-        if (!focusable || focusable.length === 0) return
-        const first = focusable[0]
-        const last = focusable[focusable.length - 1]
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-      }
-    },
-    [onOpenChange],
-  )
+  // Sprint K (F49-c3): gemensam focus-trap + Escape + focus-return.
+  // Cancel-knappen är initial fokus för destruktiva operationer (§ 6.1).
+  const { onKeyDown } = useDialogBehavior({
+    open,
+    onClose: () => onOpenChange(false),
+    containerRef: dialogRef,
+    initialFocusRef: cancelRef,
+  })
 
   if (!open) return null
 
@@ -72,7 +47,7 @@ export const ConfirmDialog = memo(function ConfirmDialog({
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onKeyDown={handleKeyDown}
+      onKeyDown={onKeyDown}
     >
       <div
         ref={dialogRef}

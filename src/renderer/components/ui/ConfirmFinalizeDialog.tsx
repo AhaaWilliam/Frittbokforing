@@ -1,3 +1,6 @@
+import { useRef } from 'react'
+import { useDialogBehavior } from '../../lib/use-dialog-behavior'
+
 interface ConfirmFinalizeDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -15,11 +18,29 @@ export function ConfirmFinalizeDialog({
   onConfirm,
   isLoading,
 }: ConfirmFinalizeDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+
+  // Sprint K (F49-c3): focus-trap + Escape + focus-return.
+  const { onKeyDown } = useDialogBehavior({
+    open,
+    onClose: () => {
+      if (!isLoading) onOpenChange(false)
+    },
+    containerRef: dialogRef,
+    initialFocusRef: cancelRef,
+  })
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onKeyDown={onKeyDown}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-finalize-title"
@@ -39,6 +60,7 @@ export function ConfirmFinalizeDialog({
         </div>
         <div className="flex justify-end gap-3">
           <button
+            ref={cancelRef}
             type="button"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}

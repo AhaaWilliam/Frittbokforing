@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
+import { useDialogBehavior } from '../../lib/use-dialog-behavior'
 
 interface PaymentDialogProps {
   open: boolean
@@ -31,6 +32,18 @@ export function PaymentDialog({
   const [paymentDate, setPaymentDate] = useState(todayLocal())
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [errors, setErrors] = useState<{ amount?: string; date?: string }>({})
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const amountInputRef = useRef<HTMLInputElement>(null)
+
+  // Sprint K (F49-c3): focus-trap + Escape + focus-return.
+  const { onKeyDown } = useDialogBehavior({
+    open,
+    onClose: () => {
+      if (!isLoading) onOpenChange(false)
+    },
+    containerRef: dialogRef,
+    initialFocusRef: amountInputRef,
+  })
 
   useEffect(() => {
     if (open) {
@@ -73,8 +86,13 @@ export function PaymentDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onKeyDown={onKeyDown}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="payment-dialog-title"
@@ -108,6 +126,7 @@ export function PaymentDialog({
               Belopp (kr)
             </label>
             <input
+              ref={amountInputRef}
               id="payment-amount"
               type="number"
               step="0.01"

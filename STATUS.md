@@ -1,5 +1,53 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint K -- F49-c3 Dialog focus-trap-härdning ✅ KLAR
+
+Session SK (2026-04-18). Tredje och sista fas av F49-c keyboard-
+navigation (c3). Fokus: härda dialog-beteende (Escape + focus-trap +
+focus-return) och promotera **M156** till accepterad M-princip.
+
+**Testbaslinje:** 2563 → **2576 vitest (+13)**. 256 → 257 testfiler (+1).
+**Playwright:** 45 specfiler oförändrat, 72 test() oförändrat,
+full-run **72p/0f**.
+**PRAGMA user_version:** 43 (oförändrat).
+**Nya IPC-kanaler:** 0. **Nya M-principer:** **M156 (accepterad)**.
+**Nya ErrorCodes:** 0. **Nya migrationer:** 0.
+
+### Levererat
+
+**Ny gemensam hook `useDialogBehavior`** i
+`src/renderer/lib/use-dialog-behavior.ts`:
+- Focus-trap (Tab + Shift+Tab cyklar)
+- Escape stänger med `e.stopPropagation()` (nested-support)
+- Auto-focus på `initialFocusRef` eller första focusable
+- Focus-return till trigger vid close (body-fallback om unmountad)
+
+**Applicerad på alla 6 modaldialoger** (ConfirmDialog,
+ConfirmFinalizeDialog, PaymentDialog, BulkPaymentDialog,
+BulkPaymentResultDialog, BatchPdfExportDialog). Fem av sex hade
+tidigare **ingen** Escape och **ingen** focus-trap — bara aria-attribut
+och klick-stäng. Nu konsekvent beteende över hela kodbasen.
+
+**M156 promoterad till accepterad M-princip** i `CLAUDE.md § 59`.
+Dokumenterar fyra pelare: skip-links, roving-tabindex, `useDialogBehavior`,
+Enter på list-rad = navigera. Review-regel: nya dialoger i
+`src/renderer/components/ui/*` MÅSTE använda `useDialogBehavior`.
+
+### Tester
+
+- `tests/renderer/lib/use-dialog-behavior.test.tsx` — 10 tester (Escape,
+  Tab-cykel, auto-focus, focus-return, unmounted-trigger-fallback,
+  stopPropagation).
+- `tests/renderer/components/ui/ConfirmFinalizeDialog.test.tsx` — +3
+  (auto-focus Cancel, Escape→close, Escape blockeras under isLoading).
+
+### F49-c är KOMPLETT
+
+Sprint I (c1) + Sprint J (c2) + Sprint K (c3) levererar hela F49-c-
+kontraktet. M156 är nu accepterad M-princip.
+
+Se `docs/sprint-k-summary.md`.
+
 ## Sprint J -- F49-c2 Roving-tabindex + widget-focus + aria-live ✅ KLAR
 
 Session SJ (2026-04-18). Andra fas av F49-c keyboard-navigation
