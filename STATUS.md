@@ -1,5 +1,84 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint F -- Backlog-avveckling P1–P6: invalidation, batch-unmatch, ADR, BkTxCd, kbd-spec, camt.054 ✅ KLAR
+
+Session SF (2026-04-18). Systematisk avveckling av 6 T3-items i prioritets-
+ordning med fas-gated STOP-villkor. Best-case utfall: alla 6 faser
+levererade.
+
+**Testbaslinje:** 2494 → **2534 vitest (+40)**. 249 → 253 testfiler (+4).
+**Playwright:** 42 → **43 specfiler (+1)**, 67 → **68 test()-kallor (+1)**.
+**PRAGMA user_version:** 41 → **43 (migration 042 + 043)**.
+**Nya IPC-kanaler:** 4 (batch-unmatch + 3 × BkTxCd-mapping).
+**Nya M-principer:** 0 (M155 + M156 är drafts i ADR/spec).
+**Nya ErrorCodes:** 0.
+
+### Levererat per fas
+
+**P1 — Precis RQ-invalidation för 5 depreciation-hooks.** Ersätter
+`invalidateAll: true` med exakt matris. `useIpcMutation.invalidate`
+accepterar nu dynamisk funktion `(data, input) => keys`. 5 nya query-
+keys (inkl. `incomeStatementByFy`, `balanceSheetByFy` för prefix-match
+över dateRange-varianter).
+
+**P2 — Batch-unmatch (Alt A, hela batchen).** `unmatchBankBatch` via
+M146-polymorfism. Delad `_unmatchPaymentCore`-helper. Ny IPC-kanal
+`bank-statement:unmatch-batch`. UI-knapp "Ångra batch" + ConfirmDialog
+med exakt varningstext (pain.001-semantik + C-serie-förklaring).
+Chronology (M142) passerar naturligt — alla korrigeringar samma datum.
+
+**P3 — ADR 002 (asset-edit efter schedule-exekvering).** Draft, väntar
+på revisor-samråd. Alt A (framtida perioder) rekommenderad — Alt B
+de-facto blockerad av `trg_check_period_on_booking`. 6 open questions
+till revisor. M155 (draft) + Sprint H-skelett.
+
+**P4 — BkTxCd-mappningar DB-driven.** Migration 042 skapar
+`bank_tx_code_mappings` (domain/family/subfamily → classification).
+`bank-fee-classifier.ts` refactored till DB-läsning med WeakMap-cache
+per db-instans; `invalidateClassifierCache(db)` efter upsert/delete.
+M153-determinism bevarad. 3 IPC-kanaler + Settings-sektion med CRUD.
+Scope-lås: ingen IBAN-prefix-parsning (eskalerat).
+
+**P5 — F49-c keyboard-navigation UX-spec.** 4 ytor, Alt B (roving-
+tabindex) rekommenderad, 3 skip-links, Enter-aktivering på rader. M156
+(draft) + Sprint-split I/J/K. s22b-f49-strategy non-goal-sektion
+uppdaterad.
+
+**P6 — camt.054 parser via Path A.** Parser återanvänder helpers från
+camt053 (nu exporterade). Migration 043 utökar
+`CHECK (source_format IN ('camt.053','camt.054'))` via M122 table-
+recreate. Path A pseudo-statement (opening=0, closing=0). Format-
+dropdown i UI. Balans-check skippas för camt.054.
+
+### Pre-flight-avvikelse rättad
+
+P6 missade initialt att `bank_statements.source_format` hade
+`CHECK IN ('camt.053')` som blockerade 'camt.054'-värdet. Ursprunglig
+Path A använde `statement_number='CAMT054-'`-prefix som workaround —
+prefix-hacket togs bort efter att migration 043 tillades. PRAGMA gick
+från planerade 42 till 43.
+
+### Bodyguard-verifiering
+
+- ✅ `check:m133` + `check:m133-ast` + `check:m153` gröna
+- ✅ Typecheck ren
+- ✅ Lint ren på nya filer
+- ✅ `migration-041-upgrade.test.ts` oförändrat (verifierar
+  user_version=41 mitt i kedjan, inte slutvärdet)
+- ✅ Inga nya ErrorCodes, inga nya M-principer i produktion
+
+### Backlog efter SF
+
+- **T3.a F62-e** — blockerad på revisor-samråd (ADR 002)
+- **T3.d MT940 + BGC** — H2 2026 per memory
+- **T3.g F49-c1/c2/c3** — UX-spec klar, implementation väntar
+- **ADR 003 camt.054-arkitektur** (nullable balans + bättre source_format-
+  modell) om prioriterat
+- **IBAN-prefix-dispatch för BkTxCd** (P4-scope-lås lyft)
+- Sprint G-rekommendation: IBAN-auto-dispatch eller F49-c1 (skip-links)
+
+Se [docs/sprint-f-summary.md](docs/sprint-f-summary.md) för detaljer.
+
 ## Sprint E -- Tiered backlog-cleanup: T1 WONTFIX + T2 filter-URL + T3 eskalering ✅ KLAR
 
 Session SE (2026-04-17). Tiered cleanup-sprint: T1 (dokumentation) + T2
