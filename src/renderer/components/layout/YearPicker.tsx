@@ -24,10 +24,14 @@ export function YearPicker() {
 
   return (
     <div className="mt-3" data-testid="year-picker">
-      <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <label
+        htmlFor="year-picker-select"
+        className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+      >
         Räkenskapsår
       </label>
       <select
+        id="year-picker-select"
         value={activeFiscalYear.id}
         onChange={(e) => {
           if (e.target.value === '__create__') {

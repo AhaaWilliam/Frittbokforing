@@ -113,8 +113,13 @@ export function ImportPreviewPhase({
         <div className="mb-6 rounded-lg border p-4">
           <h3 className="mb-3 text-sm font-medium">Import-strategi</h3>
           <div className="space-y-2">
-            <label className="flex items-start gap-2">
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- radio-input är sibling, tillhörande text finns i nested div (tillgänglig via label-textContent för screen readers) */}
+            <label
+              htmlFor="import-strategy-new"
+              className="flex items-start gap-2"
+            >
               <input
+                id="import-strategy-new"
                 type="radio"
                 name="strategy"
                 value="new"
@@ -130,8 +135,13 @@ export function ImportPreviewPhase({
                 </div>
               </div>
             </label>
-            <label className="flex items-start gap-2">
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- radio-input är sibling, tillhörande text finns i nested div (tillgänglig via label-textContent för screen readers) */}
+            <label
+              htmlFor="import-strategy-merge"
+              className="flex items-start gap-2"
+            >
               <input
+                id="import-strategy-merge"
                 type="radio"
                 name="strategy"
                 value="merge"

@@ -45,6 +45,7 @@ export const ConfirmDialog = memo(function ConfirmDialog({
 
   return (
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onKeyDown={onKeyDown}
     >

@@ -109,8 +109,14 @@ export function StepFiscalYear({
 
       {use_broken_fiscal_year && (
         <div>
-          <label className="mb-1 block text-sm font-medium">Startmånad</label>
+          <label
+            htmlFor="wizard-start-month"
+            className="mb-1 block text-sm font-medium"
+          >
+            Startmånad
+          </label>
           <select
+            id="wizard-start-month"
             value={fiscal_year_start_month}
             onChange={(e) =>
               onChange('fiscal_year_start_month', parseInt(e.target.value, 10))

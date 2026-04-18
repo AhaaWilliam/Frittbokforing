@@ -460,6 +460,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div
+                        role="presentation"
                         className="flex items-center gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >

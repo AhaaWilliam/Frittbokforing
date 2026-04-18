@@ -92,10 +92,14 @@ export function CreateAccrualDialog({
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="accrual-description"
+              className="mb-1 block text-sm font-medium"
+            >
               Beskrivning
             </label>
             <input
+              id="accrual-description"
               type="text"
               value={form.description}
               onChange={(e) =>
@@ -108,8 +112,14 @@ export function CreateAccrualDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Typ</label>
+            <label
+              htmlFor="accrual-type"
+              className="mb-1 block text-sm font-medium"
+            >
+              Typ
+            </label>
             <select
+              id="accrual-type"
               value={form.accrual_type}
               onChange={(e) =>
                 setForm((f) => ({
@@ -129,10 +139,14 @@ export function CreateAccrualDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label
+                htmlFor="accrual-balance-account"
+                className="mb-1 block text-sm font-medium"
+              >
                 Balanskonto (klass 1–2)
               </label>
               <input
+                id="accrual-balance-account"
                 type="text"
                 value={form.balance_account}
                 onChange={(e) =>
@@ -149,10 +163,14 @@ export function CreateAccrualDialog({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label
+                htmlFor="accrual-result-account"
+                className="mb-1 block text-sm font-medium"
+              >
                 Resultatkonto (klass 3–8)
               </label>
               <input
+                id="accrual-result-account"
                 type="text"
                 value={form.result_account}
                 onChange={(e) =>
@@ -171,10 +189,14 @@ export function CreateAccrualDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="accrual-amount"
+              className="mb-1 block text-sm font-medium"
+            >
               Totalbelopp (kr)
             </label>
             <input
+              id="accrual-amount"
               type="number"
               step="0.01"
               min="0.01"
@@ -189,10 +211,14 @@ export function CreateAccrualDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label
+                htmlFor="accrual-start-period"
+                className="mb-1 block text-sm font-medium"
+              >
                 Startperiod
               </label>
               <select
+                id="accrual-start-period"
                 value={form.start_period}
                 onChange={(e) => {
                   const sp = parseInt(e.target.value, 10)
@@ -212,10 +238,14 @@ export function CreateAccrualDialog({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label
+                htmlFor="accrual-period-count"
+                className="mb-1 block text-sm font-medium"
+              >
                 Antal perioder
               </label>
               <select
+                id="accrual-period-count"
                 value={form.period_count}
                 onChange={(e) =>
                   setForm((f) => ({

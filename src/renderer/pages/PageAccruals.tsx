@@ -172,16 +172,21 @@ export function PageAccruals() {
       />
 
       {showExecuteAllPreview !== null && (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="exec-all-preview-title"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-          onClick={() => setShowExecuteAllPreview(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowExecuteAllPreview(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowExecuteAllPreview(null)
+          }}
         >
           <div
             className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
             data-testid="accrual-preview-dialog"
           >
             <h3

@@ -42,8 +42,11 @@ function BSGroupSection({
           line.accounts.filter((a) => a.displayAmount !== 0).length > 0
         return (
           <div key={line.id}>
-            <div
-              className={`flex items-center justify-between py-1 ${hasAccounts && !printMode ? 'cursor-pointer hover:bg-muted/30' : ''}`}
+            <button
+              type="button"
+              disabled={!hasAccounts || printMode}
+              aria-expanded={hasAccounts ? isOpen : undefined}
+              className={`flex w-full items-center justify-between py-1 text-left ${hasAccounts && !printMode ? 'cursor-pointer hover:bg-muted/30' : 'cursor-default'}`}
               onClick={() => hasAccounts && toggle(line.id)}
             >
               <span className="flex items-center gap-1 text-sm">
@@ -62,7 +65,7 @@ function BSGroupSection({
               <span className="tabular-nums text-sm">
                 {formatReportAmount(line.displayAmount)}
               </span>
-            </div>
+            </button>
             {isOpen &&
               line.accounts
                 .filter((a) => a.displayAmount !== 0)

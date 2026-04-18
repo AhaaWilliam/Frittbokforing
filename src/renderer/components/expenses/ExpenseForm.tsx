@@ -289,6 +289,7 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
 
         {/* Supplier */}
         <div>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- SupplierPicker exponerar label via aria-label internt */}
           <label className="mb-1 block text-sm font-medium">
             Leverant&ouml;r
           </label>

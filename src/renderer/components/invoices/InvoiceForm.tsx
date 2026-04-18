@@ -247,6 +247,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
 
         {/* Customer */}
         <div>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- CustomerPicker exponerar label via aria-label internt */}
           <label className="mb-1 block text-sm font-medium">Kund</label>
           <CustomerPicker
             value={form.getField('_customer') as InvoiceFormState['_customer']}

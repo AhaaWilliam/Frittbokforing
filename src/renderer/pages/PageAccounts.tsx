@@ -114,10 +114,14 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label
+              htmlFor="account-form-number"
+              className="mb-1 block text-sm font-medium"
+            >
               Kontonummer
             </label>
             <input
+              id="account-form-number"
               type="text"
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
@@ -133,8 +137,14 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Namn</label>
+            <label
+              htmlFor="account-form-name"
+              className="mb-1 block text-sm font-medium"
+            >
+              Namn
+            </label>
             <input
+              id="account-form-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

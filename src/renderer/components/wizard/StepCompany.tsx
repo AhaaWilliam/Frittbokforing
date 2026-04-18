@@ -91,13 +91,18 @@ export function StepCompany({
         )}
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">
+      <fieldset>
+        <legend className="mb-1 block text-sm font-medium">
           Vilken redovisningsregel använder du?
-        </label>
+        </legend>
         <div className="mt-2 space-y-2">
-          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- radio-input är sibling, tillhörande text finns i nested div (tillgänglig via label-textContent för screen readers) */}
+          <label
+            htmlFor="fiscal-rule-k2"
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+          >
             <input
+              id="fiscal-rule-k2"
               type="radio"
               name="fiscal_rule"
               value="K2"
@@ -114,8 +119,13 @@ export function StepCompany({
               </div>
             </div>
           </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- radio-input är sibling, tillhörande text finns i nested div (tillgänglig via label-textContent för screen readers) */}
+          <label
+            htmlFor="fiscal-rule-k3"
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+          >
             <input
+              id="fiscal-rule-k3"
               type="radio"
               name="fiscal_rule"
               value="K3"
@@ -134,7 +144,7 @@ export function StepCompany({
             </div>
           </label>
         </div>
-      </div>
+      </fieldset>
 
       <div>
         <label

@@ -176,6 +176,7 @@ export function SupplierPicker({
                   placeholder="Namn"
                   aria-label="Nytt leverantörsnamn"
                   className="block w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  // eslint-disable-next-line jsx-a11y/no-autofocus -- medvetet: när "skapa ny leverantör"-formuläret öppnas förväntas fokus i namn-fältet
                   autoFocus
                 />
                 <input

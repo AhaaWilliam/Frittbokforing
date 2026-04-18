@@ -174,18 +174,21 @@ export function FixedAssetFormDialog({
       : 'Skapa tillgång'
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="fixed-asset-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={() => onOpenChange(false)}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onOpenChange(false)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onOpenChange(false)
+      }}
       data-testid="fixed-asset-form-dialog"
     >
-      <div
-        className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-lg">
         <h2
           id="fixed-asset-dialog-title"
           className="mb-4 text-lg font-semibold"

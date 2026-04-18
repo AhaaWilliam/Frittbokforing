@@ -167,6 +167,7 @@ export function GlobalSearch() {
       <div
         role="combobox"
         aria-expanded={showDropdown}
+        aria-controls={showDropdown ? 'search-results' : undefined}
         aria-haspopup="listbox"
         aria-owns={showDropdown ? 'search-results' : undefined}
       >
@@ -226,6 +227,7 @@ export function GlobalSearch() {
                 const items = group.items.map((item) => {
                   const idx = flatIdx++
                   return (
+                    // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- combobox-options aktiveras via Enter på input (aria-activedescendant), inte via direkt fokus
                     <li
                       key={`${item.type}-${item.identifier}`}
                       id={`search-result-${idx}`}

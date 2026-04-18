@@ -28,6 +28,7 @@ export const Tooltip = memo(function Tooltip({
       onBlur={hide}
     >
       <span
+        role="button"
         tabIndex={0}
         aria-describedby={visible ? tooltipId : undefined}
         className="inline-flex"

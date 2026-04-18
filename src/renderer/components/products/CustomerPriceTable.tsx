@@ -142,8 +142,14 @@ export function CustomerPriceTable({
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Kund</label>
+            <label
+              htmlFor="customer-price-customer"
+              className="mb-1 block text-sm font-medium"
+            >
+              Kund
+            </label>
             <input
+              id="customer-price-customer"
               type="text"
               value={customerSearch}
               onChange={(e) => {
@@ -177,8 +183,14 @@ export function CustomerPriceTable({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Pris (kr)</label>
+            <label
+              htmlFor="customer-price-amount"
+              className="mb-1 block text-sm font-medium"
+            >
+              Pris (kr)
+            </label>
             <input
+              id="customer-price-amount"
               type="number"
               min="0"
               step="0.01"
