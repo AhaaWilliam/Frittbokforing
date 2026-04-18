@@ -7,6 +7,7 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useSkipLinks } from '../../contexts/SkipLinksContext'
 import {
   useInvoiceList,
   useFinalizeInvoice,
@@ -62,6 +63,7 @@ const STATUS_BADGE: Record<
 
 export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
+  const { setBulkActionsActive } = useSkipLinks()
   const [statusFilter, setStatusFilter] = useFilterParam<InvoiceStatus>(
     'invoices_status',
     INVOICE_STATUSES,
@@ -77,6 +79,11 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
 
   // Multi-select state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const bulkActive = selectedIds.size > 0
+  useEffect(() => {
+    setBulkActionsActive(bulkActive)
+    return () => setBulkActionsActive(false)
+  }, [bulkActive, setBulkActionsActive])
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
   const [batchPdfExporting, setBatchPdfExporting] = useState(false)
@@ -373,7 +380,12 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
+        <div
+          id="bulk-actions"
+          role="region"
+          aria-label="Massåtgärder"
+          className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b"
+        >
           <span className="text-sm font-medium">{selectedIds.size} valda</span>
           {items
             .filter((i) => selectedIds.has(i.id))

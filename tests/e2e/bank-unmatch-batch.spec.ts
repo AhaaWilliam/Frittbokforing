@@ -31,7 +31,7 @@ const CAMT053 = `<?xml version="1.0" encoding="UTF-8"?>
       </Bal>
       <Bal>
         <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
-        <Amt Ccy="SEK">300.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <Amt Ccy="SEK">125.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
         <Dt><Dt>2026-03-20</Dt></Dt>
       </Bal>
       <Ntry>

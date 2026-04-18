@@ -7,6 +7,7 @@ import type {
   BulkPaymentResult,
 } from '../../../shared/types'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useSkipLinks } from '../../contexts/SkipLinksContext'
 import {
   useExpenses,
   useFinalizeExpense,
@@ -68,6 +69,7 @@ const STATUS_BADGE: Record<
 
 export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
+  const { setBulkActionsActive } = useSkipLinks()
   const [statusFilter, setStatusFilter] = useFilterParam<ExpenseStatus>(
     'expenses_status',
     EXPENSE_STATUSES,
@@ -82,6 +84,11 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const [payItem, setPayItem] = useState<ExpenseListItem | null>(null)
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const bulkActive = selectedIds.size > 0
+  useEffect(() => {
+    setBulkActionsActive(bulkActive)
+    return () => setBulkActionsActive(false)
+  }, [bulkActive, setBulkActionsActive])
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkResult, setBulkResult] = useState<BulkPaymentResult | null>(null)
 
@@ -305,7 +312,12 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b">
+        <div
+          id="bulk-actions"
+          role="region"
+          aria-label="Massåtgärder"
+          className="flex items-center gap-3 px-8 py-2 bg-primary/5 border-b"
+        >
           <span className="text-sm font-medium">{selectedIds.size} valda</span>
           <button
             type="button"

@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import type { Company } from '../../shared/types'
 import { FiscalYearProvider } from '../contexts/FiscalYearContext'
+import { SkipLinksProvider } from '../contexts/SkipLinksContext'
 import { HashRouter, useRoute } from '../lib/router'
 import { routes } from '../lib/routes'
 import { Sidebar } from '../components/layout/Sidebar'
+import { SkipLinks } from '../components/layout/SkipLinks'
 import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
 import { PageOverview } from './PageOverview'
 import { PageIncome } from './PageIncome'
@@ -86,8 +88,12 @@ function AppShellInner({ company }: AppShellProps) {
 
   return (
     <div className="flex h-screen" data-testid="app-ready">
+      <SkipLinks />
       <Sidebar company={company} />
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main
+        id="main-content"
+        className="flex flex-1 flex-col overflow-hidden"
+      >
         <ReadOnlyBanner />
         <div
           className="flex flex-1 flex-col overflow-hidden"
@@ -102,10 +108,12 @@ function AppShellInner({ company }: AppShellProps) {
 
 export function AppShell({ company }: AppShellProps) {
   return (
-    <FiscalYearProvider>
-      <HashRouter routes={routes} fallback="/overview">
-        <AppShellInner company={company} />
-      </HashRouter>
-    </FiscalYearProvider>
+    <SkipLinksProvider>
+      <FiscalYearProvider>
+        <HashRouter routes={routes} fallback="/overview">
+          <AppShellInner company={company} />
+        </HashRouter>
+      </FiscalYearProvider>
+    </SkipLinksProvider>
   )
 }

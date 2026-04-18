@@ -1,5 +1,73 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint I -- F49-c1 Skip-links + landmarks + Tab-audit ✅ KLAR
+
+Session SI (2026-04-18). Första fas av F49-c keyboard-navigation
+(c1) enligt [docs/f49c-keyboard-nav-spec.md § 8](docs/f49c-keyboard-nav-spec.md).
+Fokus: skip-links, landmarks, Tab-audit. Inga behavioral-ändringar
+(roving-tabindex etc.) — de är c2/c3.
+
+**Testbaslinje:** 2534 → **2546 vitest (+12)**. 253 → 254 testfiler (+1).
+**Playwright:** 43 → **44 specfiler (+1)**, 68 → **70 test() (+2)**.
+Full E2E: 68p/2f → **70p/0f** — bonus-fix av två pre-existing SF-regressioner
+(se "Bonus-fix" nedan).
+**PRAGMA user_version:** 43 (oförändrat).
+**Nya IPC-kanaler:** 0. **Nya M-principer:** 0 (M156 kvarstår draft).
+**Nya ErrorCodes:** 0. **Nya migrationer:** 0.
+
+### Levererat
+
+**Skip-links × 3 i AppShell:**
+- `Hoppa till huvudinnehåll` → `<main id="main-content">` (alltid)
+- `Hoppa till massåtgärder` → `<div id="bulk-actions">` (conditional)
+- `Hoppa till navigering` → `<nav id="primary-nav">` (alltid)
+
+DOM-ordning: main → bulk (om aktiv) → nav. Styling `sr-only focus:not-sr-only`.
+Conditional bulk-skip styrs via ny `SkipLinksContext` — InvoiceList +
+ExpenseList registrerar `true` när `selectedIds.size > 0`, cleanup vid
+unmount.
+
+**Landmarks-IDn:** `main-content`, `primary-nav`, `bulk-actions` (+ ARIA
+`role="region"` + `aria-label="Massåtgärder"` på bulk).
+
+**Tab-audit (docs/f49c1-audit.md):** 4 ytor (Lists, Forms, Dialogs,
+Dashboard). Awkward-findings i c1-scope: F-L3 bulk-landmark + F-Dash2
+main-landmark — båda fixade via nya IDn. Behavioral-findings (F-L1,
+F-L2, F-F2, F-D1, F-Dash1) eskalerade till c2/c3.
+
+### E2E-tester
+
+`tests/e2e/keyboard-nav.spec.ts` (2 tester, 1.8s + 1.3s):
+1. Skip-links finns + main/nav fokuseras via `focus()` + `keyboard.press('Enter')`
+   (spegelet verkliga användar-flödet; click() fungerar ej på sr-only).
+2. Bulk-skip visas när faktura selekteras + focus fungerar + försvinner
+   vid unselect.
+
+### Kvarvarande F49-c
+
+- **Sprint J (c2) — ~2 SP:** Roving-tabindex (InvoiceList/ExpenseList),
+  Enter-aktivering på list-rader, Dashboard MetricCard-fokus + Enter-nav,
+  totals `aria-live="polite"`.
+- **Sprint K (c3) — ~0.5 SP:** Radix-dialog focus-trap edge-cases,
+  full axe-run på alla dialogs, fokus-återgång-tester.
+- Efter alla tre: M156 promoteras till accepterad.
+
+### Bonus-fix: 2 pre-existing E2E-regressioner
+
+Upptäckta under Sprint I full-E2E-regressionskontroll. Båda var
+test-buggar efter Sprint F, inte prod-buggar:
+
+- **bank-fee-auto-classify S58 B3:** Testets XML hade `PMNT/NTAV/CHRG`
+  men Sprint F P4 DB-seed är `PMNT/CCRD/CHRG`. Classifier kräver exakt
+  (domain, family, subfamily)-match. Fix: ändrat `NTAV` → `CCRD` i
+  testets CAMT053_FEE-XML (1-char fix).
+- **bank-unmatch-batch SF P2:** Testets CAMT053-XML hade opening=0,
+  closing=300.00, en transaktion på 125.00. Balans-check i
+  `importBankStatement` kräver `opening + sum === closing`. Fix:
+  closing 300.00 → 125.00.
+
+Se `docs/sprint-i-summary.md`.
+
 ## Sprint F -- Backlog-avveckling P1–P6: invalidation, batch-unmatch, ADR, BkTxCd, kbd-spec, camt.054 ✅ KLAR
 
 Session SF (2026-04-18). Systematisk avveckling av 6 T3-items i prioritets-

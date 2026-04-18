@@ -34,7 +34,7 @@ const CAMT053_FEE = `<?xml version="1.0" encoding="UTF-8"?>
         <ValDt><Dt>2026-03-15</Dt></ValDt>
         <BkTxCd>
           <Domn><Cd>PMNT</Cd>
-            <Fmly><Cd>NTAV</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly>
+            <Fmly><Cd>CCRD</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly>
           </Domn>
         </BkTxCd>
       </Ntry>

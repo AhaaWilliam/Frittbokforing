@@ -72,7 +72,7 @@ export function Sidebar({ company }: SidebarProps) {
       <GlobalSearch />
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
+      <nav id="primary-nav" className="flex-1 overflow-y-auto px-2 py-3">
         <div className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Hantera
         </div>

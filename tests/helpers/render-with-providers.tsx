@@ -22,6 +22,7 @@ import { render, type RenderResult } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import axe, { type AxeResults } from 'axe-core'
 import { FiscalYearProvider } from '../../src/renderer/contexts/FiscalYearContext'
+import { SkipLinksProvider } from '../../src/renderer/contexts/SkipLinksContext'
 import { HashRouter } from '../../src/renderer/lib/router'
 import { routes } from '../../src/renderer/lib/routes'
 import { mockIpcResponse, mockIpcPending } from '../setup/mock-ipc'
@@ -130,11 +131,13 @@ export async function renderWithProviders(
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <FiscalYearProvider>
-          <HashRouter routes={routes} fallback="/overview">
-            {children}
-          </HashRouter>
-        </FiscalYearProvider>
+        <SkipLinksProvider>
+          <FiscalYearProvider>
+            <HashRouter routes={routes} fallback="/overview">
+              {children}
+            </HashRouter>
+          </FiscalYearProvider>
+        </SkipLinksProvider>
       </QueryClientProvider>
     )
   }
