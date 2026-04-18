@@ -500,6 +500,7 @@ interface ElectronAPI {
     company_id: number
     fiscal_year_id: number
     xml_content: string
+    format?: 'camt.053' | 'camt.054'
   }) => Promise<
     IpcResult<
       import('../../main/services/bank/bank-statement-service').ImportBankStatementResult
@@ -545,6 +546,13 @@ interface ElectronAPI {
       import('../../main/services/bank/bank-unmatch-service').BankUnmatchResult
     >
   >
+  unmatchBankBatch: (data: {
+    batch_id: number
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-unmatch-service').BankUnmatchBatchResult
+    >
+  >
   createBankFeeEntry: (data: {
     bank_transaction_id: number
     payment_account: string
@@ -554,6 +562,24 @@ interface ElectronAPI {
       import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult
     >
   >
+  listBankTxMappings: () => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-tx-mapping-service').BankTxMapping[]
+    >
+  >
+  upsertBankTxMapping: (data: {
+    id?: number
+    domain: string
+    family: string
+    subfamily: string
+    classification: 'bank_fee' | 'interest' | 'ignore'
+    account_number?: string | null
+  }) => Promise<
+    IpcResult<
+      import('../../main/services/bank/bank-tx-mapping-service').BankTxMapping
+    >
+  >
+  deleteBankTxMapping: (data: { id: number }) => Promise<IpcResult<undefined>>
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>

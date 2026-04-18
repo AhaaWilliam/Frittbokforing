@@ -812,7 +812,12 @@ export function useBankStatement(statementId: number | undefined) {
 
 export function useImportBankStatement() {
   return useIpcMutation<
-    { company_id: number; fiscal_year_id: number; xml_content: string },
+    {
+      company_id: number
+      fiscal_year_id: number
+      xml_content: string
+      format?: 'camt.053' | 'camt.054'
+    },
     import('../../main/services/bank/bank-statement-service').ImportBankStatementResult
   >((data) => window.api.importBankStatement(data), {
     invalidate: [queryKeys.allBankStatements()],
@@ -874,6 +879,52 @@ export function useUnmatchBankTransaction() {
       queryKeys.allBankStatements(),
       queryKeys.allInvoices(),
       queryKeys.allExpenses(),
+    ],
+  })
+}
+
+// Sprint F P4: bank_tx_code_mappings CRUD
+export function useBankTxMappings() {
+  return useIpcQuery<
+    import('../../main/services/bank/bank-tx-mapping-service').BankTxMapping[]
+  >(queryKeys.bankTxMappings(), () => window.api.listBankTxMappings())
+}
+
+export function useUpsertBankTxMapping() {
+  return useIpcMutation<
+    {
+      id?: number
+      domain: string
+      family: string
+      subfamily: string
+      classification: 'bank_fee' | 'interest' | 'ignore'
+      account_number?: string | null
+    },
+    import('../../main/services/bank/bank-tx-mapping-service').BankTxMapping
+  >((data) => window.api.upsertBankTxMapping(data), {
+    invalidate: [queryKeys.bankTxMappings()],
+  })
+}
+
+export function useDeleteBankTxMapping() {
+  return useIpcMutation<{ id: number }, undefined>(
+    (data) => window.api.deleteBankTxMapping(data),
+    { invalidate: [queryKeys.bankTxMappings()] },
+  )
+}
+
+// Sprint F P2: unmatch hel payment_batch
+export function useUnmatchBankBatch() {
+  return useIpcMutation<
+    { batch_id: number },
+    import('../../main/services/bank/bank-unmatch-service').BankUnmatchBatchResult
+  >((data) => window.api.unmatchBankBatch(data), {
+    invalidate: [
+      queryKeys.allBankStatements(),
+      queryKeys.allInvoices(),
+      queryKeys.allExpenses(),
+      queryKeys.allDashboard(),
+      queryKeys.allManualEntries(),
     ],
   })
 }
@@ -1008,14 +1059,22 @@ export function useCreateFixedAsset() {
   return useIpcMutation<
     import('../../shared/types').CreateFixedAssetInput,
     { id: number; scheduleCount: number }
-  >((data) => window.api.createFixedAsset(data), { invalidateAll: true })
+  >((data) => window.api.createFixedAsset(data), {
+    invalidate: [queryKeys.allFixedAssets()],
+  })
 }
 
 export function useUpdateFixedAsset() {
   return useIpcMutation<
     { id: number; input: import('../../shared/types').UpdateFixedAssetInput },
     { scheduleCount: number }
-  >((data) => window.api.updateFixedAsset(data), { invalidateAll: true })
+  >((data) => window.api.updateFixedAsset(data), {
+    invalidate: (_data, { id }) => [
+      queryKeys.allFixedAssets(),
+      queryKeys.fixedAsset(id),
+      queryKeys.depreciationSchedule(id),
+    ],
+  })
 }
 
 export function useDisposeFixedAsset() {
@@ -1028,13 +1087,22 @@ export function useDisposeFixedAsset() {
       proceeds_account?: string | null
     },
     void
-  >((data) => window.api.disposeFixedAsset(data), { invalidateAll: true })
+  >((data) => window.api.disposeFixedAsset(data), {
+    invalidate: (_data, { id }) => [
+      queryKeys.allFixedAssets(),
+      queryKeys.fixedAsset(id),
+      queryKeys.allDashboard(),
+      queryKeys.allIncomeStatement(),
+      queryKeys.allBalanceSheet(),
+      queryKeys.allManualEntries(),
+    ],
+  })
 }
 
 export function useDeleteFixedAsset() {
   return useIpcMutation<{ id: number }, void>(
     (data) => window.api.deleteFixedAsset(data),
-    { invalidateAll: true },
+    { invalidate: [queryKeys.allFixedAssets()] },
   )
 }
 
@@ -1043,7 +1111,15 @@ export function useExecuteDepreciationPeriod() {
     { fiscal_year_id: number; period_end_date: string },
     import('../../shared/types').ExecuteDepreciationPeriodResult
   >((data) => window.api.executeDepreciationPeriod(data), {
-    invalidateAll: true,
+    invalidate: (_data, { fiscal_year_id }) => [
+      queryKeys.allFixedAssets(),
+      queryKeys.anyFixedAsset(),
+      queryKeys.allDepreciationSchedules(),
+      queryKeys.dashboard(fiscal_year_id),
+      queryKeys.incomeStatementByFy(fiscal_year_id),
+      queryKeys.balanceSheetByFy(fiscal_year_id),
+      queryKeys.allManualEntries(),
+    ],
   })
 }
 

@@ -996,6 +996,8 @@ export const BankStatementImportSchema = z
     company_id: z.number().int().positive(),
     fiscal_year_id: z.number().int().positive(),
     xml_content: z.string().min(1),
+    // Sprint F P6: default 'camt.053' (backward-compat)
+    format: z.enum(['camt.053', 'camt.054']).optional(),
   })
   .strict()
 
@@ -1031,6 +1033,31 @@ export const BankUnmatchTransactionSchema = z
   .object({
     bank_transaction_id: z.number().int().positive(),
     correction_description: z.string().max(200).optional(),
+  })
+  .strict()
+
+// Sprint F P2: unmatch av hel payment_batch (M154 + M146)
+export const BankUnmatchBatchSchema = z
+  .object({
+    batch_id: z.number().int().positive(),
+  })
+  .strict()
+
+// Sprint F P4: bank_tx_code_mappings CRUD
+export const BankTxMappingUpsertSchema = z
+  .object({
+    id: z.number().int().positive().optional(),
+    domain: z.string().min(1).max(10),
+    family: z.string().min(1).max(10),
+    subfamily: z.string().min(1).max(10),
+    classification: z.enum(['bank_fee', 'interest', 'ignore']),
+    account_number: z.string().min(4).max(10).nullable().optional(),
+  })
+  .strict()
+
+export const BankTxMappingDeleteSchema = z
+  .object({
+    id: z.number().int().positive(),
   })
   .strict()
 
@@ -1218,7 +1245,11 @@ export const channelMap = {
   'bank-statement:match-transaction': BankMatchTransactionSchema,
   'bank-statement:suggest-matches': BankStatementSuggestMatchesSchema,
   'bank-statement:unmatch-transaction': BankUnmatchTransactionSchema,
+  'bank-statement:unmatch-batch': BankUnmatchBatchSchema,
   'bank-statement:create-fee-entry': BankCreateFeeEntrySchema,
+  'bank-tx-mapping:list': z.void(),
+  'bank-tx-mapping:upsert': BankTxMappingUpsertSchema,
+  'bank-tx-mapping:delete': BankTxMappingDeleteSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

@@ -17,14 +17,19 @@ import {
   Camt053ParseError,
   type ParsedBankStatement,
 } from './camt053-parser'
+import { parseCamt054 } from './camt054-parser'
 import log from 'electron-log'
 
 // ═══ Types ═══
+
+export type BankStatementFormat = 'camt.053' | 'camt.054'
 
 export interface ImportBankStatementInput {
   company_id: number
   fiscal_year_id: number
   xml_content: string
+  /** Default: 'camt.053' (backward-compat med existerande call sites). */
+  format?: BankStatementFormat
 }
 
 export interface ImportBankStatementResult {
@@ -60,6 +65,10 @@ export interface BankTransactionRow {
   reconciliation_status: 'unmatched' | 'matched' | 'excluded'
   /** S58 F66-e: payment_batch_id från kopplad payment-rad om matchen är en batch-betalning. UI döljer/disabler Ångra i detta fall. */
   payment_batch_id: number | null
+  /** Sprint F P2: batch_type från payment_batches när payment_batch_id är satt. */
+  payment_batch_type: 'invoice' | 'expense' | null
+  /** Sprint F P2: antal payments i batchen (för confirm-dialog-text). */
+  payment_batch_size: number | null
 }
 
 export interface BankStatementDetail {
@@ -87,11 +96,31 @@ export function importBankStatement(
   db: Database.Database,
   input: ImportBankStatementInput,
 ): IpcResult<ImportBankStatementResult> {
+  const format: BankStatementFormat = input.format ?? 'camt.053'
   try {
-    // Parse
+    // Parse. camt.054 saknar balansdata — Path A (Sprint F P6) fyller in
+    // opening=0, closing=0 för pseudo-statement. Se bank_statements-raden
+    // som skapas längre ned.
     let parsed: ParsedBankStatement
     try {
-      parsed = parseCamt053(input.xml_content)
+      if (format === 'camt.053') {
+        parsed = parseCamt053(input.xml_content)
+      } else {
+        const notification = parseCamt054(input.xml_content)
+        // camt.054 saknar balanssummor per ISO 20022-spec. Pseudo-statement
+        // med opening=0, closing=0 är en semantisk kompromiss för att
+        // undvika att göra balans-kolumnerna nullable. source_format sätts
+        // explicit till 'camt.054' (migration 043 utökade CHECK till
+        // ('camt.053','camt.054')). Se Sprint F P6 / sprint-f-prompt.md.
+        parsed = {
+          statement_number: notification.statement_number,
+          bank_account_iban: notification.bank_account_iban,
+          statement_date: notification.statement_date,
+          opening_balance_ore: 0,
+          closing_balance_ore: 0,
+          transactions: notification.transactions,
+        }
+      }
     } catch (err) {
       if (err instanceof Camt053ParseError) {
         return {
@@ -142,17 +171,20 @@ export function importBankStatement(
         }
       }
 
-      // Opening + SUM = closing
-      const sum = parsed.transactions.reduce(
-        (acc, tx) => acc + tx.amount_ore,
-        0,
-      )
-      if (parsed.opening_balance_ore + sum !== parsed.closing_balance_ore) {
-        return {
-          success: false as const,
-          code: 'VALIDATION_ERROR' as const,
-          error:
-            'Bankfilen är korrupt eller trunkerad — öppnings- och slutsaldo matchar inte summan av transaktioner.',
+      // Opening + SUM = closing — gäller bara camt.053 (statement).
+      // camt.054 saknar balansdata (Path A pseudo-statement).
+      if (format === 'camt.053') {
+        const sum = parsed.transactions.reduce(
+          (acc, tx) => acc + tx.amount_ore,
+          0,
+        )
+        if (parsed.opening_balance_ore + sum !== parsed.closing_balance_ore) {
+          return {
+            success: false as const,
+            code: 'VALIDATION_ERROR' as const,
+            error:
+              'Bankfilen är korrupt eller trunkerad — öppnings- och slutsaldo matchar inte summan av transaktioner.',
+          }
         }
       }
 
@@ -170,14 +202,15 @@ export function importBankStatement(
         }
       }
 
-      // Insert statement
+      // Insert statement. source_format='camt.054' tillåtet sedan migration 043
+      // (Sprint F P6) utökade CHECK till ('camt.053', 'camt.054').
       const stmtResult = db
         .prepare(
           `INSERT INTO bank_statements (
              company_id, fiscal_year_id, statement_number, bank_account_iban,
              statement_date, opening_balance_ore, closing_balance_ore,
              source_format, import_file_hash
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, 'camt.053', ?)`,
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           input.company_id,
@@ -187,6 +220,7 @@ export function importBankStatement(
           parsed.statement_date,
           parsed.opening_balance_ore,
           parsed.closing_balance_ore,
+          format,
           fileHash,
         )
       const statementId = Number(stmtResult.lastInsertRowid)
@@ -285,11 +319,18 @@ export function getBankStatement(
       `SELECT bt.id, bt.bank_statement_id, bt.booking_date, bt.value_date, bt.amount_ore,
               bt.transaction_reference, bt.remittance_info, bt.counterparty_iban,
               bt.counterparty_name, bt.bank_transaction_code, bt.reconciliation_status,
-              COALESCE(ip.payment_batch_id, ep.payment_batch_id) AS payment_batch_id
+              COALESCE(ip.payment_batch_id, ep.payment_batch_id) AS payment_batch_id,
+              pb.batch_type AS payment_batch_type,
+              CASE WHEN pb.id IS NULL THEN NULL ELSE (
+                SELECT COUNT(*) FROM invoice_payments WHERE payment_batch_id = pb.id
+              ) + (
+                SELECT COUNT(*) FROM expense_payments WHERE payment_batch_id = pb.id
+              ) END AS payment_batch_size
          FROM bank_transactions bt
          LEFT JOIN bank_reconciliation_matches brm ON brm.bank_transaction_id = bt.id
          LEFT JOIN invoice_payments ip ON ip.id = brm.invoice_payment_id
          LEFT JOIN expense_payments ep ON ep.id = brm.expense_payment_id
+         LEFT JOIN payment_batches pb ON pb.id = COALESCE(ip.payment_batch_id, ep.payment_batch_id)
         WHERE bt.bank_statement_id = ?
         ORDER BY bt.value_date, bt.id`,
     )

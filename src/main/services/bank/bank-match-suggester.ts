@@ -84,6 +84,8 @@ interface BankTxRow {
   remittance_info: string | null
   counterparty_iban: string | null
   counterparty_name: string | null
+  bank_tx_domain: string | null
+  bank_tx_family: string | null
   bank_tx_subfamily: string | null
 }
 
@@ -294,7 +296,7 @@ export function suggestMatchesForStatement(
     const txs = db
       .prepare(
         `SELECT id, amount_ore, value_date, remittance_info, counterparty_iban,
-                counterparty_name, bank_tx_subfamily
+                counterparty_name, bank_tx_domain, bank_tx_family, bank_tx_subfamily
          FROM bank_transactions
          WHERE bank_statement_id = ? AND reconciliation_status = 'unmatched'`,
       )
@@ -335,10 +337,12 @@ export function suggestMatchesForStatement(
       const entityCandidates: EntityCandidateNoConfidence[] = []
 
       // S58 F66-d: fee-klassificering FÖRE invoice/expense-loop
-      const feeClass = classifyBankFeeTx({
+      const feeClass = classifyBankFeeTx(db, {
         amount_ore: tx.amount_ore,
         counterparty_name: tx.counterparty_name,
         remittance_info: tx.remittance_info,
+        bank_tx_domain: tx.bank_tx_domain,
+        bank_tx_family: tx.bank_tx_family,
         bank_tx_subfamily: tx.bank_tx_subfamily,
       })
       const feeCandidates: FeeMatchCandidate[] = feeClass

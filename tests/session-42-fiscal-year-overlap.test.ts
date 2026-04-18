@@ -31,7 +31,7 @@ afterEach(() => {
 describe('Migration 014: Fiscal year overlap protection', () => {
   it('user_version = 14 efter migration', () => {
     const v = db.pragma('user_version', { simple: true }) as number
-    expect(v).toBe(41)
+    expect(v).toBe(43)
   })
 
   it('avvisar FY som överlappar helt med befintligt', () => {

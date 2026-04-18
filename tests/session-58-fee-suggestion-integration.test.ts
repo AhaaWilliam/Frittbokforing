@@ -96,11 +96,14 @@ function insertStmtWithTx(
   const txIds: number[] = []
   const ins = db.prepare(
     `INSERT INTO bank_transactions (bank_statement_id, booking_date, value_date, amount_ore,
-       counterparty_name, remittance_info, bank_tx_subfamily)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       counterparty_name, remittance_info, bank_tx_domain, bank_tx_family, bank_tx_subfamily)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   for (const tx of txs) {
     const vd = tx.value_date ?? '2026-03-15'
+    // Sprint F P4: DB-driven classifier kräver alla tre BkTxCd-fält.
+    // Seed default domain/family när bara subfamily anges (legacy test-API).
+    const sub = tx.bank_tx_subfamily ?? null
     const res = ins.run(
       statementId,
       vd,
@@ -108,7 +111,9 @@ function insertStmtWithTx(
       tx.amount_ore,
       tx.counterparty_name ?? null,
       tx.remittance_info ?? null,
-      tx.bank_tx_subfamily ?? null,
+      sub ? 'PMNT' : null,
+      sub ? 'CCRD' : null,
+      sub,
     )
     txIds.push(Number(res.lastInsertRowid))
   }

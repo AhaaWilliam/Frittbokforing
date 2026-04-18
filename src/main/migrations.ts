@@ -1447,6 +1447,72 @@ END;`,
     sql: '-- Migration 041: S58 F66-d bank-fee-reconciliation (se programmatic)',
     programmatic: migration041Programmatic,
   },
+  // Sprint F P4: bank_tx_code_mappings-tabell — ersätter hårdkodad CHRG/INTR-
+  // whitelist i bank-fee-classifier.ts med DB-driven konfig. Scope-lås:
+  // endast global classification (ingen IBAN-prefix i Sprint F). Seed-data
+  // speglar nuvarande hårdkodade default: PMNT/CCRD/CHRG → bank_fee,
+  // PMNT/CCRD/INTR → interest. Classifier härleder income vs expense från
+  // beloppstecken. M153-deterministisk: stabil per tidpunkt, cache
+  // invalideras vid upsert/delete.
+  {
+    sql: `
+    CREATE TABLE bank_tx_code_mappings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      domain TEXT NOT NULL,
+      family TEXT NOT NULL,
+      subfamily TEXT NOT NULL,
+      classification TEXT NOT NULL,
+      account_number TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      UNIQUE (domain, family, subfamily),
+      CHECK (classification IN ('bank_fee', 'interest', 'ignore'))
+    );
+
+    INSERT INTO bank_tx_code_mappings (domain, family, subfamily, classification)
+    VALUES
+      ('PMNT', 'CCRD', 'CHRG', 'bank_fee'),
+      ('PMNT', 'CCRD', 'INTR', 'interest');
+    `,
+  },
+  // Sprint F P6: utöka bank_statements.source_format CHECK till
+  // ('camt.053', 'camt.054') så Path A kan markera camt.054-rader explicit
+  // (istället för statement_number='CAMT054-'-prefix-hacket).
+  // M122 table-recreate: bank_statements har inkommande FK från
+  // bank_transactions (ON DELETE CASCADE). FK_OFF krävs utanför transaktion.
+  // M141-inventering: 0 cross-table-triggers refererar bank_statements.
+  // M121: 0 index/triggers direkt på bank_statements.
+  {
+    sql: `
+    CREATE TABLE bank_statements_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      statement_number TEXT NOT NULL,
+      bank_account_iban TEXT NOT NULL,
+      statement_date TEXT NOT NULL,
+      opening_balance_ore INTEGER NOT NULL,
+      closing_balance_ore INTEGER NOT NULL,
+      source_format TEXT NOT NULL DEFAULT 'camt.053',
+      import_file_hash TEXT NOT NULL,
+      imported_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (source_format IN ('camt.053', 'camt.054')),
+      UNIQUE (company_id, import_file_hash)
+    );
+
+    INSERT INTO bank_statements_new (
+      id, company_id, fiscal_year_id, statement_number, bank_account_iban,
+      statement_date, opening_balance_ore, closing_balance_ore, source_format,
+      import_file_hash, imported_at
+    )
+    SELECT id, company_id, fiscal_year_id, statement_number, bank_account_iban,
+           statement_date, opening_balance_ore, closing_balance_ore, source_format,
+           import_file_hash, imported_at
+    FROM bank_statements;
+
+    DROP TABLE bank_statements;
+    ALTER TABLE bank_statements_new RENAME TO bank_statements;
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

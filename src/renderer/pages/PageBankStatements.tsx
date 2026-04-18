@@ -10,6 +10,7 @@ import {
   useInvoiceList,
   useExpenses,
   useUnmatchBankTransaction,
+  useUnmatchBankBatch,
 } from '../lib/hooks'
 import { useRoute, useNavigate, Link } from '../lib/router'
 import { PageHeader } from '../components/layout/PageHeader'
@@ -63,6 +64,9 @@ function BankStatementList({
   const { data: statements, isLoading } = useBankStatements(fyId)
   const importMutation = useImportBankStatement()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importFormat, setImportFormat] = useState<'camt.053' | 'camt.054'>(
+    'camt.053',
+  )
 
   async function onFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -73,6 +77,7 @@ function BankStatementList({
         company_id: companyId,
         fiscal_year_id: fyId,
         xml_content: xml,
+        format: importFormat,
       })
       toast.success(`Importerade ${r.transaction_count} transaktioner`)
     } catch (err) {
@@ -97,6 +102,25 @@ function BankStatementList({
               onChange={onFileChange}
               data-testid="bank-import-input"
             />
+            <label className="mr-2 text-sm">
+              <span className="sr-only">Filformat</span>
+              <select
+                value={importFormat}
+                onChange={(e) =>
+                  setImportFormat(e.target.value as 'camt.053' | 'camt.054')
+                }
+                className="rounded-md border border-input bg-background px-2 py-2 text-sm"
+                data-testid="bank-import-format"
+                title={
+                  importFormat === 'camt.054'
+                    ? 'camt.054 är transaktionsnotifiering utan balans — balansrapport måste importeras separat via camt.053.'
+                    : undefined
+                }
+              >
+                <option value="camt.053">camt.053 (kontoutdrag)</option>
+                <option value="camt.054">camt.054 (notifiering)</option>
+              </select>
+            </label>
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
@@ -105,7 +129,7 @@ function BankStatementList({
               data-testid="bank-import-btn"
             >
               <Upload className="h-4 w-4" />
-              Importera camt.053
+              Importera {importFormat}
             </button>
           </>
         }
@@ -172,7 +196,13 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
   const navigate = useNavigate()
   const [matchingTxId, setMatchingTxId] = useState<number | null>(null)
   const [unmatchingTxId, setUnmatchingTxId] = useState<number | null>(null)
+  const [unmatchingBatch, setUnmatchingBatch] = useState<{
+    batchId: number
+    batchType: 'invoice' | 'expense'
+    paymentCount: number
+  } | null>(null)
   const unmatchMutation = useUnmatchBankTransaction()
+  const unmatchBatchMutation = useUnmatchBankBatch()
 
   async function handleUnmatch(txId: number) {
     try {
@@ -193,6 +223,33 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
       toast.error(err instanceof Error ? err.message : 'Ångra misslyckades')
     } finally {
       setUnmatchingTxId(null)
+    }
+  }
+
+  async function handleUnmatchBatch(batchId: number) {
+    try {
+      const r = await unmatchBatchMutation.mutateAsync({ batch_id: batchId })
+      const res = r as {
+        success?: boolean
+        error?: string
+        code?: string
+        data?: {
+          unmatched_payment_count: number
+          bank_fee_correction_entry_id: number | null
+        }
+      }
+      if (res.success === false) {
+        toast.error(errorMessage(res.code, res.error))
+      } else if (res.data) {
+        const n = res.data.unmatched_payment_count
+        const feeMsg =
+          res.data.bank_fee_correction_entry_id !== null ? ' + bankavgift' : ''
+        toast.success(`Batch ångrad — ${n} betalning(ar)${feeMsg} reverserade`)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ångra misslyckades')
+    } finally {
+      setUnmatchingBatch(null)
     }
   }
 
@@ -302,24 +359,34 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                       Matcha
                     </button>
                   )}
-                  {tx.reconciliation_status === 'matched' && (
-                    <button
-                      type="button"
-                      disabled={tx.payment_batch_id !== null}
-                      onClick={() =>
-                        tx.payment_batch_id === null && setUnmatchingTxId(tx.id)
-                      }
-                      title={
-                        tx.payment_batch_id !== null
-                          ? 'Batch-betalningar kan inte unmatchas per rad'
-                          : undefined
-                      }
-                      className="text-xs text-red-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed disabled:no-underline"
-                      data-testid={`bank-unmatch-${tx.id}`}
-                    >
-                      Ångra
-                    </button>
-                  )}
+                  {tx.reconciliation_status === 'matched' &&
+                    tx.payment_batch_id === null && (
+                      <button
+                        type="button"
+                        onClick={() => setUnmatchingTxId(tx.id)}
+                        className="text-xs text-red-600 hover:underline"
+                        data-testid={`bank-unmatch-${tx.id}`}
+                      >
+                        Ångra
+                      </button>
+                    )}
+                  {tx.reconciliation_status === 'matched' &&
+                    tx.payment_batch_id !== null && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setUnmatchingBatch({
+                            batchId: tx.payment_batch_id!,
+                            batchType: tx.payment_batch_type ?? 'invoice',
+                            paymentCount: tx.payment_batch_size ?? 0,
+                          })
+                        }
+                        className="text-xs text-red-600 hover:underline"
+                        data-testid={`bank-unmatch-batch-${tx.id}`}
+                      >
+                        Ångra batch
+                      </button>
+                    )}
                 </td>
               </tr>
             ))}
@@ -344,7 +411,40 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
           unmatchingTxId !== null && handleUnmatch(unmatchingTxId)
         }
       />
+      <ConfirmDialog
+        open={unmatchingBatch !== null}
+        onOpenChange={(open) => !open && setUnmatchingBatch(null)}
+        title="Ångra hela betalningsbatchen?"
+        description={
+          unmatchingBatch !== null
+            ? batchUnmatchDescription(
+                unmatchingBatch.paymentCount,
+                unmatchingBatch.batchType,
+              )
+            : ''
+        }
+        confirmLabel="Ångra hela batchen"
+        variant="danger"
+        onConfirm={() =>
+          unmatchingBatch !== null &&
+          handleUnmatchBatch(unmatchingBatch.batchId)
+        }
+      />
     </div>
+  )
+}
+
+function batchUnmatchDescription(
+  paymentCount: number,
+  batchType: 'invoice' | 'expense',
+): string {
+  const recipient = batchType === 'expense' ? 'leverantören' : 'kunden'
+  return (
+    `Detta skapar ett korrigeringsverifikat (C-serien) som reverserar bokföringen för alla ${paymentCount} betalningar i batchen samt batchens bankavgift.\n\n` +
+    `Viktigt:\n` +
+    `• Pengarna har redan flyttats i banken. Denna ångring påverkar endast bokföringen — den skickar inget nytt bank-kommando.\n` +
+    `• Exportfilen (pain.001) för denna batch är redan skickad. Du behöver själv kontakta ${recipient} om pengarna ska återbetalas.\n` +
+    `• Ångringen kan inte göras ogjord — den är ett korrigeringsverifikat enligt M140.`
   )
 }
 

@@ -39,11 +39,11 @@ export class Camt053ParseError extends Error {
   }
 }
 
-// ═══ Helpers ═══
+// ═══ Helpers (delade med camt054-parser per Sprint F P6) ═══
 
-type XmlNode = Record<string, unknown> | string | undefined
+export type XmlNode = Record<string, unknown> | string | undefined
 
-function stripNamespace(obj: unknown): unknown {
+export function stripNamespace(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(stripNamespace)
   if (obj && typeof obj === 'object') {
     const out: Record<string, unknown> = {}
@@ -56,7 +56,7 @@ function stripNamespace(obj: unknown): unknown {
   return obj
 }
 
-function pick(node: XmlNode, path: string[]): XmlNode {
+export function pick(node: XmlNode, path: string[]): XmlNode {
   let cur: unknown = node
   for (const p of path) {
     if (!cur || typeof cur !== 'object') return undefined
@@ -65,12 +65,12 @@ function pick(node: XmlNode, path: string[]): XmlNode {
   return cur as XmlNode
 }
 
-function asArray<T>(v: T | T[] | undefined): T[] {
+export function asArray<T>(v: T | T[] | undefined): T[] {
   if (v === undefined) return []
   return Array.isArray(v) ? v : [v]
 }
 
-function text(node: XmlNode): string | null {
+export function text(node: XmlNode): string | null {
   if (node === undefined || node === null) return null
   if (typeof node === 'string') return node.trim()
   if (typeof node === 'object') {
@@ -80,7 +80,7 @@ function text(node: XmlNode): string | null {
   return null
 }
 
-function decimalToOre(s: string): number {
+export function decimalToOre(s: string): number {
   // Accepterar "1234.56", "1234", "1234.5"
   const trimmed = s.trim()
   if (!/^-?\d+(\.\d+)?$/.test(trimmed)) {
@@ -215,7 +215,7 @@ export function parseCamt053(xmlRaw: string): ParsedBankStatement {
   }
 }
 
-function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
+export function parseNtry(entry: XmlNode): ParsedBankTransaction | null {
   if (!entry || typeof entry !== 'object') return null
 
   const amountStr = text(pick(entry, ['Amt']))

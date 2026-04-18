@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import type Database from 'better-sqlite3'
+import { createTestDb } from './helpers/create-test-db'
 import {
   classifyBankFeeTx,
+  invalidateClassifierCache,
   type BankTxInput,
 } from '../src/main/services/bank/bank-fee-classifier'
 
@@ -9,15 +12,34 @@ function tx(overrides: Partial<BankTxInput> = {}): BankTxInput {
     amount_ore: 0,
     counterparty_name: null,
     remittance_info: null,
+    bank_tx_domain: null,
+    bank_tx_family: null,
     bank_tx_subfamily: null,
     ...overrides,
   }
 }
 
+let db: Database.Database
+
+beforeEach(() => {
+  db = createTestDb()
+})
+
+afterEach(() => {
+  invalidateClassifierCache(db)
+  db.close()
+})
+
 describe('S58 A3 — bank-fee-classifier', () => {
   it('1. CHRG + negativ amount → bank_fee HIGH, konto 6570, B-serie', () => {
     const c = classifyBankFeeTx(
-      tx({ amount_ore: -5000, bank_tx_subfamily: 'CHRG' }),
+      db,
+      tx({
+        amount_ore: -5000,
+        bank_tx_domain: 'PMNT',
+        bank_tx_family: 'CCRD',
+        bank_tx_subfamily: 'CHRG',
+      }),
     )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('bank_fee')
@@ -30,7 +52,13 @@ describe('S58 A3 — bank-fee-classifier', () => {
 
   it('2. INTR + positiv amount → interest_income HIGH, 8310, A-serie', () => {
     const c = classifyBankFeeTx(
-      tx({ amount_ore: 10000, bank_tx_subfamily: 'INTR' }),
+      db,
+      tx({
+        amount_ore: 10000,
+        bank_tx_domain: 'PMNT',
+        bank_tx_family: 'CCRD',
+        bank_tx_subfamily: 'INTR',
+      }),
     )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('interest_income')
@@ -42,7 +70,13 @@ describe('S58 A3 — bank-fee-classifier', () => {
 
   it('3. INTR + negativ amount → interest_expense HIGH, 8410, B-serie', () => {
     const c = classifyBankFeeTx(
-      tx({ amount_ore: -20000, bank_tx_subfamily: 'INTR' }),
+      db,
+      tx({
+        amount_ore: -20000,
+        bank_tx_domain: 'PMNT',
+        bank_tx_family: 'CCRD',
+        bank_tx_subfamily: 'INTR',
+      }),
     )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('interest_expense')
@@ -53,8 +87,8 @@ describe('S58 A3 — bank-fee-classifier', () => {
   })
 
   it("4. Ingen BkTxCd, text='Månadsavgift', bank-counterparty + fee-text → bank_fee HIGH", () => {
-    // bank (30) + avgift-text (40) = 70 → MEDIUM
     const c = classifyBankFeeTx(
+      db,
       tx({
         amount_ore: -5000,
         counterparty_name: 'SEB',
@@ -68,8 +102,8 @@ describe('S58 A3 — bank-fee-classifier', () => {
   })
 
   it('5. Ingen BkTxCd, bank-counterparty + ränte-text, positivt belopp → interest_income MEDIUM', () => {
-    // bank (30) + ränte-text (40) = 70 → MEDIUM (inte HIGH)
     const c = classifyBankFeeTx(
+      db,
       tx({
         amount_ore: 20000,
         counterparty_name: 'SEB',
@@ -85,6 +119,7 @@ describe('S58 A3 — bank-fee-classifier', () => {
 
   it('6. Normal kundbetalning (ingen bank, ingen text) → null', () => {
     const c = classifyBankFeeTx(
+      db,
       tx({
         amount_ore: 250000,
         counterparty_name: 'ACME AB',
@@ -96,7 +131,13 @@ describe('S58 A3 — bank-fee-classifier', () => {
 
   it('7. CHRG + stort belopp (15 000 kr) → fortfarande HIGH (BkTxCd bypass:ar tröskel)', () => {
     const c = classifyBankFeeTx(
-      tx({ amount_ore: -1_500_000, bank_tx_subfamily: 'CHRG' }),
+      db,
+      tx({
+        amount_ore: -1_500_000,
+        bank_tx_domain: 'PMNT',
+        bank_tx_family: 'CCRD',
+        bank_tx_subfamily: 'CHRG',
+      }),
     )
     expect(c).not.toBeNull()
     expect(c!.type).toBe('bank_fee')
@@ -105,8 +146,9 @@ describe('S58 A3 — bank-fee-classifier', () => {
 
   it('8. Ingen BkTxCd + text-match + stort belopp (över tröskel) → null', () => {
     const c = classifyBankFeeTx(
+      db,
       tx({
-        amount_ore: -5_000_000, // 50 000 kr
+        amount_ore: -5_000_000,
         counterparty_name: 'SEB',
         remittance_info: 'Stor avgift',
       }),
@@ -115,15 +157,19 @@ describe('S58 A3 — bank-fee-classifier', () => {
   })
 
   it('9. Determinism: 1000 iterationer av identisk input → identiskt output', () => {
-    const input = tx({ amount_ore: -5000, bank_tx_subfamily: 'CHRG' })
-    const first = JSON.stringify(classifyBankFeeTx(input))
+    const input = tx({
+      amount_ore: -5000,
+      bank_tx_domain: 'PMNT',
+      bank_tx_family: 'CCRD',
+      bank_tx_subfamily: 'CHRG',
+    })
+    const first = JSON.stringify(classifyBankFeeTx(db, input))
     for (let i = 0; i < 1000; i++) {
-      expect(JSON.stringify(classifyBankFeeTx(input))).toBe(first)
+      expect(JSON.stringify(classifyBankFeeTx(db, input))).toBe(first)
     }
   })
 
   it('10. M153: source-scanning bevisar inga icke-deterministiska tokens', async () => {
-    // Läs filens råtext och verifiera att inga Date.now/Math.random/performance.now finns
     const fs = await import('node:fs/promises')
     const path = await import('node:path')
     const src = await fs.readFile(
@@ -133,7 +179,6 @@ describe('S58 A3 — bank-fee-classifier', () => {
       ),
       'utf8',
     )
-    // Strippa kommentarer och strängar för robust scan
     const stripped = src
       .replace(/\/\/[^\n]*/g, '')
       .replace(/\/\*[\s\S]*?\*\//g, '')

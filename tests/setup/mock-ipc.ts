@@ -185,6 +185,10 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   disposeFixedAsset: 'depreciation:dispose',
   deleteFixedAsset: 'depreciation:delete',
   executeDepreciationPeriod: 'depreciation:execute-period',
+  // Sprint F P4: bank_tx_code_mappings CRUD
+  listBankTxMappings: 'bank-tx-mapping:list',
+  upsertBankTxMapping: 'bank-tx-mapping:upsert',
+  deleteBankTxMapping: 'bank-tx-mapping:delete',
 }
 
 // ── Override storage ──────────────────────────────────────────────────

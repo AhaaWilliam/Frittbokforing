@@ -8,8 +8,9 @@ import { registerCustomFunctions } from '../../src/main/db-functions'
 // CHECK-rebuild) — baseline test helper omitted it and tests have adapted.
 // Index 37 = migration 038 (Sprint 53 F62: journal_entries verification_series
 // CHECK-rebuild + fixed_assets + depreciation_schedules).
+// Index 42 = migration 043 (Sprint F P6: bank_statements.source_format CHECK-utökning).
 export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([
-  21, 22, 37,
+  21, 22, 37, 42,
 ])
 
 /**

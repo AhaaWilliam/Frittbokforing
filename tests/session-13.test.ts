@@ -357,13 +357,13 @@ describe('Session 13: getDashboardSummary', () => {
 
   it('regression: user_version=10 och 20 tabeller oförändrat', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(41) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(43) // S58: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
       )
       .get() as { count: number }
-    expect(tables.count).toBe(36)
+    expect(tables.count).toBe(37)
   })
 
   it('operatingResultOre = revenueOre − expensesOre, vatNetOre = vatOut − vatIn', () => {

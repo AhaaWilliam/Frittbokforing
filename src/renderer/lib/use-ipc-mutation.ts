@@ -3,9 +3,20 @@ import type { UseMutationOptions } from '@tanstack/react-query'
 import type { IpcResult } from '../../shared/types'
 import { ipcCall } from './ipc-helpers'
 
+type InvalidateKeys = readonly (readonly unknown[])[]
+
 interface UseIpcMutationOptions<TInput, TOutput> {
-  /** QueryKeys att invalidera vid success. Tom array = ingen invalidering. */
-  invalidate?: readonly (readonly unknown[])[]
+  /**
+   * QueryKeys att invalidera vid success. Tom array = ingen invalidering.
+   *
+   * Statisk form: `readonly (readonly unknown[])[]` — lista av keys.
+   * Dynamisk form: `(data, input) => readonly (readonly unknown[])[]` —
+   * funktion som får mutationens output + input och returnerar listan.
+   * Använd dynamisk form när key beror på input (t.ex. `fixedAsset(input.id)`).
+   */
+  invalidate?:
+    | InvalidateKeys
+    | ((data: TOutput, input: TInput) => InvalidateKeys)
   /** Invalidera ALL cache (för mutations som påverkar allt, t.ex. switchFiscalYear). */
   invalidateAll?: boolean
   /** Callback efter lyckad mutation + invalidering. */
@@ -37,8 +48,12 @@ export function useIpcMutation<TInput, TOutput = void>(
       if (options?.invalidateAll) {
         await queryClient.invalidateQueries()
       } else if (options?.invalidate) {
+        const keys =
+          typeof options.invalidate === 'function'
+            ? options.invalidate(data, input)
+            : options.invalidate
         await Promise.all(
-          options.invalidate.map((key) =>
+          keys.map((key) =>
             queryClient.invalidateQueries({ queryKey: [...key] }),
           ),
         )

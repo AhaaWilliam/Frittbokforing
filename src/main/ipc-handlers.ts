@@ -145,7 +145,15 @@ import {
   getBankStatement,
 } from './services/bank/bank-statement-service'
 import { matchBankTransaction } from './services/bank/bank-match-service'
-import { unmatchBankTransaction } from './services/bank/bank-unmatch-service'
+import {
+  unmatchBankTransaction,
+  unmatchBankBatch,
+} from './services/bank/bank-unmatch-service'
+import {
+  listBankTxMappings,
+  upsertBankTxMapping,
+  deleteBankTxMapping,
+} from './services/bank/bank-tx-mapping-service'
 import { createBankFeeEntry } from './services/bank/bank-fee-entry-service'
 import { suggestMatchesForStatement } from './services/bank/bank-match-suggester'
 import { getE2EFilePath, getE2EMockOpenFile } from './utils/e2e-helpers'
@@ -237,6 +245,9 @@ import {
   BankMatchTransactionSchema,
   BankStatementSuggestMatchesSchema,
   BankUnmatchTransactionSchema,
+  BankUnmatchBatchSchema,
+  BankTxMappingUpsertSchema,
+  BankTxMappingDeleteSchema,
   BankCreateFeeEntrySchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
@@ -1273,9 +1284,32 @@ export function registerIpcHandlers(): void {
   )
 
   ipcMain.handle(
+    'bank-statement:unmatch-batch',
+    wrapIpcHandler(BankUnmatchBatchSchema, (data) =>
+      unmatchBankBatch(db, data),
+    ),
+  )
+
+  ipcMain.handle(
     'bank-statement:create-fee-entry',
     wrapIpcHandler(BankCreateFeeEntrySchema, (data) =>
       createBankFeeEntry(db, data),
+    ),
+  )
+
+  ipcMain.handle('bank-tx-mapping:list', () => listBankTxMappings(db))
+
+  ipcMain.handle(
+    'bank-tx-mapping:upsert',
+    wrapIpcHandler(BankTxMappingUpsertSchema, (data) =>
+      upsertBankTxMapping(db, data),
+    ),
+  )
+
+  ipcMain.handle(
+    'bank-tx-mapping:delete',
+    wrapIpcHandler(BankTxMappingDeleteSchema, (data) =>
+      deleteBankTxMapping(db, data),
     ),
   )
 

@@ -97,6 +97,10 @@ export const queryKeys = {
   fixedAssets: (fyId?: number) => ['fixed-assets', fyId] as const,
   fixedAsset: (id: number) => ['fixed-asset', id] as const,
   allFixedAssets: () => ['fixed-assets'] as const,
+  anyFixedAsset: () => ['fixed-asset'] as const,
+  depreciationSchedule: (assetId: number) =>
+    ['depreciation-schedule', assetId] as const,
+  allDepreciationSchedules: () => ['depreciation-schedule'] as const,
 
   // === Bank statements (Sprint 55 F66-a) ===
   bankStatements: (fyId: number) => ['bank-statements', fyId] as const,
@@ -104,6 +108,9 @@ export const queryKeys = {
   allBankStatements: () => ['bank-statements'] as const,
   bankSuggestMatches: (statementId: number) =>
     ['bank-suggest-matches', statementId] as const,
+
+  // === Bank TX code mappings (Sprint F P4) ===
+  bankTxMappings: () => ['bank-tx-mappings'] as const,
 
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
@@ -123,4 +130,9 @@ export const queryKeys = {
   allManualEntries: () => ['manual-entries'] as const,
   anyManualEntry: () => ['manual-entry'] as const,
   allDashboard: () => ['dashboard'] as const,
+  allIncomeStatement: () => ['income-statement'] as const,
+  allBalanceSheet: () => ['balance-sheet'] as const,
+  // FY-scoped prefix helpers (invaliderar alla dateRange-varianter för en FY)
+  incomeStatementByFy: (fyId: number) => ['income-statement', fyId] as const,
+  balanceSheetByFy: (fyId: number) => ['balance-sheet', fyId] as const,
 } as const

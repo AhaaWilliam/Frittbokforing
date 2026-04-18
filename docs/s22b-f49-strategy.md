@@ -380,16 +380,22 @@ i renderer. Inte 3 separata. M133 grep-check enforcar regeln statiskt.
 
 ## 10. Non-goals för F49
 
+**Not (Sprint F P5, 2026-04-18):** Följande punkter var non-goals för
+F49 men är **in-scope för F49-c** enligt separat UX-spec
+[f49c-keyboard-nav-spec.md](f49c-keyboard-nav-spec.md):
+- Layout-refaktor för keyboard-navigation → F49-c2 (roving-tabindex)
+- Skip-links → F49-c1
+- List/table semantik → F49-c1 (Tab-ordning) + F49-c2 (rad-semantik)
+
+Kvarstår som non-goal (inte i F49, inte i F49-c):
+
 - Färgkontrast-audit (WCAG 1.4.3) — `color-contrast` disabled i axe pga jsdom
 - Motion-preferences (`prefers-reduced-motion`)
 - Mobile-a11y (Electron desktop-only)
 - I18n bortom svenska
 - Typografi / font-scaling
-- Layout-refaktor för keyboard-navigation
 - `aria-busy` på TanStack Query containers
 - Error summary med fokus-flytt vid submit
-- Skip-links
-- List/table semantik (`role="row"`, `aria-sort`)
 - Wizard-pattern (steg-announcering)
 
 ## 11. Öppna frågor för William — ALLA BESVARADE (2026-04-14)

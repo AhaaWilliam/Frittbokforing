@@ -339,6 +339,7 @@ contextBridge.exposeInMainWorld('api', {
     company_id: number
     fiscal_year_id: number
     xml_content: string
+    format?: 'camt.053' | 'camt.054'
   }) => ipcRenderer.invoke('bank-statement:import', data),
   listBankStatements: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('bank-statement:list', data),
@@ -356,11 +357,24 @@ contextBridge.exposeInMainWorld('api', {
     bank_transaction_id: number
     correction_description?: string
   }) => ipcRenderer.invoke('bank-statement:unmatch-transaction', data),
+  unmatchBankBatch: (data: { batch_id: number }) =>
+    ipcRenderer.invoke('bank-statement:unmatch-batch', data),
   createBankFeeEntry: (data: {
     bank_transaction_id: number
     payment_account: string
     skipChronologyCheck?: boolean
   }) => ipcRenderer.invoke('bank-statement:create-fee-entry', data),
+  listBankTxMappings: () => ipcRenderer.invoke('bank-tx-mapping:list'),
+  upsertBankTxMapping: (data: {
+    id?: number
+    domain: string
+    family: string
+    subfamily: string
+    classification: 'bank_fee' | 'interest' | 'ignore'
+    account_number?: string | null
+  }) => ipcRenderer.invoke('bank-tx-mapping:upsert', data),
+  deleteBankTxMapping: (data: { id: number }) =>
+    ipcRenderer.invoke('bank-tx-mapping:delete', data),
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>

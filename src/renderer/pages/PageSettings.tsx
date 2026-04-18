@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { PageHeader } from '../components/layout/PageHeader'
-import { useCompany, useUpdateCompany } from '../lib/hooks'
+import {
+  useCompany,
+  useUpdateCompany,
+  useBankTxMappings,
+  useUpsertBankTxMapping,
+  useDeleteBankTxMapping,
+} from '../lib/hooks'
 import type { UpdateCompanyInput } from '../../shared/types'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 
@@ -100,6 +106,261 @@ function BackupSection() {
   )
 }
 
+function BankTxMappingsSection() {
+  const { data: mappings, isLoading } = useBankTxMappings()
+  const upsert = useUpsertBankTxMapping()
+  const del = useDeleteBankTxMapping()
+
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [domain, setDomain] = useState('PMNT')
+  const [family, setFamily] = useState('CCRD')
+  const [subfamily, setSubfamily] = useState('')
+  const [classification, setClassification] = useState<
+    'bank_fee' | 'interest' | 'ignore'
+  >('bank_fee')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+
+  function resetForm() {
+    setShowForm(false)
+    setEditingId(null)
+    setDomain('PMNT')
+    setFamily('CCRD')
+    setSubfamily('')
+    setClassification('bank_fee')
+    setAccountNumber('')
+    setError(null)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    try {
+      await upsert.mutateAsync({
+        ...(editingId !== null ? { id: editingId } : {}),
+        domain: domain.trim().toUpperCase(),
+        family: family.trim().toUpperCase(),
+        subfamily: subfamily.trim().toUpperCase(),
+        classification,
+        account_number: accountNumber.trim() || null,
+      })
+      resetForm()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Okänt fel')
+    }
+  }
+
+  const classificationLabel: Record<typeof classification, string> = {
+    bank_fee: 'Bankavgift',
+    interest: 'Ränta',
+    ignore: 'Ignorera',
+  }
+
+  return (
+    <div className="mb-8">
+      <h2 className="mb-2 text-base font-medium">
+        Bank-kodsmappningar (BkTxCd)
+      </h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        ISO 20022-koder (Domain / Family / SubFamily) som styr
+        auto-klassificering av bank-transaktioner. Räntans tecken
+        (inkomst/utgift) härleds från beloppstecknet.
+      </p>
+
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground">Laddar...</div>
+      ) : (
+        <table className="w-full text-sm" data-testid="bank-tx-mappings-table">
+          <thead>
+            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+              <th className="px-2 py-2">Domain</th>
+              <th className="px-2 py-2">Family</th>
+              <th className="px-2 py-2">SubFamily</th>
+              <th className="px-2 py-2">Klassificering</th>
+              <th className="px-2 py-2">Konto</th>
+              <th className="px-2 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {(mappings ?? []).map((m) => (
+              <tr key={m.id} className="border-b">
+                <td className="px-2 py-2 font-mono text-xs">{m.domain}</td>
+                <td className="px-2 py-2 font-mono text-xs">{m.family}</td>
+                <td className="px-2 py-2 font-mono text-xs">{m.subfamily}</td>
+                <td className="px-2 py-2">
+                  {classificationLabel[m.classification]}
+                </td>
+                <td className="px-2 py-2 font-mono text-xs">
+                  {m.account_number ?? '—'}
+                </td>
+                <td className="px-2 py-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(m.id)
+                      setDomain(m.domain)
+                      setFamily(m.family)
+                      setSubfamily(m.subfamily)
+                      setClassification(m.classification)
+                      setAccountNumber(m.account_number ?? '')
+                      setShowForm(true)
+                    }}
+                    className="mr-3 text-xs text-primary hover:underline"
+                    data-testid={`mapping-edit-${m.id}`}
+                  >
+                    Redigera
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingId(m.id)}
+                    className="text-xs text-red-600 hover:underline"
+                    data-testid={`mapping-delete-${m.id}`}
+                  >
+                    Radera
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {!showForm && (
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          className="mt-4 rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+          data-testid="mapping-add-btn"
+        >
+          + Lägg till mappning
+        </button>
+      )}
+
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="mt-4 space-y-3 rounded-md border p-4"
+          data-testid="mapping-form"
+        >
+          <div className="grid grid-cols-3 gap-3">
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">Domain</span>
+              <input
+                type="text"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                required
+                maxLength={10}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">Family</span>
+              <input
+                type="text"
+                value={family}
+                onChange={(e) => setFamily(e.target.value)}
+                required
+                maxLength={10}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">SubFamily</span>
+              <input
+                type="text"
+                value={subfamily}
+                onChange={(e) => setSubfamily(e.target.value)}
+                required
+                maxLength={10}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                data-testid="mapping-subfamily-input"
+              />
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">Klassificering</span>
+              <select
+                value={classification}
+                onChange={(e) =>
+                  setClassification(
+                    e.target.value as 'bank_fee' | 'interest' | 'ignore',
+                  )
+                }
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="bank_fee">Bankavgift</option>
+                <option value="interest">Ränta</option>
+                <option value="ignore">Ignorera</option>
+              </select>
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">Konto (valfritt)</span>
+              <input
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                maxLength={10}
+                placeholder="t.ex. 6570"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              />
+            </label>
+          </div>
+          {error && (
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {error}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={upsert.isPending}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              data-testid="mapping-save-btn"
+            >
+              {upsert.isPending
+                ? 'Sparar...'
+                : editingId !== null
+                  ? 'Uppdatera'
+                  : 'Skapa'}
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
+            >
+              Avbryt
+            </button>
+          </div>
+        </form>
+      )}
+
+      <ConfirmDialog
+        open={deletingId !== null}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+        title="Radera mappning?"
+        description="Transaktioner som matchar denna kod kommer inte längre auto-klassificeras."
+        confirmLabel="Radera"
+        variant="danger"
+        onConfirm={async () => {
+          if (deletingId === null) return
+          try {
+            await del.mutateAsync({ id: deletingId })
+          } finally {
+            setDeletingId(null)
+          }
+        }}
+      />
+    </div>
+  )
+}
+
 export function PageSettings() {
   const { data: company, isLoading } = useCompany()
   const updateMutation = useUpdateCompany()
@@ -190,6 +451,9 @@ export function PageSettings() {
       <div className="mx-auto w-full max-w-2xl px-8 py-6">
         {/* Backup */}
         <BackupSection />
+
+        {/* Bank-kodsmappningar */}
+        <BankTxMappingsSection />
 
         {/* Read-only company info */}
         <div className="mb-8">

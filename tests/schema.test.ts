@@ -92,6 +92,7 @@ describe('Struktur', () => {
       'bank_reconciliation_matches',
       'bank_statements',
       'bank_transactions',
+      'bank_tx_code_mappings',
       'budget_targets',
       'companies',
       'counterparties',
@@ -123,7 +124,7 @@ describe('Struktur', () => {
       'vat_codes',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(36)
+    expect(tables.length).toBe(37)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -142,7 +143,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(41) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(43) // S58: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {

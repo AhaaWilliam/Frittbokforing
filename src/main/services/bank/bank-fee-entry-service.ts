@@ -245,7 +245,8 @@ export function createBankFeeEntry(
     const result = db.transaction(() => {
       const tx = db
         .prepare(
-          `SELECT amount_ore, counterparty_name, remittance_info, bank_tx_subfamily
+          `SELECT amount_ore, counterparty_name, remittance_info,
+                  bank_tx_domain, bank_tx_family, bank_tx_subfamily
            FROM bank_transactions WHERE id = ?`,
         )
         .get(input.bank_transaction_id) as
@@ -253,6 +254,8 @@ export function createBankFeeEntry(
             amount_ore: number
             counterparty_name: string | null
             remittance_info: string | null
+            bank_tx_domain: string | null
+            bank_tx_family: string | null
             bank_tx_subfamily: string | null
           }
         | undefined
@@ -263,7 +266,7 @@ export function createBankFeeEntry(
           field: 'bank_transaction_id',
         }
       }
-      const classification = classifyBankFeeTx(tx)
+      const classification = classifyBankFeeTx(db, tx)
       if (!classification) {
         throw {
           code: 'VALIDATION_ERROR' as ErrorCode,

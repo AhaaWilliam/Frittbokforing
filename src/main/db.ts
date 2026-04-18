@@ -56,7 +56,9 @@ function runMigrations(database: Database.Database): void {
     // Migration 022 (index 21): invoices + payment tables öre-suffix rename.
     // Migration 023 (index 22): payment_batches FK on account_number.
     // Migration 038 (index 37): journal_entries CHECK-rebuild (verification_series) + fixed_assets + depreciation_schedules.
-    const needsFkOff = i === 20 || i === 21 || i === 22 || i === 37
+    // Migration 043 (index 42): bank_statements.source_format CHECK-utökning ('camt.053','camt.054').
+    const needsFkOff =
+      i === 20 || i === 21 || i === 22 || i === 37 || i === 42
     if (needsFkOff) database.pragma('foreign_keys = OFF')
 
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch
