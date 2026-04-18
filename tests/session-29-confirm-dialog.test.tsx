@@ -82,7 +82,7 @@ describe('ConfirmDialog', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('has correct ARIA attributes', () => {
+  it('has correct ARIA associations', () => {
     render(
       <ConfirmDialog
         open={true}
@@ -93,9 +93,19 @@ describe('ConfirmDialog', () => {
       />,
     )
     const dialog = screen.getByRole('alertdialog')
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('aria-labelledby', 'confirm-dialog-title')
-    expect(dialog).toHaveAttribute('aria-describedby', 'confirm-dialog-desc')
+    // Radix AlertDialog applicerar inte aria-modal på elementet utan
+    // hanterar modalitet via inert/aria-hidden på utanför-innehållet.
+    // Semantiskt likvärdigt per ARIA 1.2 (role=alertdialog implicerar modal).
+    const labelledBy = dialog.getAttribute('aria-labelledby')
+    const describedBy = dialog.getAttribute('aria-describedby')
+    expect(labelledBy).not.toBeNull()
+    expect(describedBy).not.toBeNull()
+    expect(document.getElementById(labelledBy!)).toHaveTextContent(
+      'Dialog title',
+    )
+    expect(document.getElementById(describedBy!)).toHaveTextContent(
+      'Dialog desc',
+    )
   })
 
   it('passes axe-core a11y check', async () => {

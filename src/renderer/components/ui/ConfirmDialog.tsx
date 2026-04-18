@@ -1,5 +1,5 @@
-import { memo, useRef } from 'react'
-import { useDialogBehavior } from '../../lib/use-dialog-behavior'
+import { memo } from 'react'
+import * as AlertDialog from '@radix-ui/react-alert-dialog'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -22,20 +22,6 @@ export const ConfirmDialog = memo(function ConfirmDialog({
   variant = 'default',
   onConfirm,
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const cancelRef = useRef<HTMLButtonElement>(null)
-
-  // Sprint K (F49-c3): gemensam focus-trap + Escape + focus-return.
-  // Cancel-knappen är initial fokus för destruktiva operationer (§ 6.1).
-  const { onKeyDown } = useDialogBehavior({
-    open,
-    onClose: () => onOpenChange(false),
-    containerRef: dialogRef,
-    initialFocusRef: cancelRef,
-  })
-
-  if (!open) return null
-
   const confirmClasses =
     variant === 'danger'
       ? 'bg-red-600 text-white hover:bg-red-700'
@@ -44,46 +30,37 @@ export const ConfirmDialog = memo(function ConfirmDialog({
         : 'bg-primary text-primary-foreground hover:bg-primary/90'
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onKeyDown={onKeyDown}
-    >
-      <div
-        ref={dialogRef}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-desc"
-        className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl"
-      >
-        <h2 id="confirm-dialog-title" className="mb-2 text-base font-semibold">
-          {title}
-        </h2>
-        <p
-          id="confirm-dialog-desc"
-          className="mb-6 text-sm text-muted-foreground whitespace-pre-line"
-        >
-          {description}
-        </p>
-        <div className="flex justify-end gap-3">
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${confirmClasses}`}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-xl focus:outline-none">
+          <AlertDialog.Title className="mb-2 text-base font-semibold">
+            {title}
+          </AlertDialog.Title>
+          <AlertDialog.Description className="mb-6 text-sm text-muted-foreground whitespace-pre-line">
+            {description}
+          </AlertDialog.Description>
+          <div className="flex justify-end gap-3">
+            <AlertDialog.Cancel asChild>
+              <button
+                type="button"
+                className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
+              >
+                {cancelLabel}
+              </button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action asChild>
+              <button
+                type="button"
+                onClick={onConfirm}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${confirmClasses}`}
+              >
+                {confirmLabel}
+              </button>
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   )
 })
