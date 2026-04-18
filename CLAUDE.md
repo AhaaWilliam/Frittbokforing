@@ -854,6 +854,35 @@ review-regel. Custom-implementation via `useDialogBehavior` är deprekerad.
 **Korsreferens:** M133 (axe-regression-gate), ADR 003 (Radix-migration).
 Sprint I/J/K F49-c1/c2/c3 leveranser; Sprint P Radix-migration.
 
+## 60. Asset-edit efter schedule-exekvering: reviderad bedömning (M155)
+
+**M155.** `updateFixedAsset` tillåts efter att schedules har
+`'executed'` eller `'skipped'`-status och påverkar **endast pending-
+schedules**. Exekverade/skipped rader bevaras oförändrat (K2-
+"reviderad bedömning"-praxis).
+
+**Validering:**
+- `input.useful_life_months > executedCount` (annars VALIDATION_ERROR
+  `useful_life_months`)
+- `input.acquisition_cost_ore - executedAccOre >= input.residual_value_ore`
+  (annars VALIDATION_ERROR `residual_value_ore`)
+
+**Implementation:** `insertPendingFromState`-helper i
+`src/main/services/depreciation-service.ts` regenererar pending från
+`period executedCount + 1` med `bookValueAfterExecuted` som cost-input
+till `generateLinearSchedule` / `generateDecliningSchedule`. Summan av
+pending-amounts = `new_cost - new_residual - executed_acc` (invariant).
+
+**Konsekvens:** Ingen C-serie-korrigering skapas. Historisk balans
+reflekterar ursprunglig avskrivningsbas. Om revisor senare anger att
+rättelse-scenarier MÅSTE gå via retroaktiv C-serie-korrigering (Alt B
+i ADR 002), kan Alt B implementeras ovanpå denna utan att bryta M155
+— Alt B är en separat code path för rättelse vs reviderad bedömning.
+
+**Referens:** ADR 002, tests/session-C-depreciation-update.test.ts
+(M155-tester: bevarad historik, summa-invariant, validerings-gränser,
+skipped-bevaring).
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.
@@ -861,6 +890,8 @@ Läs relevant ADR **innan** du föreslår en ändring som påverkar underliggand
 antaganden (t.ex. byte av native deps, transaktionsmodell).
 
 - [ADR 001 — SQLite-backend (`better-sqlite3` bevaras)](docs/adr/001-sqlite-backend.md)
+- [ADR 002 — Asset-edit efter execution (Alt A)](docs/adr/002-asset-edit-after-execution.md)
+- [ADR 003 — Radix UI för dialog-primitives](docs/adr/003-radix-ui-migration.md)
 
 ## Projektstatus
 

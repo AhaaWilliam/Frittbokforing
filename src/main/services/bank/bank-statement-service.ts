@@ -18,18 +18,53 @@ import {
   type ParsedBankStatement,
 } from './camt053-parser'
 import { parseCamt054 } from './camt054-parser'
+import { parseMt940, Mt940ParseError } from './mt940-parser'
+import { parseBgmax, BgmaxParseError } from './bgmax-parser'
 import log from 'electron-log'
 
 // ═══ Types ═══
 
-export type BankStatementFormat = 'camt.053' | 'camt.054'
+export type BankStatementFormat = 'camt.053' | 'camt.054' | 'mt940' | 'bgmax'
 
 export interface ImportBankStatementInput {
   company_id: number
   fiscal_year_id: number
   xml_content: string
-  /** Default: 'camt.053' (backward-compat med existerande call sites). */
+  /** Default: autodetektion från fil-content. */
   format?: BankStatementFormat
+}
+
+/**
+ * Autodetektion av bank-statement-format från fil-content.
+ * Ordning: camt.053 XML → camt.054 XML → MT940 → BGMAX.
+ */
+export function detectFormat(content: string): BankStatementFormat {
+  const trimmed = content.replace(/^\uFEFF/, '').trimStart()
+  const head = trimmed.slice(0, 500)
+
+  if (head.startsWith('<?xml') || head.startsWith('<Document')) {
+    if (head.includes('BkToCstmrStmt') || content.includes('BkToCstmrStmt'))
+      return 'camt.053'
+    if (
+      head.includes('BkToCstmrDbtCdtNtfctn') ||
+      content.includes('BkToCstmrDbtCdtNtfctn')
+    )
+      return 'camt.054'
+    throw new Camt053ParseError(
+      'PARSE_ERROR',
+      'XML-filen matchar varken camt.053 eller camt.054.',
+    )
+  }
+  if (head.startsWith('{1:') || head.startsWith(':20:')) {
+    return 'mt940'
+  }
+  if (/^01\d{10,}/.test(head)) {
+    return 'bgmax'
+  }
+  throw new Camt053ParseError(
+    'PARSE_ERROR',
+    'Okänt filformat — kunde inte detektera camt.053/camt.054/MT940/BGMAX.',
+  )
 }
 
 export interface ImportBankStatementResult {
@@ -96,22 +131,35 @@ export function importBankStatement(
   db: Database.Database,
   input: ImportBankStatementInput,
 ): IpcResult<ImportBankStatementResult> {
-  const format: BankStatementFormat = input.format ?? 'camt.053'
+  let format: BankStatementFormat
   try {
-    // Parse. camt.054 saknar balansdata — Path A (Sprint F P6) fyller in
-    // opening=0, closing=0 för pseudo-statement. Se bank_statements-raden
-    // som skapas längre ned.
+    format = input.format ?? detectFormat(input.xml_content)
+  } catch (err) {
+    if (err instanceof Camt053ParseError) {
+      return {
+        success: false,
+        code: 'VALIDATION_ERROR',
+        error: err.message,
+        field: err.field,
+      }
+    }
+    throw err
+  }
+  try {
+    // Parse. Format-specifika varianter producerar ParsedBankStatement:
+    //  - camt.053: direkt.
+    //  - camt.054: pseudo-statement med opening=0/closing=0 (P6).
+    //  - mt940: SWIFT-text, inhemsk parser med BkTxCd-mapping.
+    //  - bgmax: Bankgirocentralen, pseudo-statement (ingen balans).
     let parsed: ParsedBankStatement
     try {
       if (format === 'camt.053') {
         parsed = parseCamt053(input.xml_content)
-      } else {
+      } else if (format === 'camt.054') {
         const notification = parseCamt054(input.xml_content)
         // camt.054 saknar balanssummor per ISO 20022-spec. Pseudo-statement
         // med opening=0, closing=0 är en semantisk kompromiss för att
-        // undvika att göra balans-kolumnerna nullable. source_format sätts
-        // explicit till 'camt.054' (migration 043 utökade CHECK till
-        // ('camt.053','camt.054')). Se Sprint F P6 / sprint-f-prompt.md.
+        // undvika att göra balans-kolumnerna nullable. Se Sprint F P6.
         parsed = {
           statement_number: notification.statement_number,
           bank_account_iban: notification.bank_account_iban,
@@ -120,9 +168,17 @@ export function importBankStatement(
           closing_balance_ore: 0,
           transactions: notification.transactions,
         }
+      } else if (format === 'mt940') {
+        parsed = parseMt940(input.xml_content)
+      } else {
+        parsed = parseBgmax(input.xml_content)
       }
     } catch (err) {
-      if (err instanceof Camt053ParseError) {
+      if (
+        err instanceof Camt053ParseError ||
+        err instanceof Mt940ParseError ||
+        err instanceof BgmaxParseError
+      ) {
         return {
           success: false,
           code: 'VALIDATION_ERROR',

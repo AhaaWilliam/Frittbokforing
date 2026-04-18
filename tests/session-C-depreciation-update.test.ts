@@ -129,19 +129,131 @@ describe('updateFixedAsset', () => {
     expect(r.code).toBe('NOT_FOUND')
   })
 
-  it('HAS_EXECUTED_SCHEDULES efter körd avskrivning', () => {
+  it('M155 Alt A: edit efter executed bevarar historik + regenererar pending', () => {
     const id = createPristine()
-    // Execute first period (2025-01-15 → 2025-02-14 is period 1; use 2025-02-28)
     const exec = executeDepreciationPeriod(db, fyId, '2025-02-28')
     expect(exec.success).toBe(true)
     if (!exec.success) return
     expect(exec.data.succeeded.length).toBeGreaterThan(0)
 
-    const r = updateFixedAsset(db, id, baseInput({ name: 'Ändrad' }))
+    const executedBefore = db
+      .prepare(
+        `SELECT period_number, amount_ore FROM depreciation_schedules
+         WHERE fixed_asset_id = ? AND status = 'executed' ORDER BY period_number`,
+      )
+      .all(id) as Array<{ period_number: number; amount_ore: number }>
+    const executedCount = executedBefore.length
+    expect(executedCount).toBeGreaterThan(0)
+
+    const r = updateFixedAsset(
+      db,
+      id,
+      baseInput({ name: 'Ändrad', useful_life_months: 48 }),
+    )
+    expect(r.success).toBe(true)
+    if (!r.success) return
+    expect(r.data.scheduleCount).toBe(48)
+
+    // Executed-rader oförändrade
+    const executedAfter = db
+      .prepare(
+        `SELECT period_number, amount_ore FROM depreciation_schedules
+         WHERE fixed_asset_id = ? AND status = 'executed' ORDER BY period_number`,
+      )
+      .all(id) as Array<{ period_number: number; amount_ore: number }>
+    expect(executedAfter).toEqual(executedBefore)
+
+    // Pending: (48 - executedCount) rader
+    const pending = db
+      .prepare(
+        `SELECT COUNT(*) as n FROM depreciation_schedules
+         WHERE fixed_asset_id = ? AND status = 'pending'`,
+      )
+      .get(id) as { n: number }
+    expect(pending.n).toBe(48 - executedCount)
+
+    // Total schedule-length = 48
+    const all = db
+      .prepare(
+        `SELECT COUNT(*) as n FROM depreciation_schedules
+         WHERE fixed_asset_id = ?`,
+      )
+      .get(id) as { n: number }
+    expect(all.n).toBe(48)
+  })
+
+  it('M155 Alt A: VALIDATION_ERROR om ny useful_life <= executedCount', () => {
+    const id = createPristine()
+    const exec = executeDepreciationPeriod(db, fyId, '2025-02-28')
+    expect(exec.success).toBe(true)
+    if (!exec.success) return
+
+    const r = updateFixedAsset(db, id, baseInput({ useful_life_months: 1 }))
     expect(r.success).toBe(false)
     if (r.success) return
-    expect(r.code).toBe('HAS_EXECUTED_SCHEDULES')
-    expect(r.error).toMatch(/Kan inte redigera tillgång med historik/)
+    expect(r.code).toBe('VALIDATION_ERROR')
+    expect(r.error).toMatch(/Ny nyttjandetid/)
+  })
+
+  it('M155 Alt A: VALIDATION_ERROR om nytt residual > bookValueAfterExecuted', () => {
+    const id = createPristine()
+    const exec = executeDepreciationPeriod(db, fyId, '2025-02-28')
+    expect(exec.success).toBe(true)
+    if (!exec.success) return
+
+    // Exec-period-1: cost 1_000_000 / 36 ≈ 27_778 öre.
+    // Book value after executed ≈ 1_000_000 - 27_778 = 972_222.
+    // Sätt nytt residual = 990_000 → överstiger book value.
+    const r = updateFixedAsset(
+      db,
+      id,
+      baseInput({ residual_value_ore: 990_000 }),
+    )
+    expect(r.success).toBe(false)
+    if (r.success) return
+    expect(r.code).toBe('VALIDATION_ERROR')
+    expect(r.error).toMatch(/restvärde/i)
+  })
+
+  it('M155 Alt A: remaining-fördelning summerar till new_cost - new_residual - executed_acc', () => {
+    const id = createPristine()
+    const exec = executeDepreciationPeriod(db, fyId, '2025-02-28')
+    expect(exec.success).toBe(true)
+    if (!exec.success) return
+
+    const executedAccOre = (
+      db
+        .prepare(
+          `SELECT COALESCE(SUM(amount_ore), 0) as acc FROM depreciation_schedules
+           WHERE fixed_asset_id = ? AND status = 'executed'`,
+        )
+        .get(id) as { acc: number }
+    ).acc
+
+    // Edit: nytt cost 2_000_000, residual 200_000, useful_life 24
+    const r = updateFixedAsset(
+      db,
+      id,
+      baseInput({
+        acquisition_cost_ore: 2_000_000,
+        residual_value_ore: 200_000,
+        useful_life_months: 24,
+      }),
+    )
+    expect(r.success).toBe(true)
+
+    const pendingSum = (
+      db
+        .prepare(
+          `SELECT COALESCE(SUM(amount_ore), 0) as sum FROM depreciation_schedules
+           WHERE fixed_asset_id = ? AND status = 'pending'`,
+        )
+        .get(id) as { sum: number }
+    ).sum
+
+    // Pending ska fördela (2_000_000 - 200_000 - executedAccOre) över 23 perioder
+    const expected = 2_000_000 - 200_000 - executedAccOre
+    expect(pendingSum).toBe(expected)
   })
 
   it('VALIDATION_ERROR om asset.status = disposed', () => {
@@ -231,14 +343,22 @@ describe('updateFixedAsset', () => {
     expect(after.updated_at).not.toBe('2020-01-01')
   })
 
-  it('HAS_EXECUTED_SCHEDULES om någon schedule har status=skipped', () => {
+  it('M155 Alt A: skipped-perioder räknas som låsta och bevaras', () => {
     const id = createPristine()
     db.prepare(
       `UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND period_number = 1`,
     ).run(id)
     const r = updateFixedAsset(db, id, baseInput({ name: 'x' }))
-    expect(r.success).toBe(false)
-    if (r.success) return
-    expect(r.code).toBe('HAS_EXECUTED_SCHEDULES')
+    expect(r.success).toBe(true)
+    if (!r.success) return
+
+    // Skipped kvar
+    const skipped = db
+      .prepare(
+        `SELECT period_number FROM depreciation_schedules
+         WHERE fixed_asset_id = ? AND status = 'skipped'`,
+      )
+      .all(id) as Array<{ period_number: number }>
+    expect(skipped).toEqual([{ period_number: 1 }])
   })
 })

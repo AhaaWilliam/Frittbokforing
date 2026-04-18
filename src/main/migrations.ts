@@ -1513,6 +1513,46 @@ END;`,
     ALTER TABLE bank_statements_new RENAME TO bank_statements;
     `,
   },
+  // Sprint Q T3.d: utöka bank_statements.source_format CHECK till
+  // ('camt.053', 'camt.054', 'mt940', 'bgmax') för MT940 (SWIFT) och
+  // BGMAX (Bankgirocentralen) import-stöd.
+  // M122 table-recreate: bank_statements har inkommande FK från
+  // bank_transactions (ON DELETE CASCADE) + bank_reconciliation_matches.
+  // FK_OFF krävs utanför transaktion. Index 43 i migrations-array.
+  // M141-inventering: 0 cross-table-triggers refererar bank_statements.
+  // M121: 0 index/triggers direkt på bank_statements.
+  {
+    sql: `
+    CREATE TABLE bank_statements_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      statement_number TEXT NOT NULL,
+      bank_account_iban TEXT NOT NULL,
+      statement_date TEXT NOT NULL,
+      opening_balance_ore INTEGER NOT NULL,
+      closing_balance_ore INTEGER NOT NULL,
+      source_format TEXT NOT NULL DEFAULT 'camt.053',
+      import_file_hash TEXT NOT NULL,
+      imported_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      CHECK (source_format IN ('camt.053', 'camt.054', 'mt940', 'bgmax')),
+      UNIQUE (company_id, import_file_hash)
+    );
+
+    INSERT INTO bank_statements_new (
+      id, company_id, fiscal_year_id, statement_number, bank_account_iban,
+      statement_date, opening_balance_ore, closing_balance_ore, source_format,
+      import_file_hash, imported_at
+    )
+    SELECT id, company_id, fiscal_year_id, statement_number, bank_account_iban,
+           statement_date, opening_balance_ore, closing_balance_ore, source_format,
+           import_file_hash, imported_at
+    FROM bank_statements;
+
+    DROP TABLE bank_statements;
+    ALTER TABLE bank_statements_new RENAME TO bank_statements;
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

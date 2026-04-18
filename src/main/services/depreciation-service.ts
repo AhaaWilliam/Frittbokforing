@@ -310,19 +310,37 @@ export function updateFixedAsset(
       }
     }
 
-    const nonPendingCount = (
-      db
-        .prepare(
-          `SELECT COUNT(*) as n FROM depreciation_schedules
-         WHERE fixed_asset_id = ? AND status IN ('executed', 'skipped')`,
-        )
-        .get(id) as { n: number }
-    ).n
-    if (nonPendingCount > 0) {
-      return {
-        success: false as const,
-        code: 'HAS_EXECUTED_SCHEDULES' as const,
-        error: `Kan inte redigera tillgång med historik (${nonPendingCount} bokförda eller överhoppade rader). Avyttra eller radera och återskapa om attributen behöver ändras.`,
+    const executed = db
+      .prepare(
+        `SELECT
+           COALESCE(SUM(CASE WHEN status IN ('executed','skipped') THEN 1 ELSE 0 END), 0) AS n,
+           COALESCE(SUM(CASE WHEN status = 'executed' THEN amount_ore ELSE 0 END), 0) AS acc_ore
+         FROM depreciation_schedules
+         WHERE fixed_asset_id = ?`,
+      )
+      .get(id) as { n: number; acc_ore: number }
+
+    // M155 Alt A: edit efter exekvering påverkar bara pending-schedules.
+    // Reviderad bedömning (K2-praxis) — historisk data rörs inte.
+    if (executed.n > 0) {
+      if (input.useful_life_months <= executed.n) {
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error: `Ny nyttjandetid (${input.useful_life_months} mån) måste överstiga redan bokförda/överhoppade perioder (${executed.n}).`,
+          field: 'useful_life_months',
+        }
+      }
+      const bookValueAfterExecuted =
+        input.acquisition_cost_ore - executed.acc_ore
+      if (bookValueAfterExecuted < input.residual_value_ore) {
+        return {
+          success: false as const,
+          code: 'VALIDATION_ERROR' as const,
+          error:
+            'Nytt restvärde överstiger återstående bokfört värde efter exekverade avskrivningar.',
+          field: 'residual_value_ore',
+        }
       }
     }
 
@@ -344,8 +362,10 @@ export function updateFixedAsset(
       if (accountError) return accountError
     }
 
+    // Radera enbart pending — bevara executed/skipped (M155).
     db.prepare(
-      'DELETE FROM depreciation_schedules WHERE fixed_asset_id = ?',
+      `DELETE FROM depreciation_schedules
+       WHERE fixed_asset_id = ? AND status = 'pending'`,
     ).run(id)
 
     db.prepare(
@@ -373,7 +393,11 @@ export function updateFixedAsset(
       id,
     )
 
-    const scheduleCount = insertSchedule(db, id, input)
+    const scheduleCount =
+      executed.n > 0
+        ? insertPendingFromState(db, id, input, executed.n, executed.acc_ore) +
+          executed.n
+        : insertSchedule(db, id, input)
     return { success: true as const, data: { scheduleCount } }
   })()
 }
@@ -417,6 +441,68 @@ function insertSchedule(
   `)
   for (let i = 0; i < amounts.length; i++) {
     insert.run(assetId, i + 1, periods[i].start, periods[i].end, amounts[i])
+  }
+  return amounts.length
+}
+
+/**
+ * M155 Alt A: Regenerera enbart pending-perioder efter edit på tillgång
+ * med executed/skipped-historik. Reviderad bedömning — kvarvarande
+ * avskrivningsunderlag fördelas över återstående pending-månader.
+ *
+ * executedCount = antal perioder som är 'executed' eller 'skipped' (låsta).
+ * executedAccOre = summa bokförda amounts (skipped bidrar inte).
+ */
+function insertPendingFromState(
+  db: Database.Database,
+  assetId: number,
+  input: Pick<
+    CreateFixedAssetInput,
+    | 'acquisition_date'
+    | 'acquisition_cost_ore'
+    | 'residual_value_ore'
+    | 'useful_life_months'
+    | 'method'
+    | 'declining_rate_bp'
+  >,
+  executedCount: number,
+  executedAccOre: number,
+): number {
+  const remainingMonths = input.useful_life_months - executedCount
+  const bookValueAfterExecuted = input.acquisition_cost_ore - executedAccOre
+
+  const amounts =
+    input.method === 'linear'
+      ? generateLinearSchedule(
+          bookValueAfterExecuted,
+          input.residual_value_ore,
+          remainingMonths,
+        )
+      : generateDecliningSchedule(
+          bookValueAfterExecuted,
+          input.residual_value_ore,
+          remainingMonths,
+          input.declining_rate_bp!,
+        )
+
+  const periods = computePeriods(
+    input.acquisition_date,
+    input.useful_life_months,
+  )
+  const insert = db.prepare(`
+    INSERT INTO depreciation_schedules (
+      fixed_asset_id, period_number, period_start, period_end, amount_ore, status
+    ) VALUES (?, ?, ?, ?, ?, 'pending')
+  `)
+  for (let i = 0; i < amounts.length; i++) {
+    const periodNumber = executedCount + i + 1
+    insert.run(
+      assetId,
+      periodNumber,
+      periods[periodNumber - 1].start,
+      periods[periodNumber - 1].end,
+      amounts[i],
+    )
   }
   return amounts.length
 }

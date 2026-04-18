@@ -48,7 +48,7 @@ describe('ConfirmFinalizeDialog', () => {
     expect(confirmBtn).toHaveTextContent('Bokför...')
   })
 
-  // Sprint K F49-c3: focus-trap + Escape (via useDialogBehavior)
+  // Sprint P: focus-trap + Escape hanteras av Radix AlertDialog-primitive
 
   it('focuses cancel button on open', async () => {
     await renderWithProviders(

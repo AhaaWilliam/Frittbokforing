@@ -9,8 +9,9 @@ import { registerCustomFunctions } from '../../src/main/db-functions'
 // Index 37 = migration 038 (Sprint 53 F62: journal_entries verification_series
 // CHECK-rebuild + fixed_assets + depreciation_schedules).
 // Index 42 = migration 043 (Sprint F P6: bank_statements.source_format CHECK-utökning).
+// Index 43 = migration 044 (Sprint Q T3.d: MT940+BGMAX source_format-utvidgning).
 export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([
-  21, 22, 37, 42,
+  21, 22, 37, 42, 43,
 ])
 
 /**

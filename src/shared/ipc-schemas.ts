@@ -996,8 +996,9 @@ export const BankStatementImportSchema = z
     company_id: z.number().int().positive(),
     fiscal_year_id: z.number().int().positive(),
     xml_content: z.string().min(1),
-    // Sprint F P6: default 'camt.053' (backward-compat)
-    format: z.enum(['camt.053', 'camt.054']).optional(),
+    // Sprint F P6 + Sprint Q T3.d: camt.053/.054 (XML), mt940 (SWIFT),
+    // bgmax (Bankgirocentralen). Om omitted → autodetektion från content.
+    format: z.enum(['camt.053', 'camt.054', 'mt940', 'bgmax']).optional(),
   })
   .strict()
 

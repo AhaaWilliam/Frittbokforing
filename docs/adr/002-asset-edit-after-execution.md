@@ -1,9 +1,11 @@
 # ADR 002 — Asset-edit efter första schedule-exekvering
 
-**Status:** Draft (väntar på revisor-samråd)
-**Datum:** 2026-04-18 (Sprint F P3)
-**Ursprung:** T3.a backlog (Sprint E summary). Flaggades som eskalering
-eftersom implementation kräver både ADR och extern domän-input.
+**Status:** Implemented (interim Alt A, Sprint Q 2026-04-18). Revisor-
+samråd kvar som framtida-utvärdering; om K2-praxis kräver Alt B för
+rättelse-scenarier får Alt B implementeras ovanpå Alt A.
+**Datum:** 2026-04-18 (Sprint F P3 draft, Sprint Q implementation)
+**Ursprung:** T3.a backlog (Sprint E summary). Alt A accepterad som MVP
+i Sprint Q — implementation följer sketchmocken nedan.
 
 ## Kontext
 
@@ -124,11 +126,27 @@ period-reopen-UX).
 
 ## M-princip-kandidat
 
-**M155 (draft):** Asset-edit efter första schedule-exekvering är
-tillåten men påverkar **endast pending-schedules**. Exekverade rader
-är oförändrade. Ackumulerad avskrivning beräknas från existerande
-bokförd data; återstående belopp fördelas över ny nyttjandetid.
-Ingen C-serie-korrigering skapas.
+**M155 (accepterad Sprint Q):** Asset-edit efter första schedule-
+exekvering är tillåten men påverkar **endast pending-schedules**.
+Exekverade rader är oförändrade. Ackumulerad avskrivning beräknas från
+existerande bokförd data; återstående belopp fördelas över ny
+nyttjandetid. Ingen C-serie-korrigering skapas.
+
+Validering:
+- `input.useful_life_months > executedCount` (där executedCount =
+  antal schedules med status `'executed'` eller `'skipped'`)
+- `input.acquisition_cost_ore - executedAccOre >= input.residual_value_ore`
+  (bokfört värde efter executed måste täcka nytt restvärde)
+
+Implementation: `updateFixedAsset` i
+`src/main/services/depreciation-service.ts`. `insertPendingFromState`-
+helper regenererar pending från period `executedCount + 1` med
+`bookValueAfterExecuted` som input till `generateLinearSchedule`/
+`generateDecliningSchedule`.
+
+Tester: `session-C-depreciation-update.test.ts` inkluderar M155-tester
+(bevarad historik, summa-invariant, validerings-gränser, skipped-
+bevaring).
 
 Undantag (om någonsin behövs i framtiden): Alt B-mönster med
 period-reopening, kräver M-princip-utvidgning efter revisor-samråd.
