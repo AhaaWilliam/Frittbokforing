@@ -19,6 +19,7 @@ import {
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
 import { usePageParam } from '../../lib/use-page-param'
 import { useFilterParam } from '../../lib/use-filter-param'
+import { useRovingTabindex } from '../../lib/use-roving-tabindex'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -309,6 +310,12 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
     }
   }
 
+  // Sprint J F49-c2: roving-tabindex för rad-keyboard-navigation
+  const { getRowProps } = useRovingTabindex(items.length, (idx) => {
+    const item = items[idx]
+    if (item) handleRowClick(item)
+  })
+
   async function handleGeneratePdf(
     e: React.MouseEvent,
     invoiceId: number,
@@ -464,13 +471,14 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => {
+              {items.map((item, idx) => {
                 const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.draft
                 return (
                   <tr
                     key={item.id}
+                    {...getRowProps(idx)}
                     onClick={() => handleRowClick(item)}
-                    className="cursor-pointer border-b transition-colors hover:bg-muted/50"
+                    className="cursor-pointer border-b transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
                   >
                     <td
                       className="px-3 py-3"

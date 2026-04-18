@@ -4,10 +4,12 @@ import { PeriodList } from '../components/overview/PeriodList'
 import { ReTransferButton } from '../components/overview/ReTransferButton'
 import { useDashboardSummary } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import { useNavigate } from '../lib/router'
 import { formatKr } from '../lib/format'
 
 export function PageOverview() {
   const { activeFiscalYear, allFiscalYears } = useFiscalYearContext()
+  const navigate = useNavigate()
   const {
     data: summary,
     isLoading,
@@ -32,12 +34,14 @@ export function PageOverview() {
                 value={summary ? formatKr(summary.revenueOre) : undefined}
                 isLoading={isLoading}
                 sublabel="exkl. moms"
+                onClick={() => navigate('/income')}
               />
               <MetricCard
                 label="Kostnader"
                 value={summary ? formatKr(summary.expensesOre) : undefined}
                 isLoading={isLoading}
                 sublabel="exkl. moms"
+                onClick={() => navigate('/expenses')}
               />
               <MetricCard
                 label="Rörelseresultat"
@@ -53,6 +57,7 @@ export function PageOverview() {
                       ? 'positive'
                       : 'negative'
                 }
+                onClick={() => navigate('/reports')}
               />
             </div>
 
@@ -68,6 +73,7 @@ export function PageOverview() {
                       ? 'att betala till SKV'
                       : 'fordran på SKV'
                 }
+                onClick={() => navigate('/vat')}
               />
               <MetricCard
                 label="Obet. kundfordringar"
@@ -75,6 +81,7 @@ export function PageOverview() {
                   summary ? formatKr(summary.unpaidReceivablesOre) : undefined
                 }
                 isLoading={isLoading}
+                onClick={() => navigate('/aging')}
               />
               <MetricCard
                 label="Obet. lev.skulder"
@@ -82,6 +89,7 @@ export function PageOverview() {
                   summary ? formatKr(summary.unpaidPayablesOre) : undefined
                 }
                 isLoading={isLoading}
+                onClick={() => navigate('/aging')}
               />
             </div>
           </>

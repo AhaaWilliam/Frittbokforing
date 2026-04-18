@@ -26,7 +26,11 @@ export function ExpenseTotals({ lines }: ExpenseTotalsProps) {
 
   return (
     <div className="flex justify-end">
-      <div className="w-64 space-y-1 text-sm">
+      <div
+        className="w-64 space-y-1 text-sm"
+        aria-live="polite"
+        aria-label="Totaler"
+      >
         <div className="flex justify-between">
           <span className="text-muted-foreground">Netto</span>
           <span

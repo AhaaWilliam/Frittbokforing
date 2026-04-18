@@ -1,5 +1,63 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint J -- F49-c2 Roving-tabindex + widget-focus + aria-live ✅ KLAR
+
+Session SJ (2026-04-18). Andra fas av F49-c keyboard-navigation
+(c2) enligt [docs/f49c-keyboard-nav-spec.md § 8](docs/f49c-keyboard-nav-spec.md).
+Behavioral-ändringar för rad-nivå-navigation + Dashboard-widget-
+fokuserbarhet + screen-reader-notifikation i forms.
+
+**Testbaslinje:** 2546 → **2563 vitest (+17)**. 254 → 256 testfiler (+2).
+**Playwright:** 44 → **45 specfiler (+1)**, 70 → **72 test() (+2)**.
+Full E2E: 70p/0f → **72p/0f**.
+**PRAGMA user_version:** 43 (oförändrat).
+**Nya IPC-kanaler:** 0. **Nya M-principer:** 0 (M156 kvarstår draft).
+**Nya ErrorCodes:** 0. **Nya migrationer:** 0.
+
+### Levererat
+
+**Roving-tabindex (ny hook + applicering):**
+- `src/renderer/lib/use-roving-tabindex.ts` — `useRovingTabindex(rowCount,
+  onSelect?)` returnerar `getRowProps(idx)` med `tabIndex + onKeyDown +
+  onFocus + ref`.
+- Tangenter: `↑↓` rad-navigation, `Home/End` första/sista, `Enter` →
+  `onSelect(idx)`. `preventDefault` på alla hanterade keys.
+- `onFocus`-bubbling från klick synkar activeIdx.
+- InvoiceList + ExpenseList: spread `getRowProps(idx)` på `<tr>`, behåll
+  `onClick` för mus. Focus-ring via Tailwind.
+
+**Dashboard MetricCard fokuserbara + Enter-aktiverade:**
+- `MetricCard` fick optional `onClick`-prop. Utan: `<div>` (bakåtkompatibelt).
+  Med: `<button type="button">` — fokuserbar + default Enter/Space-aktivering.
+- `PageOverview` navigerar per widget: Intäkter→/income, Kostnader→
+  /expenses, Rörelseresultat→/reports, Moms→/vat, Kundford/Lev.skuld→/aging.
+- `useNavigate()` från HashRouter.
+
+**Form-totals `aria-live="polite"`:**
+- `InvoiceTotals` + `ExpenseTotals` fick `aria-live="polite"` +
+  `aria-label="Totaler"`. Screen readers annonserar ändringar vid
+  användarpaus (inte avbryter mid-sentence).
+
+### Tester
+
+- Vitest: 12 nya i `use-roving-tabindex.test.tsx` + 5 nya i
+  `MetricCard.test.tsx` (onClick → button, Enter aktiverar, focus-ring).
+- E2E: `keyboard-nav-c2.spec.ts` (2 tester) — ↓ + Enter på fakturarad
+  ger hash-match `/income/(view|edit)/\d+`; MetricCard Enter → route-nav.
+
+### Scope-utelämningar
+
+- Rad-action-knappar behåller default Tab-behavior (c3-skop om problem).
+- Space-på-rad-togglar-checkbox (spec § 3) — c3-polish.
+
+### Kvarvarande F49-c
+
+- **Sprint K (c3) — ~0.5 SP:** Radix-dialog focus-trap edge-cases,
+  full axe-run på alla dialogs, fokus-återgång-tester. Efter c3
+  promoteras **M156** till accepterad M-princip.
+
+Se `docs/sprint-j-summary.md`.
+
 ## Sprint I -- F49-c1 Skip-links + landmarks + Tab-audit ✅ KLAR
 
 Session SI (2026-04-18). Första fas av F49-c keyboard-navigation
