@@ -1,5 +1,33 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint M -- jsx-a11y-plugin installation (ABANDONED)
+
+Session SM (2026-04-18). Försökte installera `eslint-plugin-jsx-a11y`
+för att aktivera `no-static-element-interactions`-regeln och därmed
+stänga a11y-skulden från Sprint I/K.
+
+**Resultat:** Abandoned. `eslint-plugin-jsx-a11y@6.10.2` kräver
+`eslint@^3 || ... || ^9` men projektet kör `eslint@^10.1.0`. Peer-
+conflict. `npm install --legacy-peer-deps` "löste" pipeline men tog
+bort kritiska peer-deps (babel, electron-windows-sign, m.fl.) vilket
+bröt TypeScript-modulupplösning för `@testing-library/react` (screen,
+waitFor försvann).
+
+**Recovery:** `git checkout package.json package-lock.json && npm
+install && npm rebuild better-sqlite3`. Alla 2576 vitest återgröna.
+
+**Lärdom för framtida försök:**
+- Vänta tills jsx-a11y-pluginen stöder eslint@10 officiellt, ELLER
+- Använd `--force` istället för `--legacy-peer-deps` (mindre destruktivt
+  mot node_modules), ELLER
+- Downgrade eslint till 9 (stor ändring, egen sprint), ELLER
+- Hitta alternativ plugin som stöder eslint@10.
+
+Eskaleras till backlog. Inga produktionsändringar behölls från Sprint M.
+
+**Bieffekt:** `.claude/launch.json` skapades för dev-server-preview-
+infrastruktur (vite-renderer på port 5173). Behålls som tooling.
+
 ## Sprint L -- Lint-baseline-städ (193 → 95) ✅ KLAR
 
 Session SL (2026-04-18). Backlog-sprint: lint-baseline-städ.
