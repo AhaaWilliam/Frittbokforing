@@ -27,6 +27,7 @@ import {
   FEE_SCORE_HIGH,
   FEE_SCORE_MEDIUM,
 } from '../../../shared/constants'
+import { lookupBankByIban } from './iban-bank-registry'
 
 export type FeeType = 'bank_fee' | 'interest_income' | 'interest_expense'
 
@@ -40,6 +41,7 @@ export type MappingClassification = 'bank_fee' | 'interest' | 'ignore'
 export interface BankTxInput {
   amount_ore: number
   counterparty_name: string | null
+  counterparty_iban: string | null
   remittance_info: string | null
   bank_tx_domain: string | null
   bank_tx_family: string | null
@@ -169,9 +171,11 @@ function classifyByHeuristic(tx: BankTxInput): FeeClassification | null {
   // Heuristik bara för TX under MAX_FEE_HEURISTIC_ORE
   if (Math.abs(tx.amount_ore) > MAX_FEE_HEURISTIC_ORE) return null
 
-  const bankHit = tx.counterparty_name
+  const bankByName = tx.counterparty_name
     ? BANK_NAME_RE.test(tx.counterparty_name)
     : false
+  const bankByIban = lookupBankByIban(tx.counterparty_iban) !== null
+  const bankHit = bankByName || bankByIban
   const feeHit = tx.remittance_info
     ? FEE_TEXT_RE.test(tx.remittance_info)
     : false
@@ -183,7 +187,11 @@ function classifyByHeuristic(tx: BankTxInput): FeeClassification | null {
   let score = 0
   if (bankHit) {
     score += 30
-    reasons.push('Counterparty matchar bank-mönster')
+    reasons.push(
+      bankByIban
+        ? 'IBAN-prefix matchar svensk bank'
+        : 'Counterparty matchar bank-mönster',
+    )
   }
 
   if (interestHit) {

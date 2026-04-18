@@ -245,7 +245,8 @@ export function createBankFeeEntry(
     const result = db.transaction(() => {
       const tx = db
         .prepare(
-          `SELECT amount_ore, counterparty_name, remittance_info,
+          `SELECT amount_ore, counterparty_name, counterparty_iban,
+                  remittance_info,
                   bank_tx_domain, bank_tx_family, bank_tx_subfamily
            FROM bank_transactions WHERE id = ?`,
         )
@@ -253,6 +254,7 @@ export function createBankFeeEntry(
         | {
             amount_ore: number
             counterparty_name: string | null
+            counterparty_iban: string | null
             remittance_info: string | null
             bank_tx_domain: string | null
             bank_tx_family: string | null

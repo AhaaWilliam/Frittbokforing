@@ -106,7 +106,8 @@ test.describe('E03 — Expense Flow', () => {
     // 3. Finalize the expense (scope to table to avoid hitting sidebar nav)
     const table = window.locator('table')
     await table.locator('button:has-text("Bokför")').first().click()
-    const dialog = window.locator('.fixed.inset-0')
+    // Radix AlertDialog: portalad till body med role="alertdialog"
+    const dialog = window.locator('[role="alertdialog"]')
     await dialog.waitFor({ timeout: 5_000 })
     await dialog.locator('button:has-text("Bokför")').last().click()
     await window.waitForTimeout(1_000)

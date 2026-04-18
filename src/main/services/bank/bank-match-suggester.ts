@@ -340,6 +340,7 @@ export function suggestMatchesForStatement(
       const feeClass = classifyBankFeeTx(db, {
         amount_ore: tx.amount_ore,
         counterparty_name: tx.counterparty_name,
+        counterparty_iban: tx.counterparty_iban,
         remittance_info: tx.remittance_info,
         bank_tx_domain: tx.bank_tx_domain,
         bank_tx_family: tx.bank_tx_family,

@@ -817,14 +817,18 @@ visar den som disabled med tooltip. Batch-unmatch är backlog.
    Enbart aktiv rad har `tabIndex=0`, andra `-1`. ↑↓/Home/End navigerar,
    Enter aktiverar. Tab lämnar listan. Grid-mönster (ARIA composite) är
    avvisat — roving räcker för rad-nivå-navigation.
-3. **Dialogs använder `useDialogBehavior`-hook**
-   (`src/renderer/lib/use-dialog-behavior.ts`). Encapsulerar focus-trap
-   (Tab + Shift+Tab cyklar), Escape-close med `e.stopPropagation()`
-   (nested-support), auto-focus på `initialFocusRef` eller första
-   fokuserbara element, focus-return till trigger vid close. Default-
-   fokus: Cancel-knappen för destruktiva operationer, primär-knapp för
-   informativa. Alla 6 modala dialoger i `src/renderer/components/ui/*Dialog*.tsx`
-   använder hooken.
+3. **Dialogs använder Radix-primitives** — `@radix-ui/react-dialog`
+   för neutrala dialoger, `@radix-ui/react-alert-dialog` för destruktiva
+   confirm. Struktur: `<Dialog.Root open onOpenChange><Dialog.Portal>
+   <Dialog.Overlay/><Dialog.Content><Dialog.Title/><Dialog.Description/>
+   ...<Dialog.Close asChild>...</Dialog.Close></Dialog.Content>`.
+   Radix hanterar focus-trap (Tab + Shift+Tab), Escape-close,
+   auto-focus (override via `onOpenAutoFocus`-handler), focus-return,
+   inert/aria-hidden på bakgrunden, scroll-lock och portal-rendering.
+   För destruktiva dialoger: `AlertDialog.Cancel` som default-fokus.
+   Migrerat från custom `useDialogBehavior`-hook i Sprint P (ADR 003
+   Alt A). Hooken kvarstår som `@deprecated` — ny kod ska inte
+   använda den.
 4. **Enter på list-rad = navigera till detaljvy.** Samma kontrakt som
    klick. Space reserveras för selektions-checkboxar (nuvarande:
    browser-default; explicit Space-handler är backlog).
@@ -843,11 +847,12 @@ så screen readers annonserar ändrade belopp vid användarpaus.
   behavior inom active row — inte isolerade från rad-level-tabindex.
 
 **Enforcement:** Axe-körning vid varje renderer-test (M133). Nya
-dialoger i `src/renderer/components/ui/*` ska använda `useDialogBehavior`
-— review-regel.
+dialoger i `src/renderer/components/ui/*` ska använda Radix-primitives
+(`@radix-ui/react-dialog` eller `@radix-ui/react-alert-dialog`) —
+review-regel. Custom-implementation via `useDialogBehavior` är deprekerad.
 
-**Korsreferens:** M133 (axe-regression-gate). Sprint I/J/K F49-c1/c2/c3
-leveranser.
+**Korsreferens:** M133 (axe-regression-gate), ADR 003 (Radix-migration).
+Sprint I/J/K F49-c1/c2/c3 leveranser; Sprint P Radix-migration.
 
 ## Architecture Decision Records
 

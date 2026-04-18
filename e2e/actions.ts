@@ -223,8 +223,9 @@ export async function finalizeInvoice(page: Page): Promise<void> {
   const warningText = page.locator('text=Denna åtgärd kan inte ångras')
   await warningText.waitFor({ state: 'visible', timeout: 10_000 })
 
-  // Klicka confirm-knappen (sista knappen i dialogen)
-  const dialogBox = page.locator('.fixed.inset-0 .max-w-md')
+  // Klicka confirm-knappen (sista knappen i dialogen).
+  // Radix AlertDialog portalar till body med role="alertdialog".
+  const dialogBox = page.locator('[role="alertdialog"]')
   await dialogBox.locator('button').last().click()
 
   // Vänta in att dialogen försvinner ('hidden' täcker både display:none och detached)
@@ -245,8 +246,8 @@ export async function payInvoice(
   const table = page.locator('table')
   await table.locator('button:has-text("Betala")').first().click()
 
-  // Payment dialog appears
-  const dialog = page.locator('.fixed.inset-0')
+  // Payment dialog appears (Radix Dialog.Portal → role="dialog")
+  const dialog = page.locator('[role="dialog"]')
   await dialog.waitFor({ timeout: 5_000 })
 
   // Fill payment date

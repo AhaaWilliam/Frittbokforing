@@ -33,6 +33,7 @@ function tx(overrides: Partial<BankTxInput> = {}): BankTxInput {
   return {
     amount_ore: 0,
     counterparty_name: null,
+    counterparty_iban: null,
     remittance_info: null,
     bank_tx_domain: null,
     bank_tx_family: null,

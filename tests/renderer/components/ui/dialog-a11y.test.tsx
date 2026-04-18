@@ -10,9 +10,28 @@ beforeEach(() => {
   setupMockIpc()
 })
 
+/**
+ * Sprint P (ADR 003): Dialog-implementation migrerad till Radix.
+ * Radix applicerar inte aria-modal på dialog-elementet utan hanterar
+ * modalitet via inert/aria-hidden på utanför-innehåll. Radix auto-
+ * genererar aria-labelledby-IDs. Detta test verifierar beteende
+ * (title är associerat till dialog) snarare än specifika attributvärden.
+ */
+
+function assertDialogTitleAssociation(
+  dialog: HTMLElement,
+  expectedTitleText: string,
+) {
+  const labelledBy = dialog.getAttribute('aria-labelledby')
+  expect(labelledBy).not.toBeNull()
+  const titleEl = document.getElementById(labelledBy!)
+  expect(titleEl).not.toBeNull()
+  expect(titleEl).toHaveTextContent(expectedTitleText)
+}
+
 describe('F49 — Dialog a11y', () => {
-  it('all dialogs have role="dialog", aria-modal, and aria-labelledby', () => {
-    const { unmount: u1 } = render(
+  it('ConfirmFinalizeDialog har alertdialog-role + associerad title', () => {
+    render(
       <ConfirmFinalizeDialog
         open={true}
         onOpenChange={vi.fn()}
@@ -22,12 +41,12 @@ describe('F49 — Dialog a11y', () => {
         isLoading={false}
       />,
     )
-    let dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('aria-labelledby', 'confirm-finalize-title')
-    u1()
+    const dialog = screen.getByRole('alertdialog')
+    assertDialogTitleAssociation(dialog, 'Bekräfta')
+  })
 
-    const { unmount: u2 } = render(
+  it('PaymentDialog har dialog-role + associerad title + labels på inputs', () => {
+    render(
       <PaymentDialog
         open={true}
         onOpenChange={vi.fn()}
@@ -40,16 +59,15 @@ describe('F49 — Dialog a11y', () => {
         isLoading={false}
       />,
     )
-    dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('aria-labelledby', 'payment-dialog-title')
+    const dialog = screen.getByRole('dialog')
+    assertDialogTitleAssociation(dialog, 'Betalning')
 
-    // PaymentDialog inputs have labels
     expect(screen.getByLabelText(/belopp/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/datum/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/bankavgift/i)).toBeInTheDocument()
-    u2()
+  })
 
+  it('BulkPaymentResultDialog har dialog-role + associerad title', () => {
     render(
       <BulkPaymentResultDialog
         open={true}
@@ -63,8 +81,7 @@ describe('F49 — Dialog a11y', () => {
         }}
       />,
     )
-    dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('aria-labelledby', 'bulk-result-title')
+    const dialog = screen.getByRole('dialog')
+    assertDialogTitleAssociation(dialog, 'Bulk-betalning klar')
   })
 })

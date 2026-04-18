@@ -3,9 +3,19 @@ import { useCallback, useEffect, useRef, type RefObject } from 'react'
 /**
  * Sprint K (F49-c3) — Dialog focus-trap + Escape + focus-return.
  *
- * Spec: docs/f49c-keyboard-nav-spec.md § 6.
+ * @deprecated Sprint P — alla 6 dialoger migrerade till Radix-primitives
+ * (ADR 003, Alt A). Radix exponerar samma fyra pelare via deklarativ
+ * struktur (`<Dialog.Root/Portal/Overlay/Content>`), plus inert/scroll-
+ * lock/portal som useDialogBehavior saknade. Nya dialoger ska använda
+ * `@radix-ui/react-dialog` eller `@radix-ui/react-alert-dialog`.
  *
- * Centraliserar det beteende som alla modala dialoger i renderer delar:
+ * Filen + testet behålls tills vi är säkra att ingen ny kod importerar
+ * hooken. Radera i Sprint Q eller senare.
+ *
+ * Spec: docs/f49c-keyboard-nav-spec.md § 6 (ARIA-invarianter bevaras i
+ * Radix; implementation-detaljer skiljer sig).
+ *
+ * Centraliserade beteendet som alla modala dialoger i renderer delade:
  * 1. **Focus-trap:** Tab cyklar inom containern (shift+Tab → last).
  * 2. **Escape stänger.** onClose anropas; e.stopPropagation() undviker
  *    propagering till yttre dialog (nested-support, § 6.4).
@@ -16,8 +26,6 @@ import { useCallback, useEffect, useRef, type RefObject } from 'react'
  *    hade fokus när dialogen öppnades — normalt triggern.
  *    **Känd begränsning (§ 6.3):** Om triggern unmountas medan dialogen
  *    är öppen hamnar fokus på `<body>`. Dokumenterat som acceptabelt.
- *
- * Spread `onKeyDown` på dialog-containern (backdrop eller panel).
  */
 
 const FOCUSABLE_SELECTOR =

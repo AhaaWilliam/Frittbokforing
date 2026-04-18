@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
-import { useDialogBehavior } from '../../lib/use-dialog-behavior'
 
 export interface BulkPaymentRow {
   id: number
@@ -37,16 +37,6 @@ export function BulkPaymentDialog({
   const [accountNumber, setAccountNumber] = useState('1930')
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [userNote, setUserNote] = useState('')
-  const dialogRef = useRef<HTMLDivElement>(null)
-
-  // Sprint K (F49-c3): focus-trap + Escape + focus-return.
-  const { onKeyDown } = useDialogBehavior({
-    open,
-    onClose: () => {
-      if (!isLoading) onOpenChange(false)
-    },
-    containerRef: dialogRef,
-  })
 
   useEffect(() => {
     if (open) {
@@ -62,7 +52,7 @@ export function BulkPaymentDialog({
     }
   }, [open, rows])
 
-  if (!open || rows.length === 0) return null
+  if (rows.length === 0) return null
 
   const totalOre = rows.reduce((sum, r) => {
     const ore = kronorToOre(amounts[r.id] ?? '0')
@@ -90,153 +80,161 @@ export function BulkPaymentDialog({
   }
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onKeyDown={onKeyDown}
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && isLoading) return
+        onOpenChange(next)
+      }}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="bulk-payment-title"
-        className="w-full max-w-2xl max-h-[80vh] overflow-auto rounded-lg bg-background p-6 shadow-xl"
-      >
-        <h2 id="bulk-payment-title" className="mb-4 text-base font-semibold">
-          {title}
-        </h2>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content
+          onEscapeKeyDown={(e) => {
+            if (isLoading) e.preventDefault()
+          }}
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg bg-background p-6 shadow-xl focus:outline-none"
+        >
+          <Dialog.Title className="mb-4 text-base font-semibold">
+            {title}
+          </Dialog.Title>
+          <Dialog.Description className="sr-only">
+            Formulär för bulk-betalning av flera fakturor/kostnader.
+          </Dialog.Description>
 
-        {/* Per-row amounts */}
-        <div className="mb-4 rounded-md border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-3 py-2">Nr/Beskrivning</th>
-                <th className="px-3 py-2">Motpart</th>
-                <th className="px-3 py-2 text-right">Kvar</th>
-                <th className="px-3 py-2 text-right">Betala (kr)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b last:border-b-0">
-                  <td className="px-3 py-2">{row.label}</td>
-                  <td className="px-3 py-2">{row.counterparty}</td>
-                  <td className="px-3 py-2 text-right">
-                    {formatKr(row.remaining)}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={amounts[row.id] ?? ''}
-                      onChange={(e) =>
-                        setAmounts((prev) => ({
-                          ...prev,
-                          [row.id]: e.target.value,
-                        }))
-                      }
-                      aria-label={`Betala ${row.label}`}
-                      className="w-28 rounded-md border border-input bg-background px-2 py-1 text-right text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </td>
+          {/* Per-row amounts */}
+          <div className="mb-4 rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-3 py-2">Nr/Beskrivning</th>
+                  <th className="px-3 py-2">Motpart</th>
+                  <th className="px-3 py-2 text-right">Kvar</th>
+                  <th className="px-3 py-2 text-right">Betala (kr)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="border-b last:border-b-0">
+                    <td className="px-3 py-2">{row.label}</td>
+                    <td className="px-3 py-2">{row.counterparty}</td>
+                    <td className="px-3 py-2 text-right">
+                      {formatKr(row.remaining)}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={amounts[row.id] ?? ''}
+                        onChange={(e) =>
+                          setAmounts((prev) => ({
+                            ...prev,
+                            [row.id]: e.target.value,
+                          }))
+                        }
+                        aria-label={`Betala ${row.label}`}
+                        className="w-28 rounded-md border border-input bg-background px-2 py-1 text-right text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        <div className="mb-3 text-sm font-medium text-right">
-          Summa: {formatKr(totalOre)}
-        </div>
+          <div className="mb-3 text-sm font-medium text-right">
+            Summa: {formatKr(totalOre)}
+          </div>
 
-        {/* Global fields */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="bulk-payment-date"
-              className="mb-1 block text-sm font-medium"
-            >
-              Betaldatum
-            </label>
-            <input
-              id="bulk-payment-date"
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+          {/* Global fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="bulk-payment-date"
+                className="mb-1 block text-sm font-medium"
+              >
+                Betaldatum
+              </label>
+              <input
+                id="bulk-payment-date"
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="bulk-bank-account"
+                className="mb-1 block text-sm font-medium"
+              >
+                Bankkonto
+              </label>
+              <input
+                id="bulk-bank-account"
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="bulk-bank-fee"
+                className="mb-1 block text-sm font-medium"
+              >
+                Bankavgift (kr)
+              </label>
+              <input
+                id="bulk-bank-fee"
+                type="number"
+                step="0.01"
+                min="0"
+                value={bankFeeStr}
+                onChange={(e) => setBankFeeStr(e.target.value)}
+                placeholder="0.00"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="bulk-user-note"
+                className="mb-1 block text-sm font-medium"
+              >
+                Notering
+              </label>
+              <input
+                id="bulk-user-note"
+                type="text"
+                value={userNote}
+                onChange={(e) => setUserNote(e.target.value)}
+                placeholder="Valfri notering"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </div>
-          <div>
-            <label
-              htmlFor="bulk-bank-account"
-              className="mb-1 block text-sm font-medium"
-            >
-              Bankkonto
-            </label>
-            <input
-              id="bulk-bank-account"
-              type="text"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="bulk-bank-fee"
-              className="mb-1 block text-sm font-medium"
-            >
-              Bankavgift (kr)
-            </label>
-            <input
-              id="bulk-bank-fee"
-              type="number"
-              step="0.01"
-              min="0"
-              value={bankFeeStr}
-              onChange={(e) => setBankFeeStr(e.target.value)}
-              placeholder="0.00"
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="bulk-user-note"
-              className="mb-1 block text-sm font-medium"
-            >
-              Notering
-            </label>
-            <input
-              id="bulk-user-note"
-              type="text"
-              value={userNote}
-              onChange={(e) => setUserNote(e.target.value)}
-              placeholder="Valfri notering"
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-        </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-            className="rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:opacity-50"
-          >
-            Avbryt
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isLoading || totalOre <= 0}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isLoading ? 'Bearbetar...' : `Betala ${rows.length} poster`}
-          </button>
-        </div>
-      </div>
-    </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                disabled={isLoading}
+                className="rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:opacity-50"
+              >
+                Avbryt
+              </button>
+            </Dialog.Close>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isLoading || totalOre <= 0}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isLoading ? 'Bearbetar...' : `Betala ${rows.length} poster`}
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
