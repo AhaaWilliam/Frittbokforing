@@ -26,6 +26,40 @@ import {
   seedManualEntry,
 } from '../system/helpers/system-test-context'
 
+interface BalanceRow {
+  id: number
+  verification_series: string
+  verification_number: number
+  total_debit: number
+  total_credit: number
+}
+
+interface SeriesRow {
+  verification_series: string
+  verification_number: number
+}
+
+interface InvoiceNumberRow {
+  num: number
+}
+
+interface AmountLineRow {
+  debit_ore: number
+  credit_ore: number
+}
+
+interface InvoiceAmountsRow {
+  net_amount_ore: number
+  vat_amount_ore: number
+  total_amount_ore: number
+  paid_amount_ore: number
+}
+
+interface InvoiceUnpaidRow {
+  id: number
+  total_amount_ore: number
+}
+
 let ctx: SystemTestContext
 
 beforeAll(() => {
@@ -93,7 +127,7 @@ describe('Finansiella invarianter', () => {
       GROUP BY je.id
     `,
       )
-      .all() as any[]
+      .all() as BalanceRow[]
 
     expect(balances.length).toBeGreaterThan(5) // At least 5 entries
 
@@ -126,7 +160,7 @@ describe('Finansiella invarianter', () => {
       ORDER BY verification_series, verification_number
     `,
       )
-      .all(ctx.seed.fiscalYearId) as any[]
+      .all(ctx.seed.fiscalYearId) as SeriesRow[]
 
     // Group by series
     const bySeriesMap = new Map<string, number[]>()
@@ -158,7 +192,7 @@ describe('Finansiella invarianter', () => {
       ORDER BY num
     `,
       )
-      .all(ctx.seed.fiscalYearId) as any[]
+      .all(ctx.seed.fiscalYearId) as InvoiceNumberRow[]
 
     for (let i = 0; i < numbers.length; i++) {
       expect(numbers[i].num).toBe(i + 1)
@@ -172,7 +206,7 @@ describe('Finansiella invarianter', () => {
     // Check journal_entry_lines
     const lines = ctx.db
       .prepare('SELECT debit_ore, credit_ore FROM journal_entry_lines')
-      .all() as any[]
+      .all() as AmountLineRow[]
     for (const line of lines) {
       expect(Number.isInteger(line.debit_ore)).toBe(true)
       expect(Number.isInteger(line.credit_ore)).toBe(true)
@@ -183,7 +217,7 @@ describe('Finansiella invarianter', () => {
       .prepare(
         'SELECT net_amount_ore, vat_amount_ore, total_amount_ore, paid_amount_ore FROM invoices',
       )
-      .all() as any[]
+      .all() as InvoiceAmountsRow[]
     for (const inv of invoices) {
       expect(Number.isInteger(inv.net_amount_ore)).toBe(true)
       expect(Number.isInteger(inv.vat_amount_ore)).toBe(true)
@@ -229,7 +263,7 @@ describe('Finansiella invarianter', () => {
       .prepare(
         "SELECT id, total_amount_ore FROM invoices WHERE status = 'unpaid' LIMIT 1",
       )
-      .get() as any
+      .get() as InvoiceUnpaidRow | undefined
     if (inv) {
       ctx.invoiceService.payInvoice(ctx.db, {
         invoice_id: inv.id,

@@ -31,6 +31,7 @@ vi.mock('../src/main/db', () => ({
   getDbPath: () => '/tmp/mock-db-path.db',
 }))
 
+import type Database from 'better-sqlite3'
 import { dialog } from 'electron'
 import { createBackup } from '../src/main/services/backup-service'
 
@@ -49,7 +50,7 @@ describe('S59 F9 — timezone regression: backup-service', () => {
     const mockShowSaveDialog = vi.mocked(dialog.showSaveDialog)
     mockShowSaveDialog.mockResolvedValue({ canceled: true, filePath: '' })
 
-    const mockDb = { backup: vi.fn() } as any
+    const mockDb = { backup: vi.fn() } as unknown as Database.Database
     await createBackup(mockDb)
 
     expect(mockShowSaveDialog).toHaveBeenCalledWith(

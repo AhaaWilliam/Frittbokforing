@@ -23,6 +23,21 @@ import {
   type SystemTestContext,
 } from './helpers/system-test-context'
 
+interface JournalEntryRow {
+  id: number
+  verification_series: string
+  verification_number: number
+  source_type: string
+  status: string
+  fiscal_year_id: number
+}
+
+interface JournalLineRow {
+  account_number: string
+  debit_ore: number
+  credit_ore: number
+}
+
 let ctx: SystemTestContext
 
 beforeAll(() => {
@@ -75,20 +90,26 @@ describe('Räkenskapsårsövergång', () => {
       WHERE fiscal_year_id = ? AND source_type = 'opening_balance'
     `,
       )
-      .all(fy2.fiscalYear.id) as any[]
+      .all(fy2.fiscalYear.id) as JournalEntryRow[]
     expect(ibEntries.length).toBe(1)
     expect(ibEntries[0].verification_series).toBe('O')
 
     // IB-verifikation balanserar
     const ibLines = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(ibEntries[0].id) as any[]
-    const ibDebit = ibLines.reduce((s: number, l: any) => s + l.debit_ore, 0)
-    const ibCredit = ibLines.reduce((s: number, l: any) => s + l.credit_ore, 0)
+      .all(ibEntries[0].id) as JournalLineRow[]
+    const ibDebit = ibLines.reduce(
+      (s: number, l: JournalLineRow) => s + l.debit_ore,
+      0,
+    )
+    const ibCredit = ibLines.reduce(
+      (s: number, l: JournalLineRow) => s + l.credit_ore,
+      0,
+    )
     expect(ibDebit).toBe(ibCredit)
 
     // PL-konton (3xxx-8xxx) ska ha IB = 0
-    const plLines = ibLines.filter((l: any) => {
+    const plLines = ibLines.filter((l: JournalLineRow) => {
       const acctNum = parseInt(l.account_number, 10)
       return acctNum >= 3000 && acctNum <= 8999
     })
@@ -141,14 +162,18 @@ describe('Räkenskapsårsövergång', () => {
 
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(resultEntry.id) as any[]
+      .all(resultEntry.id) as JournalLineRow[]
 
     // Vinst: DEBET 8999, KREDIT 2099
     expect(
-      jels.some((l: any) => l.account_number === '8999' && l.debit_ore > 0),
+      jels.some(
+        (l: JournalLineRow) => l.account_number === '8999' && l.debit_ore > 0,
+      ),
     ).toBe(true)
     expect(
-      jels.some((l: any) => l.account_number === '2099' && l.credit_ore > 0),
+      jels.some(
+        (l: JournalLineRow) => l.account_number === '2099' && l.credit_ore > 0,
+      ),
     ).toBe(true)
   })
 
@@ -165,7 +190,7 @@ describe('Räkenskapsårsövergång', () => {
       WHERE fiscal_year_id = ? AND source_type = 'opening_balance'
     `,
       )
-      .get(fy2.fiscalYear.id) as any
+      .get(fy2.fiscalYear.id) as JournalEntryRow
     expect(ibEntry).toBeDefined()
 
     // opening_balance poster ska kunna raderas (exception i triggers)
@@ -189,7 +214,7 @@ describe('Räkenskapsårsövergång', () => {
       LIMIT 1
     `,
       )
-      .get(ctx.seed.fiscalYearId) as any
+      .get(ctx.seed.fiscalYearId) as JournalEntryRow
 
     if (normalEntry) {
       expect(() => {

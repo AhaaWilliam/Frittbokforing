@@ -129,7 +129,11 @@ describe('Cross-FY betalning (B7)', () => {
     // Payment JE tillhör FY2027
     const payJe = ctx.db
       .prepare('SELECT * FROM journal_entries WHERE id = ?')
-      .get(payResult.data.payment.journal_entry_id) as any
+      .get(payResult.data.payment.journal_entry_id) as {
+      fiscal_year_id: number
+      verification_series: string
+      verification_number: number
+    }
     expect(payJe.fiscal_year_id).toBe(fy2.fiscalYear.id)
 
     // B-serie verifikationsnummer startar om i FY2027
@@ -161,7 +165,11 @@ describe('Cross-FY betalning (B7)', () => {
       .prepare(
         'SELECT fiscal_year_id, verification_series, verification_number FROM journal_entries WHERE id = ?',
       )
-      .get(payResult.data.payment.journal_entry_id) as any
+      .get(payResult.data.payment.journal_entry_id) as {
+      fiscal_year_id: number
+      verification_series: string
+      verification_number: number
+    }
 
     // JE tillhör FY2027, inte FY2026
     expect(payJe.fiscal_year_id).toBe(fy2.fiscalYear.id)

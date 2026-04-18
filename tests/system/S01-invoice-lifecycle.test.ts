@@ -25,6 +25,30 @@ import {
   type SystemTestContext,
 } from './helpers/system-test-context'
 
+interface InvoiceRow {
+  id: number
+  status: string
+  invoice_number: string | null
+  journal_entry_id: number | null
+  total_amount_ore: number
+  vat_amount_ore: number
+}
+
+interface JournalEntryRow {
+  id: number
+  verification_series: string
+  verification_number: number
+  source_type: string
+  status: string
+  fiscal_year_id: number
+}
+
+interface JournalLineRow {
+  account_number: string
+  debit_ore: number
+  credit_ore: number
+}
+
 let ctx: SystemTestContext
 
 beforeAll(() => {
@@ -93,7 +117,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // 4. Verifiera draft-tillstånd
     const draft = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(invoiceId) as any
+      .get(invoiceId) as InvoiceRow
     expect(draft.status).toBe('draft')
     expect(draft.journal_entry_id).toBeNull()
 
@@ -104,7 +128,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const finalized = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(invoiceId) as any
+      .get(invoiceId) as InvoiceRow
     expect(finalized.status).toBe('unpaid')
     expect(finalized.invoice_number).toBe('1')
     expect(finalized.journal_entry_id).not.toBeNull()
@@ -112,7 +136,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // Verify journal entry
     const je = ctx.db
       .prepare('SELECT * FROM journal_entries WHERE id = ?')
-      .get(finalized.journal_entry_id) as any
+      .get(finalized.journal_entry_id) as JournalEntryRow
     expect(je.verification_series).toBe('A')
     expect(je.verification_number).toBe(1)
     expect(je.source_type).toBe('auto_invoice')
@@ -123,30 +147,30 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
       .prepare(
         'SELECT * FROM journal_entry_lines WHERE journal_entry_id = ? ORDER BY line_number',
       )
-      .all(finalized.journal_entry_id) as any[]
+      .all(finalized.journal_entry_id) as JournalLineRow[]
     expect(jels.length).toBeGreaterThanOrEqual(3)
 
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit) // balans!
 
     // Check specific accounts
     const debit1510 = jels.find(
-      (l: any) => l.account_number === '1510' && l.debit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '1510' && l.debit_ore > 0,
     )
     expect(debit1510).toBeDefined()
     const credit3002 = jels.find(
-      (l: any) => l.account_number === '3002' && l.credit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '3002' && l.credit_ore > 0,
     )
     expect(credit3002).toBeDefined()
     const credit2610 = jels.find(
-      (l: any) => l.account_number === '2610' && l.credit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '2610' && l.credit_ore > 0,
     )
     expect(credit2610).toBeDefined()
 
@@ -163,35 +187,39 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const paid = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(invoiceId) as any
+      .get(invoiceId) as InvoiceRow
     expect(paid.status).toBe('paid')
 
     // Payment journal entry
     const payJe = ctx.db
       .prepare('SELECT * FROM journal_entries WHERE id = ?')
-      .get(payResult.data.payment.journal_entry_id) as any
+      .get(payResult.data.payment.journal_entry_id) as JournalEntryRow
     expect(payJe.verification_series).toBe('A')
     expect(payJe.verification_number).toBe(2)
 
     const payJels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(payJe.id) as any[]
+      .all(payJe.id) as JournalLineRow[]
     const payDebit = payJels.reduce(
-      (sum: number, l: any) => sum + l.debit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.debit_ore,
       0,
     )
     const payCredit = payJels.reduce(
-      (sum: number, l: any) => sum + l.credit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.credit_ore,
       0,
     )
     expect(payDebit).toBe(payCredit)
 
     // Debit 1930 (bank), Credit 1510 (kundfordran)
     expect(
-      payJels.some((l: any) => l.account_number === '1930' && l.debit_ore > 0),
+      payJels.some(
+        (l: JournalLineRow) => l.account_number === '1930' && l.debit_ore > 0,
+      ),
     ).toBe(true)
     expect(
-      payJels.some((l: any) => l.account_number === '1510' && l.credit_ore > 0),
+      payJels.some(
+        (l: JournalLineRow) => l.account_number === '1510' && l.credit_ore > 0,
+      ),
     ).toBe(true)
 
     // 7. Dashboard
@@ -284,28 +312,28 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(inv.journal_entry_id) as any[]
+      .all(inv.journal_entry_id) as JournalLineRow[]
 
     // Should have separate credit entries for 2610 (25%) and 2620 (12%)
     const credit2610 = jels.find(
-      (l: any) => l.account_number === '2610' && l.credit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '2610' && l.credit_ore > 0,
     )
     const credit2620 = jels.find(
-      (l: any) => l.account_number === '2620' && l.credit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '2620' && l.credit_ore > 0,
     )
     expect(credit2610).toBeDefined()
     expect(credit2620).toBeDefined()
 
     // Balance check
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit)
@@ -339,7 +367,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     ctx.invoiceService.finalizeDraft(ctx.db, draftResult.data.id)
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     const totalAmount = inv.total_amount_ore
 
     // Delbetala 60%
@@ -355,7 +383,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const afterPart = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     expect(afterPart.status).toBe('partial')
 
     // Slutbetala resterande
@@ -371,7 +399,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const afterFull = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     expect(afterFull.status).toBe('paid')
 
     // 3 verifikationer total: A1 (bokföring), A2 (delbetala), A3 (slutbetala)
@@ -383,9 +411,11 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
       ORDER BY verification_number
     `,
       )
-      .all(ctx.seed.fiscalYearId) as any[]
+      .all(ctx.seed.fiscalYearId) as JournalEntryRow[]
     expect(jes.length).toBe(3)
-    expect(jes.map((j: any) => j.verification_number)).toEqual([1, 2, 3])
+    expect(jes.map((j: JournalEntryRow) => j.verification_number)).toEqual([
+      1, 2, 3,
+    ])
 
     // Dashboard revenue should not be duplicated
     const dashboard = ctx.dashboardService.getDashboardSummary(
@@ -445,7 +475,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {
       invoice_id: draftResult.data.id,
       amount_ore: inv.total_amount_ore,
@@ -459,7 +489,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     // Betalningsverifikation tillhör FY2027
     const payJe = ctx.db
       .prepare('SELECT * FROM journal_entries WHERE id = ?')
-      .get(payResult.data.payment.journal_entry_id) as any
+      .get(payResult.data.payment.journal_entry_id) as JournalEntryRow
     expect(payJe.fiscal_year_id).toBe(fy2.fiscalYear.id)
   })
 
@@ -550,7 +580,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     if (!r1.success) return
     const inv1 = ctx.db
       .prepare('SELECT invoice_number FROM invoices WHERE id = ?')
-      .get(draft1) as any
+      .get(draft1) as InvoiceRow
     expect(inv1.invoice_number).toBe('1')
 
     // Finalisera #3 → fakturanr 2 (inte 3)
@@ -559,7 +589,7 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
     if (!r3.success) return
     const inv3 = ctx.db
       .prepare('SELECT invoice_number FROM invoices WHERE id = ?')
-      .get(draft3) as any
+      .get(draft3) as InvoiceRow
     expect(inv3.invoice_number).toBe('2')
   })
 
@@ -593,14 +623,14 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(inv.journal_entry_id) as any[]
+      .all(inv.journal_entry_id) as JournalLineRow[]
 
     // Should use 3001 (custom) instead of default 3002
     const credit3001 = jels.find(
-      (l: any) => l.account_number === '3001' && l.credit_ore > 0,
+      (l: JournalLineRow) => l.account_number === '3001' && l.credit_ore > 0,
     )
     expect(credit3001).toBeDefined()
   })
@@ -635,15 +665,15 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     const inv = ctx.db
       .prepare('SELECT * FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as InvoiceRow
     expect(inv.vat_amount_ore).toBe(0)
 
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(inv.journal_entry_id) as any[]
+      .all(inv.journal_entry_id) as JournalLineRow[]
 
     // No VAT account lines (2610/2620/2630)
-    const vatLines = jels.filter((l: any) =>
+    const vatLines = jels.filter((l: JournalLineRow) =>
       ['2610', '2620', '2630'].includes(l.account_number),
     )
     expect(vatLines.length).toBe(0)
@@ -653,11 +683,11 @@ describe('Komplett fakturaflöde — kundfaktura', () => {
 
     // Balance
     const totalDebit = jels.reduce(
-      (sum: number, l: any) => sum + l.debit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.debit_ore,
       0,
     )
     const totalCredit = jels.reduce(
-      (sum: number, l: any) => sum + l.credit_ore,
+      (sum: number, l: JournalLineRow) => sum + l.credit_ore,
       0,
     )
     expect(totalDebit).toBe(totalCredit)

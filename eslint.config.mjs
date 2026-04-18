@@ -1,6 +1,7 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
 import prettierPlugin from 'eslint-plugin-prettier'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
 
 const toISOStringMessage =
   'Använd todayLocal() från shared/date-utils istället för .toISOString().slice/.split/.substring — M13/M56/M60.'
@@ -22,9 +23,11 @@ export default [
     plugins: {
       '@typescript-eslint': tsPlugin,
       prettier: prettierPlugin,
+      'jsx-a11y': jsxA11y,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      ...jsxA11y.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',

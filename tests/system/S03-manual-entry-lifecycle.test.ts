@@ -22,6 +22,25 @@ import {
   type SystemTestContext,
 } from './helpers/system-test-context'
 
+interface JournalEntryRow {
+  id: number
+  verification_series: string
+  verification_number: number
+  source_type: string
+  status: string
+}
+
+interface SeriesRow {
+  verification_series: string
+  verification_number: number
+}
+
+interface JournalLineRow {
+  account_number: string
+  debit_ore: number
+  credit_ore: number
+}
+
 let ctx: SystemTestContext
 
 beforeAll(() => {
@@ -62,7 +81,7 @@ describe('Manuella verifikationer — C-serie', () => {
     // C-serie
     const je = ctx.db
       .prepare('SELECT * FROM journal_entries WHERE id = ?')
-      .get(journalEntryId) as any
+      .get(journalEntryId) as JournalEntryRow
     expect(je.verification_series).toBe('C')
 
     // Dashboard: costs inkluderar 500 kr
@@ -149,11 +168,17 @@ describe('Manuella verifikationer — C-serie', () => {
       ORDER BY verification_series, verification_number
     `,
       )
-      .all(ctx.seed.fiscalYearId) as any[]
+      .all(ctx.seed.fiscalYearId) as SeriesRow[]
 
-    const aSeries = series.filter((s: any) => s.verification_series === 'A')
-    const bSeries = series.filter((s: any) => s.verification_series === 'B')
-    const cSeries = series.filter((s: any) => s.verification_series === 'C')
+    const aSeries = series.filter(
+      (s: SeriesRow) => s.verification_series === 'A',
+    )
+    const bSeries = series.filter(
+      (s: SeriesRow) => s.verification_series === 'B',
+    )
+    const cSeries = series.filter(
+      (s: SeriesRow) => s.verification_series === 'C',
+    )
 
     expect(aSeries.length).toBe(2)
     expect(bSeries.length).toBe(1)
@@ -216,7 +241,7 @@ describe('Manuella verifikationer — C-serie', () => {
     // Journal entry lines should only have 2 (not 5)
     const jels = ctx.db
       .prepare('SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?')
-      .all(finalizeResult.data.journalEntryId) as any[]
+      .all(finalizeResult.data.journalEntryId) as JournalLineRow[]
     expect(jels.length).toBe(2)
   })
 })

@@ -56,7 +56,7 @@ describe('Edge cases och gränsfall', () => {
       .prepare(
         "SELECT COUNT(*) as cnt FROM invoices WHERE fiscal_year_id = ? AND status != 'draft'",
       )
-      .get(ctx.seed.fiscalYearId) as any
+      .get(ctx.seed.fiscalYearId) as { cnt: number }
     expect(invoiceCount.cnt).toBe(0)
 
     // getDashboardSummary
@@ -140,7 +140,7 @@ describe('Edge cases och gränsfall', () => {
     ctx.invoiceService.finalizeDraft(ctx.db, draftResult.data.id)
     const inv = ctx.db
       .prepare('SELECT total_amount_ore FROM invoices WHERE id = ?')
-      .get(draftResult.data.id) as any
+      .get(draftResult.data.id) as { total_amount_ore: number }
 
     // Betala samma dag som fakturadatum
     const payResult = ctx.invoiceService.payInvoice(ctx.db, {

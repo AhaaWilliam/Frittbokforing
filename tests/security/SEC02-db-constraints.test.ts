@@ -21,6 +21,23 @@ import {
 import { expectSqlError } from './helpers/security-test-context'
 import { seedAndFinalizeInvoice } from '../system/helpers/system-test-context'
 
+interface InvoiceJeRow {
+  id: number
+  journal_entry_id: number
+}
+
+interface LastInsertIdRow {
+  id: number
+}
+
+interface LineIdRow {
+  id: number
+}
+
+interface OrgNumberRow {
+  org_number: string
+}
+
 let ctx: SystemTestContext
 
 beforeAll(() => {
@@ -47,7 +64,7 @@ describe('Database constraints — defense in depth', () => {
       })
       const inv = ctx.db
         .prepare('SELECT journal_entry_id FROM invoices WHERE id = ?')
-        .get(invoiceId) as any
+        .get(invoiceId) as InvoiceJeRow
       const jeId = inv.journal_entry_id
 
       // UPDATE journal_date → TRIGGER ska blockera
@@ -66,14 +83,14 @@ describe('Database constraints — defense in depth', () => {
       })
       const inv = ctx.db
         .prepare('SELECT journal_entry_id FROM invoices WHERE id = ?')
-        .get(invoiceId) as any
+        .get(invoiceId) as InvoiceJeRow
       const jeId = inv.journal_entry_id
 
       const line = ctx.db
         .prepare(
           'SELECT id FROM journal_entry_lines WHERE journal_entry_id = ? LIMIT 1',
         )
-        .get(jeId) as any
+        .get(jeId) as LineIdRow
 
       const err = expectSqlError(
         ctx,
@@ -95,7 +112,9 @@ describe('Database constraints — defense in depth', () => {
         )
         .run(ctx.seed.companyId, ctx.seed.fiscalYearId)
       const jeId = (
-        ctx.db.prepare('SELECT last_insert_rowid() as id').get() as any
+        ctx.db
+          .prepare('SELECT last_insert_rowid() as id')
+          .get() as LastInsertIdRow
       ).id
 
       // Insert unbalanced lines
@@ -142,7 +161,9 @@ describe('Database constraints — defense in depth', () => {
         )
         .run(ctx.seed.companyId, ctx.seed.fiscalYearId)
       const jeId = (
-        ctx.db.prepare('SELECT last_insert_rowid() as id').get() as any
+        ctx.db
+          .prepare('SELECT last_insert_rowid() as id')
+          .get() as LastInsertIdRow
       ).id
 
       ctx.db
@@ -190,7 +211,7 @@ describe('Database constraints — defense in depth', () => {
       seedAndFinalizeInvoice(ctx, { invoiceDate: '2026-03-15' })
       const inv = ctx.db
         .prepare("SELECT id FROM invoices WHERE status = 'unpaid' LIMIT 1")
-        .get() as any
+        .get() as LineIdRow
 
       const err = expectSqlError(ctx, 'DELETE FROM invoices WHERE id = ?', [
         inv.id,
@@ -234,7 +255,9 @@ describe('Database constraints — defense in depth', () => {
         )
         .run(ctx.seed.companyId, ctx.seed.fiscalYearId)
       const jeId = (
-        ctx.db.prepare('SELECT last_insert_rowid() as id').get() as any
+        ctx.db
+          .prepare('SELECT last_insert_rowid() as id')
+          .get() as LastInsertIdRow
       ).id
 
       const err = expectSqlError(
@@ -268,7 +291,9 @@ describe('Database constraints — defense in depth', () => {
     it('SEC02-UNIQUE-02: companies org_number unique', () => {
       // Already have a company with org_number. Try duplicate
       const existingOrg = (
-        ctx.db.prepare('SELECT org_number FROM companies LIMIT 1').get() as any
+        ctx.db
+          .prepare('SELECT org_number FROM companies LIMIT 1')
+          .get() as OrgNumberRow
       ).org_number
       const err = expectSqlError(
         ctx,

@@ -22,6 +22,7 @@ import {
   seedManualEntry,
   type SystemTestContext,
 } from './helpers/system-test-context'
+import type { Counterparty } from '../../src/shared/types'
 
 let ctx: SystemTestContext
 
@@ -77,13 +78,15 @@ describe('Stamdata — CRUD och affärsregler', () => {
       type: 'supplier',
     })
 
-    expect(customers.some((c: any) => c.name === 'Kundföretag')).toBe(true)
-    expect(customers.some((c: any) => c.name === 'Leverantörsföretag')).toBe(
-      false,
-    )
-    expect(suppliers.some((s: any) => s.name === 'Leverantörsföretag')).toBe(
+    expect(customers.some((c: Counterparty) => c.name === 'Kundföretag')).toBe(
       true,
     )
+    expect(
+      customers.some((c: Counterparty) => c.name === 'Leverantörsföretag'),
+    ).toBe(false)
+    expect(
+      suppliers.some((s: Counterparty) => s.name === 'Leverantörsföretag'),
+    ).toBe(true)
   })
 
   it('S07-03: produkt med kundspecifika priser', () => {
