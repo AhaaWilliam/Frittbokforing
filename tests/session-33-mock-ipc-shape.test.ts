@@ -35,8 +35,14 @@ describe('F57: mockIpcResponse shape validation', () => {
   })
 
   it('accepts correct success response', () => {
+    // skipDataValidation: detta test validerar enbart IpcResult-shape (F57),
+    // inte per-kanal-data-schema (F59) som kräver tät fixture.
     expect(() => {
-      mockIpcResponse('invoice:list', { success: true, data: [] })
+      mockIpcResponse(
+        'invoice:list',
+        { success: true, data: [] },
+        { skipDataValidation: true },
+      )
     }).not.toThrow()
   })
 

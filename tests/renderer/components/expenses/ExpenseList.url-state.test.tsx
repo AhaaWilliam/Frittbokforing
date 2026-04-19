@@ -15,12 +15,15 @@ const EXPENSE_ITEMS = [
     description: 'Kontorsmaterial',
     supplier_invoice_number: 'INV-001',
     total_amount_ore: 12500,
-    paid_amount_ore: 5000,
+    total_paid: 5000,
+    remaining: 7500,
     status: 'partial',
     verification_number: 1,
     verification_series: 'B',
+    journal_entry_id: 100,
     expense_type: 'normal',
     has_credit_note: 0,
+    credits_expense_id: null,
   },
 ]
 
@@ -38,7 +41,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-06-15T10:00:00'))
   mockIpcResponse('expense:list', {
     success: true,
-    data: { expenses: EXPENSE_ITEMS, counts: COUNTS },
+    data: { expenses: EXPENSE_ITEMS, counts: COUNTS, total_items: EXPENSE_ITEMS.length },
   })
 })
 

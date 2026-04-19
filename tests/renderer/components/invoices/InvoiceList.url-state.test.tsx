@@ -16,12 +16,15 @@ const INVOICE_ITEMS = [
     net_amount_ore: 10000,
     vat_amount_ore: 2500,
     total_amount_ore: 12500,
-    paid_amount_ore: 0,
+    total_paid: 0,
+    remaining: 12500,
     status: 'unpaid',
+    payment_terms: 30,
     verification_number: 1,
-    verification_series: 'A',
+    journal_entry_id: 100,
     invoice_type: 'normal',
     has_credit_note: 0,
+    credits_invoice_id: null,
   },
 ]
 
@@ -39,7 +42,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-06-15T10:00:00'))
   mockIpcResponse('invoice:list', {
     success: true,
-    data: { items: INVOICE_ITEMS, counts: COUNTS },
+    data: { items: INVOICE_ITEMS, counts: COUNTS, total_items: INVOICE_ITEMS.length },
   })
 })
 

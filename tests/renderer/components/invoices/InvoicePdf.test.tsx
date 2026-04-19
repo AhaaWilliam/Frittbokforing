@@ -41,7 +41,7 @@ const COUNTS = { total: 3, draft: 1, unpaid: 1, partial: 0, paid: 1, overdue: 0 
 function renderList(onNavigate = vi.fn()) {
   mockIpcResponse('invoice:list', {
     success: true,
-    data: { items: INVOICE_ITEMS, counts: COUNTS },
+    data: { items: INVOICE_ITEMS, counts: COUNTS, total_items: INVOICE_ITEMS.length },
   })
   return renderWithProviders(<InvoiceList onNavigate={onNavigate} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 }
@@ -173,7 +173,7 @@ describe('InvoiceList PDF features', () => {
   it('P8: axe-check passes with expanded checkboxes', async () => {
     mockIpcResponse('invoice:list', {
       success: true,
-      data: { items: INVOICE_ITEMS, counts: COUNTS },
+      data: { items: INVOICE_ITEMS, counts: COUNTS, total_items: INVOICE_ITEMS.length },
     })
     const { axeResults } = await renderWithProviders(<InvoiceList onNavigate={vi.fn()} />)
     expect(axeResults?.violations).toEqual([])

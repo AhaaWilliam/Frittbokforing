@@ -15,7 +15,7 @@
 import { vi, afterEach } from 'vitest'
 import { z } from 'zod'
 import { channelMap, type ChannelName } from '../../src/shared/ipc-schemas'
-import { CHANNEL_RESPONSE_SCHEMAS } from './channel-response-schemas'
+import { channelResponseMap } from '../../src/shared/ipc-response-schemas'
 
 // ── IpcResult shape validation (F57) ─────────────────────────────────
 
@@ -311,7 +311,9 @@ export function mockIpcResponse(
 
     // F59: per-channel data-schema validation
     if (!options?.skipDataValidation) {
-      const dataSchema = CHANNEL_RESPONSE_SCHEMAS[channel]
+      const dataSchema = (channelResponseMap as Record<string, z.ZodType>)[
+        channel
+      ]
       if (dataSchema && parsed.data.success) {
         const dataResult = dataSchema.safeParse(parsed.data.data)
         if (!dataResult.success) {
