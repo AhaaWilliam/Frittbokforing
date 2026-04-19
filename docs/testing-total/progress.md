@@ -49,7 +49,22 @@ de 3 mutanter som inte dödas är dead code — matematisk omöjlig utan att
 ändra produktionskoden (vilket prompten förbjuder under testbygget).
 82.35% = empirisk täckningsgrad för icke-dead kod.
 
-## Phase 2 — property-based
+## Phase 2 — property-based ✅
+
+Done 2026-04-19.
+
+4 testfiler i `tests/property/`, 36 properties:
+
+- `money.property.test.ts` — 12 properties för M131 (multiplyKrToOre/Ore×Decimal)
+- `vat.property.test.ts` — 9 properties för VAT per-line + aggregate
+- `rate-limiter.property.test.ts` — 7 properties för auth rate-limiter
+- `rounding.property.test.ts` — 8 properties för M99 öresutjämnings-villkor
+
+Varje property: 300–1000 runs. Alla gröna.
+Inga shrunk motexempel = kodbasen är konsekvent i property-space över
+genererad input-domän. 
+
+Över målet 20. Tid: ~45 min. Script: `npm run test:property`.
 
 ## Phase 3 — invariant audit
 
