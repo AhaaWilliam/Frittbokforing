@@ -19,6 +19,9 @@ export const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
 }
 
 export function kronorToOre(kr: string): number {
-  const n = parseFloat(kr)
+  // F-TT-006: parseFloat("99,50") = 99 (tappar decimaler) → använd
+  // .replace(',', '.') först.
+  const cleaned = kr.replace(/\s/g, '').replace(',', '.')
+  const n = parseFloat(cleaned)
   return isNaN(n) ? 0 : Math.round(n * 100)
 }

@@ -180,6 +180,38 @@ fix i schemat kommer testet grönt. Testet lämnas som-är (röd vakt).
 
 ## Phase 7 — security gaps
 
+### F-TT-006: kronorToOre hanterar inte svensk komma-notation ✅ FIXED
+
+**Problem:** Tre varianter av `kronorToOre`/`krToOre` i renderer-lagret
+tappar decimaler vid svensk komma-notation:
+
+- `src/renderer/lib/format.ts:kronorToOre` använde `Number("99,50")` → NaN → 0
+- `src/renderer/components/accruals/accrual-constants.ts:kronorToOre`
+  använde `parseFloat("99,50")` → 99 → 9900 öre
+- `src/renderer/components/budget/budget-grid-utils.ts:krToOre` samma mönster
+
+**Påverkan:** PaymentDialog, BulkPaymentDialog, CreateAccrualDialog,
+budget-flödet — alla betalnings- och beloppsbaserade dialoger. Svenska
+användare som skriver "99,50" fick 99 kr bokfört istället för 99,50 kr.
+Samma klass som F68 (F44 under kontraktsnamn) som fixades för faktura- och
+kostnads-rader i Sprint S.
+
+**Fix:** Alla tre konverterare gör nu `.replace(/\s/g, '').replace(',', '.')`
+före parseFloat. 21 regression-tester i `tests/shared/kronorToOre-locale.test.ts`.
+
+---
+
+### F-TT-005: product.ts använder parseFloat för _priceKr (F68-klass) ✅ FIXED
+
+**Problem:** `src/renderer/lib/form-schemas/product.ts` använde `parseFloat`
+både i Zod-refine (validering) och i transformern som konverterar till
+default_price_ore. Produkt-default-pris tappade decimaler vid svensk input.
+
+**Fix:** Använder nu `parseDecimal` från `src/shared/money.ts` (M131b helper).
+Täcks av existerande parseDecimal-property-tester.
+
+---
+
 ### F-TT-004: User-enumeration via login-timing ✅ FIXED
 
 **Problem:** `auth-service.login()` kollade `vault.findUser(userId)` först och

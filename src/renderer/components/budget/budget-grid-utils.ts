@@ -20,7 +20,9 @@ export function oreToKr(ore: number): string {
 }
 
 export function krToOre(kr: string): number {
-  const n = parseFloat(kr)
+  // F-TT-006: svensk komma-notation måste hanteras (parseFloat("99,50") = 99).
+  const cleaned = kr.replace(/\s/g, '').replace(',', '.')
+  const n = parseFloat(cleaned)
   return isNaN(n) ? 0 : Math.round(n * 100)
 }
 

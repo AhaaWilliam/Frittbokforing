@@ -26,7 +26,13 @@ export function formatReportAmount(amountOre: number): string {
 }
 
 export function kronorToOre(kronor: string | number): number {
-  return Math.round(Number(kronor) * 100)
+  // F-TT-006: svensk komma-notation ("99,50") måste hanteras. Tidigare
+  // gick "99,50" via `Number()` → NaN → 0 → tyst datakorruption vid
+  // betalning.
+  if (typeof kronor === 'number') return Math.round(kronor * 100)
+  const cleaned = kronor.replace(/\s/g, '').replace(',', '.')
+  const n = parseFloat(cleaned)
+  return isNaN(n) ? 0 : Math.round(n * 100)
 }
 
 // Re-export from shared date-utils to avoid breaking existing renderer imports

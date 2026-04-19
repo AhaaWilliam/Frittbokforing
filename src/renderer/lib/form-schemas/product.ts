@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CreateProductInputSchema } from '../../../shared/ipc-schemas'
 import { toOre } from '../format'
+import { parseDecimal } from '../../../shared/money'
 
 // Form-payload utan company_id — injiceras av useCreateProduct (M145).
 export const ProductPayloadSchema = CreateProductInputSchema.omit({
@@ -16,7 +17,7 @@ export const ProductFormStateSchema = z.object({
   _priceKr: z
     .string()
     .refine(
-      (v) => v === '' || (!isNaN(parseFloat(v)) && parseFloat(v) >= 0),
+      (v) => v === '' || (!isNaN(parseDecimal(v)) && parseDecimal(v) >= 0),
       'Ange ett giltigt pris',
     ),
   vat_code_id: z.number().int().positive('Välj en momskod'),
@@ -45,7 +46,7 @@ export function transformProductForm(form: ProductFormState): ProductPayload {
     description: form.description.trim() || null,
     article_type: form.article_type,
     unit: form.unit,
-    default_price_ore: toOre(parseFloat(form._priceKr) || 0),
+    default_price_ore: toOre(parseDecimal(form._priceKr) || 0),
     vat_code_id: form.vat_code_id,
     account_id: form.account_id,
   }
