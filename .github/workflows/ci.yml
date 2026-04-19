@@ -30,6 +30,16 @@ jobs:
       - run: npm run check:m133
       - run: npm run check:m133-ast
       - run: npm run check:m153
+      # Fail-fast smoke per test-kategori — fångar om en katalog råkar tas
+      # bort eller glob-filteras bort. Varje kommando är ~1s (< 30s totalt)
+      # och ger tydlig CI-rapportering per test-lager.
+      - run: npm run test:property
+      - run: npm run test:invariants
+      - run: npm run test:state-machine
+      - run: npm run test:security-fuzz
+      # Full svit (redundant mot ovan men säkerställer att inget lager är
+      # ensamt grönt medan resten failar — och täcker övriga tester/ som
+      # inte grupperas i kategorierna ovan).
       - run: npm run test -- --reporter=verbose
       - run: npm run build
 

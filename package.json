@@ -38,7 +38,10 @@
     "check:m133-ast": "node scripts/check-m133-ast.mjs --self-test && node scripts/check-m133-ast.mjs",
     "check:m153": "node scripts/check-m153.mjs",
     "test:mutation": "stryker run",
-    "test:property": "vitest run tests/property/"
+    "test:property": "vitest run tests/property/",
+    "test:invariants": "vitest run tests/invariants/",
+    "test:state-machine": "vitest run tests/state-machine/",
+    "test:security-fuzz": "vitest run tests/security-fuzz/"
   },
   "keywords": [
     "bokföring",
