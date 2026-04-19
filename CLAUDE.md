@@ -890,6 +890,48 @@ i ADR 002), kan Alt B implementeras ovanpå denna utan att bryta M155
 (M155-tester: bevarad historik, summa-invariant, validerings-gränser,
 skipped-bevaring).
 
+## 61. Combobox-kontrakt: aria-activedescendant-mönstret (M157)
+
+**M157.** Custom filtrerbara dropdown-komponenter (picker, search-select)
+ska följa WAI-ARIA 1.2 combobox-mönstret med `aria-activedescendant`
+(virtuell fokus), inte roving-tabindex (verklig fokus-flytt). Input
+behåller fysisk fokus hela tiden; "aktiv" option spåras via state
+och speglas i `aria-activedescendant` + `aria-selected`.
+
+**Kanonisk hook:** `src/renderer/lib/use-combobox-keyboard.ts` —
+`useComboboxKeyboard<T>({ items, isOpen, onSelect, onClose,
+getItemId, trailingAction? })` returnerar `activeId`, `handleKeyDown`,
+`isActive(i)`, `isTrailingActive()`.
+
+**Tangentbordsbindningar (när isOpen):**
+- ArrowDown/Up: cyklisk navigation
+- Home/End: första/sista
+- Enter: aktivera aktiv option (eller trailingAction.onActivate)
+- Escape: onClose + reset
+
+**Strukturkrav:**
+- Input: `role="combobox"` + `aria-expanded` + `aria-controls` +
+  `aria-autocomplete="list"` + `aria-activedescendant={kb.activeId}`
+- Listbox (`<ul>`): `role="listbox"` + `id` matchande aria-controls
+- Options (`<li>`): `role="option"` + `id` + `aria-selected={kb.isActive(i)}`
+- Inre button: `tabIndex={-1}` (fokus stannar på input)
+- Non-option-barn (t.ex. "+ Ny X"-action) placeras **utanför** listboxen
+  — ARIA tillåter inte blandade children-roller i listbox.
+  Använd `trailingAction`-prop på hooken för att inkludera i rotation.
+
+**Varför inte Radix/Downshift:**
+- Radix har ingen Combobox-primitive (endast Select — fel semantik
+  för filtrerbara listor med create-new).
+- Downshift (~20KB) är överkill för mönstret; tre hooks räcker.
+- Virtuell fokus-modell fungerar bättre med screen readers vid
+  filtrering — ingen fokus-jitter när listan uppdateras.
+
+**Referens:** CustomerPicker, SupplierPicker, ArticlePicker.
+Sprint S F49-d — leverans + 17 tester (hook + picker-integration).
+
+**Korsreferens:** M133 (axe-gate), M156 (bredare keyboard-kontrakt
+för renderer — comboboxen är en specialisering).
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.

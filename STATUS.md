@@ -1,5 +1,63 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint S -- Test-infra-åtstramning + F68 locale + M157 combobox ✅ KLAR
+
+Session SS (2026-04-19). 5 logiskt separata leveranser över en session:
+
+**F59b — IPC response-schemas → shared + full coverage.**
+`CHANNEL_RESPONSE_SCHEMAS` flyttat från tests/setup/ till
+`src/shared/ipc-response-schemas.ts` och gjort till full
+`Record<ChannelName, z.ZodType>` via `satisfies`. 105/105 kanaler
+registrerade (tidigare Partial ≈ 30 med tät schema + tyst fallback).
+Nya kanaler i channelMap tvingar kompileringsfel om motsvarande entry
+saknas. Täta schemas införda för hot paths: `invoice:list`,
+`expense:list`, `dashboard:summary`. Fixturer i 4 testfiler
+uppdaterade där F59-gaten avslöjade drift (gammal `paid_amount_ore`
+vs nuvarande `total_paid`/`remaining`).
+
+**M131b — money helper + parseDecimal (F68 locale-bug).** Ny
+`src/shared/money.ts` med `multiplyKrToOre` + `multiplyDecimalByOre`
++ `parseDecimal`. F68: `parseFloat("99,50")` returnerade `99` för
+svenska användare som skrev komma — 9 callsites migrerade över 7 filer
+(InvoiceLineRow, ExpenseLineRow, PayExpenseDialog, CustomerPriceTable,
+FixedAssetFormDialog, DisposeDialog, StepCompany, StepConfirm).
+`check:m131` pekar nu på `scripts/check-m131-ast.mjs` (AST-scan med
+self-test) istället för grep; fångar aliaser som gammal regex missade.
+
+**CI-gate utvidgad.** `check:m133-ast` och `check:m153` tillagda i
+`.github/workflows/ci.yml` (tidigare endast lokalt).
+
+**M157 — ARIA combobox + keyboard-nav för pickers.** Ny
+`src/renderer/lib/use-combobox-keyboard.ts` implementerar
+WAI-ARIA 1.2 `aria-activedescendant`-mönstret (virtuell fokus).
+CustomerPicker, SupplierPicker och ArticlePicker wirade till hook:
+ArrowUp/Down (cyklisk), Home/End, Enter, Escape. Listbox + option
+roles. SupplierPicker omstrukturerad — "+ Ny leverantör" flyttad
+utanför `<ul>` (ARIA tillåter inte non-option children i listbox).
+Radix/Downshift övervägda men avvisade (Radix saknar Combobox-
+primitive, Downshift skulle lagt till ~20KB dep för tre hooks).
+
+**InvoiceTotals/useEntityForm städning.** `useMemo` runt totals-
+beräkningen (paritet med ExpenseTotals per M129). 0%-rater inkluderas
+nu i vat-breakdown för explicit mix-visning. Död `initialStateRef` i
+useEntityForm rensad. Tyst payload-validerings-fail loggar nu
+`issue`-tree via `console.error` för dev-diagnostik.
+
+**Testbaslinje:** 2670 → **2695** (+25; 13 hook-unit + 4 picker-integration
++ 8 parseDecimal). 262 → 263 testfiler.
+**PRAGMA user_version:** 44 (oförändrat).
+**Nya rules i CLAUDE.md:** M131-uppdatering (helper + AST-enforcement).
+M157 (ARIA combobox-mönster) dokumenterad i samma commit som koden.
+**Påståenden avvisade efter verifiering:** AI-review-claims om
+"dubbel rounding 5-öres-fel" (omöjligt i Zod-domänen), "isDirty inte
+reaktiv" (felaktig läsning av M102), "cascading dueDate overwrite"
+(dueDate är readOnly i båda formulären).
+
+**Skulder ej adresserade:** ~70 kanaler i `channelResponseMap` är
+fortfarande `z.unknown()`-placeholder (progressiv åtstramning
+möjlig). Property-based testing för paritet övervägd men avvisad
+(shared helper eliminerar divergens-risken som motiverade den).
+
 ## Sprint M -- jsx-a11y-plugin installation (ABANDONED)
 
 Session SM (2026-04-18). Försökte installera `eslint-plugin-jsx-a11y`
