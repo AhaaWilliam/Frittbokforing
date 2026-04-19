@@ -104,7 +104,7 @@ describe('M140 — korrigering en-gångs-lås', () => {
     )
     // Försök korrigera korrigeringsverifikatet
     const r = createCorrectionEntry(db, {
-      journal_entry_id: first.correctionEntryId,
+      journal_entry_id: first.correction_entry_id,
       fiscal_year_id: fyId,
     })
     expect(r.success).toBe(false)
