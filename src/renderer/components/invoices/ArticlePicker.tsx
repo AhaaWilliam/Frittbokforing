@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import { useProducts } from '../../lib/hooks'
 import { formatKr, toKr } from '../../lib/format'
+import { useComboboxKeyboard } from '../../lib/use-combobox-keyboard'
 import type { Product } from '../../../shared/types'
 
 interface ArticlePickerProps {
@@ -49,6 +50,7 @@ export function ArticlePicker({
   const [open, setOpen] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const listboxId = useId()
 
   const { data: products } = useProducts({
     search: debouncedSearch,
@@ -106,29 +108,54 @@ export function ArticlePicker({
     setOpen(false)
   }
 
+  const kb = useComboboxKeyboard({
+    items: products,
+    isOpen: open,
+    onSelect: handleSelect,
+    onClose: () => setOpen(false),
+    getItemId: (_, i) => `${listboxId}-opt-${i}`,
+  })
+
   return (
     <div ref={containerRef} className="relative">
       <input
         type="text"
+        role="combobox"
+        aria-expanded={open && !!products && products.length > 0}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={kb.activeId}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value)
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
+        onKeyDown={kb.handleKeyDown}
         placeholder="S&ouml;k artikel..."
         aria-label="Sök artikel"
         data-testid={testId}
         className="block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {open && products && products.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-48 w-64 overflow-auto rounded-md border bg-background shadow-lg">
-          {products.map((p) => (
-            <li key={p.id}>
+        <ul
+          id={listboxId}
+          role="listbox"
+          aria-label="Artiklar"
+          className="absolute z-10 mt-1 max-h-48 w-64 overflow-auto rounded-md border bg-background shadow-lg"
+        >
+          {products.map((p, i) => (
+            <li
+              key={p.id}
+              id={`${listboxId}-opt-${i}`}
+              role="option"
+              aria-selected={kb.isActive(i)}
+            >
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => handleSelect(p)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50"
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${kb.isActive(i) ? 'bg-muted' : 'hover:bg-muted/50'}`}
               >
                 <div className="min-w-0 flex-1">
                   <span className="font-medium">{p.name}</span>

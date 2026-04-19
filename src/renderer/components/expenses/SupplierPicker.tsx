@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId, useCallback } from 'react'
 import { useCounterparties, useCreateCounterparty } from '../../lib/hooks'
+import { useComboboxKeyboard } from '../../lib/use-combobox-keyboard'
 
 interface SupplierPickerProps {
   value: { id: number; name: string } | null
@@ -29,6 +30,7 @@ export function SupplierPicker({
   const [newOrgNumber, setNewOrgNumber] = useState('')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const listboxId = useId()
 
   const { data: suppliers } = useCounterparties({
     search: debouncedSearch,
@@ -88,6 +90,32 @@ export function SupplierPicker({
     setDebouncedSearch('')
   }
 
+  const handleSelect = useCallback(
+    (s: { id: number; name: string; default_payment_terms: number }) => {
+      onChange({
+        id: s.id,
+        name: s.name,
+        default_payment_terms: s.default_payment_terms,
+      })
+      setSearch('')
+      setOpen(false)
+    },
+    [onChange],
+  )
+
+  const trailingId = `${listboxId}-create-new`
+  const kb = useComboboxKeyboard({
+    items: suppliers,
+    isOpen: open,
+    onSelect: handleSelect,
+    onClose: () => setOpen(false),
+    getItemId: (_, i) => `${listboxId}-opt-${i}`,
+    // "+ Ny leverantör" ingår i tangentbords-rotationen endast när inline-formen inte är öppen
+    trailingAction: showInline
+      ? undefined
+      : { id: trailingId, onActivate: () => setShowInline(true) },
+  })
+
   if (value) {
     return (
       <div className="flex items-center gap-2">
@@ -117,12 +145,18 @@ export function SupplierPicker({
     <div ref={containerRef} className="relative">
       <input
         type="text"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={kb.activeId}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value)
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
+        onKeyDown={kb.handleKeyDown}
         placeholder="Sök leverantör..."
         disabled={disabled}
         data-testid={testId}
@@ -132,22 +166,21 @@ export function SupplierPicker({
         className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
       />
       {open && (
-        <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-background shadow-lg">
+        <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-background shadow-lg">
+          <ul id={listboxId} role="listbox" aria-label="Leverantörer">
           {suppliers &&
-            suppliers.map((s) => (
-              <li key={s.id}>
+            suppliers.map((s, i) => (
+              <li
+                key={s.id}
+                id={`${listboxId}-opt-${i}`}
+                role="option"
+                aria-selected={kb.isActive(i)}
+              >
                 <button
                   type="button"
-                  onClick={() => {
-                    onChange({
-                      id: s.id,
-                      name: s.name,
-                      default_payment_terms: s.default_payment_terms,
-                    })
-                    setSearch('')
-                    setOpen(false)
-                  }}
-                  className="flex w-full flex-col px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50"
+                  tabIndex={-1}
+                  onClick={() => handleSelect(s)}
+                  className={`flex w-full flex-col px-3 py-2 text-left text-sm transition-colors ${kb.isActive(i) ? 'bg-muted' : 'hover:bg-muted/50'}`}
                 >
                   <span className="font-medium">{s.name}</span>
                   {s.org_number && (
@@ -158,12 +191,15 @@ export function SupplierPicker({
                 </button>
               </li>
             ))}
-          <li>
+          </ul>
+          <div>
             {!showInline ? (
               <button
+                id={trailingId}
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowInline(true)}
-                className="flex w-full items-center gap-1 px-3 py-2 text-left text-sm font-medium text-primary hover:bg-muted/50"
+                className={`flex w-full items-center gap-1 px-3 py-2 text-left text-sm font-medium text-primary ${kb.isTrailingActive() ? 'bg-muted' : 'hover:bg-muted/50'}`}
               >
                 + Ny leverantör
               </button>
@@ -210,8 +246,8 @@ export function SupplierPicker({
                 </div>
               </div>
             )}
-          </li>
-        </ul>
+          </div>
+        </div>
       )}
     </div>
   )

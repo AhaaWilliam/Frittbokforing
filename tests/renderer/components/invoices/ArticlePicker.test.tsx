@@ -105,12 +105,12 @@ describe('ArticlePicker', () => {
         <ArticlePicker counterpartyId={null} onSelect={vi.fn()} />,
       )
       await openDropdown()
-      expect(screen.getByRole('list')).toBeInTheDocument()
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
 
       fireEvent.mouseDown(document.body)
 
       await waitFor(() => {
-        expect(screen.queryByRole('list')).not.toBeInTheDocument()
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
       })
     })
   })
@@ -365,7 +365,7 @@ describe('ArticlePicker', () => {
       fireEvent.focus(screen.getByLabelText('Sök artikel'))
 
       // ArticlePicker only renders <ul> when products.length > 0
-      expect(screen.queryByRole('list')).not.toBeInTheDocument()
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
     })
   })
 

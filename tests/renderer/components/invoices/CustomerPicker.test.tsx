@@ -164,4 +164,73 @@ describe('CustomerPicker', () => {
       expect(screen.queryByRole('list')).not.toBeInTheDocument()
     })
   })
+
+  // ── Keyboard navigation (WAI-ARIA 1.2 combobox) ──────────────────────
+
+  describe('Keyboard', () => {
+    it('4.1 ArrowDown + Enter selects first customer', async () => {
+      const onChange = vi.fn()
+      await renderWithProviders(
+        <CustomerPicker value={null} onChange={onChange} />,
+      )
+      await openDropdown()
+      const input = screen.getByLabelText('Sök kund')
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+      fireEvent.keyDown(input, { key: 'Enter' })
+
+      expect(onChange).toHaveBeenCalledWith({
+        id: 1,
+        name: 'Acme AB',
+        default_payment_terms: 30,
+      })
+    })
+
+    it('4.2 ArrowDown ×2 + Enter selects second customer', async () => {
+      const onChange = vi.fn()
+      await renderWithProviders(
+        <CustomerPicker value={null} onChange={onChange} />,
+      )
+      await openDropdown()
+      const input = screen.getByLabelText('Sök kund')
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+      fireEvent.keyDown(input, { key: 'Enter' })
+
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 2, name: 'Beta Corp' }),
+      )
+    })
+
+    it('4.3 Escape stänger dropdown', async () => {
+      await renderWithProviders(
+        <CustomerPicker value={null} onChange={vi.fn()} />,
+      )
+      await openDropdown()
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+      const input = screen.getByLabelText('Sök kund')
+
+      fireEvent.keyDown(input, { key: 'Escape' })
+
+      await waitFor(() => {
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+      })
+    })
+
+    it('4.4 aria-activedescendant matchar aktiv option id', async () => {
+      await renderWithProviders(
+        <CustomerPicker value={null} onChange={vi.fn()} />,
+      )
+      await openDropdown()
+      const input = screen.getByLabelText('Sök kund') as HTMLInputElement
+
+      fireEvent.keyDown(input, { key: 'ArrowDown' })
+      const activeId = input.getAttribute('aria-activedescendant')
+      expect(activeId).toBeTruthy()
+      const activeEl = document.getElementById(activeId!)
+      expect(activeEl).toHaveAttribute('role', 'option')
+      expect(activeEl).toHaveAttribute('aria-selected', 'true')
+    })
+  })
 })
