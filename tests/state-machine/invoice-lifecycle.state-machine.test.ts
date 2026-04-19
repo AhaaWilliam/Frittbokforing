@@ -173,7 +173,7 @@ class FinalizeCmd implements fc.Command<Model, World> {
   run(model: Model, world: World): void {
     const inv = model.invoices.get(this.modelId)!
     const dbId = world.realIds[inv.id - 1]
-    const r = finalizeDraft(world.db, { id: dbId })
+    const r = finalizeDraft(world.db, dbId)
     if (r.success) {
       inv.status = 'unpaid'
     }
@@ -202,6 +202,7 @@ class PayCmd implements fc.Command<Model, World> {
       invoice_id: dbId,
       amount_ore: amount,
       payment_date: '2026-02-15',
+      payment_method: 'bank',
       account_number: '1930',
     })
     if (r.success) {
@@ -225,7 +226,7 @@ class DeleteDraftCmd implements fc.Command<Model, World> {
   run(model: Model, world: World): void {
     const inv = model.invoices.get(this.modelId)!
     const dbId = world.realIds[inv.id - 1]
-    const r = deleteDraft(world.db, { id: dbId })
+    const r = deleteDraft(world.db, dbId)
     if (inv.status === 'draft') {
       // Förväntas lyckas
       if (r.success) model.invoices.delete(this.modelId)
