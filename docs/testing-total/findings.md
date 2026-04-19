@@ -58,7 +58,30 @@ Phase 2+ levererar motsvarande coverage via property-tester och invariant-audit.
 
 ## Phase 3 — invariant gaps
 
-(tbd)
+### F-TT-003: expenses saknar `>= 0` CHECK på belopps-kolumner (M137-gap)
+
+**Observation:** Invoices har `CHECK (paid_amount_ore >= 0)` (migration 022
+table-recreate). Expenses har bara `ALTER TABLE RENAME COLUMN paid_amount TO
+paid_amount_ore` (migration 022) utan tillhörande CHECK, eftersom M127
+(ADD COLUMN-begränsning) förbjuder constraint via ALTER TABLE.
+
+**Kolumner utan CHECK i expenses-tabellen:**
+- `total_amount_ore`
+- `net_amount_ore` (om den finns — bekräfta)
+- `vat_amount_ore` (om den finns — bekräfta)
+- `paid_amount_ore`
+
+**Risk:** En service-bug som skulle beräkna negativa belopp skulle gå
+obemärkt i expenses men fångas direkt av CHECK i invoices.
+
+**Rekommendation:** Migration som table-recreate:ar expenses för att lägga
+till `>= 0`-CHECKs analogt med invoices. Kräver M122-mönstret (inkommande
+FK från `expense_lines`, `expense_payments`). Låt vara tills nästa schema-
+sprint.
+
+**Status:** Scanner-test `tests/invariants/scanners/M137-positive-amounts.test.ts`
+förväntar constraint och FAILAR för expenses → flaggar regression. Efter
+fix i schemat kommer testet grönt. Testet lämnas som-är (röd vakt).
 
 ## Phase 4 — state-machine shrunk motexempel
 

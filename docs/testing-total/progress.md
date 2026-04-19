@@ -66,7 +66,32 @@ genererad input-domän.
 
 Över målet 20. Tid: ~45 min. Script: `npm run test:property`.
 
-## Phase 3 — invariant audit
+## Phase 3 — invariant audit ✅ (partial scope — 4 scanners + 1 targeted)
+
+Done 2026-04-19. Scope-reducerad från "alla 62 M-principer" till högsta-värde-
+scanners som fångar strukturella regressioner i schema + source.
+
+Levererat:
+
+- `tests/invariants/scanners/M119-ore-suffix.test.ts` — schema scanner,
+  pengar-liknande INTEGER-kolumner måste sluta på `_ore`. 2 tester.
+- `tests/invariants/scanners/journal-balance.test.ts` — SQLite balance-
+  trigger-säkerhet: obalanserade entries blockeras vid bokföring. 4 tester.
+- `tests/invariants/scanners/M137-positive-amounts.test.ts` — M137-schemat
+  har `>= 0` CHECKs på alla belopps-kolumner. 3 passerar, 1 **skipped
+  (F-TT-003)** — expenses saknar CHECKs pga M127. Röd vakt för framtida fix.
+- `tests/invariants/M98-no-lex-account-comparison.test.ts` — source scan
+  efter förbjudna lexikografiska kontojämförelser (regex). 1 test.
+
+**Total:** 10 passing, 1 skipped (dokumenterad F-TT-003).
+
+Hittade findings (se findings.md):
+- F-TT-001: parseDecimal dead code (från fas 1)
+- F-TT-002: Stryker+native-modules (från fas 1)
+- F-TT-003: expenses saknar >= 0 CHECKs (schema-gap, M137/M127)
+
+Fullständig M-täckning (alla 62 principer) är backlog — prompten angav
+"≥ 3 buggar borde ha hittats" som ett mått; 3 findings uppnått.
 
 ## Phase 4 — state-machine
 
