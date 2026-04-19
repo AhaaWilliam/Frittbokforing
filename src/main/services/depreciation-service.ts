@@ -219,18 +219,24 @@ function validateAccountChange(
 export function createFixedAsset(
   db: Database.Database,
   input: CreateFixedAssetInput,
+  companyId?: number,
 ): IpcResult<{ id: number; scheduleCount: number }> {
   const inputError = validateFixedAssetInput(input, db)
   if (inputError) return inputError
 
   return db.transaction(() => {
     const now = todayLocalFromNow()
-    const companyId = (
-      db.prepare('SELECT id FROM companies LIMIT 1').get() as
-        | { id: number }
-        | undefined
-    )?.id
-    if (!companyId) {
+    // Sprint MC1: companyId injiceras av IPC-handlern via getActiveCompanyId.
+    // Om utelämnad (test- eller direktanrop): fall tillbaka till första bolaget
+    // för bakåtkompatibilitet. Detta speglar getActiveCompanyId-fallback-kedjan.
+    let resolvedCompanyId = companyId
+    if (!resolvedCompanyId) {
+      const first = db
+        .prepare('SELECT id FROM companies ORDER BY id LIMIT 1')
+        .get() as { id: number } | undefined
+      resolvedCompanyId = first?.id
+    }
+    if (!resolvedCompanyId) {
       return {
         success: false as const,
         code: 'NOT_FOUND' as const,
@@ -250,7 +256,7 @@ export function createFixedAsset(
     `,
       )
       .run(
-        companyId,
+        resolvedCompanyId,
         input.name,
         input.acquisition_date,
         input.acquisition_cost_ore,

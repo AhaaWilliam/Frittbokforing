@@ -26,6 +26,12 @@ export interface ImportOptions {
   /** If merge: target fiscal year (if absent, RAR 0 is matched by date range or created) */
   fiscalYearId?: number
   /**
+   * If merge: which company to merge INTO. Sprint MC1: defaults till första
+   * bolaget om utelämnad (single-company-bakåtkompatibel). Sprint MC2 sätter
+   * detta från ActiveCompanyContext via IPC-handlern.
+   */
+  targetCompanyId?: number
+  /**
    * Per-konto-resolution vid namnkonflikt (M148). Sprint 56 B2.
    * Saknad nyckel defaultar till 'keep' (tidigare tyst overwrite-beteende borttaget).
    * 'skip' på konto som refereras av importens verifikat → VALIDATION_ERROR.
@@ -53,13 +59,30 @@ export function importSie4(
       const warnings: string[] = []
 
       // ═══ 1. Company ═══
-      const existingCompany = db
-        .prepare('SELECT id, org_number FROM companies LIMIT 1')
+      // 'new'-strategin avvisar import om DB redan har ett bolag (för att
+      // undvika oavsiktlig duplicering vid första-gång-flödet). Multi-company
+      // kräver i framtiden att 'new'-strategin tillåts även när andra bolag
+      // finns — det är en MC2-fråga, inte MC1.
+      const anyCompany = db
+        .prepare('SELECT id, org_number FROM companies ORDER BY id LIMIT 1')
         .get() as { id: number; org_number: string } | undefined
+
+      // Merge-strategi: prioritera targetCompanyId om angiven (MC2-redo),
+      // annars fall tillbaka till första bolaget (MC1 single-company).
+      let mergeTarget: { id: number; org_number: string } | undefined =
+        anyCompany
+      if (options.targetCompanyId) {
+        const target = db
+          .prepare('SELECT id, org_number FROM companies WHERE id = ?')
+          .get(options.targetCompanyId) as
+          | { id: number; org_number: string }
+          | undefined
+        if (target) mergeTarget = target
+      }
 
       let companyId: number
       if (options.strategy === 'new') {
-        if (existingCompany) {
+        if (anyCompany) {
           throw {
             code: 'VALIDATION_ERROR',
             error: 'Databasen har redan ett företag. Använd merge-strategi.',
@@ -92,7 +115,7 @@ export function importSie4(
         }
         companyId = cpRes.data.id
       } else {
-        if (!existingCompany) {
+        if (!mergeTarget) {
           throw {
             code: 'VALIDATION_ERROR',
             error: 'Inget företag i databasen. Använd new-strategi.',
@@ -100,14 +123,14 @@ export function importSie4(
         }
         if (
           parseResult.header.orgNumber &&
-          parseResult.header.orgNumber !== existingCompany.org_number
+          parseResult.header.orgNumber !== mergeTarget.org_number
         ) {
           throw {
             code: 'VALIDATION_ERROR',
-            error: `Orgnummer i SIE4 (${parseResult.header.orgNumber}) matchar inte databasens företag (${existingCompany.org_number})`,
+            error: `Orgnummer i SIE4 (${parseResult.header.orgNumber}) matchar inte målbolagets (${mergeTarget.org_number})`,
           }
         }
-        companyId = existingCompany.id
+        companyId = mergeTarget.id
       }
 
       // ═══ 2. Fiscal year ═══

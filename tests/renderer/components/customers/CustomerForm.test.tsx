@@ -76,6 +76,7 @@ describe('CustomerForm', () => {
     const counterparty: Counterparty = {
       id: 5,
       name: 'Befintlig Kund AB',
+    company_id: 1,
       type: 'customer',
       org_number: '556000-0000',
       vat_number: 'SE55600000001',
@@ -107,6 +108,7 @@ describe('CustomerForm', () => {
     const counterparty: Counterparty = {
       id: 5,
       name: 'Svensk AB',
+    company_id: 1,
       type: 'customer',
       org_number: '556036-0793',
       vat_number: '',

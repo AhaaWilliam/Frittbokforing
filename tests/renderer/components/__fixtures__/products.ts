@@ -5,6 +5,7 @@ import type { Product } from '../../../../src/shared/types'
 export function makeProduct(overrides?: Partial<Product>): Product {
   return {
     id: 1,
+    company_id: 1,
     name: 'Konsulttimme',
     description: 'Per timme',
     unit: 'timme',

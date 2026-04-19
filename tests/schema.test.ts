@@ -143,7 +143,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(46) // S58: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {
@@ -236,7 +236,7 @@ describe('CHECK constraints', () => {
   it('12. Negativt net_amount invoices → error', () => {
     seedHelperData(db)
     db.prepare(
-      "INSERT INTO counterparties (id, type, name) VALUES (1, 'customer', 'Kund AB')",
+      "INSERT INTO counterparties (company_id, id, type, name) VALUES (1, 1, 'customer', 'Kund AB')",
     ).run()
     expect(() => {
       db.prepare(
@@ -345,7 +345,7 @@ describe('Triggers — fakturaskydd', () => {
   it('19. DELETE faktura med status unpaid → error', () => {
     seedHelperData(db)
     db.prepare(
-      "INSERT INTO counterparties (id, type, name) VALUES (1, 'customer', 'Kund AB')",
+      "INSERT INTO counterparties (company_id, id, type, name) VALUES (1, 1, 'customer', 'Kund AB')",
     ).run()
     db.prepare(
       `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore, status)
@@ -359,7 +359,7 @@ describe('Triggers — fakturaskydd', () => {
   it('20. DELETE faktura med status draft → OK', () => {
     seedHelperData(db)
     db.prepare(
-      "INSERT INTO counterparties (id, type, name) VALUES (1, 'customer', 'Kund AB')",
+      "INSERT INTO counterparties (company_id, id, type, name) VALUES (1, 1, 'customer', 'Kund AB')",
     ).run()
     db.prepare(
       `INSERT INTO invoices (id, counterparty_id, invoice_type, invoice_number, invoice_date, due_date, net_amount_ore, total_amount_ore, status)

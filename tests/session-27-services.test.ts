@@ -127,6 +127,7 @@ describe('M2: SQL allowlist', () => {
 
   it('updateCounterparty updates valid field', () => {
     const cpResult = createCounterparty(db, {
+      company_id: 1,
       name: 'Supplier AB',
       type: 'supplier',
       country: 'SE',
@@ -137,6 +138,7 @@ describe('M2: SQL allowlist', () => {
     const cpId = cpResult.data.id
 
     const result = updateCounterparty(db, {
+      company_id: 1,
       id: cpId,
       name: 'Updated Supplier',
     })

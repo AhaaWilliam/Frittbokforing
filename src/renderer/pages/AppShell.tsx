@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { Company } from '../../shared/types'
 import { FiscalYearProvider } from '../contexts/FiscalYearContext'
+import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { SkipLinksProvider } from '../contexts/SkipLinksContext'
 import { HashRouter, useRoute } from '../lib/router'
 import { routes } from '../lib/routes'
@@ -28,7 +29,7 @@ import { PageFixedAssets } from './PageFixedAssets'
 import { PageImport } from './PageImport'
 import { PageBankStatements } from './PageBankStatements'
 
-interface AppShellProps {
+interface AppShellInnerProps {
   company: Company
 }
 
@@ -79,7 +80,7 @@ function PageContent({ page }: { page: string }) {
   }
 }
 
-function AppShellInner({ company }: AppShellProps) {
+function AppShellInner({ company }: AppShellInnerProps) {
   const { page } = useRoute()
 
   useEffect(() => {
@@ -103,12 +104,23 @@ function AppShellInner({ company }: AppShellProps) {
   )
 }
 
-export function AppShell({ company }: AppShellProps) {
+export function AppShell() {
+  const { activeCompany } = useActiveCompany()
+
+  if (!activeCompany) {
+    // Övergångstillstånd: ActiveCompanyContext har laddat 0 bolag.
+    // App.tsx triggar wizard innan vi når hit, så detta är defensiv null.
+    return null
+  }
+
   return (
     <SkipLinksProvider>
-      <FiscalYearProvider>
+      {/* Sprint MC2: re-mount FiscalYearProvider vid bolagsbyte så att
+          restoredId-state nollställs och senast valda FY för nya bolaget
+          läses från settings. */}
+      <FiscalYearProvider key={activeCompany.id}>
         <HashRouter routes={routes} fallback="/overview">
-          <AppShellInner company={company} />
+          <AppShellInner company={activeCompany} />
         </HashRouter>
       </FiscalYearProvider>
     </SkipLinksProvider>

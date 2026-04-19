@@ -53,6 +53,7 @@ function setupSeed(testDb: Database.Database): Seed {
   }
 
   const customer = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
     org_number: '556611-2233',
@@ -60,6 +61,7 @@ function setupSeed(testDb: Database.Database): Seed {
   if (!customer.success) throw new Error('Customer failed')
 
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
     org_number: '556644-5566',
@@ -67,6 +69,7 @@ function setupSeed(testDb: Database.Database): Seed {
   if (!supplier.success) throw new Error('Supplier failed')
 
   const both = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Båda AB',
     type: 'both',
     org_number: '556677-8800',
@@ -83,6 +86,7 @@ function setupSeed(testDb: Database.Database): Seed {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100_000,
     vat_code_id: vatCode25.id,
@@ -402,7 +406,7 @@ describe('SIE5 Export', () => {
   // Test 21: regression — no migration
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(46) // S58: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

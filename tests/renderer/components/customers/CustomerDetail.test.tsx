@@ -10,6 +10,7 @@ import type { Counterparty } from '../../../../src/shared/types'
 const COUNTERPARTY: Counterparty = {
   id: 1,
   name: 'Acme AB',
+    company_id: 1,
   type: 'customer',
   org_number: '556036-0793',
   vat_number: 'SE556036079301',
@@ -103,6 +104,9 @@ describe('CustomerDetail', () => {
 
     // Verify mutation was called
     const api = window.api as unknown as Record<string, ReturnType<typeof vi.fn>>
-    expect(api.deactivateCounterparty).toHaveBeenCalledWith({ id: 1 })
+    expect(api.deactivateCounterparty).toHaveBeenCalledWith({
+      id: 1,
+      company_id: 1,
+    })
   })
 })

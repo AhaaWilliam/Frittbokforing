@@ -62,6 +62,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   createCompany: 'company:create',
   getCompany: 'company:get',
   updateCompany: 'company:update',
+  listCompanies: 'company:list',
+  switchCompany: 'company:switch',
   // Fiscal Years
   listFiscalYears: 'fiscal-year:list',
   createNewFiscalYear: 'fiscal-year:create-new',

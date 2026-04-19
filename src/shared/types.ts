@@ -54,6 +54,12 @@ export type ErrorCode =
   | 'BATCH_PAYMENT_UNMATCH_NOT_SUPPORTED'
   | 'HAS_EXECUTED_SCHEDULES'
   | 'UNEXPECTED_ERROR'
+  | 'WRONG_PASSWORD'
+  | 'WRONG_RECOVERY_KEY'
+  | 'RATE_LIMITED'
+  | 'USER_NOT_FOUND'
+  | 'NOT_AUTHENTICATED'
+  | 'WEAK_PASSWORD'
 
 // === Page navigation ===
 export type PageId =
@@ -126,6 +132,7 @@ export interface FiscalPeriod {
 // === Counterparty ===
 export interface Counterparty {
   id: number
+  company_id: number
   name: string
   type: 'customer' | 'supplier' | 'both'
   org_number: string | null
@@ -187,6 +194,7 @@ export interface UpdateCompanyInput {
 
 // === Counterparty Input ===
 export interface CreateCounterpartyInput {
+  company_id: number
   name: string
   type?: 'customer' | 'supplier' | 'both'
   org_number?: string | null
@@ -203,11 +211,13 @@ export interface CreateCounterpartyInput {
 
 export interface UpdateCounterpartyInput extends Partial<CreateCounterpartyInput> {
   id: number
+  company_id: number
 }
 
 // === Product ===
 export interface Product {
   id: number
+  company_id: number
   name: string
   description: string | null
   unit: 'timme' | 'styck' | 'dag' | 'månad' | 'km' | 'pauschal'
@@ -262,6 +272,7 @@ export const ARTICLE_TYPE_DEFAULTS = {
 
 // === Product Input ===
 export interface CreateProductInput {
+  company_id: number
   name: string
   description?: string | null
   unit?: 'timme' | 'styck' | 'dag' | 'månad' | 'km' | 'pauschal'
@@ -273,6 +284,7 @@ export interface CreateProductInput {
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {
   id: number
+  company_id: number
 }
 
 // === Invoice ===

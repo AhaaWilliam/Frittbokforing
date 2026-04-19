@@ -9,6 +9,7 @@ import {
 } from '../lib/hooks'
 import type { UpdateCompanyInput } from '../../shared/types'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { SecuritySection } from '../components/settings/SecuritySection'
 
 function BackupSection() {
   const [lastBackup, setLastBackup] = useState<string | null>(null)
@@ -449,6 +450,9 @@ export function PageSettings() {
     <div className="flex flex-1 flex-col overflow-auto">
       <PageHeader title="Inställningar" />
       <div className="mx-auto w-full max-w-2xl px-8 py-6">
+        {/* Säkerhet (ADR 004) */}
+        <SecuritySection />
+
         {/* Backup */}
         <BackupSection />
 

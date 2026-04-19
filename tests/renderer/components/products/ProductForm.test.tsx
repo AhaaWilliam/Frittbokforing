@@ -115,6 +115,7 @@ describe('ProductForm', () => {
   it('pre-fills fields in edit mode', async () => {
     const product = {
       id: 5,
+      company_id: 1,
       name: 'Befintlig tjänst',
       description: 'En beskrivning',
       unit: 'timme' as const,

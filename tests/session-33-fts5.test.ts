@@ -63,7 +63,11 @@ describe('FTS5 migration', () => {
 
 describe('rebuildSearchIndex', () => {
   it('counterparty searchable after rebuild', () => {
-    createCounterparty(db, { name: 'Östgöta Bygg AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Östgöta Bygg AB',
+      type: 'customer',
+    })
     rebuildSearchIndex(db)
     const count = db
       .prepare(
@@ -75,6 +79,7 @@ describe('rebuildSearchIndex', () => {
 
   it('product searchable after rebuild', () => {
     createProduct(db, {
+      company_id: 1,
       name: 'Konsulttimme',
       unit: 'timme',
       default_price_ore: 100000,
@@ -102,7 +107,11 @@ describe('rebuildSearchIndex', () => {
   })
 
   it('inactive counterparties excluded', () => {
-    const cp = createCounterparty(db, { name: 'Inaktiv AB', type: 'customer' })
+    const cp = createCounterparty(db, {
+      company_id: 1,
+      name: 'Inaktiv AB',
+      type: 'customer',
+    })
     if (!cp.success) throw new Error('CP failed')
     db.prepare('UPDATE counterparties SET is_active = 0 WHERE id = ?').run(
       cp.data.id,
@@ -119,7 +128,11 @@ describe('rebuildSearchIndex', () => {
 
 describe('FTS5 accent-stripping', () => {
   it('"ostgota" matches "Östgöta Bygg AB"', () => {
-    createCounterparty(db, { name: 'Östgöta Bygg AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Östgöta Bygg AB',
+      type: 'customer',
+    })
     const result = globalSearch(db, { query: 'ostgota', fiscal_year_id: fyId })
     const customers = getData(result).results.filter(
       (r) => r.type === 'customer',
@@ -128,7 +141,11 @@ describe('FTS5 accent-stripping', () => {
   })
 
   it('"ake" matches "Åke Andersson"', () => {
-    createCounterparty(db, { name: 'Åke Andersson', type: 'supplier' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Åke Andersson',
+      type: 'supplier',
+    })
     const result = globalSearch(db, { query: 'ake', fiscal_year_id: fyId })
     const suppliers = getData(result).results.filter(
       (r) => r.type === 'supplier',
@@ -139,7 +156,7 @@ describe('FTS5 accent-stripping', () => {
 
 describe('FTS5 case-insensitive', () => {
   it('"acme" matches "ACME AB"', () => {
-    createCounterparty(db, { name: 'ACME AB', type: 'customer' })
+    createCounterparty(db, { company_id: 1, name: 'ACME AB', type: 'customer' })
     const result = globalSearch(db, { query: 'acme', fiscal_year_id: fyId })
     const customers = getData(result).results.filter(
       (r) => r.type === 'customer',
@@ -150,7 +167,11 @@ describe('FTS5 case-insensitive', () => {
 
 describe('FTS5 prefix search', () => {
   it('"östg" matches "Östgöta Bygg AB"', () => {
-    createCounterparty(db, { name: 'Östgöta Bygg AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Östgöta Bygg AB',
+      type: 'customer',
+    })
     const result = globalSearch(db, { query: 'östg', fiscal_year_id: fyId })
     const customers = getData(result).results.filter(
       (r) => r.type === 'customer',
@@ -161,7 +182,11 @@ describe('FTS5 prefix search', () => {
 
 describe('FTS5 fallback', () => {
   it('globalSearch works without search_index table (LIKE fallback)', () => {
-    createCounterparty(db, { name: 'FallbackTest AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'FallbackTest AB',
+      type: 'customer',
+    })
     db.exec('DROP TABLE search_index')
     const result = globalSearch(db, {
       query: 'FallbackTest',
@@ -176,7 +201,11 @@ describe('FTS5 fallback', () => {
 
 describe('FTS5 incremental', () => {
   it('new counterparty searchable immediately after create', () => {
-    createCounterparty(db, { name: 'Nykund AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Nykund AB',
+      type: 'customer',
+    })
     // createCounterparty calls rebuildSearchIndex internally
     const result = globalSearch(db, { query: 'Nykund', fiscal_year_id: fyId })
     const customers = getData(result).results.filter(
@@ -186,7 +215,11 @@ describe('FTS5 incremental', () => {
   })
 
   it('updated counterparty name reflected in search', () => {
-    const cp = createCounterparty(db, { name: 'Old Name AB', type: 'customer' })
+    const cp = createCounterparty(db, {
+      company_id: 1,
+      name: 'Old Name AB',
+      type: 'customer',
+    })
     if (!cp.success) throw new Error('CP failed')
     db.prepare('UPDATE counterparties SET name = ? WHERE id = ?').run(
       'New Name AB',
@@ -209,8 +242,16 @@ describe('escapeFtsQuery', () => {
 
 describe('FTS5 MATCH regression', () => {
   it('literal % is not a wildcard (F8)', () => {
-    createCounterparty(db, { name: 'Rabatt 50% AB', type: 'customer' })
-    createCounterparty(db, { name: 'Rabatt 60x AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Rabatt 50% AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Rabatt 60x AB',
+      type: 'customer',
+    })
     const result = globalSearch(db, { query: '50%', fiscal_year_id: fyId })
     const customers = getData(result).results.filter(
       (r) => r.type === 'customer',

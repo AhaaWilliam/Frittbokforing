@@ -6,6 +6,7 @@ export function makeCounterparty(
   overrides: Partial<Counterparty> & Pick<Counterparty, 'id' | 'name' | 'type'>,
 ): Counterparty {
   return {
+    company_id: 1,
     org_number: null,
     vat_number: null,
     address_line1: null,

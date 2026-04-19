@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { todayLocalFromNow } from '../utils/now'
+import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { checkChronology } from './chronology-guard'
 import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
@@ -621,17 +622,19 @@ export function finalizeDraft(
         }
       }
 
+      const companyId = getCompanyIdForFiscalYear(db, invoice.fiscal_year_id!)
       const entryResult = db
         .prepare(
           `INSERT INTO journal_entries (
           company_id, fiscal_year_id, verification_number, verification_series,
           journal_date, description, status, source_type, created_by_id
         ) VALUES (
-          (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
+          ?, ?, ?, 'A',
           ?, ?, 'draft', 'auto_invoice', NULL
         )`,
         )
         .run(
+          companyId,
           invoice.fiscal_year_id,
           verificationNumber,
           invoice.invoice_date,
@@ -1049,17 +1052,19 @@ export function _payInvoiceTx(
   const description = `Betalning faktura #${invoice.invoice_number} — ${counterparty.name}`
 
   // 9. INSERT journal_entry (as draft, then book)
+  const paymentCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
   const entryResult = db
     .prepare(
       `INSERT INTO journal_entries (
         company_id, fiscal_year_id, verification_number, verification_series,
         journal_date, description, status, source_type
       ) VALUES (
-        (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
+        ?, ?, ?, 'A',
         ?, ?, 'draft', 'auto_payment'
       )`,
     )
     .run(
+      paymentCompanyId,
       paymentYear.id,
       nextVerResult.next_ver,
       input.payment_date,
@@ -1434,17 +1439,19 @@ export function payInvoicesBulk(
         const description = `Bankavgift bulk-betalning ${input.payment_date}`
 
         // INSERT as draft with source_type and source_reference already set
+        const feeCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
         const entryResult = db
           .prepare(
             `INSERT INTO journal_entries (
               company_id, fiscal_year_id, verification_number, verification_series,
               journal_date, description, status, source_type, source_reference
             ) VALUES (
-              (SELECT id FROM companies LIMIT 1), ?, ?, 'A',
+              ?, ?, ?, 'A',
               ?, ?, 'draft', 'auto_bank_fee', ?
             )`,
           )
           .run(
+            feeCompanyId,
             paymentYear.id,
             nextVer.next_ver,
             input.payment_date,

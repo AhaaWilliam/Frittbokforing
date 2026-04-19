@@ -1553,6 +1553,188 @@ END;`,
     ALTER TABLE bank_statements_new RENAME TO bank_statements;
     `,
   },
+
+  // ── Migration 045 (Sprint MC3) — stamdata-scoping per bolag ────────
+  // Lägger company_id NOT NULL på counterparties, products, price_lists.
+  // price_list_items ärver scope via FK till price_lists (M120-anda).
+  //
+  // M122-recreate på alla tre tabellerna (alla har inkommande FK):
+  //   counterparties ← invoices, expenses, price_lists
+  //   products ← invoice_lines, expense_lines, price_list_items
+  //   price_lists ← price_list_items
+  //
+  // FK_OFF krävs utanför transaktion. Index 44 i migrations-array.
+  // M141-inventering: 0 cross-table-triggers refererar counterparties/products/price_lists.
+  // M121: counterparties har 3 index (idx_counterparties_active/_type/_org_unique),
+  //       products har 1 (idx_products_active), price_lists har 0,
+  //       price_list_items har 1 (idx_price_list_items_product).
+  //
+  // Backfill: company_id = (SELECT id FROM companies ORDER BY id LIMIT 1).
+  // Migrationen kräver ≥1 bolag om någon stamdata-rad finns — annars NOT NULL fail.
+  // Single-company-installation efter MC1+MC2: trivial backfill.
+  //
+  // Ny UNIQUE: counterparties.org_number blir per-bolag-unikt
+  // (idx_counterparties_company_org_unique på (company_id, org_number)).
+  // Det gamla globala unique-indexet ersätts.
+  //
+  // Nya prestanda-index: idx_counterparties_company, idx_products_company,
+  // idx_price_lists_company.
+  {
+    sql: '',
+    programmatic: migration045Programmatic,
+  },
+
+  // ── Migration 046 (Sprint MC3) — defense-in-depth-triggers ─────────
+  // Sex BEFORE INSERT/UPDATE-triggers som verifierar att counterparty/product
+  // tillhör samma bolag som invoice/expense via fiscal_year. M138-mönster.
+  // Plus tre BEFORE UPDATE-triggers som hindrar UPDATE av company_id.
+  {
+    sql: `
+    -- ─── Cross-bolag-konsistens: counterparty på invoices ───
+    CREATE TRIGGER trg_invoice_counterparty_company_match_insert
+    BEFORE INSERT ON invoices
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än fakturans räkenskapsår.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_invoice_counterparty_company_match_update
+    BEFORE UPDATE OF counterparty_id, fiscal_year_id ON invoices
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än fakturans räkenskapsår.')
+      END;
+    END;
+
+    -- ─── Cross-bolag-konsistens: counterparty på expenses ───
+    CREATE TRIGGER trg_expense_counterparty_company_match_insert
+    BEFORE INSERT ON expenses
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än kostnadens räkenskapsår.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_expense_counterparty_company_match_update
+    BEFORE UPDATE OF counterparty_id, fiscal_year_id ON expenses
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än kostnadens räkenskapsår.')
+      END;
+    END;
+
+    -- ─── Cross-bolag-konsistens: product på invoice_lines ───
+    CREATE TRIGGER trg_invoice_line_product_company_match_insert
+    BEFORE INSERT ON invoice_lines
+    WHEN NEW.product_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM products WHERE id = NEW.product_id)
+          != (SELECT company_id FROM fiscal_years fy
+                JOIN invoices i ON i.fiscal_year_id = fy.id
+               WHERE i.id = NEW.invoice_id)
+        THEN RAISE(ABORT, 'Produkt tillhör annat bolag än fakturan.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_invoice_line_product_company_match_update
+    BEFORE UPDATE OF product_id, invoice_id ON invoice_lines
+    WHEN NEW.product_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM products WHERE id = NEW.product_id)
+          != (SELECT company_id FROM fiscal_years fy
+                JOIN invoices i ON i.fiscal_year_id = fy.id
+               WHERE i.id = NEW.invoice_id)
+        THEN RAISE(ABORT, 'Produkt tillhör annat bolag än fakturan.')
+      END;
+    END;
+
+    -- ─── Cross-bolag-konsistens: product på expense_lines ───
+    -- Note: expense_lines har inte product_id-kolumn (paritet med invoice_lines
+    -- är inte komplett). Om sådan kolumn läggs till i framtiden bör motsvarande
+    -- defense-in-depth-triggers införas analogt med invoice_lines ovan.
+
+    -- ─── Cross-bolag-konsistens: counterparty på price_lists ───
+    CREATE TRIGGER trg_price_list_counterparty_company_match_insert
+    BEFORE INSERT ON price_lists
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != NEW.company_id
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än prislistan.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_price_list_counterparty_company_match_update
+    BEFORE UPDATE OF counterparty_id, company_id ON price_lists
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != NEW.company_id
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än prislistan.')
+      END;
+    END;
+
+    -- ─── Cross-bolag-konsistens: product på price_list_items ───
+    CREATE TRIGGER trg_price_list_item_product_company_match_insert
+    BEFORE INSERT ON price_list_items
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM products WHERE id = NEW.product_id)
+          != (SELECT company_id FROM price_lists WHERE id = NEW.price_list_id)
+        THEN RAISE(ABORT, 'Produkt tillhör annat bolag än prislistan.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_price_list_item_product_company_match_update
+    BEFORE UPDATE OF product_id, price_list_id ON price_list_items
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM products WHERE id = NEW.product_id)
+          != (SELECT company_id FROM price_lists WHERE id = NEW.price_list_id)
+        THEN RAISE(ABORT, 'Produkt tillhör annat bolag än prislistan.')
+      END;
+    END;
+
+    -- ─── Immutability: company_id får aldrig UPDATE:as ───
+    CREATE TRIGGER trg_counterparties_company_immutable
+    BEFORE UPDATE OF company_id ON counterparties
+    WHEN NEW.company_id != OLD.company_id
+    BEGIN
+      SELECT RAISE(ABORT, 'company_id på counterparties får inte ändras.');
+    END;
+
+    CREATE TRIGGER trg_products_company_immutable
+    BEFORE UPDATE OF company_id ON products
+    WHEN NEW.company_id != OLD.company_id
+    BEGIN
+      SELECT RAISE(ABORT, 'company_id på products får inte ändras.');
+    END;
+
+    CREATE TRIGGER trg_price_lists_company_immutable
+    BEFORE UPDATE OF company_id ON price_lists
+    WHEN NEW.company_id != OLD.company_id
+    BEGIN
+      SELECT RAISE(ABORT, 'company_id på price_lists får inte ändras.');
+    END;
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -3270,5 +3452,243 @@ function migration038Verify(db: import('better-sqlite3').Database): void {
       .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name=?")
       .get(idx)
     if (!exists) throw new Error(`Migration 038 failed: index ${idx} saknas`)
+  }
+}
+
+// ── Migration 045 (Sprint MC3) — stamdata-scoping per bolag ──────────
+//
+// Recreate counterparties/products/price_lists med company_id NOT NULL.
+// Kör inom FK_OFF (M122). Triggers att hantera vid framtida recreate
+// av dessa tabeller dokumenterade i M141-inventering ovan (0 cross-table-
+// triggers vid skrivpunkten).
+//
+// Backfill: alla befintliga rader får company_id från första bolaget.
+// Detta är säkert eftersom MC1+MC2 redan etablerat att första bolaget är
+// "default-bolaget" pre-multicompany.
+function migration045Programmatic(db: import('better-sqlite3').Database): void {
+  // Idempotency: kolla om counterparties redan har company_id-kolumn.
+  const cpCols = db.prepare('PRAGMA table_info(counterparties)').all() as {
+    name: string
+  }[]
+  if (cpCols.some((c) => c.name === 'company_id')) return
+
+  // Pre-flight: ≥1 bolag krävs om någon stamdata-rad finns. Fail-fast med
+  // tydligt fel istället för obscure NOT NULL-violation.
+  const counts = db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM companies) AS company_count,
+         (SELECT COUNT(*) FROM counterparties) AS cp_count,
+         (SELECT COUNT(*) FROM products) AS prod_count,
+         (SELECT COUNT(*) FROM price_lists) AS pl_count`,
+    )
+    .get() as {
+    company_count: number
+    cp_count: number
+    prod_count: number
+    pl_count: number
+  }
+
+  if (
+    counts.company_count === 0 &&
+    counts.cp_count + counts.prod_count + counts.pl_count > 0
+  ) {
+    throw new Error(
+      'Migration 045: stamdata finns men 0 bolag — kan inte backfilla company_id.',
+    )
+  }
+
+  // backfillCompanyId kan vara NULL om DB är helt tom (0 rader i alla
+  // tabeller) — då skippas INSERT...SELECT eftersom källtabellen är tom.
+  const firstCompany = db
+    .prepare('SELECT id FROM companies ORDER BY id LIMIT 1')
+    .get() as { id: number } | undefined
+  const backfillCompanyId = firstCompany?.id ?? null
+
+  // ─── Del A: counterparties ───
+  db.exec(`
+    CREATE TABLE counterparties_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      org_number TEXT,
+      email TEXT,
+      phone TEXT,
+      address_line1 TEXT,
+      postal_code TEXT,
+      city TEXT,
+      country TEXT DEFAULT 'SE',
+      default_revenue_account TEXT,
+      default_expense_account TEXT,
+      payment_terms INTEGER NOT NULL DEFAULT 30,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      vat_number TEXT,
+      contact_person TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      bankgiro TEXT DEFAULT NULL,
+      plusgiro TEXT DEFAULT NULL,
+      bank_account TEXT DEFAULT NULL,
+      bank_clearing TEXT DEFAULT NULL,
+      CHECK (type IN ('customer', 'supplier', 'both')),
+      CHECK (is_active IN (0, 1))
+    );
+  `)
+
+  if (backfillCompanyId !== null) {
+    db.prepare(
+      `INSERT INTO counterparties_new (
+        id, company_id, type, name, org_number, email, phone,
+        address_line1, postal_code, city, country,
+        default_revenue_account, default_expense_account,
+        payment_terms, is_active, created_at, vat_number, contact_person,
+        updated_at, bankgiro, plusgiro, bank_account, bank_clearing
+      )
+      SELECT
+        id, ?, type, name, org_number, email, phone,
+        address_line1, postal_code, city, country,
+        default_revenue_account, default_expense_account,
+        payment_terms, is_active, created_at, vat_number, contact_person,
+        updated_at, bankgiro, plusgiro, bank_account, bank_clearing
+      FROM counterparties`,
+    ).run(backfillCompanyId)
+  }
+
+  db.exec(`
+    DROP TABLE counterparties;
+    ALTER TABLE counterparties_new RENAME TO counterparties;
+
+    CREATE INDEX idx_counterparties_active ON counterparties(is_active);
+    CREATE INDEX idx_counterparties_type ON counterparties(type);
+    CREATE INDEX idx_counterparties_company ON counterparties(company_id, is_active);
+    CREATE UNIQUE INDEX idx_counterparties_company_org_unique
+      ON counterparties(company_id, org_number) WHERE org_number IS NOT NULL;
+  `)
+
+  // ─── Del B: products ───
+  db.exec(`
+    CREATE TABLE products_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      name TEXT NOT NULL,
+      description TEXT,
+      unit TEXT NOT NULL DEFAULT 'timme'
+        CHECK(unit IN ('timme','styck','dag','månad','km','pauschal')),
+      default_price_ore INTEGER NOT NULL DEFAULT 0,
+      vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
+      account_id INTEGER NOT NULL REFERENCES accounts(id),
+      article_type TEXT NOT NULL DEFAULT 'service'
+        CHECK(article_type IN ('service','goods','expense')),
+      is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `)
+
+  if (backfillCompanyId !== null) {
+    db.prepare(
+      `INSERT INTO products_new (
+        id, company_id, name, description, unit, default_price_ore,
+        vat_code_id, account_id, article_type, is_active, created_at, updated_at
+      )
+      SELECT
+        id, ?, name, description, unit, default_price_ore,
+        vat_code_id, account_id, article_type, is_active, created_at, updated_at
+      FROM products`,
+    ).run(backfillCompanyId)
+  }
+
+  db.exec(`
+    DROP TABLE products;
+    ALTER TABLE products_new RENAME TO products;
+
+    CREATE INDEX idx_products_active ON products(is_active);
+    CREATE INDEX idx_products_company ON products(company_id, is_active);
+  `)
+
+  // ─── Del C: price_lists ───
+  // Backfilla från counterparty.company_id där counterparty_id är satt,
+  // annars första bolaget. price_list_items är oförändrade.
+  db.exec(`
+    CREATE TABLE price_lists_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      name TEXT NOT NULL,
+      is_default INTEGER NOT NULL DEFAULT 0 CHECK(is_default IN (0,1)),
+      counterparty_id INTEGER REFERENCES counterparties(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `)
+
+  if (backfillCompanyId !== null) {
+    db.prepare(
+      `INSERT INTO price_lists_new (
+        id, company_id, name, is_default, counterparty_id, created_at
+      )
+      SELECT
+        pl.id,
+        COALESCE(
+          (SELECT cp.company_id FROM counterparties cp WHERE cp.id = pl.counterparty_id),
+          ?
+        ),
+        pl.name, pl.is_default, pl.counterparty_id, pl.created_at
+      FROM price_lists pl`,
+    ).run(backfillCompanyId)
+  }
+
+  db.exec(`
+    DROP TABLE price_lists;
+    ALTER TABLE price_lists_new RENAME TO price_lists;
+
+    CREATE INDEX idx_price_lists_company ON price_lists(company_id);
+  `)
+
+  migration045Verify(db)
+}
+
+function migration045Verify(db: import('better-sqlite3').Database): void {
+  for (const t of ['counterparties', 'products', 'price_lists']) {
+    const cols = db.prepare(`PRAGMA table_info(${t})`).all() as {
+      name: string
+      notnull: number
+    }[]
+    const cpCol = cols.find((c) => c.name === 'company_id')
+    if (!cpCol) {
+      throw new Error(`Migration 045: ${t}.company_id saknas`)
+    }
+    if (cpCol.notnull !== 1) {
+      throw new Error(`Migration 045: ${t}.company_id måste vara NOT NULL`)
+    }
+    const orphan = db
+      .prepare(`SELECT COUNT(*) as c FROM ${t} WHERE company_id IS NULL`)
+      .get() as { c: number }
+    if (orphan.c > 0) {
+      throw new Error(
+        `Migration 045: ${t} har ${orphan.c} rader utan company_id efter backfill`,
+      )
+    }
+  }
+
+  const oldIndex = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_counterparties_org_unique'",
+    )
+    .get()
+  if (oldIndex) {
+    throw new Error(
+      'Migration 045: gamla idx_counterparties_org_unique finns kvar',
+    )
+  }
+
+  const newIndex = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_counterparties_company_org_unique'",
+    )
+    .get()
+  if (!newIndex) {
+    throw new Error(
+      'Migration 045: nya idx_counterparties_company_org_unique saknas',
+    )
   }
 }

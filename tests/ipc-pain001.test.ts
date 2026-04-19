@@ -36,6 +36,7 @@ describe('PaymentBatchExportPain001Schema', () => {
 
 describe('CreateCounterpartyInputSchema — payment fields', () => {
   const base = {
+    company_id: 1,
     name: 'Test AB',
     type: 'supplier' as const,
   }

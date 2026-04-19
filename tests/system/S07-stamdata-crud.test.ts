@@ -50,6 +50,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
     // Uppdatera
     const updateResult = ctx.counterpartyService.updateCounterparty(ctx.db, {
       id: customer.id,
+      company_id: ctx.seed.companyId,
       name: 'Uppdaterad AB',
       city: 'Stockholm',
     })
@@ -59,11 +60,16 @@ describe('Stamdata — CRUD och affärsregler', () => {
     const deactivateResult = ctx.counterpartyService.deactivateCounterparty(
       ctx.db,
       customer.id,
+      ctx.seed.companyId,
     )
     expect(deactivateResult.success).toBe(true)
 
     // Verify inactive
-    const fetched = ctx.counterpartyService.getCounterparty(ctx.db, customer.id)
+    const fetched = ctx.counterpartyService.getCounterparty(
+      ctx.db,
+      customer.id,
+      ctx.seed.companyId,
+    )
     expect(fetched?.is_active).toBe(0)
   })
 
@@ -72,9 +78,11 @@ describe('Stamdata — CRUD och affärsregler', () => {
     seedSupplier(ctx, { name: 'Leverantörsföretag' })
 
     const customers = ctx.counterpartyService.listCounterparties(ctx.db, {
+      company_id: ctx.seed.companyId,
       type: 'customer',
     })
     const suppliers = ctx.counterpartyService.listCounterparties(ctx.db, {
+      company_id: ctx.seed.companyId,
       type: 'supplier',
     })
 
@@ -94,8 +102,11 @@ describe('Stamdata — CRUD och affärsregler', () => {
     const customerA = seedCustomer(ctx, { name: 'Kund A' })
     const customerB = seedCustomer(ctx, { name: 'Kund B' })
 
+    const cid = ctx.seed.companyId
+
     // Sätt kundpris 80 kr för kund A
     ctx.productService.setCustomerPrice(ctx.db, {
+      company_id: cid,
       product_id: product.id,
       counterparty_id: customerA.id,
       price_ore: 8000,
@@ -103,6 +114,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
 
     // Kund A → 80 kr
     const priceA = ctx.productService.getPriceForCustomer(ctx.db, {
+      company_id: cid,
       product_id: product.id,
       counterparty_id: customerA.id,
     })
@@ -111,6 +123,7 @@ describe('Stamdata — CRUD och affärsregler', () => {
 
     // Kund B → 100 kr (default)
     const priceB = ctx.productService.getPriceForCustomer(ctx.db, {
+      company_id: cid,
       product_id: product.id,
       counterparty_id: customerB.id,
     })
@@ -119,10 +132,12 @@ describe('Stamdata — CRUD och affärsregler', () => {
 
     // Ta bort kundpris → kund A → 100 kr
     ctx.productService.removeCustomerPrice(ctx.db, {
+      company_id: cid,
       product_id: product.id,
       counterparty_id: customerA.id,
     })
     const priceAfter = ctx.productService.getPriceForCustomer(ctx.db, {
+      company_id: cid,
       product_id: product.id,
       counterparty_id: customerA.id,
     })
@@ -162,12 +177,14 @@ describe('Stamdata — CRUD och affärsregler', () => {
     seedSupplier(ctx, { name: 'Gamma Supplies' })
 
     const searchAcme = ctx.counterpartyService.listCounterparties(ctx.db, {
+      company_id: ctx.seed.companyId,
       search: 'Acme',
     })
     expect(searchAcme.length).toBe(1)
     expect(searchAcme[0].name).toBe('Acme Corporation')
 
     const allCustomers = ctx.counterpartyService.listCounterparties(ctx.db, {
+      company_id: ctx.seed.companyId,
       type: 'customer',
     })
     expect(allCustomers.length).toBeGreaterThanOrEqual(2)

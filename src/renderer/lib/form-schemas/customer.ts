@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import { CreateCounterpartyInputSchema } from '../../../shared/ipc-schemas'
 
-// PayloadSchema = exakt det backend förväntar sig
-export const CustomerPayloadSchema = CreateCounterpartyInputSchema
+// PayloadSchema = backend-payload utan company_id (det injiceras av
+// useCreateCounterparty-hooken via ActiveCompanyContext, M145).
+export const CustomerPayloadSchema = CreateCounterpartyInputSchema.omit({
+  company_id: true,
+})
 export type CustomerPayload = z.infer<typeof CustomerPayloadSchema>
 
 // FormStateSchema = vad formuläret håller lokalt (alla strängar, inga null)

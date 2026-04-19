@@ -117,7 +117,9 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           aria-label="Pris"
           value={line.unit_price_kr}
           onChange={(e) =>
-            onUpdate(index, { unit_price_kr: parseDecimal(e.target.value) || 0 })
+            onUpdate(index, {
+              unit_price_kr: parseDecimal(e.target.value) || 0,
+            })
           }
           data-testid={`invoice-line-${index}-price`}
           className="block w-24 rounded-md border border-input bg-background px-2 py-1.5 text-right text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"

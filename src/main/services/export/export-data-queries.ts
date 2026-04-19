@@ -90,10 +90,18 @@ export interface ExportDateRange {
 
 // ═══ Queries ═══
 
-export function getCompanyInfo(db: Database.Database): CompanyInfo {
+export function getCompanyInfo(
+  db: Database.Database,
+  fiscalYearId: number,
+): CompanyInfo {
   const row = db
-    .prepare('SELECT org_number, name FROM companies LIMIT 1')
-    .get() as CompanyInfo | undefined
+    .prepare(
+      `SELECT c.org_number, c.name
+         FROM companies c
+         JOIN fiscal_years fy ON fy.company_id = c.id
+        WHERE fy.id = ?`,
+    )
+    .get(fiscalYearId) as CompanyInfo | undefined
   if (!row)
     throw { code: 'NOT_FOUND' as const, error: 'Inget företag hittades' }
   return {

@@ -9,6 +9,7 @@ import { localTimestampFromNow } from '../../utils/now'
 
 interface BatchRow {
   id: number
+  fiscal_year_id: number
   batch_type: string
   payment_date: string
   account_number: string
@@ -76,8 +77,13 @@ export function validateBatchForExport(
   }
 
   const company = db
-    .prepare('SELECT name, org_number, bankgiro FROM companies LIMIT 1')
-    .get() as CompanyRow | undefined
+    .prepare(
+      `SELECT c.name, c.org_number, c.bankgiro
+         FROM companies c
+         JOIN fiscal_years fy ON fy.company_id = c.id
+        WHERE fy.id = ?`,
+    )
+    .get(batch.fiscal_year_id) as CompanyRow | undefined
 
   if (!company?.bankgiro) {
     result.valid = false
@@ -115,8 +121,13 @@ export function generatePain001(
   }
 
   const company = db
-    .prepare('SELECT name, org_number, bankgiro FROM companies LIMIT 1')
-    .get() as CompanyRow
+    .prepare(
+      `SELECT c.name, c.org_number, c.bankgiro
+         FROM companies c
+         JOIN fiscal_years fy ON fy.company_id = c.id
+        WHERE fy.id = ?`,
+    )
+    .get(batch.fiscal_year_id) as CompanyRow | undefined
 
   if (!company?.bankgiro) {
     return {

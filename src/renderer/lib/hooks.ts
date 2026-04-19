@@ -40,6 +40,7 @@ import type {
 import { useIpcQuery } from './use-ipc-query'
 import { useIpcMutation } from './use-ipc-mutation'
 import { queryKeys } from './query-keys'
+import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 
 // === Company ===
 
@@ -52,7 +53,7 @@ export function useCompany() {
 export function useCreateCompany() {
   return useIpcMutation<CreateCompanyInput, Company>(
     (data) => window.api.createCompany(data),
-    { invalidate: [queryKeys.company()] },
+    { invalidate: [queryKeys.company(), queryKeys.companies()] },
   )
 }
 
@@ -60,6 +61,20 @@ export function useUpdateCompany() {
   return useIpcMutation<UpdateCompanyInput, Company>(
     (data) => window.api.updateCompany(data),
     { invalidate: [queryKeys.company()] },
+  )
+}
+
+export function useCompanies() {
+  return useIpcQuery<Company[]>(queryKeys.companies(), () =>
+    window.api.listCompanies(),
+  )
+}
+
+export function useSwitchCompany() {
+  // Bolagsbyte ändrar scope för ALLA queries — invalidera hela cachen.
+  return useIpcMutation<number, Company>(
+    (companyId) => window.api.switchCompany({ company_id: companyId }),
+    { invalidateAll: true },
   )
 }
 
@@ -131,110 +146,182 @@ export function useReopenPeriod(fiscalYearId: number | undefined) {
 
 // === Counterparties ===
 
+// === Counterparties (Sprint MC3: scopas per bolag via ActiveCompanyContext) ===
+//
+// Mönster: alla hooks läser companyId från useActiveCompany() och injicerar
+// i IPC-payload. Pickers, sidor och dialogs slipper därmed propsa company_id.
+// Mutations: hooken stoppar in company_id automatiskt så caller skickar bara
+// domän-fält. CompanySwitcher invaliderar redan hela cachen vid bolagsbyte.
+
 export function useCounterparties(params?: {
   search?: string
   type?: string
   active_only?: boolean
 }) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcQuery<Counterparty[]>(
-    queryKeys.counterparties(params as Record<string, unknown>),
-    () => window.api.listCounterparties(params ?? {}),
+    queryKeys.counterparties({
+      ...(params ?? {}),
+      company_id: companyId,
+    } as Record<string, unknown>),
+    () =>
+      window.api.listCounterparties({
+        company_id: companyId!,
+        ...(params ?? {}),
+      }),
+    { enabled: !!companyId },
   )
 }
 
 export function useCounterparty(id: number | undefined) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcQuery<Counterparty | null>(
     queryKeys.counterparty(id!),
-    () => window.api.getCounterparty({ id: id! }),
-    { enabled: !!id },
+    () => window.api.getCounterparty({ id: id!, company_id: companyId! }),
+    { enabled: !!id && !!companyId },
   )
 }
 
 export function useCreateCounterparty() {
-  return useIpcMutation<CreateCounterpartyInput, Counterparty>(
-    (data) => window.api.createCounterparty(data),
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<
+    Omit<CreateCounterpartyInput, 'company_id'>,
+    Counterparty
+  >(
+    (data) =>
+      window.api.createCounterparty({
+        ...data,
+        company_id: companyId!,
+      } as CreateCounterpartyInput),
     { invalidate: [queryKeys.counterparties()] },
   )
 }
 
 export function useUpdateCounterparty() {
-  return useIpcMutation<UpdateCounterpartyInput, Counterparty>(
-    (data) => window.api.updateCounterparty(data),
-    {
-      invalidate: [queryKeys.counterparties()],
-      onSuccess: (_result, variables) => {
-        void _result
-        void variables
-      },
-    },
-  )
-}
-
-export function useDeactivateCounterparty() {
-  return useIpcMutation<{ id: number }, Counterparty>(
-    (data) => window.api.deactivateCounterparty(data),
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<
+    Omit<UpdateCounterpartyInput, 'company_id'>,
+    Counterparty
+  >(
+    (data) =>
+      window.api.updateCounterparty({
+        ...data,
+        company_id: companyId!,
+      } as UpdateCounterpartyInput),
     { invalidate: [queryKeys.counterparties()] },
   )
 }
 
-// === Products ===
+export function useDeactivateCounterparty() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<{ id: number }, Counterparty>(
+    (data) =>
+      window.api.deactivateCounterparty({
+        id: data.id,
+        company_id: companyId!,
+      }),
+    { invalidate: [queryKeys.counterparties()] },
+  )
+}
+
+// === Products (Sprint MC3: scopas per bolag) ===
 
 export function useProducts(params?: {
   search?: string
   type?: string
   active_only?: boolean
 }) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcQuery<Product[]>(
-    queryKeys.products(params as Record<string, unknown>),
-    () => window.api.listProducts(params ?? {}),
+    queryKeys.products({
+      ...(params ?? {}),
+      company_id: companyId,
+    } as Record<string, unknown>),
+    () =>
+      window.api.listProducts({ company_id: companyId!, ...(params ?? {}) }),
+    { enabled: !!companyId },
   )
 }
 
 export function useProduct(id: number | undefined) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcQuery<(Product & { customer_prices: CustomerPrice[] }) | null>(
     queryKeys.product(id!),
-    () => window.api.getProduct({ id: id! }),
-    { enabled: !!id },
+    () => window.api.getProduct({ id: id!, company_id: companyId! }),
+    { enabled: !!id && !!companyId },
   )
 }
 
 export function useCreateProduct() {
-  return useIpcMutation<CreateProductInput, Product>(
-    (data) => window.api.createProduct(data),
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<Omit<CreateProductInput, 'company_id'>, Product>(
+    (data) =>
+      window.api.createProduct({
+        ...data,
+        company_id: companyId!,
+      } as CreateProductInput),
     { invalidate: [queryKeys.products()] },
   )
 }
 
 export function useUpdateProduct() {
-  return useIpcMutation<UpdateProductInput, Product>(
-    (data) => window.api.updateProduct(data),
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<Omit<UpdateProductInput, 'company_id'>, Product>(
+    (data) =>
+      window.api.updateProduct({
+        ...data,
+        company_id: companyId!,
+      } as UpdateProductInput),
     { invalidate: [queryKeys.products()] },
   )
 }
 
 export function useDeactivateProduct() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcMutation<{ id: number }, Product>(
-    (data) => window.api.deactivateProduct(data),
+    (data) =>
+      window.api.deactivateProduct({ id: data.id, company_id: companyId! }),
     { invalidate: [queryKeys.products()] },
   )
 }
 
 export function useSetCustomerPrice(productId: number | undefined) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcMutation<
     { product_id: number; counterparty_id: number; price_ore: number },
     CustomerPrice
-  >((data) => window.api.setCustomerPrice(data), {
-    invalidate: productId ? [queryKeys.product(productId)] : [],
-  })
+  >(
+    (data) => window.api.setCustomerPrice({ ...data, company_id: companyId! }),
+    {
+      invalidate: productId ? [queryKeys.product(productId)] : [],
+    },
+  )
 }
 
 export function useRemoveCustomerPrice(productId: number | undefined) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
   return useIpcMutation<
     { product_id: number; counterparty_id: number },
     undefined
-  >((data) => window.api.removeCustomerPrice(data), {
-    invalidate: productId ? [queryKeys.product(productId)] : [],
-  })
+  >(
+    (data) =>
+      window.api.removeCustomerPrice({ ...data, company_id: companyId! }),
+    {
+      invalidate: productId ? [queryKeys.product(productId)] : [],
+    },
+  )
 }
 
 // === Stödjande ===

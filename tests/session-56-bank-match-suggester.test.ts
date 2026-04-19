@@ -53,6 +53,7 @@ function seed(
     ).run(m, start, end)
   }
   const cust = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund Alfa AB',
     type: 'customer',
     org_number: null,
@@ -61,12 +62,14 @@ function seed(
   if (!cust.success) throw new Error(cust.error)
   if (opts?.withCustIban !== false) {
     const upd = updateCounterparty(db, {
+      company_id: 1,
       id: cust.data.id,
       bank_account: IBAN_A,
     })
     if (!upd.success) throw new Error(upd.error)
   }
   const supp = createCounterparty(db, {
+    company_id: 1,
     name: 'Lev Gamma AB',
     type: 'supplier',
     org_number: null,

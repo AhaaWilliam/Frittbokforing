@@ -44,11 +44,13 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })
   if (!supplier.success) throw new Error('Supplier creation failed')
   const supplier2 = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Staples AB',
     type: 'supplier',
   })

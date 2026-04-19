@@ -51,6 +51,7 @@ function seedForExport(db: Database.Database): { fyId: number } {
     id: number
   }
   const customer = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
     org_number: '559999-0001',
@@ -64,6 +65,7 @@ function seedForExport(db: Database.Database): { fyId: number } {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(db, {
+    company_id: 1,
     name: 'Produkt',
     default_price_ore: 10000,
     vat_code_id: vatCode.id,

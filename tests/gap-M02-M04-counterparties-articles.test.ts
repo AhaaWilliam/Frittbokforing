@@ -17,6 +17,7 @@ import {
 } from '../src/main/ipc-schemas'
 
 let db: Database.Database
+let cpyId: number
 
 function createTestDb(): Database.Database {
   const testDb = new Database(':memory:')
@@ -45,6 +46,17 @@ const VALID_COMPANY = {
 
 beforeEach(() => {
   db = createTestDb()
+  const cmp = createCompany(db, {
+    name: 'Test AB',
+    org_number: '556036-0793',
+    fiscal_rule: 'K2',
+    share_capital: 2_500_000,
+    registration_date: '2025-01-15',
+    fiscal_year_start: '2025-01-01',
+    fiscal_year_end: '2025-12-31',
+  })
+  if (!cmp.success) throw new Error('seedCompany failed: ' + cmp.error)
+  cpyId = cmp.data.id
   createCompany(db, VALID_COMPANY)
 })
 
@@ -76,6 +88,7 @@ describe('GAP M02-1: EU VAT-nummer formatvalidering', () => {
 
   it('kund med giltigt VAT-nummer skapas', () => {
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'EU Kund GmbH',
       type: 'customer',
       vat_number: 'DE123456789',
@@ -88,32 +101,47 @@ describe('GAP M02-1: EU VAT-nummer formatvalidering', () => {
 
 describe('GAP M02-2: Sortering och filtrering', () => {
   beforeEach(() => {
-    createCounterparty(db, { name: 'Alfa AB', type: 'customer' })
-    createCounterparty(db, { name: 'Zeta AB', type: 'customer' })
-    createCounterparty(db, { name: 'Beta AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Alfa AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Zeta AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Beta AB',
+      type: 'customer',
+    })
   })
 
   it('default sortering: namn ASC', () => {
-    const list = listCounterparties(db, { type: 'customer' })
+    const list = listCounterparties(db, { company_id: cpyId, type: 'customer' })
     const names = list.map((c) => c.name)
     expect(names).toEqual(['Alfa AB', 'Beta AB', 'Zeta AB'])
   })
 
   it('is_active filtrering: deaktiverad kund exkluderas', () => {
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Inaktiv AB',
       type: 'customer',
     })
     if (!result.success) throw new Error(result.error)
-    deactivateCounterparty(db, result.data.id)
+    deactivateCounterparty(db, result.data.id, cpyId)
 
     const activeOnly = listCounterparties(db, {
+      company_id: cpyId,
       type: 'customer',
       active_only: true,
     })
     expect(activeOnly.find((c) => c.name === 'Inaktiv AB')).toBeUndefined()
 
     const all = listCounterparties(db, {
+      company_id: cpyId,
       type: 'customer',
       active_only: false,
     })
@@ -122,11 +150,12 @@ describe('GAP M02-2: Sortering och filtrering', () => {
 
   it('deaktiverad kund med befintliga fakturor: kund finns kvar i DB', () => {
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Inaktiv Kund AB',
       type: 'customer',
     })
     if (!result.success) throw new Error(result.error)
-    deactivateCounterparty(db, result.data.id)
+    deactivateCounterparty(db, result.data.id, cpyId)
 
     const row = db
       .prepare('SELECT is_active FROM counterparties WHERE id = ?')
@@ -138,11 +167,13 @@ describe('GAP M02-2: Sortering och filtrering', () => {
 describe('GAP M02-3: UpdateCounterparty field guards', () => {
   it('uppdatering av giltig kolumn fungerar', () => {
     const created = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Original AB',
       type: 'customer',
     })
     if (!created.success) throw new Error(created.error)
     const updated = updateCounterparty(db, {
+      company_id: cpyId,
       id: created.data.id,
       name: 'Nytt Namn AB',
     })
@@ -171,6 +202,7 @@ describe('GAP M02-3: UpdateCounterparty field guards', () => {
 describe('GAP M02-4: Snabbskapande returnerar tillräcklig data', () => {
   it('createCounterparty returnerar id + name för dropdown', () => {
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Dropdown Kund',
       type: 'customer',
     })
@@ -190,11 +222,13 @@ describe('GAP M02-4: Snabbskapande returnerar tillräcklig data', () => {
 describe('GAP M03-1: Leverantör-specifika tester', () => {
   it('duplikat org_number för leverantörer → blockeras', () => {
     createCounterparty(db, {
+      company_id: cpyId,
       name: 'Lev A',
       type: 'supplier',
       org_number: '556789-0123',
     })
     const dup = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Lev B',
       type: 'supplier',
       org_number: '556789-0123',
@@ -205,16 +239,35 @@ describe('GAP M03-1: Leverantör-specifika tester', () => {
   })
 
   it('NULL org_number × 2 för leverantörer → båda lyckas', () => {
-    const a = createCounterparty(db, { name: 'Lev X', type: 'supplier' })
-    const b = createCounterparty(db, { name: 'Lev Y', type: 'supplier' })
+    const a = createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Lev X',
+      type: 'supplier',
+    })
+    const b = createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Lev Y',
+      type: 'supplier',
+    })
     expect(a.success).toBe(true)
     expect(b.success).toBe(true)
   })
 
   it('leverantör syns inte vid type=customer filter', () => {
-    createCounterparty(db, { name: 'Leverantör AB', type: 'supplier' })
-    createCounterparty(db, { name: 'Kund AB', type: 'customer' })
-    const customers = listCounterparties(db, { type: 'customer' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Leverantör AB',
+      type: 'supplier',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Kund AB',
+      type: 'customer',
+    })
+    const customers = listCounterparties(db, {
+      company_id: cpyId,
+      type: 'customer',
+    })
     expect(customers.find((c) => c.name === 'Leverantör AB')).toBeUndefined()
     expect(customers.find((c) => c.name === 'Kund AB')).toBeDefined()
   })
@@ -238,6 +291,7 @@ describe('GAP M04-1: Artikeltyp → standardkonto', () => {
   it('service-typ → konto 3002 (ARTICLE_TYPE_DEFAULTS)', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const result = createProduct(db, {
+      company_id: cpyId,
       name: 'Konsulttjänst',
       default_price_ore: 100_000,
       vat_code_id: vatCodeId,
@@ -261,6 +315,7 @@ describe('GAP M04-1: Artikeltyp → standardkonto', () => {
     if (!goodsAccount) return // Account may not exist in seed
 
     const result = createProduct(db, {
+      company_id: cpyId,
       name: 'Vara',
       default_price_ore: 50_000,
       vat_code_id: vatCodeId,
@@ -275,6 +330,7 @@ describe('GAP M04-2: Momskod-koppling', () => {
   it('ogiltig vat_code_id → error vid produktskapande', () => {
     const { accountId } = getTestIds(db)
     const result = createProduct(db, {
+      company_id: cpyId,
       name: 'Felaktig',
       default_price_ore: 10_000,
       vat_code_id: 99999, // Non-existent

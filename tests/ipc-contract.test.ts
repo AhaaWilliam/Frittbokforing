@@ -134,6 +134,7 @@ describe('Counterparty schemas', () => {
     type: 'customer',
     country: 'Sverige',
     default_payment_terms: 30,
+    company_id: 1,
   }
 
   it('CreateCounterpartyInputSchema accepts valid', () =>
@@ -149,18 +150,23 @@ describe('Counterparty schemas', () => {
   it('UpdateCounterpartyInputSchema requires id', () =>
     invalid(UpdateCounterpartyInputSchema, { name: 'Updated' }))
   it('UpdateCounterpartyInputSchema accepts valid', () =>
-    valid(UpdateCounterpartyInputSchema, { id: 1, name: 'Updated' }))
+    valid(UpdateCounterpartyInputSchema, {
+      id: 1,
+      company_id: 1,
+      name: 'Updated',
+    }))
 
-  it('CounterpartyListInputSchema accepts empty', () =>
-    valid(CounterpartyListInputSchema, {}))
+  it('CounterpartyListInputSchema accepts company_id', () =>
+    valid(CounterpartyListInputSchema, { company_id: 1 }))
   it('CounterpartyIdSchema rejects zero', () =>
-    invalid(CounterpartyIdSchema, { id: 0 }))
+    invalid(CounterpartyIdSchema, { id: 0, company_id: 1 }))
 })
 
 // ── Product ────────────────────────────────────────────────────────
 
 describe('Product schemas', () => {
   const validProduct = {
+    company_id: 1,
     name: 'Konsulttimme',
     unit: 'timme',
     default_price_ore: 100000,
@@ -181,10 +187,10 @@ describe('Product schemas', () => {
 
   it('UpdateProductInputSchema requires id', () =>
     invalid(UpdateProductInputSchema, { name: 'X' }))
-  it('ProductListInputSchema accepts empty', () =>
-    valid(ProductListInputSchema, {}))
+  it('ProductListInputSchema accepts company_id', () =>
+    valid(ProductListInputSchema, { company_id: 1 }))
   it('ProductIdSchema rejects string id', () =>
-    invalid(ProductIdSchema, { id: 'abc' }))
+    invalid(ProductIdSchema, { id: 'abc', company_id: 1 }))
 })
 
 // ── Pricing ────────────────────────────────────────────────────────
@@ -192,14 +198,16 @@ describe('Product schemas', () => {
 describe('Pricing schemas', () => {
   it('SetCustomerPriceInputSchema accepts valid', () =>
     valid(SetCustomerPriceInputSchema, {
+      company_id: 1,
       product_id: 1,
       counterparty_id: 2,
       price_ore: 50000,
     }))
   it('RemoveCustomerPriceInputSchema rejects missing field', () =>
-    invalid(RemoveCustomerPriceInputSchema, { product_id: 1 }))
+    invalid(RemoveCustomerPriceInputSchema, { product_id: 1, company_id: 1 }))
   it('GetPriceForCustomerInputSchema accepts valid', () =>
     valid(GetPriceForCustomerInputSchema, {
+      company_id: 1,
       product_id: 1,
       counterparty_id: 2,
     }))

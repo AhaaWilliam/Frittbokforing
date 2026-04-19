@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('api', {
   createCompany: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('company:create', data),
   getCompany: () => ipcRenderer.invoke('company:get'),
+  listCompanies: () => ipcRenderer.invoke('company:list'),
+  switchCompany: (data: { company_id: number }) =>
+    ipcRenderer.invoke('company:switch', data),
   updateCompany: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('company:update', data),
   // Fiscal Years
@@ -380,6 +383,51 @@ contextBridge.exposeInMainWorld('api', {
   setSetting: (key: string, value: unknown) =>
     ipcRenderer.invoke('settings:set', key, value),
 })
+
+// Auth — separate namespace (window.auth.*) for the local-login + SQLCipher
+// flow (ADR 004). Kept out of window.api so auth is usable BEFORE the DB
+// is open (app/ipc handlers that require DB would otherwise fail pre-login).
+contextBridge.exposeInMainWorld('auth', {
+  listUsers: () => ipcRenderer.invoke('auth:list-users'),
+  status: () => ipcRenderer.invoke('auth:status'),
+  createUser: (data: { displayName: string; password: string }) =>
+    ipcRenderer.invoke('auth:create-user', data),
+  login: (data: { userId: string; password: string }) =>
+    ipcRenderer.invoke('auth:login', data),
+  loginWithRecovery: (data: { userId: string; recoveryPhrase: string }) =>
+    ipcRenderer.invoke('auth:login-recovery', data),
+  logout: () => ipcRenderer.invoke('auth:logout'),
+  changePassword: (data: {
+    userId: string
+    oldPassword: string
+    newPassword: string
+  }) => ipcRenderer.invoke('auth:change-password', data),
+  rotateRecoveryKey: (data: { userId: string }) =>
+    ipcRenderer.invoke('auth:rotate-recovery', data),
+  renameUser: (data: { userId: string; displayName: string }) =>
+    ipcRenderer.invoke('auth:rename-user', data),
+  deleteUser: (data: { userId: string }) =>
+    ipcRenderer.invoke('auth:delete-user', data),
+  touch: () => ipcRenderer.invoke('auth:touch'),
+  setTimeout: (data: { timeoutMs: number }) =>
+    ipcRenderer.invoke('auth:set-timeout', data),
+  // Legacy-DB migration (ADR 004 §9)
+  legacyCheck: () => ipcRenderer.invoke('auth:legacy-check'),
+  legacyImport: () => ipcRenderer.invoke('auth:legacy-import'),
+  legacySkip: () => ipcRenderer.invoke('auth:legacy-skip'),
+})
+
+// Test-only auth API — separate from window.__testApi; lives on window.__authTestApi
+if (process.env.FRITT_TEST === '1') {
+  contextBridge.exposeInMainWorld('__authTestApi', {
+    createAndLoginUser: (data?: {
+      displayName?: string
+      password?: string
+    }) => ipcRenderer.invoke('__test:createAndLoginUser', data ?? {}),
+    lockNow: () => ipcRenderer.invoke('__test:lockNow'),
+    setTimeoutMs: (ms: number) => ipcRenderer.invoke('__test:setTimeoutMs', ms),
+  })
+}
 
 // Test-only API — separate from window.api, guarded by FRITT_TEST
 if (process.env.FRITT_TEST === '1') {

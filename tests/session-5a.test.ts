@@ -15,6 +15,7 @@ import {
 } from '../src/main/ipc-schemas'
 
 let db: Database.Database
+let cpyId: number
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -28,6 +29,17 @@ const VALID_COMPANY = {
 
 beforeEach(() => {
   db = createTestDb()
+  const cmp = createCompany(db, {
+    name: 'Test AB',
+    org_number: '556036-0793',
+    fiscal_rule: 'K2',
+    share_capital: 2_500_000,
+    registration_date: '2025-01-15',
+    fiscal_year_start: '2025-01-01',
+    fiscal_year_end: '2025-12-31',
+  })
+  if (!cmp.success) throw new Error('seedCompany failed: ' + cmp.error)
+  cpyId = cmp.data.id
 })
 
 afterEach(() => {
@@ -40,7 +52,7 @@ afterEach(() => {
 describe('Migration 005', () => {
   it('1. user_version = 5, nya tabeller och kolumner', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(46) // S58: Uppdatera vid nya migrationer
 
     // Nya tabeller
     const tables = db
@@ -89,6 +101,7 @@ describe('Migration 005', () => {
 describe('Counterparty CRUD', () => {
   it('3. Skapa kund med alla fält inkl. VAT → success', () => {
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Acme AB',
       type: 'customer',
       org_number: '556036-0793',
@@ -115,6 +128,7 @@ describe('Counterparty CRUD', () => {
   it('4. Ogiltigt VAT-nummer → VALIDATION_ERROR', () => {
     // Bara 1 bokstav i landskod → ogiltigt
     const result = createCounterparty(db, {
+      company_id: cpyId,
       name: 'Bad VAT AB',
       vat_number: 'X1234',
     })
@@ -125,6 +139,7 @@ describe('Counterparty CRUD', () => {
 
     // Tomt/null ska vara ok
     const ok = createCounterparty(db, {
+      company_id: cpyId,
       name: 'No VAT AB',
       vat_number: null,
     })
@@ -132,23 +147,27 @@ describe('Counterparty CRUD', () => {
   })
 
   it('5. Lista kunder med sök → filtrerar på namn', () => {
-    createCounterparty(db, { name: 'Acme AB' })
-    createCounterparty(db, { name: 'Beta AB' })
-    createCounterparty(db, { name: 'Acme Konsult' })
+    createCounterparty(db, { company_id: cpyId, name: 'Acme AB' })
+    createCounterparty(db, { company_id: cpyId, name: 'Beta AB' })
+    createCounterparty(db, { company_id: cpyId, name: 'Acme Konsult' })
 
-    const all = listCounterparties(db, {})
+    const all = listCounterparties(db, { company_id: cpyId })
     expect(all.length).toBe(3)
 
-    const acme = listCounterparties(db, { search: 'Acme' })
+    const acme = listCounterparties(db, { company_id: cpyId, search: 'Acme' })
     expect(acme.length).toBe(2)
   })
 
   it('6. Uppdatera kund → success', () => {
-    const created = createCounterparty(db, { name: 'Original AB' })
+    const created = createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Original AB',
+    })
     expect(created.success).toBe(true)
     if (!created.success) return
 
     const updated = updateCounterparty(db, {
+      company_id: cpyId,
       id: created.data.id,
       name: 'Nytt Namn AB',
       vat_number: 'SE556036079301',
@@ -161,28 +180,51 @@ describe('Counterparty CRUD', () => {
   })
 
   it('7. Inaktivera kund → is_active = 0', () => {
-    const created = createCounterparty(db, { name: 'Inactive AB' })
+    const created = createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Inactive AB',
+    })
     expect(created.success).toBe(true)
     if (!created.success) return
 
-    deactivateCounterparty(db, created.data.id)
+    deactivateCounterparty(db, created.data.id, cpyId)
 
-    const activeOnly = listCounterparties(db, { active_only: true })
+    const activeOnly = listCounterparties(db, {
+      company_id: cpyId,
+      active_only: true,
+    })
     expect(activeOnly.find((c) => c.name === 'Inactive AB')).toBeUndefined()
 
-    const all = listCounterparties(db, { active_only: false })
+    const all = listCounterparties(db, {
+      company_id: cpyId,
+      active_only: false,
+    })
     expect(all.find((c) => c.name === 'Inactive AB')).toBeDefined()
   })
 
   it('8. Lista kunder filtrerar typ korrekt', () => {
-    createCounterparty(db, { name: 'Kund AB', type: 'customer' })
-    createCounterparty(db, { name: 'Lev AB', type: 'supplier' })
-    createCounterparty(db, { name: 'Båda AB', type: 'both' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Kund AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Lev AB',
+      type: 'supplier',
+    })
+    createCounterparty(db, { company_id: cpyId, name: 'Båda AB', type: 'both' })
 
-    const customers = listCounterparties(db, { type: 'customer' })
+    const customers = listCounterparties(db, {
+      company_id: cpyId,
+      type: 'customer',
+    })
     expect(customers.length).toBe(2) // customer + both
 
-    const suppliers = listCounterparties(db, { type: 'supplier' })
+    const suppliers = listCounterparties(db, {
+      company_id: cpyId,
+      type: 'supplier',
+    })
     expect(suppliers.length).toBe(2) // supplier + both
   })
 })

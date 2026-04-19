@@ -17,8 +17,8 @@ function seedMinimalData(testDb: Database.Database): {
   testDb.exec(`
     INSERT INTO companies (id, org_number, name, fiscal_rule) VALUES (1, '559000-1234', 'Test AB', 'K2');
     INSERT INTO fiscal_years (id, company_id, year_label, start_date, end_date) VALUES (1, 1, '2026', '2026-01-01', '2026-12-31');
-    INSERT INTO counterparties (id, name, type) VALUES (1, 'Kund AB', 'customer');
-    INSERT INTO counterparties (id, name, type) VALUES (2, 'Leverantör AB', 'supplier');
+    INSERT INTO counterparties (company_id, id, name, type) VALUES (1, 1, 'Kund AB', 'customer');
+    INSERT INTO counterparties (company_id, id, name, type) VALUES (1, 2, 'Leverantör AB', 'supplier');
   `)
 
   const inv = testDb

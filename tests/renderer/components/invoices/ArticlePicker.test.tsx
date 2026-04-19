@@ -192,6 +192,7 @@ describe('ArticlePicker', () => {
         expect(getMockApi().getPriceForCustomer).toHaveBeenCalledTimes(1)
       })
       expect(getMockApi().getPriceForCustomer).toHaveBeenCalledWith({
+        company_id: 1,
         product_id: 1,
         counterparty_id: 5,
       })

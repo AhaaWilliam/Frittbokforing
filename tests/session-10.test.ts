@@ -47,11 +47,13 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })
   if (!supplier.success) throw new Error('Supplier failed')
   const customer = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
@@ -69,6 +71,7 @@ function seedAll(testDb: Database.Database) {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100000,
     vat_code_id: vatCodeOut.id,
@@ -436,6 +439,7 @@ describe('Validering', () => {
 
     // Same number different supplier = OK
     const otherSupplier = createCounterparty(db, {
+      company_id: 1,
       name: 'Annan Lev',
       type: 'supplier',
     })

@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { checkChronology } from './chronology-guard'
+import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { validateAccountsActive } from './account-service'
 import { rebuildSearchIndex } from './search-service'
 import type {
@@ -287,17 +288,22 @@ export function executeAccrualForPeriod(
 
       // 8. Create journal entry
       const description = `Periodisering: ${schedule.description} (period ${periodNumber}/${schedule.start_period + schedule.period_count - 1})`
+      const accrCompanyId = getCompanyIdForFiscalYear(
+        db,
+        schedule.fiscal_year_id,
+      )
       const jeResult = db
         .prepare(
           `INSERT INTO journal_entries (
             company_id, fiscal_year_id, verification_number, verification_series,
             journal_date, description, status, source_type
           ) VALUES (
-            (SELECT id FROM companies LIMIT 1), ?, ?, 'C',
+            ?, ?, ?, 'C',
             ?, ?, 'draft', 'manual'
           )`,
         )
         .run(
+          accrCompanyId,
           schedule.fiscal_year_id,
           nextVer.next_ver,
           journalDate,

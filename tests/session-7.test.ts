@@ -30,6 +30,7 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
@@ -44,6 +45,7 @@ function seedAll(testDb: Database.Database) {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsulttjänst',
     unit: 'timme',
     default_price_ore: 95000,
@@ -102,7 +104,7 @@ afterEach(() => {
 describe('Migration 007', () => {
   it('1. user_version = 14, invoice_lines.account_number exists', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(46) // S58: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_lines)') as { name: string }[]

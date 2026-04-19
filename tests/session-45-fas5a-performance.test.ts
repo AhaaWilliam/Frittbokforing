@@ -37,7 +37,11 @@ function seedInvoice(testDb: Database.Database) {
   const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
     id: number
   }
-  const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
+  const cp = createCounterparty(testDb, {
+    company_id: 1,
+    name: 'Kund AB',
+    type: 'customer',
+  })
   if (!cp.success) throw new Error('CP failed')
   const vatCode = testDb
     .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
@@ -46,6 +50,7 @@ function seedInvoice(testDb: Database.Database) {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100000,
     vat_code_id: vatCode.id,
@@ -66,6 +71,7 @@ function seedExpense(testDb: Database.Database) {
     id: number
   }
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })
@@ -593,6 +599,7 @@ describe('F17: getAllJournalEntryLines batched query', () => {
       id: number
     }
     const supplier = createCounterparty(db, {
+      company_id: 1,
       name: 'Leverantör AB',
       type: 'supplier',
     })
@@ -846,6 +853,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(44)
+    expect(row[0].user_version).toBe(46)
   })
 })

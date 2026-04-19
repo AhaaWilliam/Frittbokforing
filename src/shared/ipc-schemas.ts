@@ -109,6 +109,7 @@ export const VatNumberSchema = z
 // === Counterparty ===
 export const CreateCounterpartyInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     name: z.string().min(1).max(200),
     type: z.enum(['customer', 'supplier', 'both']).default('customer'),
     org_number: z
@@ -153,6 +154,7 @@ export const UpdateCounterpartyInputSchema = z
 
 export const CounterpartyListInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     search: z.string().optional(),
     type: z.enum(['customer', 'supplier', 'both']).optional(),
     active_only: z.boolean().default(true),
@@ -162,6 +164,14 @@ export const CounterpartyListInputSchema = z
 export const CounterpartyIdSchema = z
   .object({
     id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
+// === Company switch (Sprint MC1) ===
+export const CompanySwitchInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
   })
   .strict()
 
@@ -184,6 +194,7 @@ export const UpdateCompanyInputSchema = z
 // === Product ===
 export const CreateProductInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     name: z.string().min(1).max(200),
     description: z.string().max(1000).nullable().optional(),
     unit: z
@@ -205,6 +216,7 @@ export const UpdateProductInputSchema = z
 
 export const ProductListInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     search: z.string().optional(),
     type: z.enum(['service', 'goods', 'expense']).optional(),
     active_only: z.boolean().default(true),
@@ -214,11 +226,13 @@ export const ProductListInputSchema = z
 export const ProductIdSchema = z
   .object({
     id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
   })
   .strict()
 
 export const SetCustomerPriceInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     product_id: z.number().int().positive(),
     counterparty_id: z.number().int().positive(),
     price_ore: z.number().int().min(0),
@@ -227,6 +241,7 @@ export const SetCustomerPriceInputSchema = z
 
 export const RemoveCustomerPriceInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     product_id: z.number().int().positive(),
     counterparty_id: z.number().int().positive(),
   })
@@ -234,6 +249,7 @@ export const RemoveCustomerPriceInputSchema = z
 
 export const GetPriceForCustomerInputSchema = z
   .object({
+    company_id: z.number().int().positive(),
     product_id: z.number().int().positive(),
     counterparty_id: z.number().int().positive(),
   })
@@ -1098,6 +1114,8 @@ export const channelMap = {
   'company:create': CreateCompanyInputSchema,
   'company:get': z.void(),
   'company:update': UpdateCompanyInputSchema,
+  'company:list': z.void(),
+  'company:switch': CompanySwitchInputSchema,
 
   // Fiscal Years
   'fiscal-year:list': z.void(),

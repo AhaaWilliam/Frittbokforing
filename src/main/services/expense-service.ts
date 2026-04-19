@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { addDays } from '../../shared/date-utils'
 import { todayLocalFromNow } from '../utils/now'
+import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { checkChronology } from './chronology-guard'
 import { rebuildSearchIndex } from './search-service'
 import { escapeLikePattern } from '../../shared/escape-like'
@@ -494,17 +495,24 @@ export function finalizeExpense(
         }
       }
 
+      const expCompanyId = getCompanyIdForFiscalYear(db, expense.fiscal_year_id)
       const entryResult = db
         .prepare(
           `INSERT INTO journal_entries (
           company_id, fiscal_year_id, verification_number, verification_series,
           journal_date, description, status, source_type
         ) VALUES (
-          (SELECT id FROM companies LIMIT 1), ?, ?, 'B',
+          ?, ?, ?, 'B',
           ?, ?, 'draft', 'auto_expense'
         )`,
         )
-        .run(expense.fiscal_year_id, nextVer, expense.expense_date, description)
+        .run(
+          expCompanyId,
+          expense.fiscal_year_id,
+          nextVer,
+          expense.expense_date,
+          description,
+        )
       const journalEntryId = Number(entryResult.lastInsertRowid)
 
       // 9. INSERT journal_entry_lines
@@ -775,17 +783,19 @@ export function _payExpenseTx(
   const description = `Betalning leverantörsfaktura — ${counterpartyName}`
 
   // 11. INSERT journal_entry (B-serie)
+  const payCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
   const entryResult = db
     .prepare(
       `INSERT INTO journal_entries (
         company_id, fiscal_year_id, verification_number, verification_series,
         journal_date, description, status, source_type
       ) VALUES (
-        (SELECT id FROM companies LIMIT 1), ?, ?, 'B',
+        ?, ?, ?, 'B',
         ?, ?, 'draft', 'auto_payment'
       )`,
     )
     .run(
+      payCompanyId,
       paymentYear.id,
       nextVerResult.next_ver,
       input.payment_date,
@@ -1140,17 +1150,19 @@ export function payExpensesBulk(
 
         const description = `Bankavgift bulk-betalning ${input.payment_date}`
 
+        const feeCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
         const entryResult = db
           .prepare(
             `INSERT INTO journal_entries (
               company_id, fiscal_year_id, verification_number, verification_series,
               journal_date, description, status, source_type, source_reference
             ) VALUES (
-              (SELECT id FROM companies LIMIT 1), ?, ?, 'B',
+              ?, ?, ?, 'B',
               ?, ?, 'draft', 'auto_bank_fee', ?
             )`,
           )
           .run(
+            feeCompanyId,
             paymentYear.id,
             nextVer.next_ver,
             input.payment_date,

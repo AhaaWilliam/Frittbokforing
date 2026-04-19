@@ -30,6 +30,7 @@ function seed(db: Database.Database): Seeded {
     ).run(m, start, end)
   }
   const cust = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund',
     type: 'customer',
     org_number: null,

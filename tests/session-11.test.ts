@@ -29,6 +29,7 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })
@@ -112,7 +113,7 @@ describe('Session 11: Migration 010', () => {
 
   it('PRAGMA user_version = 10', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(46) // S58: Uppdatera vid nya migrationer
   })
 
   it('expense payments use auto_payment source_type in B-series', () => {

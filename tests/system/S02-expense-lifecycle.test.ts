@@ -302,7 +302,7 @@ describe('Komplett kostnadsflöde — leverantörsfaktura', () => {
     // Let me do invoice first for A-series
     const customer = ctx.db
       .prepare(
-        "INSERT INTO counterparties (type, name, is_active) VALUES ('customer', 'A-kund', 1) RETURNING *",
+        "INSERT INTO counterparties (company_id, type, name, is_active) VALUES (1, 'customer', 'A-kund', 1) RETURNING *",
       )
       .get() as CounterpartyIdRow
     const vatCode = ctx.db

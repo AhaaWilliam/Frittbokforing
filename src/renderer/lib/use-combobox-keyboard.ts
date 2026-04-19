@@ -129,7 +129,15 @@ export function useComboboxKeyboard<T>(
           break
       }
     },
-    [isOpen, totalCount, activeIndex, optionsList, onSelect, onClose, trailingAction],
+    [
+      isOpen,
+      totalCount,
+      activeIndex,
+      optionsList,
+      onSelect,
+      onClose,
+      trailingAction,
+    ],
   )
 
   const isActive = useCallback(

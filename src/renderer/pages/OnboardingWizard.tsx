@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useCreateCompany } from '../lib/hooks'
 import { StepCompany } from '../components/wizard/StepCompany'
 import {
@@ -6,7 +6,7 @@ import {
   computeFiscalYear,
 } from '../components/wizard/StepFiscalYear'
 import { StepConfirm } from '../components/wizard/StepConfirm'
-import type { CreateCompanyInput } from '../../shared/types'
+import type { Company, CreateCompanyInput } from '../../shared/types'
 
 type WizardStep = 1 | 2 | 3
 
@@ -47,9 +47,27 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
 
 const STEPS = ['Företagsuppgifter', 'Bokföringsår', 'Bekräfta']
 
-export function OnboardingWizard() {
+interface OnboardingWizardProps {
+  /** Triggas när wizarden ska stängas utan att skapa bolag (add-company-modal). */
+  onCancel?: () => void
+  /** Triggas efter framgångsrikt skapat bolag (add-company-modal). */
+  onSuccess?: (company: Company) => void
+}
+
+export function OnboardingWizard({
+  onCancel,
+  onSuccess,
+}: OnboardingWizardProps = {}) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const createCompany = useCreateCompany()
+
+  // Anropa onSuccess efter att mutationen lyckats. useEffect undviker
+  // setState-i-render genom att vänta tills reactQuery rapporterat success.
+  useEffect(() => {
+    if (createCompany.isSuccess && createCompany.data && onSuccess) {
+      onSuccess(createCompany.data)
+    }
+  }, [createCompany.isSuccess, createCompany.data, onSuccess])
 
   const setField = (field: string, value: string | boolean | number) =>
     dispatch({ type: 'SET_FIELD', field, value })
@@ -72,10 +90,24 @@ export function OnboardingWizard() {
       data-testid="wizard"
     >
       <div className="w-full max-w-lg">
-        <h1 className="mb-2 text-center text-2xl font-bold">Fritt Bokföring</h1>
+        <h1 className="mb-2 text-center text-2xl font-bold">
+          {onCancel ? 'Lägg till bolag' : 'Fritt Bokföring'}
+        </h1>
         <p className="mb-6 text-center text-sm text-muted-foreground">
-          Kom igång med din bokföring
+          {onCancel ? 'Skapa ett nytt bolag' : 'Kom igång med din bokföring'}
         </p>
+        {onCancel && (
+          <div className="mb-4 text-center">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="text-xs text-muted-foreground underline"
+              data-testid="wizard-cancel"
+            >
+              Avbryt
+            </button>
+          </div>
+        )}
 
         {/* Stepper */}
         <div className="mb-6 flex items-center justify-center gap-2">

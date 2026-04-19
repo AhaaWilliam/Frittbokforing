@@ -25,10 +25,15 @@ function mapRow(row: Record<string, unknown>): Counterparty {
 
 export function listCounterparties(
   db: Database.Database,
-  input: { search?: string; type?: string; active_only?: boolean },
+  input: {
+    company_id: number
+    search?: string
+    type?: string
+    active_only?: boolean
+  },
 ): Counterparty[] {
-  let sql = 'SELECT * FROM counterparties WHERE 1=1'
-  const params: unknown[] = []
+  let sql = 'SELECT * FROM counterparties WHERE company_id = ?'
+  const params: unknown[] = [input.company_id]
 
   if (input.active_only !== false) {
     sql += ' AND is_active = 1'
@@ -58,10 +63,19 @@ export function listCounterparties(
 export function getCounterparty(
   db: Database.Database,
   id: number,
+  companyId?: number,
 ): Counterparty | null {
-  const row = db
-    .prepare('SELECT * FROM counterparties WHERE id = ?')
-    .get(id) as Record<string, unknown> | undefined
+  // companyId är optional för att stödja interna anrop som redan har
+  // upstream-validering (t.ex. createCounterparty:s post-INSERT-läsning).
+  // IPC-handlern skickar alltid companyId — defense-in-depth-guard.
+  const sql =
+    companyId !== undefined
+      ? 'SELECT * FROM counterparties WHERE id = ? AND company_id = ?'
+      : 'SELECT * FROM counterparties WHERE id = ?'
+  const params = companyId !== undefined ? [id, companyId] : [id]
+  const row = db.prepare(sql).get(...params) as
+    | Record<string, unknown>
+    | undefined
   return row ? mapRow(row) : null
 }
 
@@ -84,10 +98,11 @@ export function createCounterparty(
   try {
     const result = db
       .prepare(
-        `INSERT INTO counterparties (name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms, bankgiro, plusgiro, bank_account, bank_clearing)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO counterparties (company_id, name, type, org_number, vat_number, address_line1, postal_code, city, country, contact_person, email, phone, payment_terms, bankgiro, plusgiro, bank_account, bank_clearing)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
+        data.company_id,
         data.name,
         data.type,
         data.org_number ?? null,
@@ -146,9 +161,11 @@ export function updateCounterparty(
       code: 'VALIDATION_ERROR',
     }
   }
-  const { id, ...data } = parsed.data
+  const { id, company_id: _company_id, ...data } = parsed.data
 
-  const existing = getCounterparty(db, id)
+  // company_id är obligatorisk i schemat men används bara som scope-guard;
+  // får inte UPDATE:as (immutability-trigger 046 fångar annars).
+  const existing = getCounterparty(db, id, _company_id)
   if (!existing)
     return {
       success: false,
@@ -204,7 +221,7 @@ export function updateCounterparty(
       ).run(...params)
     }
 
-    const updated = getCounterparty(db, id)!
+    const updated = getCounterparty(db, id, _company_id)!
     try {
       rebuildSearchIndex(db)
     } catch {
@@ -230,8 +247,9 @@ export function updateCounterparty(
 export function deactivateCounterparty(
   db: Database.Database,
   id: number,
+  companyId: number,
 ): IpcResult<Counterparty> {
-  const existing = getCounterparty(db, id)
+  const existing = getCounterparty(db, id, companyId)
   if (!existing)
     return {
       success: false,
@@ -240,9 +258,9 @@ export function deactivateCounterparty(
     }
 
   db.prepare(
-    "UPDATE counterparties SET is_active = 0, updated_at = datetime('now','localtime') WHERE id = ?",
-  ).run(id)
+    "UPDATE counterparties SET is_active = 0, updated_at = datetime('now','localtime') WHERE id = ? AND company_id = ?",
+  ).run(id, companyId)
 
-  const updated = getCounterparty(db, id)!
+  const updated = getCounterparty(db, id, companyId)!
   return { success: true, data: updated }
 }

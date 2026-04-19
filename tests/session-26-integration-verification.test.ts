@@ -92,8 +92,7 @@ function seedBookedEntry(opts: {
 function seedDraftInvoice(): number {
   const cpResult = db
     .prepare(
-      `INSERT INTO counterparties (name, type, org_number, is_active)
-       VALUES ('Kund AB', 'customer', '556000-0001', 1)`,
+      `INSERT INTO counterparties (company_id, name, type, org_number, is_active) VALUES (1, 'Kund AB', 'customer', '556000-0001', 1)`,
     )
     .run()
   const counterpartyId = Number(cpResult.lastInsertRowid)

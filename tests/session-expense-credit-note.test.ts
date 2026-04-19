@@ -28,6 +28,7 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })

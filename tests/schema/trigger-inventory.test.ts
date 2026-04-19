@@ -25,10 +25,54 @@ const EXPECTED_TRIGGERS = [
   { name: 'trg_immutable_booked_line_delete', tbl_name: 'journal_entry_lines' },
   { name: 'trg_immutable_booked_line_insert', tbl_name: 'journal_entry_lines' },
   { name: 'trg_immutable_booked_line_update', tbl_name: 'journal_entry_lines' },
+  // ─── Sprint MC3 — defense-in-depth-triggers (M145) ────────────────
+  { name: 'trg_counterparties_company_immutable', tbl_name: 'counterparties' },
+  {
+    name: 'trg_expense_counterparty_company_match_insert',
+    tbl_name: 'expenses',
+  },
+  {
+    name: 'trg_expense_counterparty_company_match_update',
+    tbl_name: 'expenses',
+  },
+  {
+    name: 'trg_invoice_counterparty_company_match_insert',
+    tbl_name: 'invoices',
+  },
+  {
+    name: 'trg_invoice_counterparty_company_match_update',
+    tbl_name: 'invoices',
+  },
+  {
+    name: 'trg_invoice_line_product_company_match_insert',
+    tbl_name: 'invoice_lines',
+  },
+  {
+    name: 'trg_invoice_line_product_company_match_update',
+    tbl_name: 'invoice_lines',
+  },
+  {
+    name: 'trg_price_list_item_product_company_match_insert',
+    tbl_name: 'price_list_items',
+  },
+  {
+    name: 'trg_price_list_item_product_company_match_update',
+    tbl_name: 'price_list_items',
+  },
+  {
+    name: 'trg_price_list_counterparty_company_match_insert',
+    tbl_name: 'price_lists',
+  },
+  {
+    name: 'trg_price_list_counterparty_company_match_update',
+    tbl_name: 'price_lists',
+  },
+  { name: 'trg_price_lists_company_immutable', tbl_name: 'price_lists' },
+  { name: 'trg_products_company_immutable', tbl_name: 'products' },
 ] as const
 
 describe('Trigger inventory', () => {
-  test('matches expected list (16 triggers)', () => {
+  test('matches expected list (29 triggers)', () => {
     const db = createTestDb()
     const actual = db
       .prepare(

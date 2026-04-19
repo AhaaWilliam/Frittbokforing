@@ -15,10 +15,15 @@ import log from 'electron-log'
 
 export function listProducts(
   db: Database.Database,
-  input: { search?: string; type?: string; active_only?: boolean },
+  input: {
+    company_id: number
+    search?: string
+    type?: string
+    active_only?: boolean
+  },
 ): Product[] {
-  let sql = 'SELECT * FROM products WHERE 1=1'
-  const params: unknown[] = []
+  let sql = 'SELECT * FROM products WHERE company_id = ?'
+  const params: unknown[] = [input.company_id]
 
   if (input.active_only !== false) {
     sql += ' AND is_active = 1'
@@ -40,12 +45,20 @@ export function listProducts(
 export function getProduct(
   db: Database.Database,
   id: number,
+  companyId?: number,
 ): (Product & { customer_prices: CustomerPrice[] }) | null {
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as
-    | Product
-    | undefined
+  // companyId optional för intern bakåtkompatibilitet (post-INSERT-läsning).
+  // IPC-handlern skickar alltid companyId — defense-in-depth-guard.
+  const sql =
+    companyId !== undefined
+      ? 'SELECT * FROM products WHERE id = ? AND company_id = ?'
+      : 'SELECT * FROM products WHERE id = ?'
+  const params = companyId !== undefined ? [id, companyId] : [id]
+  const product = db.prepare(sql).get(...params) as Product | undefined
   if (!product) return null
 
+  // Customer prices är scopade via JOIN till counterparties+price_lists,
+  // som båda tillhör samma bolag som produkten (defense-in-depth-trigger 046).
   const customerPrices = db
     .prepare(
       `SELECT pli.price_ore, cp.id AS counterparty_id, cp.name AS counterparty_name
@@ -77,10 +90,11 @@ export function createProduct(
   try {
     const result = db
       .prepare(
-        `INSERT INTO products (name, description, unit, default_price_ore, vat_code_id, account_id, article_type)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO products (company_id, name, description, unit, default_price_ore, vat_code_id, account_id, article_type)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
+        data.company_id,
         data.name,
         data.description ?? null,
         data.unit,
@@ -132,11 +146,11 @@ export function updateProduct(
       code: 'VALIDATION_ERROR',
     }
   }
-  const { id, ...data } = parsed.data
+  const { id, company_id: companyId, ...data } = parsed.data
 
-  const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as
-    | Product
-    | undefined
+  const existing = db
+    .prepare('SELECT * FROM products WHERE id = ? AND company_id = ?')
+    .get(id, companyId) as Product | undefined
   if (!existing) {
     return {
       success: false,
@@ -158,10 +172,10 @@ export function updateProduct(
 
     if (sets.length > 0) {
       sets.push("updated_at = datetime('now','localtime')")
-      params.push(id)
-      db.prepare(`UPDATE products SET ${sets.join(', ')} WHERE id = ?`).run(
-        ...params,
-      )
+      params.push(id, companyId)
+      db.prepare(
+        `UPDATE products SET ${sets.join(', ')} WHERE id = ? AND company_id = ?`,
+      ).run(...params)
     }
 
     const updated = db
@@ -186,10 +200,11 @@ export function updateProduct(
 export function deactivateProduct(
   db: Database.Database,
   id: number,
+  companyId: number,
 ): IpcResult<Product> {
-  const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as
-    | Product
-    | undefined
+  const existing = db
+    .prepare('SELECT * FROM products WHERE id = ? AND company_id = ?')
+    .get(id, companyId) as Product | undefined
   if (!existing) {
     return {
       success: false,
@@ -200,8 +215,8 @@ export function deactivateProduct(
 
   try {
     db.prepare(
-      "UPDATE products SET is_active = 0, updated_at = datetime('now','localtime') WHERE id = ?",
-    ).run(id)
+      "UPDATE products SET is_active = 0, updated_at = datetime('now','localtime') WHERE id = ? AND company_id = ?",
+    ).run(id, companyId)
     const updated = db
       .prepare('SELECT * FROM products WHERE id = ?')
       .get(id) as Product
@@ -218,32 +233,56 @@ export function deactivateProduct(
 
 export function setCustomerPrice(
   db: Database.Database,
-  input: { product_id: number; counterparty_id: number; price_ore: number },
+  input: {
+    company_id: number
+    product_id: number
+    counterparty_id: number
+    price_ore: number
+  },
 ): IpcResult<CustomerPrice> {
   try {
     return db.transaction(() => {
+      // Kund + produkt MÅSTE tillhöra samma bolag som anropet — verifieras
+      // explicit för tydligare felmeddelande än trigger 046:s ABORT.
+      const cp = db
+        .prepare(
+          'SELECT name FROM counterparties WHERE id = ? AND company_id = ?',
+        )
+        .get(input.counterparty_id, input.company_id) as
+        | { name: string }
+        | undefined
+      if (!cp) {
+        return {
+          success: false as const,
+          error: 'Kunden hittades inte.',
+          code: 'COUNTERPARTY_NOT_FOUND' as const,
+        }
+      }
+      const prod = db
+        .prepare('SELECT 1 FROM products WHERE id = ? AND company_id = ?')
+        .get(input.product_id, input.company_id)
+      if (!prod) {
+        return {
+          success: false as const,
+          error: 'Artikeln hittades inte.',
+          code: 'PRODUCT_NOT_FOUND' as const,
+        }
+      }
+
       let priceList = db
-        .prepare('SELECT id FROM price_lists WHERE counterparty_id = ?')
-        .get(input.counterparty_id) as { id: number } | undefined
+        .prepare(
+          'SELECT id FROM price_lists WHERE counterparty_id = ? AND company_id = ?',
+        )
+        .get(input.counterparty_id, input.company_id) as
+        | { id: number }
+        | undefined
 
       if (!priceList) {
-        const cp = db
-          .prepare('SELECT name FROM counterparties WHERE id = ?')
-          .get(input.counterparty_id) as { name: string } | undefined
-
-        if (!cp) {
-          return {
-            success: false as const,
-            error: 'Kunden hittades inte.',
-            code: 'COUNTERPARTY_NOT_FOUND' as const,
-          }
-        }
-
         const result = db
           .prepare(
-            'INSERT INTO price_lists (name, is_default, counterparty_id) VALUES (?, 0, ?)',
+            'INSERT INTO price_lists (company_id, name, is_default, counterparty_id) VALUES (?, ?, 0, ?)',
           )
-          .run(`Prislista ${cp.name}`, input.counterparty_id)
+          .run(input.company_id, `Prislista ${cp.name}`, input.counterparty_id)
         priceList = { id: Number(result.lastInsertRowid) }
       }
 
@@ -253,10 +292,6 @@ export function setCustomerPrice(
          ON CONFLICT(price_list_id, product_id)
          DO UPDATE SET price_ore = excluded.price_ore`,
       ).run(priceList.id, input.product_id, input.price_ore)
-
-      const cp = db
-        .prepare('SELECT name FROM counterparties WHERE id = ?')
-        .get(input.counterparty_id) as { name: string }
 
       return {
         success: true as const,
@@ -279,12 +314,16 @@ export function setCustomerPrice(
 
 export function removeCustomerPrice(
   db: Database.Database,
-  input: { product_id: number; counterparty_id: number },
+  input: { company_id: number; product_id: number; counterparty_id: number },
 ): IpcResult<undefined> {
   try {
     const priceList = db
-      .prepare('SELECT id FROM price_lists WHERE counterparty_id = ?')
-      .get(input.counterparty_id) as { id: number } | undefined
+      .prepare(
+        'SELECT id FROM price_lists WHERE counterparty_id = ? AND company_id = ?',
+      )
+      .get(input.counterparty_id, input.company_id) as
+      | { id: number }
+      | undefined
 
     if (!priceList) {
       return { success: true, data: undefined }
@@ -307,16 +346,16 @@ export function removeCustomerPrice(
 
 export function getPriceForCustomer(
   db: Database.Database,
-  input: { product_id: number; counterparty_id: number },
+  input: { company_id: number; product_id: number; counterparty_id: number },
 ): PriceResult {
   const customerPrice = db
     .prepare(
       `SELECT pli.price_ore
      FROM price_list_items pli
      JOIN price_lists pl ON pl.id = pli.price_list_id
-     WHERE pl.counterparty_id = ? AND pli.product_id = ?`,
+     WHERE pl.counterparty_id = ? AND pli.product_id = ? AND pl.company_id = ?`,
     )
-    .get(input.counterparty_id, input.product_id) as
+    .get(input.counterparty_id, input.product_id, input.company_id) as
     | { price_ore: number }
     | undefined
 
@@ -325,8 +364,12 @@ export function getPriceForCustomer(
   }
 
   const product = db
-    .prepare('SELECT default_price_ore FROM products WHERE id = ?')
-    .get(input.product_id) as { default_price_ore: number } | undefined
+    .prepare(
+      'SELECT default_price_ore FROM products WHERE id = ? AND company_id = ?',
+    )
+    .get(input.product_id, input.company_id) as
+    | { default_price_ore: number }
+    | undefined
 
   return { price_ore: product?.default_price_ore ?? 0, source: 'default' }
 }

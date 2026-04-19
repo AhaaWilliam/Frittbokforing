@@ -207,8 +207,28 @@ export function createCompany(
   }
 }
 
+export function listCompanies(db: Database.Database): Company[] {
+  return db.prepare('SELECT * FROM companies ORDER BY id').all() as Company[]
+}
+
+export function getCompanyById(
+  db: Database.Database,
+  id: number,
+): Company | null {
+  const row = db.prepare('SELECT * FROM companies WHERE id = ?').get(id)
+  return (row as Company) ?? null
+}
+
+/**
+ * Backwards-kompatibel single-company getter.
+ *
+ * Sprint MC1: returnerar första bolaget. Renderer-sidan migreras till
+ * listCompanies/getCompanyById i Sprint MC2 när ActiveCompanyContext införs.
+ * Nya callsites ska INTE använda denna — använd listCompanies eller
+ * getCompanyById med ett aktivt company_id från active-context-helpern.
+ */
 export function getCompany(db: Database.Database): Company | null {
-  const row = db.prepare('SELECT * FROM companies LIMIT 1').get()
+  const row = db.prepare('SELECT * FROM companies ORDER BY id LIMIT 1').get()
   return (row as Company) ?? null
 }
 
@@ -225,6 +245,9 @@ export function updateCompany(
     }
   }
 
+  // Sprint MC1: updateCompany targetar fortfarande "första bolaget" via
+  // getCompany. UI-kontraktet utvidgas i MC2 (UpdateCompanyInputSchema får
+  // ett id-fält samtidigt som ActiveCompanyContext införs).
   const company = getCompany(db)
   if (!company) {
     return {

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
-import { migrations } from '../src/main/migrations'
 import {
   listProducts,
   getProduct,
@@ -14,23 +13,11 @@ import {
 import { listVatCodes } from '../src/main/services/vat-service'
 import { listAccounts } from '../src/main/services/account-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
+import { createCompany } from '../src/main/services/company-service'
+import { createTestDb } from './helpers/create-test-db'
 
 let db: Database.Database
-
-function createTestDb(): Database.Database {
-  const testDb = new Database(':memory:')
-  testDb.pragma('journal_mode = WAL')
-  testDb.pragma('foreign_keys = ON')
-  for (let i = 0; i < migrations.length; i++) {
-    const m = migrations[i]
-    testDb.exec('BEGIN EXCLUSIVE')
-    testDb.exec(m.sql)
-    if (m.programmatic) m.programmatic(testDb)
-    testDb.pragma(`user_version = ${i + 1}`)
-    testDb.exec('COMMIT')
-  }
-  return testDb
-}
+let cpyId: number
 
 // Helper: get first outgoing vat_code and a revenue account
 function getTestIds(testDb: Database.Database) {
@@ -49,6 +36,7 @@ function createTestProduct(
 ) {
   const { vatCodeId, accountId } = getTestIds(testDb)
   return createProduct(testDb, {
+    company_id: cpyId,
     name: 'Webbutveckling',
     unit: 'timme',
     default_price_ore: 95000, // 950 kr
@@ -61,6 +49,17 @@ function createTestProduct(
 
 beforeEach(() => {
   db = createTestDb()
+  const cmp = createCompany(db, {
+    name: 'Test AB',
+    org_number: '556036-0793',
+    fiscal_rule: 'K2',
+    share_capital: 2_500_000,
+    registration_date: '2025-01-15',
+    fiscal_year_start: '2025-01-01',
+    fiscal_year_end: '2025-12-31',
+  })
+  if (!cmp.success) throw new Error('seedCompany failed: ' + cmp.error)
+  cpyId = cmp.data.id
 })
 
 afterEach(() => {
@@ -89,10 +88,10 @@ describe('Produkt-CRUD', () => {
     createTestProduct(db, { name: 'Hosting' })
     createTestProduct(db, { name: 'Webb-design' })
 
-    const all = listProducts(db, {})
+    const all = listProducts(db, { company_id: cpyId })
     expect(all.length).toBe(3)
 
-    const webb = listProducts(db, { search: 'Webb' })
+    const webb = listProducts(db, { company_id: cpyId, search: 'Webb' })
     expect(webb.length).toBe(2)
   })
 
@@ -100,6 +99,7 @@ describe('Produkt-CRUD', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     createTestProduct(db, { name: 'Tjänst', article_type: 'service' })
     createProduct(db, {
+      company_id: cpyId,
       name: 'Vara',
       unit: 'styck',
       default_price_ore: 10000,
@@ -108,7 +108,7 @@ describe('Produkt-CRUD', () => {
       article_type: 'goods',
     })
 
-    const services = listProducts(db, { type: 'service' })
+    const services = listProducts(db, { company_id: cpyId, type: 'service' })
     expect(services.length).toBe(1)
     expect(services[0].name).toBe('Tjänst')
   })
@@ -119,6 +119,7 @@ describe('Produkt-CRUD', () => {
     if (!created.success) return
 
     const updated = updateProduct(db, {
+      company_id: cpyId,
       id: created.data.id,
       name: 'Nytt namn',
       default_price_ore: 100000,
@@ -135,12 +136,15 @@ describe('Produkt-CRUD', () => {
     expect(created.success).toBe(true)
     if (!created.success) return
 
-    deactivateProduct(db, created.data.id)
+    deactivateProduct(db, created.data.id, cpyId)
 
-    const activeOnly = listProducts(db, { active_only: true })
+    const activeOnly = listProducts(db, {
+      company_id: cpyId,
+      active_only: true,
+    })
     expect(activeOnly.length).toBe(0)
 
-    const all = listProducts(db, { active_only: false })
+    const all = listProducts(db, { company_id: cpyId, active_only: false })
     expect(all.length).toBe(1)
   })
 })
@@ -154,18 +158,19 @@ describe('Prislogik', () => {
     expect(product.success).toBe(true)
     if (!product.success) return
 
-    const cp = createCounterparty(db, { name: 'Acme AB' })
+    const cp = createCounterparty(db, { company_id: cpyId, name: 'Acme AB' })
     expect(cp.success).toBe(true)
     if (!cp.success) return
 
     const result = setCustomerPrice(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
       price_ore: 85000,
     })
     expect(result.success).toBe(true)
 
-    const detail = getProduct(db, product.data.id)
+    const detail = getProduct(db, product.data.id, cpyId)
     expect(detail).not.toBeNull()
     expect(detail!.customer_prices.length).toBe(1)
     expect(detail!.customer_prices[0].price_ore).toBe(85000)
@@ -175,16 +180,18 @@ describe('Prislogik', () => {
   it('7. getPriceForCustomer med kundpris → source=customer', () => {
     const product = createTestProduct(db)
     if (!product.success) return
-    const cp = createCounterparty(db, { name: 'Acme AB' })
+    const cp = createCounterparty(db, { company_id: cpyId, name: 'Acme AB' })
     if (!cp.success) return
 
     setCustomerPrice(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
       price_ore: 85000,
     })
 
     const result = getPriceForCustomer(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
@@ -195,10 +202,11 @@ describe('Prislogik', () => {
   it('8. getPriceForCustomer utan kundpris → source=default', () => {
     const product = createTestProduct(db)
     if (!product.success) return
-    const cp = createCounterparty(db, { name: 'Annan AB' })
+    const cp = createCounterparty(db, { company_id: cpyId, name: 'Annan AB' })
     if (!cp.success) return
 
     const result = getPriceForCustomer(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
@@ -209,20 +217,23 @@ describe('Prislogik', () => {
   it('9. Ta bort kundpris → fallback till default', () => {
     const product = createTestProduct(db)
     if (!product.success) return
-    const cp = createCounterparty(db, { name: 'Acme AB' })
+    const cp = createCounterparty(db, { company_id: cpyId, name: 'Acme AB' })
     if (!cp.success) return
 
     setCustomerPrice(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
       price_ore: 85000,
     })
     removeCustomerPrice(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })
 
     const result = getPriceForCustomer(db, {
+      company_id: cpyId,
       product_id: product.data.id,
       counterparty_id: cp.data.id,
     })

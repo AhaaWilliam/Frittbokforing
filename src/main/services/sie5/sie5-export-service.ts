@@ -114,7 +114,7 @@ export function exportSie5(
   const { fiscalYearId } = options
 
   // Fetch all data
-  const company = getCompanyInfo(db)
+  const company = getCompanyInfo(db, fiscalYearId)
   const fy = getFiscalYear(db, fiscalYearId)
   const periods = getPeriods(db, fiscalYearId)
   const accounts = getUsedAccounts(db, fiscalYearId)

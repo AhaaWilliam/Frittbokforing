@@ -70,7 +70,11 @@ beforeEach(() => {
     id: number
   }
   fyId = fy.id
-  const cpResult = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
+  const cpResult = createCounterparty(db, {
+    company_id: 1,
+    name: 'Kund AB',
+    type: 'customer',
+  })
   if (!cpResult.success) throw new Error('createCounterparty failed')
   cpId = cpResult.data.id
 

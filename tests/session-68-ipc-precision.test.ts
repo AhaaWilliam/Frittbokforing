@@ -43,7 +43,11 @@ beforeEach(() => {
   }
   fiscalYearId = fy.id
 
-  const cp = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
+  const cp = createCounterparty(db, {
+    company_id: 1,
+    name: 'Kund AB',
+    type: 'customer',
+  })
   if (!cp.success) throw new Error('CP failed')
   counterpartyId = cp.data.id
 
@@ -56,6 +60,7 @@ beforeEach(() => {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const prod = createProduct(db, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100000,
     vat_code_id: vc.id,

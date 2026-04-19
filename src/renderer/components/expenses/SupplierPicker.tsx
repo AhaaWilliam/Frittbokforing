@@ -168,29 +168,29 @@ export function SupplierPicker({
       {open && (
         <div className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-background shadow-lg">
           <ul id={listboxId} role="listbox" aria-label="Leverantörer">
-          {suppliers &&
-            suppliers.map((s, i) => (
-              <li
-                key={s.id}
-                id={`${listboxId}-opt-${i}`}
-                role="option"
-                aria-selected={kb.isActive(i)}
-              >
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => handleSelect(s)}
-                  className={`flex w-full flex-col px-3 py-2 text-left text-sm transition-colors ${kb.isActive(i) ? 'bg-muted' : 'hover:bg-muted/50'}`}
+            {suppliers &&
+              suppliers.map((s, i) => (
+                <li
+                  key={s.id}
+                  id={`${listboxId}-opt-${i}`}
+                  role="option"
+                  aria-selected={kb.isActive(i)}
                 >
-                  <span className="font-medium">{s.name}</span>
-                  {s.org_number && (
-                    <span className="text-xs text-muted-foreground">
-                      {s.org_number}
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => handleSelect(s)}
+                    className={`flex w-full flex-col px-3 py-2 text-left text-sm transition-colors ${kb.isActive(i) ? 'bg-muted' : 'hover:bg-muted/50'}`}
+                  >
+                    <span className="font-medium">{s.name}</span>
+                    {s.org_number && (
+                      <span className="text-xs text-muted-foreground">
+                        {s.org_number}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
           </ul>
           <div>
             {!showInline ? (

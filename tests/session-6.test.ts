@@ -49,6 +49,7 @@ function seedTestData(testDb: Database.Database) {
   }
 
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
@@ -68,6 +69,7 @@ function seedTestData(testDb: Database.Database) {
     .get() as { id: number }
 
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsulttjänst',
     unit: 'timme',
     default_price_ore: 95000,

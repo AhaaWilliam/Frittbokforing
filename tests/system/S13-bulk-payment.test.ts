@@ -793,6 +793,7 @@ describe('payInvoicesBulk — cross fiscal year', () => {
 
     // Create customer with correct schema fields
     const custResult = ctx.counterpartyService.createCounterparty(ctx.db, {
+      company_id: 1,
       name: 'CrossFY Kund',
       type: 'customer',
     })

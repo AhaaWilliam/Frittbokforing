@@ -39,6 +39,7 @@ function seed(db: Database.Database, cpBankAccount: string | null): Seeded {
     ).run(m, start, end)
   }
   const cust = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund Alfa AB',
     type: 'customer',
     org_number: null,

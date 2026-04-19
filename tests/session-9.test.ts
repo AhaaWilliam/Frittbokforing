@@ -30,6 +30,7 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
@@ -41,6 +42,7 @@ function seedAll(testDb: Database.Database) {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100000, // 1000 kr for easy math
     vat_code_id: vatCode.id,
@@ -381,7 +383,7 @@ describe('Integration', () => {
 
   it('14. Migration 008 — payment_method + account_number columns', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(46) // S58: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_payments)') as { name: string }[]

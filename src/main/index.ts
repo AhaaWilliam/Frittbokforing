@@ -2,9 +2,12 @@ import { app, BrowserWindow, Menu, dialog, session } from 'electron'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
-import { registerIpcHandlers } from './ipc-handlers'
-import { getDb, closeDb } from './db'
+import { registerIpcHandlers, runPostUnlockStartup } from './ipc-handlers'
+import { closeDb, openEncryptedDb } from './db'
 import { createPreUpdateBackup } from './pre-update-backup'
+import { getAuth } from './auth'
+import { registerAuthIpcHandlers } from './auth/auth-handlers'
+import { legacyDbDefaultPath } from './auth/legacy-migration'
 
 // --- Crash handler (main process) ---
 process.on('uncaughtException', (error) => {
@@ -159,8 +162,45 @@ app.whenReady().then(() => {
     })
   })
 
-  // Initiera DB tidigt — skapar filen och kör PRAGMA/migrationer
-  getDb()
+  // Auth-first flöde (ADR 004):
+  //   1. Registrera auth-handlers (pre-auth — renderer behöver dem för
+  //      LockScreen innan DB är öppen).
+  //   2. Registrera bokförings-handlers en gång. De använder `dbProxy`
+  //      som resolver `getDb()` lazy per anrop — handlers behöver inte
+  //      bindas om vid logout/login.
+  //   3. Vid unlock (login/create/recovery): öppna per-user SQLCipher-DB
+  //      och kör post-unlock-startup (ensure indexes, refresh statuses).
+  //   4. Vid lock (logout / auto-lock): stäng DB. Renderer visar LockScreen
+  //      igen vid nästa poll av auth:status.
+  const auth = getAuth()
+  const legacyPath = legacyDbDefaultPath(app.getPath('documents'))
+  const onUnlock = (userId: string) => {
+    const key = auth.keyStore.getKey()
+    openEncryptedDb(auth.vault.dbPath(userId), key)
+    runPostUnlockStartup()
+  }
+  const onLock = () => {
+    closeDb()
+  }
+  registerAuthIpcHandlers(auth.service, auth.keyStore, {
+    onUnlock,
+    onLock,
+    legacyDbPath: legacyPath,
+    vault: auth.vault,
+  })
+  if (process.env.FRITT_TEST === '1') {
+    const { registerAuthTestHandlers } =
+      require('./auth/auth-test-handlers') as typeof import('./auth/auth-test-handlers')
+    registerAuthTestHandlers({
+      service: auth.service,
+      keyStore: auth.keyStore,
+      onUnlock,
+    })
+  }
+  // Auto-lock (inactivity timer i key-store) stänger också DB.
+  auth.keyStore.onLock(() => {
+    closeDb()
+  })
   registerIpcHandlers()
   createWindow()
 

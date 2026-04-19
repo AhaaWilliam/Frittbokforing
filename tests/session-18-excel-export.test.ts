@@ -48,11 +48,13 @@ function setupSeed(testDb: Database.Database): Seed {
     id: number
   }
   const customer = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
   if (!customer.success) throw new Error('Customer failed')
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })
@@ -67,6 +69,7 @@ function setupSeed(testDb: Database.Database): Seed {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100_000,
     vat_code_id: vatCode25.id,
@@ -573,7 +576,7 @@ describe('Excel Export', () => {
   // 27. Regression
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(46) // S58: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

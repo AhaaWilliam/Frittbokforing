@@ -39,6 +39,7 @@ function seed(db: Database.Database): Seeded {
     ).run(m, start, end)
   }
   const cust = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund',
     type: 'customer',
     org_number: null,
@@ -46,6 +47,7 @@ function seed(db: Database.Database): Seeded {
   })
   if (!cust.success) throw new Error(cust.error)
   const supp = createCounterparty(db, {
+    company_id: 1,
     name: 'Lev',
     type: 'supplier',
     org_number: null,

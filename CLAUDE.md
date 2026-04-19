@@ -932,6 +932,51 @@ Sprint S F49-d — leverans + 17 tester (hook + picker-integration).
 **Korsreferens:** M133 (axe-gate), M156 (bredare keyboard-kontrakt
 för renderer — comboboxen är en specialisering).
 
+## 62. Stamdata scopas per bolag (M158)
+
+**M158.** `counterparties`, `products`, `price_lists` har obligatorisk
+`company_id INTEGER NOT NULL REFERENCES companies(id)`. `price_list_items`
+ärver scope via FK till `price_lists` (M120-anda — ingen egen kolumn).
+Alla services (counterparty-service, product-service) tar `company_id` som
+explicit parameter; ingen "aktiv-fallback" i service-lagret. IPC-scheman
+för list/get/create/update inkluderar `company_id` som obligatoriskt fält.
+Renderer-hooks (`useCounterparties`, `useProducts`, etc.) hämtar `companyId`
+från `useActiveCompany()` och skickar explicit till IPC.
+
+**Defense-in-depth (M138-mönster):** Migration 046 inför SQLite-triggers
+(BEFORE INSERT/UPDATE) som verifierar att `counterparty.company_id` matchar
+`fiscal_year.company_id` på invoices/expenses, samt att product och
+price_list ligger i samma bolag som invoice/price_list. Triggers kastar
+`SQLITE_CONSTRAINT_TRIGGER` med svenskt felmeddelande — normala flöden
+når aldrig hit eftersom service-lagret filtrerar.
+
+**company_id immutability:** `counterparties.company_id`, `products.company_id`
+och `price_lists.company_id` får aldrig UPDATE:as. Tre dedikerade triggers
+(`trg_*_company_immutable`) blockerar förändring. Bolag-flytt mellan rader
+är inte ett supportat scenario.
+
+**UNIQUE per bolag:** `counterparties.org_number` är unik per bolag, inte
+globalt. Två bolag kan ha samma juridiska person som registrerad motpart
+(t.ex. Acme AB med org-nr X som kund i båda). Compound-index
+`(company_id, org_number) WHERE org_number IS NOT NULL`. M124-mappning
+(`COUNTERPARTY_UNIQUE_MAPPINGS`) är robust mot compound-index — substring
+`'counterparties'` + `'org_number'` matchar fortsatt.
+
+**Undantag:** `accounts` och `vat_codes` förblir globala system-tabeller.
+BAS-kontoplanen är gemensam; K2/K3-filtrering vid runtime (regel 13).
+
+**Cross-table-trigger-inventering (M141):** Framtida table-recreate av
+`counterparties`, `products`, `expenses`, `invoices`, `invoice_lines`,
+`price_lists` eller `price_list_items` måste plocka upp defense-in-depth-
+triggers från migration 046 i sin DROP/CREATE-sekvens.
+
+**Begränsning:** `expense_lines` saknar `product_id`-kolumn (paritet med
+invoice_lines är ofullständig). Om kolumnen läggs till i framtiden ska
+motsvarande cross-bolag-triggers införas analogt med invoice_lines.
+
+**Referens:** Sprint MC3, migration 045 + 046,
+`tests/sprint-mc3-stamdata-isolation.test.ts`.
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.

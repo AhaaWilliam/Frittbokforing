@@ -77,6 +77,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
   it('tillåtna fält uppdateras korrekt', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
+      company_id: 1,
       name: 'Originalprodukt',
       default_price_ore: 100_00,
       vat_code_id: vatCodeId,
@@ -87,6 +88,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
     if (!created.success) throw new Error(created.error)
 
     const updated = updateProduct(db, {
+      company_id: 1,
       id: created.data.id,
       name: 'Uppdaterad produkt',
       default_price_ore: 200_00,
@@ -100,6 +102,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
   it('icke-tillåtna fält ignoreras tyst av allowlist', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
+      company_id: 1,
       name: 'Skyddad produkt',
       default_price_ore: 100_00,
       vat_code_id: vatCodeId,
@@ -122,6 +125,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
   it('allowlist skyddar mot kolumner som passerar Zod men inte bör uppdateras', () => {
     const { vatCodeId, accountId } = getTestIds(db)
     const created = createProduct(db, {
+      company_id: 1,
       name: 'Test',
       default_price_ore: 100_00,
       vat_code_id: vatCodeId,
@@ -142,6 +146,7 @@ describe('Regression: product-service ALLOWED_PRODUCT_COLUMNS', () => {
     // Vi kan inte kringgå Zod i prod, men vi testar att service-lagret
     // har defense-in-depth genom att verifiera DB-kolumner efter en giltig update
     const updated = updateProduct(db, {
+      company_id: 1,
       id: created.data.id,
       name: 'Nytt namn',
     })

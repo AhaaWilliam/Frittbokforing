@@ -7,6 +7,7 @@ import {
   createCounterparty,
 } from '../src/main/services/counterparty-service'
 let db: Database.Database
+let cpyId: number
 
 const VALID_COMPANY = {
   name: 'Test AB',
@@ -20,6 +21,17 @@ const VALID_COMPANY = {
 
 beforeEach(() => {
   db = createTestDb()
+  const cmp = createCompany(db, {
+    name: 'Test AB',
+    org_number: '556036-0793',
+    fiscal_rule: 'K2',
+    share_capital: 2_500_000,
+    registration_date: '2025-01-15',
+    fiscal_year_start: '2025-01-01',
+    fiscal_year_end: '2025-12-31',
+  })
+  if (!cmp.success) throw new Error('seedCompany failed: ' + cmp.error)
+  cpyId = cmp.data.id
   createCompany(db, VALID_COMPANY)
 })
 
@@ -31,28 +43,58 @@ afterEach(() => {
 
 describe('F8 — LIKE escaping: counterparty-service', () => {
   it('search with % matches literally, not as wildcard', () => {
-    createCounterparty(db, { name: '50% Rabatt AB', type: 'customer' })
-    createCounterparty(db, { name: 'Helt Annat AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: '50% Rabatt AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Helt Annat AB',
+      type: 'customer',
+    })
 
-    const result = listCounterparties(db, { search: '50%' })
+    const result = listCounterparties(db, { company_id: cpyId, search: '50%' })
     expect(result).toHaveLength(1)
     expect(result[0].name).toBe('50% Rabatt AB')
   })
 
   it('search with _ matches literally, not as single-char wildcard', () => {
-    createCounterparty(db, { name: 'foo_bar AB', type: 'customer' })
-    createCounterparty(db, { name: 'fooXbar AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'foo_bar AB',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'fooXbar AB',
+      type: 'customer',
+    })
 
-    const result = listCounterparties(db, { search: 'foo_bar' })
+    const result = listCounterparties(db, {
+      company_id: cpyId,
+      search: 'foo_bar',
+    })
     expect(result).toHaveLength(1)
     expect(result[0].name).toBe('foo_bar AB')
   })
 
   it('search with ! escape char works', () => {
-    createCounterparty(db, { name: 'Bang! Corp', type: 'customer' })
-    createCounterparty(db, { name: 'Bang Corp', type: 'customer' })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Bang! Corp',
+      type: 'customer',
+    })
+    createCounterparty(db, {
+      company_id: cpyId,
+      name: 'Bang Corp',
+      type: 'customer',
+    })
 
-    const result = listCounterparties(db, { search: 'Bang!' })
+    const result = listCounterparties(db, {
+      company_id: cpyId,
+      search: 'Bang!',
+    })
     expect(result).toHaveLength(1)
     expect(result[0].name).toBe('Bang! Corp')
   })
@@ -65,10 +107,10 @@ describe('F8 — LIKE escaping: counterparty-service', () => {
 describe('F8 — LIKE escaping: SQL-level verification', () => {
   it('ESCAPE ! makes % literal in SQL-concat pattern', () => {
     db.prepare(
-      "INSERT INTO counterparties (name, type) VALUES (?, 'customer')",
+      "INSERT INTO counterparties (company_id, name, type) VALUES (1, ?, 'customer')",
     ).run('100% Match')
     db.prepare(
-      "INSERT INTO counterparties (name, type) VALUES (?, 'customer')",
+      "INSERT INTO counterparties (company_id, name, type) VALUES (1, ?, 'customer')",
     ).run('Normal')
 
     const rows = db

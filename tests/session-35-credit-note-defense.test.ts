@@ -52,13 +52,13 @@ function seedBase() {
 }
 
 function makeCustomer(name: string): number {
-  const r = createCounterparty(db, { name, type: 'customer' })
+  const r = createCounterparty(db, { company_id: 1, name, type: 'customer' })
   if (!r.success) throw new Error(r.error)
   return r.data.id
 }
 
 function makeSupplier(name: string): number {
-  const r = createCounterparty(db, { name, type: 'supplier' })
+  const r = createCounterparty(db, { company_id: 1, name, type: 'supplier' })
   if (!r.success) throw new Error(r.error)
   return r.data.id
 }

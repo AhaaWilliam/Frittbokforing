@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { validateAccountsActive } from './account-service'
 import { checkChronology } from './chronology-guard'
+import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { rebuildSearchIndex } from './search-service'
 import type {
   ManualEntry,
@@ -364,17 +365,19 @@ export function finalizeManualEntry(
       const verificationNumber = nextVer.next_ver
 
       // 10. INSERT journal_entry (draft first, then book)
+      const meCompanyId = getCompanyIdForFiscalYear(db, fiscalYearId)
       const jeResult = db
         .prepare(
           `INSERT INTO journal_entries (
           company_id, fiscal_year_id, verification_number, verification_series,
           journal_date, description, status, source_type
         ) VALUES (
-          (SELECT id FROM companies LIMIT 1), ?, ?, 'C',
+          ?, ?, ?, 'C',
           ?, ?, 'draft', 'manual'
         )`,
         )
         .run(
+          meCompanyId,
           fiscalYearId,
           verificationNumber,
           entry.entry_date,

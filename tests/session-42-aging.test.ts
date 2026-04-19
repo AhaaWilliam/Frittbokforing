@@ -53,6 +53,7 @@ function seedBase() {
     }
   ).id
   const cpResult = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'both',
     default_payment_terms: 30,

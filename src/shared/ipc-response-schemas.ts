@@ -47,7 +47,9 @@ const ProductSchema = z
   .object({ id: z.number(), name: z.string() })
   .passthrough()
 
-const VatCodeSchema = z.object({ id: z.number(), code: z.string() }).passthrough()
+const VatCodeSchema = z
+  .object({ id: z.number(), code: z.string() })
+  .passthrough()
 
 const InvoiceListItemSchema = z.object({
   id: z.number(),
@@ -144,6 +146,8 @@ export const channelResponseMap = {
   'company:create': TODO,
   'company:get': TODO,
   'company:update': TODO,
+  'company:list': TODO,
+  'company:switch': TODO,
 
   // Fiscal Years
   'fiscal-year:list': z.array(FiscalYearSchema),

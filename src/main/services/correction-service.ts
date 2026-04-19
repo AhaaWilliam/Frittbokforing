@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import { todayLocalFromNow } from '../utils/now'
+import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import type { ErrorCode, IpcResult } from '../../shared/types'
 import { rebuildSearchIndex } from './search-service'
 
@@ -244,17 +245,19 @@ export function createCorrectionEntry(
 
       // 6. Create correction journal entry (as draft first)
       const today = todayLocalFromNow()
+      const corrCompanyId = getCompanyIdForFiscalYear(db, input.fiscal_year_id)
       const jeResult = db
         .prepare(
           `INSERT INTO journal_entries (
             company_id, fiscal_year_id, verification_number, verification_series,
             journal_date, description, status, source_type, corrects_entry_id
           ) VALUES (
-            (SELECT id FROM companies LIMIT 1), ?, ?, 'C',
+            ?, ?, ?, 'C',
             ?, ?, 'draft', 'manual', ?
           )`,
         )
         .run(
+          corrCompanyId,
           input.fiscal_year_id,
           verificationNumber,
           today,

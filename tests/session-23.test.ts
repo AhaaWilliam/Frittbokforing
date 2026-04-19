@@ -74,7 +74,7 @@ describe('Migration 013: system accounts', () => {
 
   it('PRAGMA user_version is 14', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(44)
+    expect(version).toBe(46)
   })
 })
 
@@ -408,6 +408,7 @@ describe('finaliserings-guards', () => {
 
     // Create supplier
     const cpResult = createCounterparty(db, {
+      company_id: 1,
       name: 'Test Supplier',
       type: 'supplier',
     })

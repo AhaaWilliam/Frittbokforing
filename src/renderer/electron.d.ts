@@ -38,6 +38,8 @@ interface ElectronAPI {
   healthCheck: () => Promise<HealthCheckResponse>
   createCompany: (data: CreateCompanyInput) => Promise<IpcResult<Company>>
   getCompany: () => Promise<IpcResult<Company | null>>
+  listCompanies: () => Promise<IpcResult<Company[]>>
+  switchCompany: (data: { company_id: number }) => Promise<IpcResult<Company>>
   updateCompany: (data: UpdateCompanyInput) => Promise<IpcResult<Company>>
   listFiscalYears: () => Promise<IpcResult<FiscalYear[]>>
   createNewFiscalYear: (data: {
@@ -67,12 +69,14 @@ interface ElectronAPI {
     period_id: number
   }) => Promise<IpcResult<FiscalPeriod>>
   listCounterparties: (data: {
+    company_id: number
     search?: string
     type?: string
     active_only?: boolean
   }) => Promise<IpcResult<Counterparty[]>>
   getCounterparty: (data: {
     id: number
+    company_id: number
   }) => Promise<IpcResult<Counterparty | null>>
   createCounterparty: (
     data: CreateCounterpartyInput,
@@ -82,30 +86,39 @@ interface ElectronAPI {
   ) => Promise<IpcResult<Counterparty>>
   deactivateCounterparty: (data: {
     id: number
+    company_id: number
   }) => Promise<IpcResult<Counterparty>>
   listProducts: (data: {
+    company_id: number
     search?: string
     type?: string
     active_only?: boolean
   }) => Promise<IpcResult<Product[]>>
   getProduct: (data: {
     id: number
+    company_id: number
   }) => Promise<
     IpcResult<(Product & { customer_prices: CustomerPrice[] }) | null>
   >
   createProduct: (data: CreateProductInput) => Promise<IpcResult<Product>>
   updateProduct: (data: UpdateProductInput) => Promise<IpcResult<Product>>
-  deactivateProduct: (data: { id: number }) => Promise<IpcResult<Product>>
+  deactivateProduct: (data: {
+    id: number
+    company_id: number
+  }) => Promise<IpcResult<Product>>
   setCustomerPrice: (data: {
+    company_id: number
     product_id: number
     counterparty_id: number
     price_ore: number
   }) => Promise<IpcResult<CustomerPrice>>
   removeCustomerPrice: (data: {
+    company_id: number
     product_id: number
     counterparty_id: number
   }) => Promise<IpcResult<undefined>>
   getPriceForCustomer: (data: {
+    company_id: number
     product_id: number
     counterparty_id: number
   }) => Promise<IpcResult<PriceResult>>
@@ -585,9 +598,68 @@ interface ElectronAPI {
   setSetting: (key: string, value: unknown) => Promise<void>
 }
 
+export interface UserMeta {
+  id: string
+  displayName: string
+  createdAt: string
+}
+
+export interface AuthStatus {
+  locked: boolean
+  userId: string | null
+  timeoutMs: number
+}
+
+export interface AuthAPI {
+  listUsers: () => Promise<IpcResult<UserMeta[]>>
+  status: () => Promise<IpcResult<AuthStatus>>
+  createUser: (data: {
+    displayName: string
+    password: string
+  }) => Promise<IpcResult<{ user: UserMeta; recoveryKey: string }>>
+  login: (data: {
+    userId: string
+    password: string
+  }) => Promise<IpcResult<{ user: UserMeta }>>
+  loginWithRecovery: (data: {
+    userId: string
+    recoveryPhrase: string
+  }) => Promise<IpcResult<{ user: UserMeta }>>
+  logout: () => Promise<IpcResult<{ ok: true }>>
+  changePassword: (data: {
+    userId: string
+    oldPassword: string
+    newPassword: string
+  }) => Promise<IpcResult<{ ok: true }>>
+  rotateRecoveryKey: (data: {
+    userId: string
+  }) => Promise<IpcResult<{ recoveryKey: string }>>
+  renameUser: (data: {
+    userId: string
+    displayName: string
+  }) => Promise<IpcResult<{ ok: true }>>
+  deleteUser: (data: {
+    userId: string
+  }) => Promise<IpcResult<{ ok: true }>>
+  touch: () => Promise<IpcResult<{ ok: true }>>
+  setTimeout: (data: {
+    timeoutMs: number
+  }) => Promise<IpcResult<{ ok: true; timeoutMs: number }>>
+  legacyCheck: () => Promise<
+    IpcResult<{ exists: boolean; path: string | null }>
+  >
+  legacyImport: () => Promise<
+    IpcResult<{ ok: true; archivedTo: string }>
+  >
+  legacySkip: () => Promise<
+    IpcResult<{ ok: true; archivedTo: string | null }>
+  >
+}
+
 declare global {
   interface Window {
     api: ElectronAPI
+    auth: AuthAPI
   }
 }
 

@@ -55,6 +55,7 @@ beforeAll(() => {
 
   // Create supplier with bankgiro
   const supplier = createCounterparty(db, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
     org_number: '559999-0001',

@@ -23,9 +23,14 @@ function seedBase(testDb: Database.Database) {
   const fy = testDb.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
     id: number
   }
-  const cp = createCounterparty(testDb, { name: 'Kund AB', type: 'customer' })
+  const cp = createCounterparty(testDb, {
+    company_id: 1,
+    name: 'Kund AB',
+    type: 'customer',
+  })
   if (!cp.success) throw new Error('CP failed')
   const supplierCp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
   })

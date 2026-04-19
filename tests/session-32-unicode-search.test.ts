@@ -94,7 +94,11 @@ describe('lower_unicode function (F58)', () => {
 describe('cross-case search (service level, F58)', () => {
   it('"åke" matches "Åke Andersson"', () => {
     const fyId = seedCompany()
-    createCounterparty(db, { name: 'Åke Andersson', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Åke Andersson',
+      type: 'customer',
+    })
     const found = getData(
       globalSearch(db, { query: 'åke', fiscal_year_id: fyId }),
     ).results.some((r) => r.title === 'Åke Andersson')
@@ -103,7 +107,11 @@ describe('cross-case search (service level, F58)', () => {
 
   it('"östgöta" matches "Östgöta Bygg AB"', () => {
     const fyId = seedCompany()
-    createCounterparty(db, { name: 'Östgöta Bygg AB', type: 'supplier' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Östgöta Bygg AB',
+      type: 'supplier',
+    })
     const found = getData(
       globalSearch(db, { query: 'östgöta', fiscal_year_id: fyId }),
     ).results.some((r) => r.title === 'Östgöta Bygg AB')
@@ -112,7 +120,7 @@ describe('cross-case search (service level, F58)', () => {
 
   it('"ACME" matches "Acme AB" (ASCII case regression)', () => {
     const fyId = seedCompany()
-    createCounterparty(db, { name: 'Acme AB', type: 'customer' })
+    createCounterparty(db, { company_id: 1, name: 'Acme AB', type: 'customer' })
     const found = getData(
       globalSearch(db, { query: 'ACME', fiscal_year_id: fyId }),
     ).results.some((r) => r.title === 'Acme AB')
@@ -123,7 +131,11 @@ describe('cross-case search (service level, F58)', () => {
 describe('F8 regression after lower_unicode migration', () => {
   it('literal % is not a wildcard', () => {
     const fyId = seedCompany()
-    createCounterparty(db, { name: 'Rabatt 50% AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Rabatt 50% AB',
+      type: 'customer',
+    })
     const results = getData(
       globalSearch(db, { query: '50%', fiscal_year_id: fyId }),
     ).results
@@ -132,7 +144,11 @@ describe('F8 regression after lower_unicode migration', () => {
 
   it('literal _ is not a wildcard (FTS5: _ is token separator, "50_" matches "50" prefix)', () => {
     const fyId = seedCompany()
-    createCounterparty(db, { name: 'Rabatt 50% AB', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Rabatt 50% AB',
+      type: 'customer',
+    })
     // With FTS5, "_" is a token separator not a LIKE wildcard.
     // "50_" tokenizes to "50" which matches "50" in "Rabatt 50% AB" via prefix.
     const results = getData(

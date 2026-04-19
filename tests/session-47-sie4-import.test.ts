@@ -300,6 +300,7 @@ describe('S47: Roundtrip (export → parse)', () => {
       id: number
     }
     const customer = createCounterparty(db, {
+      company_id: 1,
       name: 'RT Kund',
       type: 'customer',
       org_number: '559999-0001',
@@ -313,6 +314,7 @@ describe('S47: Roundtrip (export → parse)', () => {
       .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
       .get() as { id: number }
     const product = createProduct(db, {
+      company_id: 1,
       name: 'RT Produkt',
       default_price_ore: 10000,
       vat_code_id: vatCode.id,

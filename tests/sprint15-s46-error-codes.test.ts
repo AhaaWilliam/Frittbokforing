@@ -337,6 +337,7 @@ describe('counterparty-service DUPLICATE_ORG_NUMBER', () => {
   it('returns DUPLICATE_ORG_NUMBER on duplicate org_number', () => {
     seedCompanyAndFY()
     const r1 = createCounterparty(db, {
+      company_id: 1,
       name: 'Kund A',
       type: 'customer',
       org_number: '556036-0793',
@@ -344,6 +345,7 @@ describe('counterparty-service DUPLICATE_ORG_NUMBER', () => {
     expect(r1.success).toBe(true)
 
     const r2 = createCounterparty(db, {
+      company_id: 1,
       name: 'Kund B',
       type: 'customer',
       org_number: '556036-0793',

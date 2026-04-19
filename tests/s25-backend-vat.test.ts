@@ -56,12 +56,17 @@ const vatCodeMap = new Map<string, number>()
 
 beforeEach(() => {
   db = createTestDb()
-  createCompany(db, VALID_COMPANY)
+  const cmp = createCompany(db, VALID_COMPANY)
+  if (!cmp.success) throw new Error('createCompany failed: ' + cmp.error)
   const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
     id: number
   }
   fyId = fy.id
-  const cpResult = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
+  const cpResult = createCounterparty(db, {
+    company_id: cmp.data.id,
+    name: 'Kund AB',
+    type: 'customer',
+  })
   if (!cpResult.success) throw new Error('createCounterparty failed')
   cpId = cpResult.data.id
 

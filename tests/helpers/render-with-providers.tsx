@@ -22,11 +22,12 @@ import { render, type RenderResult } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import axe, { type AxeResults } from 'axe-core'
 import { FiscalYearProvider } from '../../src/renderer/contexts/FiscalYearContext'
+import { ActiveCompanyProvider } from '../../src/renderer/contexts/ActiveCompanyContext'
 import { SkipLinksProvider } from '../../src/renderer/contexts/SkipLinksContext'
 import { HashRouter } from '../../src/renderer/lib/router'
 import { routes } from '../../src/renderer/lib/routes'
 import { mockIpcResponse, mockIpcPending } from '../setup/mock-ipc'
-import type { FiscalYear } from '../../src/shared/types'
+import type { Company, FiscalYear } from '../../src/shared/types'
 
 // ── Re-export AxeResults for consumer use ─────────────────────────────
 export type { AxeResults }
@@ -73,6 +74,8 @@ function runAxeSerialized(container: Element): Promise<AxeResults> {
 interface RenderWithProvidersOptions {
   /** Fiscal year state: object for loaded, 'loading' for pending, 'none' for empty list. */
   fiscalYear?: { id: number; label: string; is_closed?: 0 | 1 } | 'loading' | 'none'
+  /** Active company for ActiveCompanyContext (Sprint MC2). Default: dummy "Test AB". */
+  company?: Company
   /** Initial hash route (e.g. '/overview'). */
   initialRoute?: string
   /** Custom QueryClient if test needs cache control. */
@@ -94,10 +97,38 @@ export async function renderWithProviders(
 ): Promise<RenderWithProvidersResult> {
   const {
     fiscalYear = { id: 1, label: '2026' },
+    company,
     initialRoute = '/overview',
     queryClient: providedQc,
     axeCheck = true,
   } = options
+
+  // Sprint MC2: ActiveCompanyContext mockas med ett default-bolag, om inte
+  // testet gett en egen via `company`-optionen.
+  const activeCompany: Company = company ?? ({
+    id: 1,
+    name: 'Test AB',
+    org_number: '556036-0793',
+    fiscal_rule: 'K2',
+    share_capital: 2_500_000,
+    base_currency: 'SEK',
+    registration_date: '2025-01-01',
+    vat_number: null,
+    email: null,
+    phone: null,
+    address_line1: null,
+    address_line2: null,
+    postal_code: null,
+    city: null,
+    country: 'SE',
+    bankgiro: null,
+    plusgiro: null,
+    website: null,
+    board_members: null,
+    created_at: '2025-01-01 00:00:00',
+  } as Company)
+  mockIpcResponse('company:list', { success: true, data: [activeCompany] })
+  mockIpcResponse('company:switch', { success: true, data: activeCompany })
 
   // Configure mock-IPC for FiscalYearContext dependencies
   if (fiscalYear === 'loading') {
@@ -132,11 +163,13 @@ export async function renderWithProviders(
     return (
       <QueryClientProvider client={queryClient}>
         <SkipLinksProvider>
-          <FiscalYearProvider>
-            <HashRouter routes={routes} fallback="/overview">
-              {children}
-            </HashRouter>
-          </FiscalYearProvider>
+          <ActiveCompanyProvider>
+            <FiscalYearProvider>
+              <HashRouter routes={routes} fallback="/overview">
+                {children}
+              </HashRouter>
+            </FiscalYearProvider>
+          </ActiveCompanyProvider>
         </SkipLinksProvider>
       </QueryClientProvider>
     )

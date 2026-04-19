@@ -63,13 +63,13 @@ function seedBase() {
 }
 
 function createCustomer(name: string): number {
-  const r = createCounterparty(db, { name, type: 'customer' })
+  const r = createCounterparty(db, { company_id: 1, name, type: 'customer' })
   if (!r.success) throw new Error(r.error)
   return r.data.id
 }
 
 function createSupplier(name: string): number {
-  const r = createCounterparty(db, { name, type: 'supplier' })
+  const r = createCounterparty(db, { company_id: 1, name, type: 'supplier' })
   if (!r.success) throw new Error(r.error)
   return r.data.id
 }
@@ -289,7 +289,7 @@ describe('FTS5: betalning + namnändring', () => {
     const custId = createCustomer('OldNameCo')
     createAndFinalizeInvoice(custId, '2026-03-15')
 
-    updateCounterparty(db, { id: custId, name: 'NewNameCo' })
+    updateCounterparty(db, { company_id: 1, id: custId, name: 'NewNameCo' })
     // Ensure rebuild ran (updateCounterparty calls it, but verify)
     rebuildSearchIndex(db)
 

@@ -210,6 +210,7 @@ describe('SupplierPicker', () => {
 
       await waitFor(() => {
         expect(getMockApi().createCounterparty).toHaveBeenCalledWith({
+          company_id: 1,
           name: 'Ny Leverantör AB',
           type: 'supplier',
           org_number: null,

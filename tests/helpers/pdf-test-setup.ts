@@ -54,6 +54,7 @@ export function createTestDbWithFinalizedInvoice() {
 
   // Seed: testkund
   const customer = createCounterparty(db, {
+    company_id: 1,
     name: 'Testkund AB',
     type: 'customer',
     org_number: '559987-6543',
@@ -76,6 +77,7 @@ export function createTestDbWithFinalizedInvoice() {
 
   // Seed: produkter
   const product25 = createProduct(db, {
+    company_id: 1,
     name: 'Konsulttjänst',
     default_price_ore: 10000,
     vat_code_id: vatCode25.id,

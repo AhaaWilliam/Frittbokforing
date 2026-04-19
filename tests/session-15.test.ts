@@ -47,11 +47,13 @@ function seedAll(testDb: Database.Database): Seed {
   }
 
   const customer = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
   if (!customer.success) throw new Error('Customer creation failed')
   const supplier = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Lev AB',
     type: 'supplier',
   })
@@ -78,6 +80,7 @@ function seedAll(testDb: Database.Database): Seed {
     .get() as { id: number }
 
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100_000,
     vat_code_id: vatCode25.id,
@@ -368,7 +371,7 @@ describe('getVatReport', () => {
   // Test 12: Regression — no migration
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(44) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(46) // S58: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

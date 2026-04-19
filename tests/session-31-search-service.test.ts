@@ -39,18 +39,21 @@ function seedBase(testDb: Database.Database) {
     id: number
   }
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Acme AB',
     type: 'customer',
     org_number: '556036-0793',
   })
   if (!cp.success) throw new Error('CP failed')
   const supplierCp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Leverantör AB',
     type: 'supplier',
     org_number: '556789-1234',
   })
   if (!supplierCp.success) throw new Error('Supplier CP failed')
   const bothCp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Rabatt 50% AB',
     type: 'both',
   })
@@ -263,6 +266,7 @@ describe('globalSearch — service layer', () => {
   it('stamdata (products) are global regardless of FY — M14', () => {
     const seed = seedBase(db)
     const prod = createProduct(db, {
+      company_id: 1,
       name: 'Konsulttimme',
       default_price_ore: 125000,
       vat_code_id: seed.vatCodeId,
@@ -357,7 +361,11 @@ describe('globalSearch — service layer', () => {
 
   it('åäö: same-case search works (Åke → Åke)', () => {
     const seed = seedBase(db)
-    createCounterparty(db, { name: 'Åke Andersson', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Åke Andersson',
+      type: 'customer',
+    })
     const result = globalSearch(db, {
       query: 'Åke',
       fiscal_year_id: seed.fiscalYearId,
@@ -371,7 +379,11 @@ describe('globalSearch — service layer', () => {
   it('åäö: cross-case search matches after F58 fix (regression F58)', () => {
     // Sprint 32: lower_unicode() registered via db-functions.ts replaces stock LOWER().
     const seed = seedBase(db)
-    createCounterparty(db, { name: 'Åke Andersson', type: 'customer' })
+    createCounterparty(db, {
+      company_id: 1,
+      name: 'Åke Andersson',
+      type: 'customer',
+    })
     const result = globalSearch(db, {
       query: 'åke',
       fiscal_year_id: seed.fiscalYearId,

@@ -170,6 +170,7 @@ describe('S44: Budget service', () => {
   it('B10: getBudgetVsActual computes variance with booked entries', () => {
     // Create a finalized invoice → revenue booked in period 1 (Jan)
     const customer = createCounterparty(db, {
+      company_id: 1,
       name: 'Budgetkund',
       type: 'customer',
       org_number: '559999-0001',
@@ -180,6 +181,7 @@ describe('S44: Budget service', () => {
       .prepare("SELECT id FROM vat_codes WHERE code = 'MP1'")
       .get() as { id: number }
     const product = createProduct(db, {
+      company_id: 1,
       name: 'Budgetprodukt',
       default_price_ore: 50000_00,
       vat_code_id: vatCode.id,

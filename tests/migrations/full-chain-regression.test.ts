@@ -62,6 +62,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
 
     // === Seed counterparties ===
     const cust1 = createCounterparty(db, {
+      company_id: 1,
       name: 'Kund Alfa AB',
       type: 'customer',
       org_number: null,
@@ -69,6 +70,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
     })
     if (!cust1.success) throw new Error(cust1.error)
     const cust2 = createCounterparty(db, {
+      company_id: 1,
       name: 'Kund Beta AB',
       type: 'customer',
       org_number: null,
@@ -76,6 +78,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
     })
     if (!cust2.success) throw new Error(cust2.error)
     const supp1 = createCounterparty(db, {
+      company_id: 1,
       name: 'Leverantör Gamma AB',
       type: 'supplier',
       org_number: null,
@@ -83,6 +86,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
     })
     if (!supp1.success) throw new Error(supp1.error)
     const supp2 = createCounterparty(db, {
+      company_id: 1,
       name: 'Leverantör Delta AB',
       type: 'supplier',
       org_number: null,
@@ -105,6 +109,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
       .get() as { id: number }
 
     const prod1 = createProduct(db, {
+      company_id: 1,
       name: 'Konsulttjänst',
       default_price_ore: 10000,
       vat_code_id: vatOut25.id,
@@ -113,6 +118,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
     })
     if (!prod1.success) throw new Error(prod1.error)
     const prod2 = createProduct(db, {
+      company_id: 1,
       name: 'Skruvar',
       default_price_ore: 5000,
       vat_code_id: vatOut25.id,
@@ -330,7 +336,7 @@ describe('Full-chain regression (migrations 1→24)', () => {
         )
         .get() as { cnt: number }
     ).cnt
-    expect(triggerCount).toBe(16)
+    expect(triggerCount).toBe(29)
 
     // 4. All journal_entries balance (SUM debit = SUM credit per entry)
     const unbalanced = db

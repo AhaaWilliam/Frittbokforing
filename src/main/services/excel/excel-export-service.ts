@@ -78,7 +78,7 @@ export async function exportExcel(
 ): Promise<ExcelExportResult> {
   const { fiscalYearId, startDate, endDate } = options
 
-  const company = getCompanyInfo(db)
+  const company = getCompanyInfo(db, fiscalYearId)
   const fy = getFiscalYear(db, fiscalYearId)
   const periods = getPeriods(db, fiscalYearId)
   const accounts = getUsedAccounts(db, fiscalYearId)

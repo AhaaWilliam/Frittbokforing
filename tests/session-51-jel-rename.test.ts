@@ -47,7 +47,7 @@ describe('Migration 018 — journal_entry_lines rename', () => {
     const uv = db.prepare('PRAGMA user_version').get() as {
       user_version: number
     }
-    expect(uv.user_version).toBe(44)
+    expect(uv.user_version).toBe(46)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {
@@ -127,7 +127,11 @@ describe('Trigger survival after migration 018', () => {
 describe('E2E smoke: invoice lifecycle with renamed columns', () => {
   it('create → book → pay → verify balance', () => {
     const seed = seedBase(db)
-    const cp = createCounterparty(db, { name: 'Kund AB', type: 'customer' })
+    const cp = createCounterparty(db, {
+      company_id: 1,
+      name: 'Kund AB',
+      type: 'customer',
+    })
     if (!cp.success) throw new Error(cp.error)
 
     const vatCode = db
@@ -137,6 +141,7 @@ describe('E2E smoke: invoice lifecycle with renamed columns', () => {
       .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
       .get() as { id: number }
     const prod = createProduct(db, {
+      company_id: 1,
       name: 'Konsulttjänst',
       default_price_ore: 100_000,
       vat_code_id: vatCode.id,
@@ -211,6 +216,7 @@ describe('M92 export format — no _ore leak', () => {
   function seedWithBookedEntry(testDb: Database.Database) {
     const seed = seedBase(testDb)
     const cp = createCounterparty(testDb, {
+      company_id: 1,
       name: 'Export Kund',
       type: 'customer',
     })
@@ -223,6 +229,7 @@ describe('M92 export format — no _ore leak', () => {
       .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
       .get() as { id: number }
     const prod = createProduct(testDb, {
+      company_id: 1,
       name: 'Exportprodukt',
       default_price_ore: 50_000,
       vat_code_id: vatCode.id,

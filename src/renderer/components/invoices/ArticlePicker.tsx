@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useId } from 'react'
 import { useProducts } from '../../lib/hooks'
+import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { formatKr, toKr } from '../../lib/format'
 import { useComboboxKeyboard } from '../../lib/use-combobox-keyboard'
 import type { Product } from '../../../shared/types'
@@ -51,6 +52,8 @@ export function ArticlePicker({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const listboxId = useId()
+  const { activeCompany } = useActiveCompany()
+  const activeCompanyId = activeCompany?.id
 
   const { data: products } = useProducts({
     search: debouncedSearch,
@@ -82,9 +85,10 @@ export function ArticlePicker({
 
   async function handleSelect(product: Product) {
     let priceOre = product.default_price_ore
-    if (counterpartyId) {
+    if (counterpartyId && activeCompanyId) {
       try {
         const result = await window.api.getPriceForCustomer({
+          company_id: activeCompanyId,
           product_id: product.id,
           counterparty_id: counterpartyId,
         })

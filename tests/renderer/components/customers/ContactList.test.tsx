@@ -11,6 +11,7 @@ const CUSTOMERS: Counterparty[] = [
   {
     id: 1,
     name: 'Acme AB',
+    company_id: 1,
     type: 'customer',
     org_number: '556036-0793',
     vat_number: null,
@@ -33,6 +34,7 @@ const CUSTOMERS: Counterparty[] = [
   {
     id: 2,
     name: 'Beta Corp',
+    company_id: 1,
     type: 'supplier',
     org_number: '556100-0000',
     vat_number: null,
@@ -55,6 +57,7 @@ const CUSTOMERS: Counterparty[] = [
   {
     id: 3,
     name: 'Gamma HB',
+    company_id: 1,
     type: 'both',
     org_number: null,
     vat_number: null,

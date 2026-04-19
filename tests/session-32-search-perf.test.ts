@@ -23,7 +23,7 @@ describe('globalSearch performance baseline (F13)', () => {
 
     // Seed 1000 counterparties
     const insert = db.prepare(
-      "INSERT INTO counterparties (name, type) VALUES (?, 'customer')",
+      "INSERT INTO counterparties (company_id, name, type) VALUES (1, ?, 'customer')",
     )
     db.transaction(() => {
       for (let i = 0; i < 1000; i++) {

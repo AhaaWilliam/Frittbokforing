@@ -37,12 +37,12 @@ describe('Sprint D C3 — M100 strukturerade fel i export-lagret', () => {
     db = createTestDb()
   })
 
-  it('getCompanyInfo kastar NOT_FOUND vid tom companies-tabell', () => {
-    expect(() => getCompanyInfo(db)).toThrow(
+  it('getCompanyInfo kastar NOT_FOUND vid okänt fiscalYearId (Sprint MC1)', () => {
+    expect(() => getCompanyInfo(db, 999)).toThrow(
       expect.objectContaining({ code: 'NOT_FOUND' }),
     )
     try {
-      getCompanyInfo(db)
+      getCompanyInfo(db, 999)
     } catch (err) {
       expect(err).toHaveProperty('code', 'NOT_FOUND')
       expect((err as { error: string }).error).toMatch(/företag/i)

@@ -41,7 +41,11 @@ function seed() {
   const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
     id: number
   }
-  const supplier = createCounterparty(db, { name: 'Lev AB', type: 'supplier' })
+  const supplier = createCounterparty(db, {
+    company_id: 1,
+    name: 'Lev AB',
+    type: 'supplier',
+  })
   if (!supplier.success) throw new Error('seed failed')
   const vatCode25 = db
     .prepare("SELECT id FROM vat_codes WHERE code = 'IP1'")

@@ -19,6 +19,7 @@ vi.mock('electron-log', () => ({
 
 vi.mock('../src/main/db', () => ({
   getDb: (...args: unknown[]) => mockGetDb(...args),
+  hasOpenDb: () => mockGetDb() !== undefined,
 }))
 
 import { createPreUpdateBackup } from '../src/main/pre-update-backup'

@@ -569,6 +569,7 @@ export function seedCustomer(
   overrides?: Partial<{ name: string; org_number: string }>,
 ): Counterparty {
   const result = createCounterparty(ctx.db, {
+    company_id: ctx.seed.companyId,
     name: overrides?.name ?? 'Testkund AB',
     type: 'customer',
     org_number: overrides?.org_number ?? null,
@@ -584,6 +585,7 @@ export function seedSupplier(
   overrides?: Partial<{ name: string; org_number: string }>,
 ): Counterparty {
   const result = createCounterparty(ctx.db, {
+    company_id: ctx.seed.companyId,
     name: overrides?.name ?? 'Testleverantör AB',
     type: 'supplier',
     org_number: overrides?.org_number ?? null,
@@ -610,6 +612,7 @@ export function seedProduct(
     .get() as { id: number }
 
   const result = createProduct(ctx.db, {
+    company_id: ctx.seed.companyId,
     name: overrides?.name ?? 'Konsulttjänst',
     default_price_ore: overrides?.default_price_ore ?? 10000, // 100 kr
     vat_code_id: vatCode,

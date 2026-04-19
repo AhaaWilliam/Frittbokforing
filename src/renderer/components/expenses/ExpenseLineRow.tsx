@@ -76,7 +76,9 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           step={0.01}
           value={line.unit_price_kr}
           onChange={(e) =>
-            onUpdate(index, { unit_price_kr: parseDecimal(e.target.value) || 0 })
+            onUpdate(index, {
+              unit_price_kr: parseDecimal(e.target.value) || 0,
+            })
           }
           aria-label="Pris"
           data-testid={`expense-line-${index}-price`}

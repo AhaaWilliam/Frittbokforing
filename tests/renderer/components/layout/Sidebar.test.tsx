@@ -53,7 +53,10 @@ beforeEach(() => {
 describe('Sidebar', () => {
   it('renders company name and fiscal_rule K2', async () => {
     const company = makeCompany({ name: 'Mitt Företag AB', fiscal_rule: 'K2' })
-    await renderWithProviders(<Sidebar company={company} />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+    await renderWithProviders(<Sidebar company={company} />, {
+      axeCheck: false, // M133 exempt — dedicated axe test below
+      company,
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Mitt Företag AB')).toBeInTheDocument()

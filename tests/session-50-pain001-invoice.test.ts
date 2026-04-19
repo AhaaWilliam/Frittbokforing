@@ -53,6 +53,7 @@ beforeAll(() => {
   ).id
 
   const customer = createCounterparty(db, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
     org_number: '559999-0002',
@@ -111,6 +112,7 @@ describe('S50: pain.001 export för invoice-batch', () => {
   it('I2: validateBatchForExport flags customer without payment info', () => {
     // New customer without any payment info
     const bad = createCounterparty(db, {
+      company_id: 1,
       name: 'Ingen-Bankgiro Kund',
       type: 'customer',
     })

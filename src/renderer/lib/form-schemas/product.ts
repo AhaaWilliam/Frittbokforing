@@ -2,7 +2,10 @@ import { z } from 'zod'
 import { CreateProductInputSchema } from '../../../shared/ipc-schemas'
 import { toOre } from '../format'
 
-export const ProductPayloadSchema = CreateProductInputSchema
+// Form-payload utan company_id — injiceras av useCreateProduct (M145).
+export const ProductPayloadSchema = CreateProductInputSchema.omit({
+  company_id: true,
+})
 export type ProductPayload = z.infer<typeof ProductPayloadSchema>
 
 export const ProductFormStateSchema = z.object({

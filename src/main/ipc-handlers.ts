@@ -1,10 +1,13 @@
-import { ipcMain, app, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
-import { getDb, getDbPath, getTableCount } from './db'
+import { dbProxy, getDbPath, getTableCount } from './db'
+import { loadSettings, saveSettings } from './utils/settings'
+import { getActiveCompanyId } from './utils/active-context'
 import {
   createCompany,
-  getCompany,
+  getCompanyById,
+  listCompanies,
   updateCompany,
 } from './services/company-service'
 import {
@@ -249,35 +252,30 @@ import {
   BankTxMappingUpsertSchema,
   BankTxMappingDeleteSchema,
   BankCreateFeeEntrySchema,
+  CompanySwitchInputSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
 import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
 
-function getSettingsPath(): string {
-  return path.join(app.getPath('userData'), 'fritt-settings.json')
-}
-
-function loadSettings(): Record<string, unknown> {
-  try {
-    return JSON.parse(fs.readFileSync(getSettingsPath(), 'utf-8'))
-  } catch {
-    return {}
-  }
-}
-
-function saveSettings(data: Record<string, unknown>): void {
-  fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2))
-}
-
-export function registerIpcHandlers(): void {
-  const db = getDb()
-
-  // Startup: ensure indexes and refresh overdue statuses
+/**
+ * Post-unlock startup tasks. Called from the auth unlock hook after the
+ * per-user encrypted DB is opened. Runs per login because it targets the
+ * just-opened connection, which may differ between users.
+ */
+export function runPostUnlockStartup(): void {
+  const db = dbProxy
   ensureInvoiceIndexes(db)
   refreshInvoiceStatuses(db)
   ensureExpenseIndexes(db)
   refreshExpenseStatuses(db)
+}
+
+export function registerIpcHandlers(): void {
+  // `db` is a lazy proxy resolving getDb() on each property access.
+  // This lets us register handlers once at startup even though the real
+  // DB is only opened after auth unlock (M158+ROAD — see ADR 004 §7).
+  const db = dbProxy
 
   ipcMain.handle('db:health-check', (): HealthCheckResponse => {
     try {
@@ -296,7 +294,33 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle(
     'company:get',
-    wrapIpcHandler(null, () => getCompany(db)),
+    wrapIpcHandler(null, () => {
+      // Sprint MC1: returnerar aktivt bolag (settings.last_company_id) med
+      // fallback till första bolaget. Bakåtkompatibel med single-company-UI.
+      const id = getActiveCompanyId(db, loadSettings())
+      return id ? getCompanyById(db, id) : null
+    }),
+  )
+  ipcMain.handle(
+    'company:list',
+    wrapIpcHandler(null, () => listCompanies(db)),
+  )
+  ipcMain.handle(
+    'company:switch',
+    wrapIpcHandler(CompanySwitchInputSchema, (data) => {
+      const company = getCompanyById(db, data.company_id)
+      if (!company) {
+        throw {
+          code: 'NOT_FOUND',
+          error: 'Företaget hittades inte.',
+          field: 'company_id',
+        }
+      }
+      const settings = loadSettings()
+      settings.last_company_id = company.id
+      saveSettings(settings)
+      return company
+    }),
   )
   ipcMain.handle('company:update', (_event, input: unknown) =>
     updateCompany(db, input),
@@ -340,14 +364,12 @@ export function registerIpcHandlers(): void {
         throw { code: 'VALIDATION_ERROR', error: 'Inget aktivt räkenskapsår.' }
       }
 
-      const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as
-        | { id: number }
-        | undefined
-      if (!company) {
+      const companyId = getActiveCompanyId(db, settings)
+      if (!companyId) {
         throw { code: 'VALIDATION_ERROR', error: 'Inget företag hittat.' }
       }
 
-      const result = createNewFiscalYear(db, company.id, activeFyId, {
+      const result = createNewFiscalYear(db, companyId, activeFyId, {
         confirmBookResult: data.confirmBookResult ?? false,
         netResultOre: data.netResultOre ?? 0,
       })
@@ -424,7 +446,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(
     'counterparty:get',
     wrapIpcHandler(CounterpartyIdSchema, (data) =>
-      getCounterparty(db, data.id),
+      getCounterparty(db, data.id, data.company_id),
     ),
   )
 
@@ -439,7 +461,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(
     'counterparty:deactivate',
     wrapIpcHandler(CounterpartyIdSchema, (data) =>
-      deactivateCounterparty(db, data.id),
+      deactivateCounterparty(db, data.id, data.company_id),
     ),
   )
 
@@ -451,7 +473,9 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(
     'product:get',
-    wrapIpcHandler(ProductIdSchema, (data) => getProduct(db, data.id)),
+    wrapIpcHandler(ProductIdSchema, (data) =>
+      getProduct(db, data.id, data.company_id),
+    ),
   )
 
   ipcMain.handle('product:create', (_event, input: unknown) =>
@@ -464,7 +488,9 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(
     'product:deactivate',
-    wrapIpcHandler(ProductIdSchema, (data) => deactivateProduct(db, data.id)),
+    wrapIpcHandler(ProductIdSchema, (data) =>
+      deactivateProduct(db, data.id, data.company_id),
+    ),
   )
 
   // === Product pricing ===
@@ -1060,6 +1086,7 @@ export function registerIpcHandlers(): void {
       return importSie4(db, parseResult, {
         strategy: data.strategy,
         fiscalYearId: data.fiscal_year_id,
+        targetCompanyId: getActiveCompanyId(db, loadSettings()) ?? undefined,
         conflict_resolutions: filteredResolutions,
       })
     }),
@@ -1180,9 +1207,13 @@ export function registerIpcHandlers(): void {
   // === Depreciation (Sprint 53 F62) ===
   ipcMain.handle(
     'depreciation:create-asset',
-    wrapIpcHandler(DepreciationCreateAssetSchema, (data) =>
-      createFixedAsset(db, data),
-    ),
+    wrapIpcHandler(DepreciationCreateAssetSchema, (data) => {
+      const companyId = getActiveCompanyId(db, loadSettings())
+      if (!companyId) {
+        throw { code: 'VALIDATION_ERROR', error: 'Inget företag hittat.' }
+      }
+      return createFixedAsset(db, data, companyId)
+    }),
   )
 
   ipcMain.handle(

@@ -2,13 +2,16 @@
  * Centraliserade queryKey-factories.
  *
  * Konventioner:
- * - Stamdata (globala): inga FY-scope
+ * - Stamdata (counterparties, products, price_lists): scopas per bolag via
+ *   ActiveCompanyContext sedan Sprint MC3. company_id ingår i queryKey som
+ *   del av params-objektet (M145).
  * - Transaktionella: fiscal_year_id som andra element
  * - Filterobjekt som sista element (om det finns)
  */
 export const queryKeys = {
   // === Stamdata (globala) ===
   company: () => ['company'] as const,
+  companies: () => ['companies'] as const,
   fiscalYears: () => ['fiscal-years'] as const,
   fiscalPeriods: (fyId: number) => ['fiscal-periods', fyId] as const,
   counterparties: (params?: Record<string, unknown>) =>

@@ -16,8 +16,9 @@ describe('mock-ipc', () => {
       string,
       (...args: unknown[]) => Promise<unknown>
     >
-    // counterparty:create has a schema requiring { name, type, ... }
+    // counterparty:create has a schema requiring { name, type, company_id, ... }
     const result = await api.createCounterparty({
+      company_id: 1,
       name: 'Test AB',
       type: 'customer',
     })
@@ -45,6 +46,7 @@ describe('mock-ipc', () => {
     mockIpcResponse('counterparty:create', customResponse)
 
     const result = await api.createCounterparty({
+      company_id: 1,
       name: 'Test AB',
       type: 'customer',
     })

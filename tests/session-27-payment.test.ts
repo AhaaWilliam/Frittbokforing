@@ -43,6 +43,7 @@ function seedAll(testDb: Database.Database) {
     id: number
   }
   const cp = createCounterparty(testDb, {
+    company_id: 1,
     name: 'Kund AB',
     type: 'customer',
   })
@@ -54,6 +55,7 @@ function seedAll(testDb: Database.Database) {
     .prepare("SELECT id FROM accounts WHERE account_number = '3002'")
     .get() as { id: number }
   const product = createProduct(testDb, {
+    company_id: 1,
     name: 'Konsult',
     default_price_ore: 100000,
     vat_code_id: vatCode.id,
