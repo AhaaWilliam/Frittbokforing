@@ -26,9 +26,9 @@ function getDraftInternal(
 ): InvoiceWithLines | null {
   const invoice = db
     .prepare(
-      `SELECT i.*, cp.name AS counterparty_name
+      `SELECT i.*, COALESCE(cp.name, 'Okänd kund') AS counterparty_name
      FROM invoices i
-     JOIN counterparties cp ON cp.id = i.counterparty_id
+     LEFT JOIN counterparties cp ON cp.id = i.counterparty_id
      WHERE i.id = ?`,
     )
     .get(id) as (Invoice & { counterparty_name: string }) | undefined

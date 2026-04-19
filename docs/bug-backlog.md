@@ -126,66 +126,70 @@ fixad i Sprint 11 S43 (M98). Sprint 24b fixade kvarvarande ORDER BY + localeComp
 
 ## Låg — Städ (Fas 6)
 
-### F7 — verification_sequences-tabell finns men används aldrig 🟢
-**Fil:** `migration005`, alla verification_number-ställen
-**Fix:** Antingen använd tabellen eller droppa den (migration 017). Rekommendation: droppa, MAX+1 räcker för single-user-app.
+### F7 — verification_sequences-tabell finns men används aldrig ✅ STÄNGD (Sprint 27)
+**Stängd:** Migration 028 droppar tabellen. Audit 2026-04-19 bekräftade att
+all verification_number-tilldelning sker via `MAX+1`-pattern.
 
-### F8 — LIKE-patterns escapas inte 🟢
-**Filer:** `listInvoices`, `listExpenses`
-**Problem:** Sökning efter `50%` eller `foo_bar` matchar fel.
-**Fix:** `escapeLikePattern()` helper, escape `\`, `%`, `_`.
+### F8 — LIKE-patterns escapas inte ✅ STÄNGD (redan fixat)
+**Stängd:** `src/shared/escape-like.ts` + `ESCAPE '!'` i listInvoices/listExpenses.
+Backlog-entry var inaktuell. Verifierat 2026-04-19.
 
-### F10 — getDraftInternal använder INNER JOIN mot counterparties 🟢
-**Fil:** `invoice-service.ts`
-**Fix:** LEFT JOIN + `COALESCE(cp.name, 'Okänd kund')`. Defensivt mot future edge cases.
+### F10 — getDraftInternal använder INNER JOIN mot counterparties ✅ Sprint cleanup 2026-04-19
+**Fix:** LEFT JOIN + `COALESCE(cp.name, 'Okänd kund')` i `getDraftInternal`.
+Defensivt mot edge cases där counterparty raderats eller saknas.
 
-### F13 — Duplicerade ensureIndexes + migration 🟢
-**Fil:** `invoice-service.ts`, `expense-service.ts`
-**Fix:** Ta bort `ensureInvoiceIndexes`/`ensureExpenseIndexes`, behåll bara i migrationen.
+### F13 — Duplicerade ensureIndexes + migration 🟢 DELVIS
+**Status (2026-04-19 audit):** Indexen (`idx_invoices_list`, `idx_expenses_list`)
+finns ENDAST i `ensureInvoiceIndexes`/`ensureExpenseIndexes` — inte i migrations.
+Ingen duplicering. Fix kräver ny migration (068?) som skapar indexen + ta bort
+ensure-funktionerna + anropen i ipc-handlers.ts. Liten risk, ingen regression;
+skjut till nästa schema-sprint.
 
 ### F14 — manual-entry-service litar på IPC-validering ✅ Stale-close
 **Stängd:** Service har egen validering (balanschecker, datumvalidering, FY-bounds, periodkontroll, kontoexistens). Inte enbart IPC-beroende.
 **Not:** Var redan fixad men inte markerad. Upptäckt vid S24b backlog-audit.
 
-### F20 — VAT-report SQL-string-interpolation 🟢
-**Fil:** `vat-report-service.ts`
-**Fix:** Byt `'${VAT_OUT_25_ACCOUNT}'` mot bind-variabler.
+### F20 — VAT-report SQL-string-interpolation ✅ STÄNGD (redan fixat)
+**Stängd:** `vat-report-service.ts` använder `.all(VAT_OUT_25_ACCOUNT, ...)`
+bind-variabler. Backlog-entry var inaktuell. Verifierat 2026-04-19.
 
-### F25 — getUsedAccounts returnerar för många konton i SIE-export 🟢
-**Fil:** `sie4-export-service.ts`, `sie5-export-service.ts`
-**Problem:** `WHERE ... OR a.is_active = 1` inkluderar oanvända aktiva konton.
-**Fix:** `WHERE account_number IN (...actually_used)`.
+### F25 — getUsedAccounts returnerar för många konton i SIE-export ✅ STÄNGD (redan fixat)
+**Stängd:** `getUsedAccounts` i `export/export-data-queries.ts` filtrerar på
+`account_number IN (SELECT DISTINCT ... booked journal_entry_lines)` — ingen
+`is_active = 1`-union kvar. Verifierat 2026-04-19.
 
-### F28 — SIE5 hardcoded series-namn fel 🟢
-**Fil:** `sie5-export-service.ts`
-**Problem:** Serie C heter "Betalningar", borde vara "Manuella verifikationer". Serie O saknas.
-**Fix:** Uppdatera seriesNames map.
+### F28 — SIE5 hardcoded series-namn fel ✅ Sprint cleanup 2026-04-19
+**Stängd:** C + O var redan korrekt. Lade till saknade E (Avskrivningar) och
+I (Importerade verifikationer) i `seriesNames` — M151 introducerade dem
+utan att SIE5-export följde efter.
 
-### F35 — ExpenseForm quantity input min={0} 🟢
-**Fil:** `src/renderer/components/expenses/ExpenseForm.tsx:309`
-**Problem:** Tillåter quantity=0 i UI, fångas först av backend Zod.
-**Fix:** `min={1}`.
+### F35 — ExpenseForm quantity input min={0} ✅ STÄNGD (redan fixat)
+**Stängd:** `ExpenseLineRow.tsx:61` har `min={1}` på quantity. `min={0}`
+finns bara på `unit_price` (pris kan vara 0). Verifierat 2026-04-19.
 
-### F38 — ManualEntryForm diff visas som absolutbelopp 🟢
-**Fil:** `src/renderer/components/manual-entries/ManualEntryForm.tsx:236`
-**Problem:** Visar inte OM debet > kredit eller tvärtom.
-**Fix:** Lägg till tecken eller label "debet > kredit" / "kredit > debet".
+### F38 — ManualEntryForm diff visas som absolutbelopp ✅ STÄNGD (redan fixat)
+**Stängd:** `ManualEntryForm.tsx:427-429` visar "(debet > kredit)" / "(kredit
+> debet)" i felfärg. Verifierat 2026-04-19.
 
 ---
 
 ## Ej längre aktuella
 
-### F18 — Tidigare oro om report-service signMultiplier
-**Status:** Inte en bug. Session-20 testar alla teckenfall explicit. Tas bort från listan.
+### F18 — Tidigare oro om report-service signMultiplier ✅ Ej bug
+**Status:** Stängt 2026-04-19. Inte en bug — session-20 täcker alla teckenfall.
 
-### F37 — Test session-21 speglar bug F4
-**Status:** Hanteras tillsammans med F4 i Fas 3. Inte separat post.
+### F37 — Test session-21 speglar bug F4 ✅ Täckt av F4-fix
+**Status:** Stängt 2026-04-19. Hanterat tillsammans med F4 i Sprint 11 Fas 3.
 
 ---
 
 ## Sprint 18 S65b findings (2026-04-14)
 
-### F39 — Formulärtyper använder _kr-suffix utan dokumenterad konvention 🟡
+### F39 — Formulärtyper använder _kr-suffix utan dokumenterad konvention ✅ STÄNGD
+**Stängd:** CLAUDE.md M136 ("Renderer form-types använder _kr-suffix")
+dokumenterar konventionen explicit + M119-undantaget. Verifierat 2026-04-19.
+
+**Historik:**
 **Filer:** `src/renderer/lib/form-schemas/invoice.ts` (InvoiceLineForm.unit_price_kr), `src/renderer/lib/form-schemas/expense.ts` (ExpenseLineForm.unit_price_kr)
 **Problem:** M119 kräver `_ore`-suffix på alla belopp-kolumner i SQLite, men formulärtyper i renderer använder `_kr`-suffix medvetet (undviker dubbelkonvertering under inmatning). Konvertering sker vid submit (`toOre(line.unit_price_kr)` i `transformInvoiceForm`). Denna konvention är odokumenterad.
 **Risk:** Framtida utvecklare (eller AI-assistenter) som läser M119 kan anta att allt ska vara öre och introducera felaktig konvertering i renderer-lager.
@@ -284,9 +288,9 @@ eftersom webbläsarens number-input aldrig returnerar komma-format till JS.
 **M-regel:** M133 (axeCheck:false-regression-skydd via `npm run check:m133`).
 **axeCheck:false:** 4 → 0.
 
-### F49-b — AST-baserad M133-utökning 🟢 Backlog
-**Problem:** M133 fångar bara axeCheck:false-återinförsel. En framtida utökning bör verifiera att error-`<p>`-element har `role="alert"` via ts-morph AST-analys (grep-regex kan inte matcha multi-line JSX pålitligt).
-**Prioritet:** Låg.
+### F49-b — AST-baserad M133-utökning ✅ STÄNGD (redan fixat)
+**Stängd:** `scripts/check-m133-ast.mjs` finns och kör i CI via `check:m133-ast`-
+script (inkl. self-test). Verifierat 2026-04-19.
 
 ---
 

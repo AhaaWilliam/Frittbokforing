@@ -380,6 +380,8 @@ export function exportSie5(
     A: 'Kundfakturor',
     B: 'Leverantörsfakturor',
     C: 'Manuella verifikationer',
+    E: 'Avskrivningar',
+    I: 'Importerade verifikationer',
     O: 'Ingående balanser',
   }
 
