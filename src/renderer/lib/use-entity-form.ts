@@ -56,7 +56,6 @@ export function useEntityForm<TForm extends object, TPayload, TResult = void>(
   } = options
 
   const initialState = { ...defaults, ...initialData } as TForm
-  const initialStateRef = useRef<TForm>(initialState)
   const dirtyRef = useRef(false)
 
   const [formData, setFormData] = useState<TForm>(initialState)
@@ -109,6 +108,13 @@ export function useEntityForm<TForm extends object, TPayload, TResult = void>(
       // Validate payload against payloadSchema
       const payloadResult = payloadSchema.safeParse(payload)
       if (!payloadResult.success) {
+        // Denna gren indikerar en transform/schema-diskrepans (formSchema
+        // accepterar värden som payloadSchema inte gör). Dev-ergonomi:
+        // logga fullständigt issue-tree för diagnostik.
+        console.error(
+          '[useEntityForm] payload-validering misslyckades efter transform',
+          payloadResult.error.issues,
+        )
         setSubmitError('Internt valideringsfel: payload matchade inte schemat')
         return
       }
@@ -135,7 +141,6 @@ export function useEntityForm<TForm extends object, TPayload, TResult = void>(
     (data?: Partial<TForm>) => {
       const newState = { ...defaults, ...initialData, ...data } as TForm
       setFormData(newState)
-      initialStateRef.current = newState
       dirtyRef.current = false
       setErrors({})
       setSubmitError(null)

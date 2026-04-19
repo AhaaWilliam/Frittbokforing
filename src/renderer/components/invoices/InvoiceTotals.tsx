@@ -1,34 +1,33 @@
+import { useMemo } from 'react'
 import type { InvoiceLineForm } from '../../lib/form-schemas/invoice'
 import { formatKr } from '../../lib/format'
+import { multiplyKrToOre } from '../../../shared/money'
 
 interface InvoiceTotalsProps {
   lines: InvoiceLineForm[]
 }
 
 export function InvoiceTotals({ lines }: InvoiceTotalsProps) {
-  // Calculate per-line amounts in oren
-  const lineAmounts = lines.map((line) => {
-    // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44)
-    const nettoOre = Math.round(
-      (Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100)) /
-        100,
-    )
-    const vatOre = Math.round(nettoOre * line.vat_rate)
-    return { nettoOre, vatOre, vatRate: line.vat_rate }
-  })
+  const { totalNetto, totalVat, totalAtt, vatRates } = useMemo(() => {
+    const lineAmounts = lines.map((line) => {
+      const nettoOre = multiplyKrToOre(line.quantity, line.unit_price_kr)
+      const vatOre = Math.round(nettoOre * line.vat_rate)
+      return { nettoOre, vatOre, vatRate: line.vat_rate }
+    })
 
-  const totalNetto = lineAmounts.reduce((sum, l) => sum + l.nettoOre, 0)
-  const totalVat = lineAmounts.reduce((sum, l) => sum + l.vatOre, 0)
-  const totalAtt = totalNetto + totalVat
+    const totalNetto = lineAmounts.reduce((sum, l) => sum + l.nettoOre, 0)
+    const totalVat = lineAmounts.reduce((sum, l) => sum + l.vatOre, 0)
 
-  // Group VAT by rate
-  const vatByRate = new Map<number, number>()
-  for (const la of lineAmounts) {
-    if (la.vatRate > 0) {
+    // Group VAT by rate. Inkluderar 0%-rader för explicit breakdown
+    // vid blandade momssatser.
+    const vatByRate = new Map<number, number>()
+    for (const la of lineAmounts) {
       vatByRate.set(la.vatRate, (vatByRate.get(la.vatRate) ?? 0) + la.vatOre)
     }
-  }
-  const vatRates = Array.from(vatByRate.entries()).sort(([a], [b]) => b - a)
+    const vatRates = Array.from(vatByRate.entries()).sort(([a], [b]) => b - a)
+
+    return { totalNetto, totalVat, totalAtt: totalNetto + totalVat, vatRates }
+  }, [lines])
 
   return (
     <div
@@ -50,7 +49,7 @@ export function InvoiceTotals({ lines }: InvoiceTotalsProps) {
           <span>{formatKr(amount)}</span>
         </div>
       ))}
-      {totalVat === 0 && (
+      {vatRates.length === 0 && (
         <div className="flex justify-between">
           <span className="text-muted-foreground">Moms</span>
           <span>{formatKr(0)}</span>

@@ -207,7 +207,7 @@ describe('InvoiceTotals — grupperad VAT', () => {
     expect(screen.getByText(byKr(1200))).toBeDefined()
   })
 
-  it('B4.2: mix 25% + 0% → 0%-grupp visas inte, bara 25%-grupp', () => {
+  it('B4.2: mix 25% + 0% → båda grupper visas (explicit 0%-breakdown)', () => {
     const lines = [
       makeLine({ temp_id: 'a', quantity: 1, unit_price_kr: 100, vat_rate: 0.25 }),
       makeLine({ temp_id: 'b', quantity: 1, unit_price_kr: 100, vat_rate: 0.25 }),
@@ -215,14 +215,12 @@ describe('InvoiceTotals — grupperad VAT', () => {
     ]
     render(<InvoiceTotals lines={lines} />)
 
-    // 0%-rader exkluderas från vatByRate (if vatRate > 0)
-    // Bara 25%-grupp: 2 × 10000 * 0.25 = 5000
+    // 0%-rater inkluderas i vatByRate för explicit breakdown.
+    // 25%-grupp: 2 × 10000 * 0.25 = 5000 öre
+    // 0%-grupp: 1 × 10000 * 0.0 = 0 öre (visas ändå för transparens)
     expect(screen.getByText('Moms 25%')).toBeDefined()
-    expect(screen.getByText(byKr(5000))).toBeDefined()
-    // "Moms 0%" ska INTE finnas
-    expect(screen.queryByText('Moms 0%')).toBeNull()
-    // "Moms" standalone (totalVat===0 case) ska inte finnas heller (totalVat = 5000 > 0)
-    // Netto: 30000, total VAT: 5000 (0%-rad bidrar 0), total: 35000
+    expect(screen.getByText('Moms 0%')).toBeDefined()
+    // Netto: 30000, total VAT: 5000, total: 35000
     expect(screen.getByText(byKr(30000))).toBeDefined()
     expect(screen.getByText(byKr(35000))).toBeDefined()
   })
