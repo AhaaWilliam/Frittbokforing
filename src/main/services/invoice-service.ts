@@ -803,13 +803,6 @@ export function refreshInvoiceStatuses(db: Database.Database): number {
   return result.changes
 }
 
-export function ensureInvoiceIndexes(db: Database.Database): void {
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_invoices_list
-    ON invoices(fiscal_year_id, status, invoice_date)
-  `)
-}
-
 export function listInvoices(
   db: Database.Database,
   input: {

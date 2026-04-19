@@ -1249,16 +1249,6 @@ export function refreshExpenseStatuses(db: Database.Database): number {
 }
 
 // ════════════════════════════════════════════════════════════
-// ensureExpenseIndexes
-// ════════════════════════════════════════════════════════════
-export function ensureExpenseIndexes(db: Database.Database): void {
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_expenses_fiscal_year_status
-    ON expenses(fiscal_year_id, status, expense_date)
-  `)
-}
-
-// ════════════════════════════════════════════════════════════
 // listExpenses — filter, search, sort, status counts
 // ════════════════════════════════════════════════════════════
 export function listExpenses(

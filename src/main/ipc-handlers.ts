@@ -48,7 +48,6 @@ import {
   finalizeDraft,
   updateSentInvoice,
   listInvoices,
-  ensureInvoiceIndexes,
   refreshInvoiceStatuses,
   payInvoice,
   payInvoicesBulk,
@@ -67,7 +66,6 @@ import {
   getExpensePayments,
   getExpense,
   refreshExpenseStatuses,
-  ensureExpenseIndexes,
   listExpenses,
   createExpenseCreditNoteDraft,
 } from './services/expense-service'
@@ -265,9 +263,8 @@ import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
  */
 export function runPostUnlockStartup(): void {
   const db = dbProxy
-  ensureInvoiceIndexes(db)
+  // Indexes flyttade till migration 048 (F13).
   refreshInvoiceStatuses(db)
-  ensureExpenseIndexes(db)
   refreshExpenseStatuses(db)
 }
 

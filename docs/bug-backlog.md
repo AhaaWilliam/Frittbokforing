@@ -138,12 +138,14 @@ Backlog-entry var inaktuell. Verifierat 2026-04-19.
 **Fix:** LEFT JOIN + `COALESCE(cp.name, 'Okänd kund')` i `getDraftInternal`.
 Defensivt mot edge cases där counterparty raderats eller saknas.
 
-### F13 — Duplicerade ensureIndexes + migration 🟢 DELVIS
-**Status (2026-04-19 audit):** Indexen (`idx_invoices_list`, `idx_expenses_list`)
-finns ENDAST i `ensureInvoiceIndexes`/`ensureExpenseIndexes` — inte i migrations.
-Ingen duplicering. Fix kräver ny migration (068?) som skapar indexen + ta bort
-ensure-funktionerna + anropen i ipc-handlers.ts. Liten risk, ingen regression;
-skjut till nästa schema-sprint.
+### F13 — Duplicerade ensureIndexes + migration ✅ Sprint cleanup 2026-04-19
+**Fix:** Migration 048 skapar `idx_invoices_list` i schemat. Funktionerna
+`ensureInvoiceIndexes` + `ensureExpenseIndexes` borttagna tillsammans med
+deras anrop i `ipc-handlers.ts:runPostUnlockStartup`.
+
+**Not:** `ensureExpenseIndexes` skapade `idx_expenses_fiscal_year_status`
+som redan fanns i migration 047 expenses table-recreate — den var i praktiken
+en no-op och togs bort utan ersättning.
 
 ### F14 — manual-entry-service litar på IPC-validering ✅ Stale-close
 **Stängd:** Service har egen validering (balanschecker, datumvalidering, FY-bounds, periodkontroll, kontoexistens). Inte enbart IPC-beroende.
@@ -266,10 +268,12 @@ eftersom webbläsarens number-input aldrig returnerar komma-format till JS.
 **Status:** STÄNGD. Max-qty UX-guard på invoice (9999.99, float ≤2 dec) och expense (9999, int) quantity i form-schema + IPC-schema. 9 tester i `tests/session-22a-f46-max-qty.test.ts`. Error-meddelanden lokaliserade till svensk formatering. Read-tolerans verifierad (safeParse fail utan krasch).
 **Referens:** `src/shared/constants.ts` (MAX_QTY_INVOICE, MAX_QTY_EXPENSE).
 
-### F46b — DB-CHECK defense-in-depth för quantity max 🟢
-**Problem:** Zod-validering i form-schema + IPC-schema täcker alla write-paths via IPC, men DB har ingen CHECK-constraint. Defense-in-depth kräver table-recreate (M122-procedur).
-**Prioritet:** Låg — IPC är single entry-point för writes. Zod-validering täcker.
-**Förslag:** `CHECK(quantity <= 9999.99)` på invoice_lines, `CHECK(quantity <= 9999)` på expense_lines via M122 table-recreate-migration.
+### F46b — DB-CHECK defense-in-depth för quantity max ✅ STÄNGD (redan fixat)
+**Status (2026-04-19 audit):** BÅDA tabeller har redan CHECK på quantity:
+- `invoice_lines.quantity REAL CHECK (quantity > 0 AND quantity <= 9999.99)`
+- `expense_lines.quantity INTEGER CHECK (quantity >= 1 AND quantity <= 9999)`
+
+Backlog-entry var stale — defense-in-depth redan på plats.
 
 ### F47 — M131-efterlevnad i display-lager (InvoiceLineRow, ExpenseLineRow) ✅ Sprint 21 S68a+S68b
 **Status:** STÄNGD. Alt B applicerad i båda LineRow-komponenterna.

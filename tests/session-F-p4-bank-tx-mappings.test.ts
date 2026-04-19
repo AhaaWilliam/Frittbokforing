@@ -85,7 +85,7 @@ describe('Sprint F P4 — migration 042', () => {
 
   it('PRAGMA user_version är 44 efter migrations (Sprint F P4 + P6)', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(47)
+    expect(version).toBe(48)
   })
 })
 

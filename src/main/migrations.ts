@@ -1759,6 +1759,24 @@ END;`,
     sql: '-- Migration 047: expenses table-recreate + >= 0 CHECKs (F-TT-003) (se programmatic)',
     programmatic: migration047Programmatic,
   },
+
+  // ── Migration 048 — F13: flytta idx_invoices_list från ensureInvoiceIndexes ──
+  //
+  // `idx_invoices_list` skapades tidigare vid app-start via
+  // `ensureInvoiceIndexes` (kallas från ipc-handlers.ts). Konventionen är
+  // att index ska vara del av schemat (migrationer) så de är deterministiska
+  // + syns i schema-dump. Idempotent (IF NOT EXISTS) — existerande DB:er
+  // med indexet redan-skapat via ensureInvoiceIndexes lämnas orörda.
+  //
+  // ensureExpenseIndexes skapar idx_expenses_fiscal_year_status vilket
+  // REDAN finns i expenses-tabellens migration 047 table-recreate — den
+  // funktionen tas bort utan motsvarande migrations-tillägg.
+  {
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_invoices_list
+        ON invoices(fiscal_year_id, status, invoice_date);
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
