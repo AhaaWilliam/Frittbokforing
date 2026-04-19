@@ -28,5 +28,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run check:m131
       - run: npm run check:m133
+      - run: npm run check:m133-ast
+      - run: npm run check:m153
       - run: npm run test -- --reporter=verbose
       - run: npm run build
