@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/shared/money.ts"
+  ],
+  "ignorePatterns": [
+    "release",
+    "dist",
+    "dist-main",
+    "dist-preload",
+    "dist-renderer",
+    "coverage",
+    "reports",
+    ".stryker-tmp",
+    "node_modules/.cache",
+    "playwright-report",
+    "test-results",
+    "e2e-user-data"
+  ],
+  "checkers": [],
+  "timeoutMS": 30000,
+  "concurrency": 4,
+  "thresholds": { "high": 85, "low": 70, "break": 60 },
+  "reporters": ["clear-text", "html", "json"],
+  "htmlReporter": { "fileName": "reports/mutation/index.html" },
+  "jsonReporter": { "fileName": "reports/mutation/mutation-report.json" },
+  "logLevel": "info"
+}

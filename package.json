@@ -36,7 +36,9 @@
     "check:lint-new": "node scripts/check-lint-new.mjs",
     "check:m133": "node scripts/check-m133.mjs",
     "check:m133-ast": "node scripts/check-m133-ast.mjs --self-test && node scripts/check-m133-ast.mjs",
-    "check:m153": "node scripts/check-m153.mjs"
+    "check:m153": "node scripts/check-m153.mjs",
+    "test:mutation": "stryker run",
+    "test:property": "vitest run tests/property/"
   },
   "keywords": [
     "bokföring",
@@ -70,6 +72,9 @@
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
     "@playwright/test": "^1.58.2",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
