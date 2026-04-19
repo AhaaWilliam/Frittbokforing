@@ -8,6 +8,7 @@ import {
   generateMasterKey,
   openEnvelope,
   sealMasterKey,
+  type Envelope,
   type KdfParams,
   ARGON2ID_DEFAULTS,
 } from './crypto'
@@ -66,6 +67,28 @@ function wipeBuffer(buf: Buffer): void {
 export function createAuthService(deps: AuthServiceDeps) {
   const kdf = deps.kdfParams ?? ARGON2ID_DEFAULTS
 
+  /**
+   * Dummy envelope som används för constant-time-dummy-decrypt vid
+   * USER_NOT_FOUND (F-TT-004 — mitigerar user-enumeration-timing-attack).
+   *
+   * Lazy-initierad vid första login-försök mot icke-existerande user.
+   * Skapas med samma `kdf`-params som riktiga user-envelopes så argon2id-
+   * kostnaden matchar. Nyckel och innehåll är random och bryr sig ingen om
+   * (openEnvelope kommer ändå kasta pga auth-tag-fel med godtyckligt lösen).
+   */
+  let dummyEnvelopeCache: Envelope | null = null
+  async function getDummyEnvelope(): Promise<Envelope> {
+    if (dummyEnvelopeCache) return dummyEnvelopeCache
+    const dummyKey = generateMasterKey()
+    const dummySecret = Buffer.from('unused-dummy-secret-for-timing-parity')
+    try {
+      dummyEnvelopeCache = await sealMasterKey(dummyKey, dummySecret, kdf)
+    } finally {
+      wipeBuffer(dummyKey)
+    }
+    return dummyEnvelopeCache
+  }
+
   async function createUser(
     displayName: string,
     password: string,
@@ -97,7 +120,23 @@ export function createAuthService(deps: AuthServiceDeps) {
 
   async function login(userId: string, password: string): Promise<UserMeta> {
     const user = deps.vault.findUser(userId)
-    if (!user) throw new AuthError('USER_NOT_FOUND', 'Användaren finns inte')
+    if (!user) {
+      // F-TT-004: Mitigera user-enumeration-timing-attack — kör dummy
+      // argon2id-decrypt med samma kostnad som riktig login så svarstid
+      // inte avslöjar om userId finns.
+      const pwBuf = Buffer.from(password, 'utf8')
+      try {
+        const dummy = await getDummyEnvelope()
+        try {
+          await openEnvelope(dummy, pwBuf)
+        } catch {
+          // förväntat — dummy har random nyckel
+        }
+      } finally {
+        wipeBuffer(pwBuf)
+      }
+      throw new AuthError('USER_NOT_FOUND', 'Användaren finns inte')
+    }
 
     const now = deps.now()
     const retryAfter = deps.rateLimiter.checkAllowed(userId, now)

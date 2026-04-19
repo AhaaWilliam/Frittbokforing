@@ -180,4 +180,25 @@ fix i schemat kommer testet grönt. Testet lämnas som-är (röd vakt).
 
 ## Phase 7 — security gaps
 
-(tbd)
+### F-TT-004: User-enumeration via login-timing ✅ FIXED
+
+**Problem:** `auth-service.login()` kollade `vault.findUser(userId)` först och
+returnerade USER_NOT_FOUND early om användaren inte fanns — utan att köra
+argon2id-decrypt. Existerande användare med fel lösen triggade full argon2id-
+pipeline (~1ms per försök med FAST_KDF, ~200–500ms i prod).
+
+Mätt timing-ratio före fix: **0.030** (USER_NOT_FOUND 33× snabbare).
+Attackyta: angripare kan enumerera giltiga user-IDs via response-tid utan
+något lösen.
+
+**Fix:** `createAuthService` skapar lazy en cached `dummyEnvelope` med samma
+`kdf`-params som riktiga user-envelopes. Vid USER_NOT_FOUND kör login nu
+`openEnvelope(dummy, pwBuf)` innan den kastar USER_NOT_FOUND. argon2id-
+kostnaden matchar riktiga login-flödet.
+
+Mätt timing-ratio efter fix: **0.983** (praktiskt constant-time).
+
+**Test:** `tests/security-fuzz/auth-timing.test.ts` I2 gate:ar ratio ≥ 0.5
+(marginal för JIT + OS-scheduling). Regression-skyddat.
+
+**Referens:** Sprint TT-7 (2026-04-19).
