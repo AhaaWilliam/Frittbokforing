@@ -371,7 +371,7 @@ describe('getVatReport', () => {
   // Test 12: Regression — no migration
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(46) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(47) // S58: Uppdatera vid nya migrationer
     const tables = db
       .prepare(
         "SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",

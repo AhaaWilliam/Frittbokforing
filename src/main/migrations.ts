@@ -1735,6 +1735,30 @@ END;`,
     END;
     `,
   },
+
+  // ── Migration 047 — F-TT-003: expenses table-recreate med >= 0 CHECKs ──
+  //
+  // Lägger till `CHECK (total_amount_ore >= 0)` och
+  // `CHECK (paid_amount_ore >= 0)` på expenses-tabellen. M127 tillåter inte
+  // CHECK via ALTER TABLE ADD COLUMN, så table-recreate via M122-mönstret
+  // krävs (inkommande FK från expense_lines + expense_payments).
+  //
+  // Triggers attached till expenses som ska återskapas (M121):
+  //   - trg_expense_counterparty_company_match_insert
+  //   - trg_expense_counterparty_company_match_update
+  //
+  // Indexes att återskapa:
+  //   - idx_expenses_fiscal_year_status
+  //   - idx_expenses_supplier_duplicate (UNIQUE WHERE)
+  //   - idx_exp_credits
+  //
+  // Cross-table triggers (M141): trg_no_correct_with_payments på
+  // journal_entries refererar expenses i body men triggern är INTE attached
+  // till expenses → överlever DROP TABLE expenses automatiskt.
+  {
+    sql: '-- Migration 047: expenses table-recreate + >= 0 CHECKs (F-TT-003) (se programmatic)',
+    programmatic: migration047Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -3690,5 +3714,133 @@ function migration045Verify(db: import('better-sqlite3').Database): void {
     throw new Error(
       'Migration 045: nya idx_counterparties_company_org_unique saknas',
     )
+  }
+}
+
+/**
+ * Migration 047 — F-TT-003: expenses table-recreate med >= 0 CHECKs.
+ *
+ * Körs med `foreign_keys = OFF` utanför transaktionen (M122). Skapar
+ * expenses_new med CHECK (total_amount_ore >= 0) + CHECK (paid_amount_ore >= 0),
+ * kopierar data, dropper gamla tabellen, renaming, återskapar indexes +
+ * triggers attached till expenses. Cross-table-triggers på journal_entries
+ * som refererar expenses överlever automatiskt (inte attached till
+ * droppade tabellen — M141-check).
+ */
+function migration047Programmatic(
+  db: import('better-sqlite3').Database,
+): void {
+  // M141 cross-table-trigger-inventering: trg_no_correct_with_payments på
+  // journal_entries refererar expenses i body. SQLite validerar triggers vid
+  // ALTER TABLE RENAME, så triggern måste droppas innan recreate.
+  db.exec(`DROP TRIGGER IF EXISTS trg_no_correct_with_payments;`)
+
+  // Skapa expenses_new med fullständigt nuvarande schema + CHECKs.
+  db.exec(`
+    CREATE TABLE expenses_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      counterparty_id INTEGER NOT NULL REFERENCES counterparties(id),
+      supplier_invoice_number TEXT,
+      expense_date TEXT NOT NULL,
+      due_date TEXT,
+      description TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'draft'
+        CHECK(status IN ('draft', 'unpaid', 'paid', 'overdue', 'partial')),
+      payment_terms INTEGER NOT NULL DEFAULT 30,
+      journal_entry_id INTEGER REFERENCES journal_entries(id),
+      total_amount_ore INTEGER NOT NULL DEFAULT 0,
+      notes TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      paid_amount_ore INTEGER NOT NULL DEFAULT 0,
+      expense_type TEXT NOT NULL DEFAULT 'normal'
+        CHECK(expense_type IN ('normal', 'credit_note')),
+      credits_expense_id INTEGER REFERENCES expenses(id),
+      CHECK (total_amount_ore >= 0),
+      CHECK (paid_amount_ore >= 0)
+    );
+
+    INSERT INTO expenses_new (
+      id, fiscal_year_id, counterparty_id, supplier_invoice_number,
+      expense_date, due_date, description, status, payment_terms,
+      journal_entry_id, total_amount_ore, notes, created_at, updated_at,
+      paid_amount_ore, expense_type, credits_expense_id
+    )
+    SELECT
+      id, fiscal_year_id, counterparty_id, supplier_invoice_number,
+      expense_date, due_date, description, status, payment_terms,
+      journal_entry_id, total_amount_ore, notes, created_at, updated_at,
+      paid_amount_ore, expense_type, credits_expense_id
+    FROM expenses;
+  `)
+
+  // Dropa gamla tabellen — tar med sig dess triggers (M121).
+  db.exec(`DROP TABLE expenses;`)
+
+  // Rename + återskapa indexes och triggers.
+  db.exec(`
+    ALTER TABLE expenses_new RENAME TO expenses;
+
+    CREATE INDEX idx_expenses_fiscal_year_status
+      ON expenses(fiscal_year_id, status, expense_date);
+
+    CREATE UNIQUE INDEX idx_expenses_supplier_duplicate
+      ON expenses(counterparty_id, supplier_invoice_number)
+      WHERE supplier_invoice_number IS NOT NULL;
+
+    CREATE INDEX idx_exp_credits ON expenses(credits_expense_id);
+
+    CREATE TRIGGER trg_expense_counterparty_company_match_insert
+    BEFORE INSERT ON expenses
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än kostnadens räkenskapsår.')
+      END;
+    END;
+
+    CREATE TRIGGER trg_expense_counterparty_company_match_update
+    BEFORE UPDATE OF counterparty_id, fiscal_year_id ON expenses
+    WHEN NEW.counterparty_id IS NOT NULL
+    BEGIN
+      SELECT CASE
+        WHEN (SELECT company_id FROM counterparties WHERE id = NEW.counterparty_id)
+          != (SELECT company_id FROM fiscal_years WHERE id = NEW.fiscal_year_id)
+        THEN RAISE(ABORT, 'Motpart tillhör annat bolag än kostnadens räkenskapsår.')
+      END;
+    END;
+
+    -- M141: återskapa cross-table-triggern på journal_entries som refererar
+    -- expenses i body (droppades ovan för RENAME-validering).
+    CREATE TRIGGER trg_no_correct_with_payments
+    BEFORE UPDATE ON journal_entries
+    WHEN OLD.status = 'booked' AND NEW.status = 'corrected'
+    BEGIN
+        SELECT CASE
+            WHEN EXISTS (SELECT 1 FROM invoice_payments WHERE journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM expense_payments WHERE journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM invoices i JOIN invoice_payments ip ON ip.invoice_id = i.id WHERE i.journal_entry_id = OLD.id)
+              OR EXISTS (SELECT 1 FROM expenses e JOIN expense_payments ep ON ep.expense_id = e.id WHERE e.journal_entry_id = OLD.id)
+            THEN RAISE(ABORT, 'Kan inte korrigera verifikat med beroende betalningar.')
+        END;
+    END;
+  `)
+
+  // Verify
+  const schema = (
+    db
+      .prepare(
+        `SELECT sql FROM sqlite_master WHERE type='table' AND name='expenses'`,
+      )
+      .get() as { sql: string }
+  ).sql
+  if (!/total_amount_ore\s*>=\s*0/.test(schema)) {
+    throw new Error('Migration 047: total_amount_ore CHECK saknas')
+  }
+  if (!/paid_amount_ore\s*>=\s*0/.test(schema)) {
+    throw new Error('Migration 047: paid_amount_ore CHECK saknas')
   }
 }

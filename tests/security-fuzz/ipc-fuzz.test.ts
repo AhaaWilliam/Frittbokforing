@@ -80,7 +80,7 @@ describe('IPC fuzz — Zod-scheman hanterar alla input utan att kasta', () => {
   })
 
   it('prototype pollution-payloads blockeras av .strict()', () => {
-    const pollutions = [
+    const pollutions: unknown[] = [
       { __proto__: { polluted: true } },
       { constructor: { prototype: { polluted: true } } },
       { 'x-proto': { polluted: true } },

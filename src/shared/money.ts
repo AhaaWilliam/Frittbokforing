@@ -37,13 +37,12 @@ export function multiplyKrToOre(qtyDecimal: number, priceKr: number): number {
  * konvertering tolkar `"99,50"` som `99` och tappar decimalerna tyst,
  * vilket skapar produktionsbuggar i fakturering och betalning (F68).
  *
- * Whitespace trimmas. Tomma strängar → `NaN` (inte 0 — callsiten
+ * Whitespace hanteras via parseFloat (skipprar leading + stoppar vid
+ * trailing). Tom sträng → `NaN` (parseFloat default — callsiten
  * bestämmer hur tomt ska hanteras).
  */
 export function parseDecimal(value: string): number {
-  const trimmed = value.trim()
-  if (trimmed === '') return Number.NaN
-  return parseFloat(trimmed.replace(',', '.'))
+  return parseFloat(value.replace(',', '.'))
 }
 
 /**

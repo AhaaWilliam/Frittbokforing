@@ -32,9 +32,10 @@ describe('M137 scanner — monetära kolumner har >= 0 CHECK', () => {
     }
   })
 
-  // SKIPPED: F-TT-003 — expenses saknar >= 0 CHECKs (M127 ALTER TABLE-begränsning).
-  // Testet FAILAR idag. Avmarkera .skip efter migration som table-recreate:ar expenses.
-  it.skip('expenses-tabellen: alla _ore-kolumner har >= 0 check', () => {
+  // F-TT-003 fixat i migration 047 — expenses table-recreate med CHECKs.
+  // Expenses har bara total_amount_ore och paid_amount_ore (inga net/vat
+  // — beloppen härleds från lines).
+  it('expenses-tabellen: alla _ore-kolumner har >= 0 check', () => {
     const db = createTestDb()
     const schema = (
       db
@@ -43,12 +44,7 @@ describe('M137 scanner — monetära kolumner har >= 0 CHECK', () => {
         )
         .get() as { sql: string }
     ).sql
-    for (const col of [
-      'total_amount_ore',
-      'net_amount_ore',
-      'vat_amount_ore',
-      'paid_amount_ore',
-    ]) {
+    for (const col of ['total_amount_ore', 'paid_amount_ore']) {
       expect(schema, `${col} >= 0 constraint`).toMatch(
         new RegExp(`${col}\\s*>=\\s*0`),
       )

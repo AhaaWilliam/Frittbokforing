@@ -383,7 +383,7 @@ describe('Integration', () => {
 
   it('14. Migration 008 — payment_method + account_number columns', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(46) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(47) // S58: Uppdatera vid nya migrationer
 
     const cols = (
       db.pragma('table_info(invoice_payments)') as { name: string }[]

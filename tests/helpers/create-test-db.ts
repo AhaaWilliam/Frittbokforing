@@ -11,8 +11,9 @@ import { registerCustomFunctions } from '../../src/main/db-functions'
 // Index 42 = migration 043 (Sprint F P6: bank_statements.source_format CHECK-utökning).
 // Index 43 = migration 044 (Sprint Q T3.d: MT940+BGMAX source_format-utvidgning).
 // Index 44 = migration 045 (Sprint MC3: counterparties/products/price_lists company_id).
+// Index 46 = migration 047 (F-TT-003: expenses table-recreate för CHECKs).
 export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([
-  21, 22, 37, 42, 43, 44,
+  21, 22, 37, 42, 43, 44, 46,
 ])
 
 /**
