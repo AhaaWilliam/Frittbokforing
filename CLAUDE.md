@@ -257,6 +257,13 @@ native float-multiplikation.
 
 **Formel:** `Math.round(Math.round(a * 100) * Math.round(b * 100) / 100)`
 
+**Kanonisk helper:** `src/shared/money.ts` — `multiplyKrToOre(qty, priceKr)`
+och `multiplyDecimalByOre(qty, priceOre)`. All ny monetär multiplikation med
+`_kr`-operand MÅSTE gå via helpern; `scripts/check-m131-ast.mjs` (AST-scan
+i CI) flaggar binär `*` på `_kr`-identifier utanför `money.ts`. Regeln är
+syntaktisk, inte semantisk — detektor i kapplöpning med nya mönster har
+ersatts av en single-source-of-truth.
+
 **Invariant:** Båda operander har ≤2 decimalers precision (låst via Zod-refine
 i form- och IPC-scheman).
 
@@ -270,10 +277,10 @@ i form- och IPC-scheman).
 **Referens:** InvoiceTotals, ExpenseTotals, invoice-service.ts `processLines`
 (Sprint 20 S67b), `docs/s67b-characterization.md`, `scripts/characterize-totals.mjs`.
 
-**Scope:** Gäller alla monetära beräkningar i systemet. Sprint 20 täcker
+**Scope:** Gäller alla monetära beräkningar i systemet. Sprint 20 täckte
 renderer-sidans Totals-komponenter och invoice-service.ts bokföringsgenerering.
-InvoiceLineRow.tsx och ExpenseLineRow.tsx (display-lager) är identifierade
-men lämnade som F47-backlog (lågrisk — display, inte bokföring).
+Sprint S migrerade InvoiceLineRow.tsx och ExpenseLineRow.tsx (tidigare F47-
+backlog) till helpern som del av AST-enforcement-övergången.
 
 **Konsekvens:** Framtida komponenter med monetära beräkningar följer samma
 mönster. Zod-scheman för qty-fält måste inkludera 2-decimaler-invarianten.

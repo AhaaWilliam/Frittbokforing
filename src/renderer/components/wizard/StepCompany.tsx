@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react'
 
 import { todayLocal } from '../../lib/format'
+import { parseDecimal } from '../../../shared/money'
 
 interface StepCompanyProps {
   name: string
@@ -34,7 +35,7 @@ export function StepCompany({
   }
 
   const orgNumberValid = /^[5-9]\d{5}-\d{4}$/.test(org_number)
-  const shareCapitalNum = parseFloat(share_capital)
+  const shareCapitalNum = parseDecimal(share_capital)
   const shareCapitalValid = !isNaN(shareCapitalNum) && shareCapitalNum >= 25000
   const registrationDateValid =
     registration_date !== '' && registration_date <= todayLocal()

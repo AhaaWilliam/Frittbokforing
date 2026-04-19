@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CustomerPrice } from '../../../shared/types'
 import { formatKr, unitLabel, toOre } from '../../lib/format'
+import { parseDecimal } from '../../../shared/money'
 import {
   useSetCustomerPrice,
   useRemoveCustomerPrice,
@@ -42,7 +43,7 @@ export function CustomerPriceTable({
       return
     }
 
-    const parsed = parseFloat(priceKr)
+    const parsed = parseDecimal(priceKr)
     if (isNaN(parsed) || parsed < 0) {
       setError('Ange ett giltigt pris')
       return

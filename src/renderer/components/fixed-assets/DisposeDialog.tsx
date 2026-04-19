@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAllAccounts } from '../../lib/hooks'
 import { todayLocal } from '../../../shared/date-utils'
+import { parseDecimal } from '../../../shared/money'
 
 export interface DisposeDialogResult {
   disposed_date: string
@@ -30,7 +31,7 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
 
   function submit() {
     const saleOre = salePriceKr
-      ? Math.round(parseFloat(salePriceKr.replace(',', '.')) * 100)
+      ? Math.round(parseDecimal(salePriceKr) * 100)
       : 0
     onConfirm({
       disposed_date: disposedDate,
@@ -90,7 +91,7 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
               />
             </label>
 
-            {salePriceKr && parseFloat(salePriceKr.replace(',', '.')) > 0 && (
+            {salePriceKr && parseDecimal(salePriceKr) > 0 && (
               <label className="mb-4 block text-sm">
                 <span className="mb-1 block text-xs uppercase text-muted-foreground">
                   Intäktskonto (balansräkning 1xxx–2xxx)

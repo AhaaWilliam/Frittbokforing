@@ -2,6 +2,7 @@ import { memo } from 'react'
 import type { ExpenseLineForm } from '../../lib/form-schemas/expense'
 import type { Account, VatCode } from '../../../shared/types'
 import { formatKr } from '../../lib/format'
+import { multiplyKrToOre, parseDecimal } from '../../../shared/money'
 
 interface ExpenseLineRowProps {
   line: ExpenseLineForm
@@ -23,11 +24,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
   onUpdate,
   onRemove,
 }: ExpenseLineRowProps) {
-  // M131: heltalsaritmetik — defensiv, qty är int i produktion (F47)
-  const lineNetOre = Math.round(
-    (Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100)) /
-      100,
-  )
+  const lineNetOre = multiplyKrToOre(line.quantity, line.unit_price_kr)
   const lineVatOre = Math.round(lineNetOre * line.vat_rate)
 
   return (
@@ -79,7 +76,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
           step={0.01}
           value={line.unit_price_kr}
           onChange={(e) =>
-            onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
+            onUpdate(index, { unit_price_kr: parseDecimal(e.target.value) || 0 })
           }
           aria-label="Pris"
           data-testid={`expense-line-${index}-price`}

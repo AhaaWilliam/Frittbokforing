@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ExpenseDetail } from '../../../shared/types'
 import { usePayExpense } from '../../lib/hooks'
 import { formatKr, toOre, toKr, todayLocal } from '../../lib/format'
+import { parseDecimal } from '../../../shared/money'
 
 interface PayExpenseDialogProps {
   expense: ExpenseDetail
@@ -31,10 +32,10 @@ export function PayExpenseDialog({
   const handleSubmit = async () => {
     setError(null)
     try {
-      const feeOre = bankFeeStr ? toOre(parseFloat(bankFeeStr)) : undefined
+      const feeOre = bankFeeStr ? toOre(parseDecimal(bankFeeStr)) : undefined
       await payMutation.mutateAsync({
         expense_id: expense.id,
-        amount_ore: toOre(parseFloat(amountKr)),
+        amount_ore: toOre(parseDecimal(amountKr)),
         payment_date: paymentDate,
         payment_method: paymentMethod,
         account_number: accountNumber,

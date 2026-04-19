@@ -1,4 +1,5 @@
 import type { CreateCompanyInput } from '../../../shared/types'
+import { parseDecimal } from '../../../shared/money'
 
 interface StepConfirmProps {
   name: string
@@ -15,7 +16,7 @@ interface StepConfirmProps {
 }
 
 function formatKr(value: string): string {
-  const num = parseFloat(value)
+  const num = parseDecimal(value)
   if (isNaN(num)) return '0 kr'
   return num.toLocaleString('sv-SE') + ' kr'
 }
@@ -64,7 +65,7 @@ export function StepConfirm({
       name,
       org_number,
       fiscal_rule,
-      share_capital: Math.round(parseFloat(share_capital) * 100),
+      share_capital: Math.round(parseDecimal(share_capital) * 100),
       registration_date,
       fiscal_year_start,
       fiscal_year_end,

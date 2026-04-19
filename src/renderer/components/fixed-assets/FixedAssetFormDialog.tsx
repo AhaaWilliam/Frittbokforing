@@ -6,6 +6,7 @@ import {
 } from '../../../shared/depreciation-defaults'
 import { useCreateFixedAsset, useUpdateFixedAsset } from '../../lib/hooks'
 import { todayLocal } from '../../../shared/date-utils'
+import { parseDecimal } from '../../../shared/money'
 import type {
   CreateFixedAssetInput,
   DepreciationMethod,
@@ -103,8 +104,8 @@ export function FixedAssetFormDialog({
     e.preventDefault()
     setFormError(null)
 
-    const costOre = Math.round(parseFloat(costKr) * 100)
-    const residualOre = Math.round(parseFloat(residualKr || '0') * 100)
+    const costOre = Math.round(parseDecimal(costKr) * 100)
+    const residualOre = Math.round(parseDecimal(residualKr || '0') * 100)
     const monthsNum = parseInt(months, 10)
 
     if (!name.trim()) return setFormError('Namn krävs')
@@ -127,7 +128,7 @@ export function FixedAssetFormDialog({
       account_depreciation_expense: expAccount.trim(),
     }
     if (method === 'declining') {
-      const ratePct = parseFloat(decliningRatePct)
+      const ratePct = parseDecimal(decliningRatePct)
       if (!Number.isFinite(ratePct) || ratePct <= 0)
         return setFormError('Ange giltig degressiv ränta')
       payload.declining_rate_bp = Math.round(ratePct * 100)

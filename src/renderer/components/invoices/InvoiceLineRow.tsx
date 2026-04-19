@@ -3,6 +3,7 @@ import type { InvoiceLineForm } from '../../lib/form-schemas/invoice'
 import { formatKr } from '../../lib/format'
 import { useVatCodes } from '../../lib/hooks'
 import { ArticlePicker } from './ArticlePicker'
+import { multiplyKrToOre, parseDecimal } from '../../../shared/money'
 
 interface InvoiceLineRowProps {
   line: InvoiceLineForm
@@ -60,11 +61,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
     onUpdate(index, updates)
   }
 
-  // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44/F47)
-  const lineNettoOre = Math.round(
-    (Math.round(line.quantity * 100) * Math.round(line.unit_price_kr * 100)) /
-      100,
-  )
+  const lineNettoOre = multiplyKrToOre(line.quantity, line.unit_price_kr)
 
   return (
     <tr className="border-b">
@@ -107,7 +104,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           aria-label="Antal"
           value={line.quantity}
           onChange={(e) =>
-            onUpdate(index, { quantity: parseFloat(e.target.value) || 0 })
+            onUpdate(index, { quantity: parseDecimal(e.target.value) || 0 })
           }
           data-testid={`invoice-line-${index}-quantity`}
           className="block w-20 rounded-md border border-input bg-background px-2 py-1.5 text-right text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -120,7 +117,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           aria-label="Pris"
           value={line.unit_price_kr}
           onChange={(e) =>
-            onUpdate(index, { unit_price_kr: parseFloat(e.target.value) || 0 })
+            onUpdate(index, { unit_price_kr: parseDecimal(e.target.value) || 0 })
           }
           data-testid={`invoice-line-${index}-price`}
           className="block w-24 rounded-md border border-input bg-background px-2 py-1.5 text-right text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { ExpenseLineForm } from '../../lib/form-schemas/expense'
 import { formatKr } from '../../lib/format'
+import { multiplyKrToOre } from '../../../shared/money'
 
 interface ExpenseTotalsProps {
   lines: ExpenseLineForm[]
@@ -11,12 +12,7 @@ export function ExpenseTotals({ lines }: ExpenseTotalsProps) {
     let netOre = 0
     let vatOre = 0
     for (const line of lines) {
-      // M131: heltalsaritmetik — undviker IEEE 754-precision-fel (F44)
-      const lineNetOre = Math.round(
-        (Math.round(line.quantity * 100) *
-          Math.round(line.unit_price_kr * 100)) /
-          100,
-      )
+      const lineNetOre = multiplyKrToOre(line.quantity, line.unit_price_kr)
       const lineVatOre = Math.round(lineNetOre * line.vat_rate)
       netOre += lineNetOre
       vatOre += lineVatOre
