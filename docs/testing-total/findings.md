@@ -39,7 +39,47 @@ båda implementationer är lika korrekta.
 **Status:** Flaggad. Ingen test skriven (ingen produktion-bug att skydda mot).
 Mutation-score på money.ts stannar på 82.35% pga dessa 3 mutanter.
 
-### F-TT-002: Stryker sandbox + better-sqlite3 SIGSEGV ⚠️ PARTIAL FIX
+### F-TT-002: Stryker sandbox + better-sqlite3 SIGSEGV ❌ UNRESOLVED
+
+**TT-1-utredning (2026-04-19):**
+
+Försökte Alt A (vitest `pool:'threads'` + `fileParallelism:false`) och
+inPlace-läge. Båda failar med samma SIGSEGV.
+
+**Rotorsak identifierad:** `@stryker-mutator/vitest-runner` 9.6.1 har
+hårdkodat `pool: 'threads'` i `vitest-test-runner.js:40` som inte kan
+override:as via konfig. Kombinerat med Vitest 4.1 och `better-sqlite3` (som
+inte är thread-safe via `worker_threads`) → SIGSEGV när någon service-test
+öppnar en DB-handle i en worker-thread.
+
+**Vitest 4 deprecerar gamla `poolOptions`-strukturen** — stryker-runnerns
+injicerade config använder fortfarande gammalt format ("DEPRECATED:
+test.poolOptions was removed in Vitest 4" i loggarna). Upstream-problem.
+
+**Framtida lösningar (ej levererade i TT-1):**
+
+1. **Alt A-fix:** vänta på ny stryker-runner-release som stöder
+   `pool: 'forks'` eller annan konfig. Bevakar
+   [stryker-mutator/stryker-js#4853](https://github.com/stryker-mutator/stryker-js).
+2. **Alt B (preload):** bygga en `stryker-preload.cjs` som monkey-patchar
+   `@stryker-mutator/vitest-runner`s injicerade config innan vitest-start.
+   Skissat men ej implementerat.
+3. **Alt C (mock):** skapa `tests/mocks/better-sqlite3-inmemory.ts` som
+   implementerar subset av bss3-API:t. Vite-alias i stryker-config.
+   Uppskattat 4–8 h. Inte implementerat pga begränsad TT-1-tidsbudget.
+4. **Nedgradera vitest:** till 3.x tillfälligt. Impacterar hela sviten,
+   ej acceptabelt.
+
+**Status:** Alt D (scope-accept) vald. Stryker-config låst till
+`src/shared/money.ts` (100% mutation score). Service-mutation-coverage
+levereras via fas 2 (property), fas 3 (invariant), fas 4 (state-machine)
+som skyddar motsvarande logik genom andra mekanismer.
+
+Om upstream-fix landas → uppdatera stryker-runner och utvidga `mutate`-lista.
+
+---
+
+### F-TT-002 (historisk): Stryker sandbox + better-sqlite3 SIGSEGV ⚠️ PARTIAL FIX
 
 **Försök:** Lade till `buildCommand: "npm rebuild better-sqlite3 better-sqlite3-multiple-ciphers"`
 i `stryker.conf.json`. Detta kör rebuild i varje sandbox efter kopiering.

@@ -20,7 +20,6 @@
     "test-results",
     "e2e-user-data"
   ],
-  "buildCommand": "npm rebuild better-sqlite3 better-sqlite3-multiple-ciphers",
   "checkers": [],
   "timeoutMS": 30000,
   "concurrency": 4,
