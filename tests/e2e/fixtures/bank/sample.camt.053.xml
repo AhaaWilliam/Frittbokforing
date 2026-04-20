@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  E2E fixture for e12-bank-reconciliation.spec.ts.
+  5 transactions:
+    REF-E12-1  CRDT  125.00  — matches invoice 1 (10000 öre netto + 25% moms = 12500)
+    REF-E12-2  CRDT  250.00  — matches invoice 2
+    REF-E12-3  CRDT  375.00  — matches invoice 3
+    REF-E12-4  DBIT   50.00  — bank fee (CHRG sub-family) — auto-classify candidate
+    REF-E12-5  CRDT  500.00  — manual-match candidate (matches invoice 4)
+-->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>E12</MsgId><CreDtTm>2026-03-31T10:00:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>STMT-E12</Id>
+      <CreDtTm>2026-03-31T10:00:00</CreDtTm>
+      <Acct><Id><IBAN>SE4550000000058398257466</IBAN></Id><Ccy>SEK</Ccy></Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">0.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-03-01</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="SEK">1200.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-03-31</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="SEK">125.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-03-10</Dt></BookgDt><ValDt><Dt>2026-03-10</Dt></ValDt>
+        <AcctSvcrRef>REF-E12-1</AcctSvcrRef>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">250.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-03-12</Dt></BookgDt><ValDt><Dt>2026-03-12</Dt></ValDt>
+        <AcctSvcrRef>REF-E12-2</AcctSvcrRef>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">375.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-03-15</Dt></BookgDt><ValDt><Dt>2026-03-15</Dt></ValDt>
+        <AcctSvcrRef>REF-E12-3</AcctSvcrRef>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">50.00</Amt><CdtDbtInd>DBIT</CdtDbtInd>
+        <BookgDt><Dt>2026-03-20</Dt></BookgDt><ValDt><Dt>2026-03-20</Dt></ValDt>
+        <AcctSvcrRef>REF-E12-4</AcctSvcrRef>
+        <BkTxCd>
+          <Domn><Cd>PMNT</Cd>
+            <Fmly><Cd>CCRD</Cd><SubFmlyCd>CHRG</SubFmlyCd></Fmly>
+          </Domn>
+        </BkTxCd>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="SEK">500.00</Amt><CdtDbtInd>CRDT</CdtDbtInd>
+        <BookgDt><Dt>2026-03-25</Dt></BookgDt><ValDt><Dt>2026-03-25</Dt></ValDt>
+        <AcctSvcrRef>REF-E12-5</AcctSvcrRef>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>
