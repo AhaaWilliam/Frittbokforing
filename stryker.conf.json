@@ -3,8 +3,11 @@
   "packageManager": "npm",
   "testRunner": "vitest",
   "coverageAnalysis": "perTest",
+  "vitest": {
+    "configFile": "vitest.config.stryker.ts"
+  },
   "mutate": [
-    "src/shared/money.ts"
+    "src/main/services/result-service.ts"
   ],
   "ignorePatterns": [
     "release",
