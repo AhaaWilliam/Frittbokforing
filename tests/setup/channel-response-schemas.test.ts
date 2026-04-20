@@ -38,10 +38,13 @@ describe('F59 — per-channel response-schema validation', () => {
     }).toThrow(/data does not match response schema/)
   })
 
-  it('channel without response schema: only outer IpcResult validated', () => {
-    // account:create has no response schema → only IpcResult shape check
+  it('loose passthrough schema accepts any object shape', () => {
+    // Sprint U: alla channels i channelResponseMap har nu tight (eller
+    // loose passthrough) schemas — inga z.unknown() kvar. LooseObject-
+    // baserade schemas (company:update, product:deactivate etc) tillåter
+    // valfria extra fält via `.passthrough()` men kräver ett object.
     expect(() => {
-      mockIpcResponse('account:create', {
+      mockIpcResponse('company:update', {
         success: true,
         data: { anything: 'goes' },
       })
