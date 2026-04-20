@@ -62,23 +62,27 @@ test('@critical e11: legacy v44 DB → new user → import → data intact', asy
   try {
     // ── Step 1: LockScreen, no users → CreateForm shown directly ──────
     // Empty users list auto-routes to {kind: 'create'} (LockScreen.tsx:30).
-    await expect(
-      window.getByRole('heading', { name: 'Fritt Bokföring' }),
-    ).toBeVisible({ timeout: 15_000 })
+    // Using data-testids (M117) instead of localized text.
+    await expect(window.getByTestId('lockscreen-name')).toBeVisible({
+      timeout: 15_000,
+    })
 
-    // Fill displayName + password + confirm
-    await window.getByLabel(/Namn/).fill('E11 Test User')
-    await window.getByLabel(/^Lösenord/).fill('e2e-e11-password-12345')
-    await window.getByLabel(/Bekräfta/).fill('e2e-e11-password-12345')
-    await window.getByRole('button', { name: 'Skapa användare' }).click()
+    // Fill displayName + password + confirm.
+    // NOTE: Use pressSequentially for password fields — .fill() occasionally
+    // races with browser password-manager heuristics on Electron/Chromium
+    // (new-password autocomplete), causing truncated values in confirm.
+    const PW = 'e2e-e11-password-12345'
+    await window.getByTestId('lockscreen-name').fill('E11 Test User')
+    await window.getByTestId('lockscreen-new-password').pressSequentially(PW)
+    await window.getByTestId('lockscreen-confirm-password').pressSequentially(PW)
+    await window.getByTestId('lockscreen-create-submit').click()
 
     // ── Step 2: Recovery-key display → confirm ─────────────────────────
-    await expect(
-      window.getByRole('heading', { name: /Återställningsnyckel/ }),
-    ).toBeVisible({ timeout: 10_000 })
-    // Tick the "I have saved this" checkbox + continue
-    await window.getByRole('checkbox').check()
-    await window.getByRole('button', { name: /Fortsätt/ }).click()
+    await expect(window.getByTestId('lockscreen-recovery-key')).toBeVisible({
+      timeout: 10_000,
+    })
+    await window.getByTestId('lockscreen-recovery-confirmed').check()
+    await window.getByTestId('lockscreen-recovery-continue').click()
 
     // ── Step 3: LegacyPrompt appears ───────────────────────────────────
     await expect(
@@ -86,10 +90,10 @@ test('@critical e11: legacy v44 DB → new user → import → data intact', asy
     ).toBeVisible({ timeout: 10_000 })
 
     // ── Step 4: Click "Importera" → LegacyWorking → LegacyDone ────────
+    // LegacyWorking is transient (typically <1s for 5-entry DB) and may
+    // flash by before we can assert it — assert the LegacyDone state
+    // instead, which is stable.
     await window.getByTestId('lockscreen-legacy-import').click()
-    await expect(window.getByText(/Importerar data/)).toBeVisible({
-      timeout: 5_000,
-    })
     await expect(
       window.getByTestId('lockscreen-legacy-continue'),
     ).toBeVisible({ timeout: 30_000 })

@@ -2,9 +2,15 @@
 /**
  * Sub-process worker for seedLegacyDb (e11 spec).
  *
- * Runs in a Node sub-process — NOT in the test process — so we can
- * `require('better-sqlite3-multiple-ciphers')` without ABI conflicts
- * with the Electron-rebuilt copy used by Playwright.
+ * Uses Node's built-in `node:sqlite` module (Node 22.5+) instead of
+ * better-sqlite3 to avoid the ABI conflict: Playwright/Electron rebuilds
+ * native modules for the Electron ABI, but this worker runs under plain
+ * Node, which would fail to load Electron-ABI binaries.
+ *
+ * `node:sqlite` exposes DatabaseSync with a slightly different API than
+ * better-sqlite3 — no `.pragma()` method. The shim below bridges the
+ * gap for migrations.js + db-functions.js which expect better-sqlite3-
+ * shaped API.
  *
  * Args (via argv):
  *   process.argv[2] — absolute path to the legacy DB to create.
@@ -21,6 +27,7 @@
 
 const path = require('path')
 const fs = require('fs')
+const sqlite = require('node:sqlite')
 
 const targetPath = process.argv[2]
 if (!targetPath) {
@@ -28,9 +35,37 @@ if (!targetPath) {
   process.exit(1)
 }
 
+/**
+ * Wrap node:sqlite's DatabaseSync with a better-sqlite3-compatible
+ * `.pragma()` method so migrations.js + db-functions.js work unchanged.
+ */
+function wrapDb(db) {
+  const wrapped = {
+    exec: (sql) => db.exec(sql),
+    prepare: (sql) => db.prepare(sql),
+    function: (name, opts, fn) => db.function(name, opts, fn),
+    close: () => db.close(),
+    pragma: (stmt, opts) => {
+      // Write-form: "name = value" → exec
+      if (stmt.includes('=')) {
+        db.exec(`PRAGMA ${stmt}`)
+        return undefined
+      }
+      // Read-form: return rows (or simple value if opts.simple=true)
+      const rows = db.prepare(`PRAGMA ${stmt}`).all()
+      if (opts && opts.simple) {
+        if (rows.length === 0) return undefined
+        const first = rows[0]
+        const keys = Object.keys(first)
+        return keys.length > 0 ? first[keys[0]] : undefined
+      }
+      return rows
+    },
+  }
+  return wrapped
+}
+
 try {
-  const Database = require('better-sqlite3-multiple-ciphers')
-  // Compiled output; dist/main/main/migrations.js relative to repo root.
   const repoRoot = path.resolve(__dirname, '../../..')
   const migrationsModule = require(
     path.join(repoRoot, 'dist/main/main/migrations.js'),
@@ -45,7 +80,8 @@ try {
   }
 
   fs.mkdirSync(path.dirname(targetPath), { recursive: true })
-  const db = new Database(targetPath)
+  const rawDb = new sqlite.DatabaseSync(targetPath)
+  const db = wrapDb(rawDb)
   try {
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
@@ -137,25 +173,20 @@ try {
         /* table may not exist or row may already exist post-migration */
       }
 
-      // 1 invoice (minimal, draft)
+      // 1 counterparty (minimal)
       const counterpartyInsert = db.prepare(
         `INSERT INTO counterparties (type, name, company_id)
          VALUES ('customer', ?, ?)`,
       )
-      let counterpartyId
       try {
-        counterpartyId = Number(
-          counterpartyInsert.run('Acme AB', companyId).lastInsertRowid,
-        )
+        counterpartyInsert.run('Acme AB', companyId)
       } catch (err) {
         // Older counterparties schema (pre-MC3) lacks company_id NOT NULL.
-        counterpartyId = Number(
-          db
-            .prepare(
-              `INSERT INTO counterparties (type, name) VALUES ('customer', ?)`,
-            )
-            .run('Acme AB').lastInsertRowid,
-        )
+        db
+          .prepare(
+            `INSERT INTO counterparties (type, name) VALUES ('customer', ?)`,
+          )
+          .run('Acme AB')
       }
 
       // 5 journal_entries (drafts — no balance/period trigger blockers).

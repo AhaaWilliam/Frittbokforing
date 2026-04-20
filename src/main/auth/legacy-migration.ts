@@ -101,18 +101,70 @@ export function migrateLegacyToEncrypted(
         )
         .all() as { type: string; name: string; sql: string }[]
 
+      // Identify FTS5 virtual tables and their shadow-table prefixes.
+      // SQLite auto-creates shadow tables (name_data, name_idx, name_content,
+      // name_docsize, name_config) when CREATE VIRTUAL TABLE ... USING fts5()
+      // runs. Copying those shadow tables as plain CREATE TABLE would fail
+      // with "object name reserved for internal use". Skip them during both
+      // schema copy and data copy; FTS5 rebuilds its content post-import.
+      const FTS5_SHADOW_SUFFIXES = [
+        '_data',
+        '_idx',
+        '_content',
+        '_docsize',
+        '_config',
+      ]
+      const virtualTablePrefixes = objects
+        .filter(
+          (o) =>
+            o.type === 'table' &&
+            /^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(o.sql),
+        )
+        .map((o) => o.name)
+      const isFts5Shadow = (name: string): boolean => {
+        for (const prefix of virtualTablePrefixes) {
+          for (const suffix of FTS5_SHADOW_SUFFIXES) {
+            if (name === `${prefix}${suffix}`) return true
+          }
+        }
+        return false
+      }
+
       for (const obj of objects) {
-        if (obj.type === 'table') {
+        if (obj.type === 'table' && !isFts5Shadow(obj.name)) {
           target.exec(obj.sql)
         }
       }
 
       // 4. Copy row data for every table (before indexes/triggers so
       // inserts don't trigger legacy triggers against the target).
-      const tables = objects.filter((o) => o.type === 'table')
+      // Skip virtual tables (FTS5 content is rebuilt from source rows) and
+      // their shadow tables (SQLite rejects direct INSERT into those).
+      const tables = objects.filter(
+        (o) =>
+          o.type === 'table' &&
+          !isFts5Shadow(o.name) &&
+          !/^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(o.sql),
+      )
       for (const t of tables) {
         const ident = `"${t.name.replace(/"/g, '""')}"`
         target.exec(`INSERT INTO main.${ident} SELECT * FROM legacy.${ident}`)
+      }
+
+      // 4b. Rebuild FTS5 indexes from the imported source rows.
+      // `INSERT INTO <fts>(<fts>) VALUES('rebuild')` is FTS5's in-place
+      // index refresh — populates shadow tables from the external-content
+      // source (or the virtual table's own rows if it's not external).
+      for (const prefix of virtualTablePrefixes) {
+        const ident = `"${prefix.replace(/"/g, '""')}"`
+        try {
+          target.exec(`INSERT INTO ${ident}(${ident}) VALUES('rebuild')`)
+        } catch {
+          // Rebuild is best-effort — if the FTS5 table has no content
+          // triggers yet (created later via app migrations), this is a
+          // no-op. The app's rebuildSearchIndex helper runs on first
+          // post-unlock startup anyway.
+        }
       }
 
       // 5. Now create indexes, views, triggers (after data is in place).
