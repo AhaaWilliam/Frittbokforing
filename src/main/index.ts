@@ -173,7 +173,13 @@ app.whenReady().then(() => {
   //   4. Vid lock (logout / auto-lock): stäng DB. Renderer visar LockScreen
   //      igen vid nästa poll av auth:status.
   const auth = getAuth()
-  const legacyPath = legacyDbDefaultPath(app.getPath('documents'))
+  // E2E override: when FRITT_TEST=1, allow tests to point the legacy-DB
+  // detector at a temp file instead of the real ~/Documents path. Strict
+  // FRITT_TEST guard prevents accidental production use.
+  const legacyPath =
+    process.env.FRITT_TEST === '1' && process.env.FRITT_LEGACY_DB_PATH
+      ? process.env.FRITT_LEGACY_DB_PATH
+      : legacyDbDefaultPath(app.getPath('documents'))
   const onUnlock = (userId: string) => {
     const key = auth.keyStore.getKey()
     openEncryptedDb(auth.vault.dbPath(userId), key)

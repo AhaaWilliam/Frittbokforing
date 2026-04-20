@@ -10,33 +10,25 @@
  *  5. After "Fortsätt" the user lands in AppShell with imported data
  *     (companies, fiscal_years, journal_entries) intact.
  *
- * Skipped pending an env-override for the legacy path:
- *   The legacy path is resolved via `legacyDbDefaultPath(app.getPath('documents'))`
- *   in `src/main/index.ts`. Production-only — no FRITT_LEGACY_DB_PATH env exists.
- *   E2E cannot point at a temp file without writing into the user's real
- *   ~/Documents/Fritt Bokföring/data.db, which is unsafe.
- *
- * NEEDED HELPER (TODO):
- *   - Add FRITT_LEGACY_DB_PATH env honoured in src/main/index.ts when
- *     FRITT_TEST=1, OR a __testApi:setLegacyPath endpoint that overrides
- *     the path before LockScreen calls auth:legacy-check.
- *   - Add a helper `seedLegacyDb(path, version)` in tests/e2e/helpers/
- *     that writes an unencrypted SQLite file with a known v44+ schema
- *     (companies + fiscal_years + journal_entries seeded via raw INSERTs)
- *     using better-sqlite3 in a sub-process to dodge the ABI conflict.
- *
- * When the helper lands, remove `.skip` and the spec should pass as-is.
+ * Infrastructure:
+ *   - `FRITT_LEGACY_DB_PATH` env (honoured in src/main/index.ts when
+ *     FRITT_TEST=1) overrides the production legacy-DB path so this test
+ *     never touches ~/Documents/Fritt Bokföring/data.db.
+ *   - `seedLegacyDb(path)` writes an unencrypted SQLite file with current-
+ *     schema migrations applied + minimal data (1 company, 1 fiscal year,
+ *     5 journal_entries). Runs in a Node sub-process to dodge the
+ *     better-sqlite3 Electron-ABI conflict.
  */
 import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { _electron as electron } from '@playwright/test'
-import { randomUUID } from 'node:crypto'
+import { seedLegacyDb } from './helpers/seed-legacy-db'
 
 const APP_ENTRY = path.join(__dirname, '../../dist/main/main/index.js')
 
-test.skip('@critical e11: legacy v44 DB → new user → import → data intact', async () => {
+test('@critical e11: legacy v44 DB → new user → import → data intact', async () => {
   // ── Setup: temp dirs + legacy DB ─────────────────────────────────────
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fritt-e2e-e11-'))
   const userDataDir = path.join(tmpDir, 'userData')
@@ -47,16 +39,10 @@ test.skip('@critical e11: legacy v44 DB → new user → import → data intact'
   fs.mkdirSync(downloadDir, { recursive: true })
   fs.mkdirSync(legacyDir, { recursive: true })
 
-  // TODO: replace with `seedLegacyDb(legacyPath, { version: 44 })` helper.
-  // Spawn a Node sub-process that uses better-sqlite3 to write a pre-auth
-  // unencrypted DB with: 1 company, 1 fiscal_year, 5 journal_entries.
-  // Cannot use better-sqlite3 in this process due to Electron ABI rebuild.
-  // For now this would throw — hence the .skip above.
-  throw new Error(
-    'seedLegacyDb helper not yet implemented — see file header TODO',
-  )
+  // Seed an unencrypted v44+ legacy DB at legacyPath via sub-process
+  // (Electron-ABI conflict prevents using better-sqlite3 here directly).
+  await seedLegacyDb(legacyPath)
 
-  /* eslint-disable no-unreachable */
   const app = await electron.launch({
     args: [APP_ENTRY],
     env: {
@@ -66,7 +52,8 @@ test.skip('@critical e11: legacy v44 DB → new user → import → data intact'
       E2E_USER_DATA: userDataDir,
       E2E_TESTING: 'true',
       E2E_DOWNLOAD_DIR: downloadDir,
-      // TODO: requires src/main/index.ts to honour this when FRITT_TEST=1.
+      // Honoured by src/main/index.ts when FRITT_TEST=1 (see legacyPath
+      // resolution there). Production launches ignore this var.
       FRITT_LEGACY_DB_PATH: legacyPath,
     },
   })
@@ -143,5 +130,4 @@ test.skip('@critical e11: legacy v44 DB → new user → import → data intact'
     await app.close().catch(() => {})
     fs.rmSync(tmpDir, { recursive: true, force: true })
   }
-  /* eslint-enable no-unreachable */
 })
