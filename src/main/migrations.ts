@@ -1819,6 +1819,19 @@ CREATE INDEX idx_ip_je ON invoice_payments(journal_entry_id);
 CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
 `,
   },
+
+  // ── Migration 052 — A2: expense_lines.unit_price_ore >= 0 CHECK ──
+  //
+  // Lägger till CHECK (unit_price_ore >= 0) på expense_lines via M121 table-recreate.
+  // expense_lines har inga inkommande FK-referenser (M122 ej tillämpligt),
+  // inga index och inga triggers (bekräftat: migration032).
+  //
+  // Pre-flight: befintlig data verifieras vara >= 0 (ska alltid stämma
+  // men CHECK-constrainten saknades tidigare i schemat).
+  {
+    sql: '-- Migration 052: expense_lines unit_price_ore >= 0 CHECK (se programmatic)',
+    programmatic: migration052Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -4045,5 +4058,58 @@ function migration049Programmatic(
     .get()
   if (!collectionsOk) {
     throw new Error('Migration 049 failed: sepa_dd_collections saknas')
+  }
+}
+
+function migration052Programmatic(
+  db: import('better-sqlite3').Database,
+): void {
+  // Pre-flight: verifiera att inga befintliga rader har unit_price_ore < 0
+  const badRows = db
+    .prepare('SELECT COUNT(*) as cnt FROM expense_lines WHERE unit_price_ore < 0')
+    .get() as { cnt: number }
+  if (badRows.cnt > 0) {
+    throw new Error(
+      `Migration 052 failed: ${badRows.cnt} expense_lines-rader har unit_price_ore < 0`,
+    )
+  }
+
+  // Table-recreate med CHECK (unit_price_ore >= 0) (M121)
+  // expense_lines har inga inkommande FK, inga index, inga triggers.
+  db.exec(`
+    CREATE TABLE expense_lines_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+      description TEXT NOT NULL DEFAULT '',
+      account_number TEXT NOT NULL REFERENCES accounts(account_number),
+      quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 1 AND quantity <= 9999),
+      unit_price_ore INTEGER NOT NULL DEFAULT 0 CHECK (unit_price_ore >= 0),
+      vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
+      line_total_ore INTEGER NOT NULL DEFAULT 0,
+      vat_amount_ore INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO expense_lines_new (id, expense_id, description, account_number,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at)
+    SELECT id, expense_id, description, account_number,
+      quantity, unit_price_ore, vat_code_id, line_total_ore, vat_amount_ore,
+      sort_order, created_at
+    FROM expense_lines;
+    DROP TABLE expense_lines;
+    ALTER TABLE expense_lines_new RENAME TO expense_lines;
+  `)
+
+  // Verify
+  const schema = db
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='expense_lines'",
+    )
+    .get() as { sql: string }
+  if (!schema.sql.includes('unit_price_ore >= 0')) {
+    throw new Error(
+      'Migration 052 failed: expense_lines saknar CHECK (unit_price_ore >= 0)',
+    )
   }
 }

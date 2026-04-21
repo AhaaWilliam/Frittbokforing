@@ -451,7 +451,7 @@ export const ExpenseLineInputSchema = z
       .int()
       .min(1)
       .max(MAX_QTY_EXPENSE, { message: ERR_MSG_MAX_QTY_EXPENSE }),
-    unit_price_ore: z.number().int(),
+    unit_price_ore: z.number().int().min(0),
     vat_code_id: z.number().int().positive(),
     sort_order: z.number().int().min(0).optional(),
   })
