@@ -115,17 +115,19 @@ export const ExpenseListRow = memo(function ExpenseListRow({
               Bokför
             </button>
           )}
-          {item.status !== 'draft' && item.status !== 'paid' && (
-            <button
-              type="button"
-              onClick={() => onPayClick(item)}
-              title="Registrera betalning"
-              className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
-            >
-              <CreditCard className="h-3 w-3" />
-              Betala
-            </button>
-          )}
+          {item.status !== 'draft' &&
+            item.status !== 'paid' &&
+            item.expense_type !== 'credit_note' && (
+              <button
+                type="button"
+                onClick={() => onPayClick(item)}
+                title="Registrera betalning"
+                className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
+              >
+                <CreditCard className="h-3 w-3" />
+                Betala
+              </button>
+            )}
           {item.status !== 'draft' &&
             item.expense_type !== 'credit_note' &&
             !item.has_credit_note && (

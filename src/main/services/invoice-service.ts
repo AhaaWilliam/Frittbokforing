@@ -944,6 +944,15 @@ export function _payInvoiceTx(
     .get(input.invoice_id) as Invoice | undefined
   if (!invoice) throw { code: 'INVOICE_NOT_FOUND', error: 'Faktura saknas' }
 
+  // 1b. Blockera betalning på kreditfakturor (A1)
+  if (invoice.invoice_type === 'credit_note') {
+    throw {
+      code: 'VALIDATION_ERROR',
+      error:
+        'Kreditfakturor kan inte betalas — skapa återbetalning via manuellt verifikat',
+    }
+  }
+
   // 2. Validera status
   const payableStatuses = ['unpaid', 'overdue', 'partial']
   if (!payableStatuses.includes(invoice.status)) {

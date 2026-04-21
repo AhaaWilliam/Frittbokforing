@@ -205,7 +205,8 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   }
 
   const isSelectable = useCallback(
-    (item: InvoiceListItem) => item.status !== 'draft',
+    (item: InvoiceListItem) =>
+      item.status !== 'draft' && item.invoice_type !== 'credit_note',
     [],
   )
 

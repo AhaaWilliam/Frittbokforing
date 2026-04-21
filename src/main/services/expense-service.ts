@@ -672,6 +672,15 @@ export function _payExpenseTx(
   if (!expense)
     throw { code: 'EXPENSE_NOT_FOUND', error: 'Kostnad hittades inte' }
 
+  // 1b. Blockera betalning på kreditnotor (A1)
+  if (expense.expense_type === 'credit_note') {
+    throw {
+      code: 'VALIDATION_ERROR',
+      error:
+        'Kreditnotor kan inte betalas — skapa återbetalning via manuellt verifikat',
+    }
+  }
+
   // 2. Validera status (unpaid, overdue, partial)
   const payableStatuses = ['unpaid', 'overdue', 'partial']
   if (!payableStatuses.includes(expense.status)) {

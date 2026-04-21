@@ -194,7 +194,8 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
 
   const isSelectable = useCallback(
     (item: ExpenseListItem) =>
-      ['unpaid', 'partial', 'overdue'].includes(item.status),
+      ['unpaid', 'partial', 'overdue'].includes(item.status) &&
+      item.expense_type !== 'credit_note',
     [],
   )
 

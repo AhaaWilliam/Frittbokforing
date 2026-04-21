@@ -8,6 +8,7 @@ import {
   saveDraft,
   finalizeDraft,
   payInvoice,
+  createCreditNoteDraft,
 } from '../src/main/services/invoice-service'
 
 let db: Database.Database
@@ -161,5 +162,42 @@ describe('M3: Atomär paid_amount beräkning', () => {
     expect(result.success).toBe(false)
     if (result.success) return
     expect(result.code).toBe('OVERPAYMENT')
+  })
+})
+
+describe('A1: Blockera betalning på kreditfakturor', () => {
+  it('payInvoice returnerar VALIDATION_ERROR för kreditfaktura', () => {
+    // Fryser klockan så att createCreditNoteDraft (som kallar todayLocalFromNow())
+    // producerar ett datum inom räkenskapsåret (2025)
+    process.env.FRITT_NOW = '2025-03-20'
+    try {
+      const seed = seedAll(db)
+      const original = createUnpaidInvoice(db, seed)
+
+      // Skapa och finalisera kreditfaktura
+      const creditDraft = createCreditNoteDraft(db, {
+        original_invoice_id: original.id,
+        fiscal_year_id: seed.fiscalYearId,
+      })
+      expect(creditDraft.success).toBe(true)
+      if (!creditDraft.success) return
+      const creditFinalized = finalizeDraft(db, creditDraft.data.id)
+      expect(creditFinalized.success).toBe(true)
+      if (!creditFinalized.success) return
+
+      // Försök betala kreditfakturan — ska blockas
+      const result = payInvoice(db, {
+        invoice_id: creditDraft.data.id,
+        amount_ore: 1_250_000,
+        payment_date: '2025-03-25',
+        payment_method: 'bankgiro',
+        account_number: '1930',
+      })
+      expect(result.success).toBe(false)
+      if (result.success) return
+      expect(result.code).toBe('VALIDATION_ERROR')
+    } finally {
+      delete process.env.FRITT_NOW
+    }
   })
 })
