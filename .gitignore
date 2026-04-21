@@ -22,6 +22,8 @@ notion-snapshots/
 .s24b-tmp/
 .s25-tmp/
 .claude/scheduled_tasks.lock
+.agent.lock
+.agent-logs/
 reports/
 .stryker-tmp/
 fritt-full-source-*.txt
