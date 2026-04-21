@@ -958,18 +958,13 @@ export function executeDepreciationPeriod(
     db.transaction(() => {
       for (const p of pending) {
         try {
-          db.transaction(() => {
-            _executeScheduleTx(db, fiscalYearId, fy.company_id, p)
-          })()
-          const je = db
-            .prepare(
-              'SELECT journal_entry_id FROM depreciation_schedules WHERE id = ?',
-            )
-            .get(p.schedule_id) as { journal_entry_id: number | null }
+          const journalEntryId = db.transaction(() =>
+            _executeScheduleTx(db, fiscalYearId, fy.company_id, p),
+          )()
           succeeded.push({
             asset_id: p.fixed_asset_id,
             schedule_id: p.schedule_id,
-            journal_entry_id: je.journal_entry_id ?? 0,
+            journal_entry_id: journalEntryId ?? 0,
             amount_ore: p.amount_ore,
           })
         } catch (err: unknown) {
@@ -1038,14 +1033,14 @@ function _executeScheduleTx(
     account_accumulated_depreciation: string
     account_depreciation_expense: string
   },
-): void {
+): number | null {
   if (p.amount_ore === 0) {
     // Noll-avskrivning: markera som executed utan verifikat
     db.prepare(
       `UPDATE depreciation_schedules SET status = 'executed' WHERE id = ?`,
     ).run(p.schedule_id)
     checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
-    return
+    return null
   }
 
   checkChronology(db, fiscalYearId, 'E', p.period_end)
@@ -1106,6 +1101,7 @@ function _executeScheduleTx(
   ).run(journalEntryId, p.schedule_id)
 
   checkAndMarkFullyDepreciated(db, p.fixed_asset_id)
+  return journalEntryId
 }
 
 function checkAndMarkFullyDepreciated(
