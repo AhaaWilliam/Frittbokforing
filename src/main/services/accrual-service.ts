@@ -168,10 +168,11 @@ export function getAccrualSchedules(
       (sum, e) => sum + e.amount_ore,
       0,
     )
+    const entryByPeriod = new Map(scheduleEntries.map((e) => [e.period_number, e]))
 
     const periodStatuses: AccrualPeriodStatus[] = []
     for (let p = s.start_period; p < s.start_period + s.period_count; p++) {
-      const periodEntry = scheduleEntries.find((e) => e.period_number === p)
+      const periodEntry = entryByPeriod.get(p)
       periodStatuses.push({
         periodNumber: p,
         executed: executedPeriods.has(p),
