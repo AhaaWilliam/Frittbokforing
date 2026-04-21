@@ -196,18 +196,12 @@ export async function restoreBackup(
       runMigrationsOnFile(restoringPath)
     }
 
-    // Step 4: Pre-restore backup of current database
-    db.pragma('wal_checkpoint(TRUNCATE)')
-    fs.copyFileSync(dbPath, preRestorePath)
-    // Also copy WAL/SHM if they exist
-    const walPath = `${dbPath}-wal`
-    const shmPath = `${dbPath}-shm`
-    if (fs.existsSync(walPath)) {
-      fs.copyFileSync(walPath, `${preRestorePath}-wal`)
-    }
-    if (fs.existsSync(shmPath)) {
-      fs.copyFileSync(shmPath, `${preRestorePath}-shm`)
-    }
+    // Step 4: Pre-restore backup of current database via db.backup() (B1)
+    // db.backup() använder better-sqlite3:s online-backup-API som tar ett
+    // konsekvent snapshot utan att behöva stänga DB-handtaget. Detta är
+    // säkrare än copyFileSync + WAL/SHM-kopiering som riskerar inkonsekvent
+    // state om WAL inte är checkpointad.
+    await db.backup(preRestorePath)
 
     // Step 5: Close app DB handle
     closeDb()
@@ -235,12 +229,14 @@ export async function restoreBackup(
     // Unreachable after exit, but satisfies return type
     return { restored: true }
   } catch (err) {
-    // Cleanup temp file
-    try {
-      if (fs.existsSync(restoringPath)) fs.unlinkSync(restoringPath)
-    } catch {
-      /* best effort */
-    }
+    // Lämna kvar .restoring-filen för manuell återhämtning (B1).
+    // Om closeDb() hann köras men rename misslyckades finns .restoring-filen
+    // kvar som enda kopia av backup-databasen — ta inte bort den.
+    // Filen kan återställas manuellt av användaren eller supporten.
+    log.warn(
+      '[backup] Restore failed — leaving .restoring file for manual recovery:',
+      restoringPath,
+    )
 
     const msg =
       err instanceof Error ? err.message : 'Okänt fel vid återställning'
