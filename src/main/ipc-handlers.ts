@@ -146,6 +146,7 @@ import {
   saveBudgetTargets,
   getBudgetVsActual,
   copyBudgetFromPreviousFy,
+  getBudgetSummaryByYear,
 } from './services/budget-service'
 import {
   createFixedAsset,
@@ -262,6 +263,7 @@ import {
   BudgetSaveSchema,
   BudgetVarianceSchema,
   BudgetCopySchema,
+  BudgetSummaryByYearSchema,
   DepreciationCreateAssetSchema,
   DepreciationUpdateAssetSchema,
   DepreciationListSchema,
@@ -1376,6 +1378,13 @@ export function registerIpcHandlers(): void {
         data.target_fiscal_year_id,
         data.source_fiscal_year_id,
       ),
+    ),
+  )
+
+  ipcMain.handle(
+    'budget:getSummaryByYear',
+    wrapIpcHandler(BudgetSummaryByYearSchema, (data) =>
+      getBudgetSummaryByYear(db, data.fiscal_year_id),
     ),
   )
 

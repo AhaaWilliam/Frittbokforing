@@ -7,6 +7,7 @@ import type {
   BudgetVarianceLine,
   BudgetVarianceReport,
   BudgetVariancePeriod,
+  BudgetSummaryByYear,
 } from '../../shared/types'
 import type { IpcResult } from '../../shared/types'
 
@@ -214,4 +215,47 @@ export function copyBudgetFromPreviousFy(
     .run(targetFyId, sourceFyId)
 
   return { success: true, data: { count: result.changes } }
+}
+
+export function getBudgetSummaryByYear(
+  db: Database.Database,
+  fiscalYearId: number,
+): IpcResult<BudgetSummaryByYear> {
+  const budgetRow = db
+    .prepare(
+      'SELECT COALESCE(SUM(amount_ore), 0) AS total FROM budget_targets WHERE fiscal_year_id = ?',
+    )
+    .get(fiscalYearId) as { total: number }
+
+  const actualRows = db
+    .prepare(
+      `SELECT jel.account_number,
+              SUM(jel.credit_ore) - SUM(jel.debit_ore) AS net
+       FROM journal_entry_lines jel
+       JOIN journal_entries je ON jel.journal_entry_id = je.id
+       WHERE je.fiscal_year_id = ? AND je.status = 'booked'
+       GROUP BY jel.account_number`,
+    )
+    .all(fiscalYearId) as Array<{ account_number: string; net: number }>
+
+  let totalSpentOre = 0
+  for (const row of actualRows) {
+    for (const group of INCOME_STATEMENT_CONFIG) {
+      for (const line of group.lines) {
+        if (matchesRanges(row.account_number, line.ranges)) {
+          totalSpentOre += row.net * line.signMultiplier
+          break
+        }
+      }
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      year_id: fiscalYearId,
+      total_budget_ore: budgetRow.total,
+      total_spent_ore: Math.round(totalSpentOre),
+    },
+  }
 }

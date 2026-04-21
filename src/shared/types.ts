@@ -900,6 +900,12 @@ export interface BudgetVarianceReport {
   lines: BudgetVarianceLine[]
 }
 
+export interface BudgetSummaryByYear {
+  year_id: number
+  total_budget_ore: number
+  total_spent_ore: number
+}
+
 // === Accruals (Periodiseringar) ===
 
 export type AccrualType =

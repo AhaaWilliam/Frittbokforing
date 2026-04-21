@@ -334,6 +334,8 @@ contextBridge.exposeInMainWorld('api', {
     target_fiscal_year_id: number
     source_fiscal_year_id: number
   }) => ipcRenderer.invoke('budget:copy-from-previous', data),
+  getBudgetSummaryByYear: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('budget:getSummaryByYear', data),
   // Depreciation (Sprint 53 F62)
   createFixedAsset: (data: {
     name: string

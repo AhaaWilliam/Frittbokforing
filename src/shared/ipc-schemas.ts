@@ -858,6 +858,12 @@ export const BudgetCopySchema = z
   })
   .strict()
 
+export const BudgetSummaryByYearSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === SIE4 Import ===
 export const Sie4SelectFileSchema = z.object({}).strict()
 
