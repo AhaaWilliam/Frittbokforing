@@ -1807,6 +1807,18 @@ END;`,
   {
     sql: `ALTER TABLE companies ADD COLUMN approved_for_f_tax INTEGER NOT NULL DEFAULT 1`,
   },
+
+  // ── Migration 051 — Index på payments.journal_entry_id ──
+  //
+  // invoice_payments och expense_payments saknade index på journal_entry_id.
+  // Kolumnen används av triggers (trg_immutable_booked_entry_update m.fl.) via
+  // subquery på payments — utan index sker full table scan per trigger-evaluering.
+  {
+    sql: `
+CREATE INDEX idx_ip_je ON invoice_payments(journal_entry_id);
+CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
+`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

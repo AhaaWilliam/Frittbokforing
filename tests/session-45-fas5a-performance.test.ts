@@ -853,6 +853,6 @@ describe('F17: getAllJournalEntryLines batched query', () => {
 describe('Regression: PRAGMA user_version', () => {
   it('18. user_version === 15', () => {
     const row = db.pragma('user_version') as { user_version: number }[]
-    expect(row[0].user_version).toBe(50)
+    expect(row[0].user_version).toBe(51)
   })
 })
