@@ -355,3 +355,162 @@ describe('GAP M10-4: Timezone-säker datumparsning', () => {
     expect(dateConstructorUses).toBe(0)
   })
 })
+
+// ═══════════════════════════════════════════════════════════
+// GAP M10-5: Alla tre momssatser bidrar separat (Q1 mutation kill)
+// ═══════════════════════════════════════════════════════════
+
+describe('GAP M10-5: Alla tre momssatser bidrar separat till vatOutTotalOre', () => {
+  it('vatOutTotalOre = vatOut25 + vatOut12 + vatOut6 (alla tre icke-noll)', () => {
+    // Seed entries for all three VAT rates with DISTINCT amounts
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2610', debit: 0, credit: 25_000 }, // 25% moms
+      { account_number: '2620', debit: 0, credit: 12_000 }, // 12% moms
+      { account_number: '2630', debit: 0, credit: 6_000 },  // 6% moms
+      { account_number: '1510', debit: 43_000, credit: 0 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const q1 = report.quarters[0]
+
+    expect(q1.vatOut25Ore).toBe(25_000)
+    expect(q1.vatOut12Ore).toBe(12_000)
+    expect(q1.vatOut6Ore).toBe(6_000)
+    // vatOutTotalOre must be the sum — not difference — of all three
+    expect(q1.vatOutTotalOre).toBe(25_000 + 12_000 + 6_000)
+    expect(q1.vatOutTotalOre).toBe(43_000)
+  })
+
+  it('vatNetOre = vatOutTotalOre - vatInOre (ej addition, ej noll)', () => {
+    // Seed outgoing VAT (25%) + incoming VAT (2640)
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2610', debit: 0, credit: 25_000 }, // utgående moms
+      { account_number: '2640', debit: 8_000, credit: 0 },  // ingående moms (DR)
+      { account_number: '1510', debit: 17_000, credit: 0 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const q1 = report.quarters[0]
+
+    expect(q1.vatOut25Ore).toBe(25_000)
+    expect(q1.vatInOre).toBe(8_000)
+    expect(q1.vatOutTotalOre).toBe(25_000)
+    // Must be subtraction: 25000 - 8000 = 17000, not 25000 + 8000 = 33000
+    expect(q1.vatNetOre).toBe(25_000 - 8_000)
+    expect(q1.vatNetOre).toBe(17_000)
+  })
+
+  it('vatNetOre negativ när ingående > utgående', () => {
+    // Balanced entry: debit=20k, credit=5k+15k=20k
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2610', debit: 0, credit: 5_000 },   // utgående: 5k
+      { account_number: '2640', debit: 20_000, credit: 0 },  // ingående: 20k
+      { account_number: '1930', debit: 0, credit: 15_000 },  // clearing (balanserar)
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const q1 = report.quarters[0]
+
+    expect(q1.vatOutTotalOre).toBe(5_000)
+    expect(q1.vatInOre).toBe(20_000)
+    expect(q1.vatNetOre).toBe(5_000 - 20_000) // -15000, momsåterbäring
+    expect(q1.vatNetOre).toBe(-15_000)
+  })
+})
+
+describe('GAP M10-6: Årstotal täcker vatOut12, vatOut6, vatIn, vatNetOre (reduce-mutation kill)', () => {
+  // Helper: seed a Q3 entry with specific accounts
+  function seedQ3Entry(
+    lines: { account_number: string; debit: number; credit: number }[],
+  ) {
+    const jeId = db
+      .prepare(
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, journal_date, description, status, source_type)
+         VALUES (?, ?, '2025-08-15', 'Q3 entry', 'draft', 'manual')`,
+      )
+      .run(companyId, fiscalYearId).lastInsertRowid as number
+    lines.forEach((l, i) => {
+      db.prepare(
+        `INSERT INTO journal_entry_lines (journal_entry_id, line_number, account_number, debit_ore, credit_ore)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).run(jeId, i + 1, l.account_number, l.debit, l.credit)
+    })
+    db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(
+      jeId,
+    )
+  }
+
+  it('yearTotal.vatOut12Ore = summa kvartal vatOut12Ore', () => {
+    // Q1: 12k moms 12%, Q3: 6k moms 12%
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2620', debit: 0, credit: 12_000 },
+      { account_number: '1510', debit: 12_000, credit: 0 },
+    ])
+    seedQ3Entry([
+      { account_number: '2620', debit: 0, credit: 6_000 },
+      { account_number: '1510', debit: 6_000, credit: 0 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const sumVat12 = report.quarters.reduce((s, q) => s + q.vatOut12Ore, 0)
+    expect(report.yearTotal.vatOut12Ore).toBe(sumVat12)
+    expect(report.yearTotal.vatOut12Ore).toBe(18_000)
+  })
+
+  it('yearTotal.vatOut6Ore = summa kvartal vatOut6Ore', () => {
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2630', debit: 0, credit: 6_000 },
+      { account_number: '1510', debit: 6_000, credit: 0 },
+    ])
+    seedQ3Entry([
+      { account_number: '2630', debit: 0, credit: 3_000 },
+      { account_number: '1510', debit: 3_000, credit: 0 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const sumVat6 = report.quarters.reduce((s, q) => s + q.vatOut6Ore, 0)
+    expect(report.yearTotal.vatOut6Ore).toBe(sumVat6)
+    expect(report.yearTotal.vatOut6Ore).toBe(9_000)
+  })
+
+  it('yearTotal.vatInOre = summa kvartal vatInOre', () => {
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2640', debit: 10_000, credit: 0 },
+      { account_number: '1510', debit: 0, credit: 10_000 },
+    ])
+    seedQ3Entry([
+      { account_number: '2640', debit: 5_000, credit: 0 },
+      { account_number: '1510', debit: 0, credit: 5_000 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const sumVatIn = report.quarters.reduce((s, q) => s + q.vatInOre, 0)
+    expect(report.yearTotal.vatInOre).toBe(sumVatIn)
+    expect(report.yearTotal.vatInOre).toBe(15_000)
+  })
+
+  it('yearTotal.vatNetOre = yearTotal.vatOutTotalOre - yearTotal.vatInOre', () => {
+    // Q1: 25% out=25k, in=8k → net=17k
+    createBookedEntry(db, { companyId, fiscalYearId }, [
+      { account_number: '2610', debit: 0, credit: 25_000 },
+      { account_number: '2640', debit: 8_000, credit: 0 },
+      { account_number: '1510', debit: 17_000, credit: 0 },
+    ])
+    // Q3: 12% out=12k, in=3k → net=9k
+    seedQ3Entry([
+      { account_number: '2620', debit: 0, credit: 12_000 },
+      { account_number: '2640', debit: 3_000, credit: 0 },
+      { account_number: '1510', debit: 9_000, credit: 0 },
+    ])
+
+    const report = getVatReport(db, fiscalYearId)
+    const yt = report.yearTotal
+
+    // Total: out=37k, in=11k, net=26k
+    expect(yt.vatOutTotalOre).toBe(37_000)
+    expect(yt.vatInOre).toBe(11_000)
+    // vatNetOre must be subtraction, not addition
+    expect(yt.vatNetOre).toBe(37_000 - 11_000)
+    expect(yt.vatNetOre).toBe(26_000)
+  })
+})

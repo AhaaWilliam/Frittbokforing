@@ -527,4 +527,77 @@ describe('calculateResultBreakdown', () => {
     expect(breakdown.expensesOre).toBe(3_000_000)
     expect(breakdown.operatingResultOre).toBe(7_000_000)
   })
+
+  it('resultAfterFinancialOre = operatingResult + financialNet (klass 8)', () => {
+    // Revenue 100k
+    bookEntry('2025-03-15', [
+      { account: '1930', debit: 10_000_000, credit: 0 },
+      { account: '3002', debit: 0, credit: 10_000_000 },
+    ])
+    // Expense 30k
+    bookEntry('2025-03-20', [
+      { account: '5010', debit: 3_000_000, credit: 0 },
+      { account: '1930', debit: 0, credit: 3_000_000 },
+    ])
+    // Financial income 5k (8310) — keeps resultAfterFinancial != operatingResult
+    bookEntry('2025-06-30', [
+      { account: '1930', debit: 500_000, credit: 0 },
+      { account: '8310', debit: 0, credit: 500_000 },
+    ])
+
+    const breakdown = calculateResultBreakdown(db, fyId)
+    expect(breakdown.operatingResultOre).toBe(7_000_000)
+    // Must be addition: 7M + 0.5M = 7.5M, not 7M - 0.5M = 6.5M
+    expect(breakdown.resultAfterFinancialOre).toBe(7_000_000 + 500_000)
+    expect(breakdown.resultAfterFinancialOre).toBe(7_500_000)
+  })
+
+  it('netResultOre = resultAfterFinancial + appropriationsNet (skatt)', () => {
+    // Revenue 100k
+    bookEntry('2025-03-15', [
+      { account: '1930', debit: 10_000_000, credit: 0 },
+      { account: '3002', debit: 0, credit: 10_000_000 },
+    ])
+    // Tax 2k (8910 debit) — reduces netResult
+    bookEntry('2025-12-31', [
+      { account: '8910', debit: 200_000, credit: 0 },
+      { account: '2510', debit: 0, credit: 200_000 },
+    ])
+
+    const breakdown = calculateResultBreakdown(db, fyId)
+    expect(breakdown.operatingResultOre).toBe(10_000_000)
+    expect(breakdown.resultAfterFinancialOre).toBe(10_000_000) // no financial items
+    // netResultOre must include tax: 10M - 0.2M = 9.8M (tax has signMultiplier=-1)
+    expect(breakdown.netResultOre).toBe(10_000_000 - 200_000)
+    expect(breakdown.netResultOre).toBe(9_800_000)
+  })
+
+  it('alla fält överstämmer med calculateResultSummary', () => {
+    bookEntry('2025-03-15', [
+      { account: '1930', debit: 20_000_000, credit: 0 },
+      { account: '3002', debit: 0, credit: 20_000_000 },
+    ])
+    bookEntry('2025-03-20', [
+      { account: '5010', debit: 8_000_000, credit: 0 },
+      { account: '1930', debit: 0, credit: 8_000_000 },
+    ])
+    bookEntry('2025-06-30', [
+      { account: '1930', debit: 500_000, credit: 0 },
+      { account: '8310', debit: 0, credit: 500_000 },
+    ])
+    bookEntry('2025-12-31', [
+      { account: '8910', debit: 100_000, credit: 0 },
+      { account: '2510', debit: 0, credit: 100_000 },
+    ])
+
+    const breakdown = calculateResultBreakdown(db, fyId)
+    const summary = calculateResultSummary(db, fyId)
+
+    expect(breakdown.operatingResultOre).toBe(summary.operatingResultOre)
+    expect(breakdown.resultAfterFinancialOre).toBe(summary.resultAfterFinancialOre)
+    expect(breakdown.netResultOre).toBe(summary.netResultOre)
+    // Breakdown-specific fields
+    expect(breakdown.revenueOre).toBe(20_000_000) // positive revenue
+    expect(breakdown.expensesOre).toBe(8_000_000)  // positive expenses
+  })
 })

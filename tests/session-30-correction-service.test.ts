@@ -662,3 +662,132 @@ describe('B4: Correction Service', () => {
     expect(original.corrected_by_id).toBeNull()
   })
 })
+
+// ── Precision tests: return shape + field-level verification (Q1 mutation kill) ──
+
+describe('B4: Correction Service — precision / mutation-kill', () => {
+  it('returnvärde innehåller original_entry_id korrekt', () => {
+    const seed = seedBase(db)
+    const manual = bookManualEntry(db, seed, '2026-03-01')
+
+    const result = createCorrectionEntry(db, {
+      journal_entry_id: manual.journalEntryId,
+      fiscal_year_id: seed.fiscalYearId,
+    })
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    // All three return fields must be present and correct
+    expect(result.data.original_entry_id).toBe(manual.journalEntryId)
+    expect(result.data.correction_entry_id).toBeGreaterThan(0)
+    expect(result.data.correction_verification_number).toBeGreaterThan(0)
+    // correction_entry_id must differ from original
+    expect(result.data.correction_entry_id).not.toBe(manual.journalEntryId)
+  })
+
+  it('korrigeringsverifikat har source_type=manual och serie=C', () => {
+    const seed = seedBase(db)
+    const manual = bookManualEntry(db, seed, '2026-03-01')
+
+    const result = createCorrectionEntry(db, {
+      journal_entry_id: manual.journalEntryId,
+      fiscal_year_id: seed.fiscalYearId,
+    })
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    const correction = getEntry(db, result.data.correction_entry_id)
+    expect(correction.verification_series).toBe('C')
+    expect(correction.source_type).toBe('manual')
+  })
+
+  it('radbelopp inverteras exakt för asymmetriska rader', () => {
+    // Use amounts where debit ≠ credit on individual lines → swap is non-trivial
+    const seed = seedBase(db)
+
+    // Book a manual entry with asymmetric amounts: 7000 and 3000
+    const draft = saveManualEntryDraft(db, {
+      fiscal_year_id: seed.fiscalYearId,
+      entry_date: '2026-03-01',
+      description: 'Asymmetric amounts',
+      lines: [
+        { account_number: '1930', debit_ore: 7_000, credit_ore: 0 },
+        { account_number: '2440', debit_ore: 0, credit_ore: 3_000 },
+        { account_number: '3001', debit_ore: 0, credit_ore: 4_000 },
+      ],
+    })
+    expect(draft.success).toBe(true)
+    if (!draft.success) return
+
+    const fin = finalizeManualEntry(db, draft.data.id, seed.fiscalYearId)
+    expect(fin.success).toBe(true)
+    if (!fin.success) return
+
+    const result = createCorrectionEntry(db, {
+      journal_entry_id: fin.data.journalEntryId,
+      fiscal_year_id: seed.fiscalYearId,
+    })
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    const corrLines = getLines(db, result.data.correction_entry_id)
+    expect(corrLines).toHaveLength(3)
+
+    // Line 1: original debit=7000,credit=0 → correction debit=0,credit=7000
+    expect(corrLines[0].account_number).toBe('1930')
+    expect(corrLines[0].debit_ore).toBe(0)
+    expect(corrLines[0].credit_ore).toBe(7_000)
+
+    // Line 2: original debit=0,credit=3000 → correction debit=3000,credit=0
+    expect(corrLines[1].account_number).toBe('2440')
+    expect(corrLines[1].debit_ore).toBe(3_000)
+    expect(corrLines[1].credit_ore).toBe(0)
+
+    // Line 3: original debit=0,credit=4000 → correction debit=4000,credit=0
+    expect(corrLines[2].account_number).toBe('3001')
+    expect(corrLines[2].debit_ore).toBe(4_000)
+    expect(corrLines[2].credit_ore).toBe(0)
+  })
+
+  it('canCorrectEntry hoppar över FY/period-check (ingen correctionFiscalYearId)', () => {
+    const seed = seedBase(db)
+    const manual = bookManualEntry(db, seed, '2026-03-01')
+
+    // Close all periods — createCorrectionEntry would fail but canCorrectEntry should still return true
+    db.prepare(
+      `UPDATE accounting_periods SET is_closed = 1 WHERE fiscal_year_id = ?`,
+    ).run(seed.fiscalYearId)
+
+    const result = canCorrectEntry(db, manual.journalEntryId)
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    // canCorrectEntry doesn't check periods → canCorrect = true even with closed period
+    expect(result.data.canCorrect).toBe(true)
+  })
+
+  it('guard ENTRY_ALREADY_CORRECTED: status=corrected och corrected_by_id=null räcker', () => {
+    const seed = seedBase(db)
+
+    // Insert an entry directly with status='corrected' but corrected_by_id=null.
+    // This simulates a DB state where status-flaggan ensam triggar guard 1.
+    const verNum = db
+      .prepare(
+        "SELECT COALESCE(MAX(verification_number),0)+1 as n FROM journal_entries WHERE fiscal_year_id=? AND verification_series='C'",
+      )
+      .get(seed.fiscalYearId) as { n: number }
+    const jeId = db
+      .prepare(
+        `INSERT INTO journal_entries (company_id, fiscal_year_id, verification_series, verification_number, journal_date, description, status, source_type, corrected_by_id)
+         VALUES (1, ?, 'C', ?, '2026-03-01', 'Status-only corrected', 'corrected', 'manual', null)`,
+      )
+      .run(seed.fiscalYearId, verNum.n).lastInsertRowid as number
+
+    const result = createCorrectionEntry(db, {
+      journal_entry_id: jeId,
+      fiscal_year_id: seed.fiscalYearId,
+    })
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.code).toBe('ENTRY_ALREADY_CORRECTED')
+  })
+})
