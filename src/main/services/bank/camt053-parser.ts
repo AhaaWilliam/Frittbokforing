@@ -89,6 +89,12 @@ export function decimalToOre(s: string): number {
   const negative = trimmed.startsWith('-')
   const abs = negative ? trimmed.slice(1) : trimmed
   const [kr, ore = '0'] = abs.split('.')
+  if (kr.length > 13) {
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      `Belopp för stort: "${s}" (max 13 heltalssiffror)`,
+    )
+  }
   const oreNormalized = (ore + '00').slice(0, 2)
   const n = parseInt(kr, 10) * 100 + parseInt(oreNormalized, 10)
   return negative ? -n : n
