@@ -60,6 +60,65 @@ import {
   FiscalYearCreateNewInputSchema,
   FiscalYearSwitchInputSchema,
   NetResultInputSchema,
+  // Q3: previously uncovered schemas
+  PayInvoicesBulkPayloadSchema,
+  PayExpensesBulkPayloadSchema,
+  BulkPaymentResultSchema,
+  BudgetGetSchema,
+  BudgetSaveSchema,
+  BudgetLinesSchema,
+  BudgetVarianceSchema,
+  BudgetCopySchema,
+  BudgetSummaryByYearSchema,
+  DepreciationCreateAssetSchema,
+  DepreciationUpdateAssetSchema,
+  DepreciationIdSchema,
+  DepreciationListSchema,
+  DepreciationDisposeSchema,
+  DepreciationExecutePeriodSchema,
+  SepaDdCreateMandateSchema,
+  SepaDdListMandatesSchema,
+  SepaDdRevokeMandateSchema,
+  SepaDdCreateCollectionSchema,
+  SepaDdCreateBatchSchema,
+  SepaDdExportPain008Schema,
+  SepaDdListCollectionsSchema,
+  SepaDdListBatchesSchema,
+  BankStatementImportSchema,
+  BankStatementListSchema,
+  BankStatementGetSchema,
+  BankStatementSuggestMatchesSchema,
+  BankMatchTransactionSchema,
+  BankUnmatchTransactionSchema,
+  BankUnmatchBatchSchema,
+  BankCreateFeeEntrySchema,
+  BankTxMappingUpsertSchema,
+  BankTxMappingDeleteSchema,
+  AccrualCreateSchema,
+  AccrualListSchema,
+  AccrualExecuteSchema,
+  AccrualExecuteAllSchema,
+  AccrualDeactivateSchema,
+  AgingInputSchema,
+  CashFlowInputSchema,
+  AccountStatementInputSchema,
+  CompanySwitchInputSchema,
+  CanCorrectSchema,
+  CorrectJournalEntrySchema,
+  CreateCreditNoteDraftSchema,
+  CreateExpenseCreditNoteDraftSchema,
+  GlobalSearchSchema,
+  ListImportedEntriesSchema,
+  PaymentBatchExportPain001Schema,
+  PaymentBatchValidateExportSchema,
+  SelectDirectorySchema,
+  SavePdfBatchSchema,
+  Sie4ImportSchema,
+  Sie4SelectFileSchema,
+  Sie4ValidateSchema,
+  Sie5ImportSchema,
+  Sie5SelectFileSchema,
+  Sie5ValidateSchema,
 } from '../src/shared/ipc-schemas'
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -531,4 +590,408 @@ describe('VatCodeListInputSchema', () => {
     valid(VatCodeListInputSchema, { direction: 'outgoing' }))
   it('rejects invalid direction', () =>
     invalid(VatCodeListInputSchema, { direction: 'both' }))
+})
+
+// ── Q3: Bulk Payments ─────────────────────────────────────────────
+
+describe('PayInvoicesBulkPayloadSchema', () => {
+  const valid_bulk = {
+    payments: [{ invoice_id: 1, amount_ore: 10000 }],
+    payment_date: '2026-03-15',
+    account_number: '1930',
+  }
+  it('accepts valid', () => valid(PayInvoicesBulkPayloadSchema, valid_bulk))
+  it('rejects empty payments', () =>
+    invalid(PayInvoicesBulkPayloadSchema, { ...valid_bulk, payments: [] }))
+  it('rejects missing payment_date', () =>
+    invalid(PayInvoicesBulkPayloadSchema, {
+      ...valid_bulk,
+      payment_date: undefined,
+    }))
+})
+
+describe('PayExpensesBulkPayloadSchema', () => {
+  const valid_bulk = {
+    payments: [{ expense_id: 1, amount_ore: 10000 }],
+    payment_date: '2026-03-15',
+    account_number: '1930',
+  }
+  it('accepts valid', () => valid(PayExpensesBulkPayloadSchema, valid_bulk))
+  it('rejects empty payments', () =>
+    invalid(PayExpensesBulkPayloadSchema, { ...valid_bulk, payments: [] }))
+})
+
+describe('BulkPaymentResultSchema', () => {
+  it('accepts completed result', () =>
+    valid(BulkPaymentResultSchema, {
+      batch_id: 1,
+      status: 'completed',
+      succeeded: [{ id: 1, payment_id: 2, journal_entry_id: 3 }],
+      failed: [],
+      bank_fee_journal_entry_id: null,
+    }))
+  it('rejects invalid status', () =>
+    invalid(BulkPaymentResultSchema, {
+      batch_id: 1,
+      status: 'unknown',
+      succeeded: [],
+      failed: [],
+      bank_fee_journal_entry_id: null,
+    }))
+})
+
+// ── Q3: Budget ────────────────────────────────────────────────────
+
+describe('Budget schemas', () => {
+  it('BudgetLinesSchema accepts empty object', () =>
+    valid(BudgetLinesSchema, {}))
+  it('BudgetGetSchema accepts valid', () =>
+    valid(BudgetGetSchema, { fiscal_year_id: 1 }))
+  it('BudgetGetSchema rejects missing fiscal_year_id', () =>
+    invalid(BudgetGetSchema, {}))
+  it('BudgetSaveSchema accepts valid', () =>
+    valid(BudgetSaveSchema, {
+      fiscal_year_id: 1,
+      targets: [{ line_id: 'line1', period_number: 1, amount_ore: 50000 }],
+    }))
+  it('BudgetSaveSchema rejects empty targets', () =>
+    invalid(BudgetSaveSchema, { fiscal_year_id: 1, targets: [] }))
+  it('BudgetVarianceSchema accepts valid', () =>
+    valid(BudgetVarianceSchema, { fiscal_year_id: 1 }))
+  it('BudgetCopySchema accepts valid', () =>
+    valid(BudgetCopySchema, {
+      target_fiscal_year_id: 2,
+      source_fiscal_year_id: 1,
+    }))
+  it('BudgetSummaryByYearSchema accepts valid', () =>
+    valid(BudgetSummaryByYearSchema, { fiscal_year_id: 1 }))
+})
+
+// ── Q3: Depreciation ─────────────────────────────────────────────
+
+describe('Depreciation schemas', () => {
+  const validAsset = {
+    name: 'Dator',
+    acquisition_date: '2026-01-01',
+    acquisition_cost_ore: 1000000,
+    useful_life_months: 36,
+    method: 'linear',
+    account_asset: '1210',
+    account_accumulated_depreciation: '1219',
+    account_depreciation_expense: '7832',
+  }
+  it('DepreciationCreateAssetSchema accepts valid linear', () =>
+    valid(DepreciationCreateAssetSchema, validAsset))
+  it('DepreciationCreateAssetSchema rejects empty name', () =>
+    invalid(DepreciationCreateAssetSchema, { ...validAsset, name: '' }))
+  it('DepreciationUpdateAssetSchema accepts valid', () =>
+    valid(DepreciationUpdateAssetSchema, { id: 1, input: validAsset }))
+  it('DepreciationIdSchema accepts valid', () =>
+    valid(DepreciationIdSchema, { id: 1 }))
+  it('DepreciationIdSchema rejects zero', () =>
+    invalid(DepreciationIdSchema, { id: 0 }))
+  it('DepreciationListSchema accepts empty', () =>
+    valid(DepreciationListSchema, {}))
+  it('DepreciationListSchema accepts with fiscal_year_id', () =>
+    valid(DepreciationListSchema, { fiscal_year_id: 1 }))
+  it('DepreciationDisposeSchema accepts valid', () =>
+    valid(DepreciationDisposeSchema, {
+      id: 1,
+      disposed_date: '2026-06-30',
+    }))
+  it('DepreciationDisposeSchema rejects bad date format', () =>
+    invalid(DepreciationDisposeSchema, { id: 1, disposed_date: '2026-6-30' }))
+  it('DepreciationExecutePeriodSchema accepts valid', () =>
+    valid(DepreciationExecutePeriodSchema, {
+      fiscal_year_id: 1,
+      period_end_date: '2026-01-31',
+    }))
+})
+
+// ── Q3: SEPA DD ──────────────────────────────────────────────────
+
+describe('SepaDd schemas', () => {
+  it('SepaDdCreateMandateSchema accepts valid', () =>
+    valid(SepaDdCreateMandateSchema, {
+      counterparty_id: 1,
+      mandate_reference: 'MAND001',
+      signature_date: '2026-01-01',
+      sequence_type: 'FRST',
+      iban: 'SE4550000000058398257466',
+    }))
+  it('SepaDdCreateMandateSchema rejects invalid sequence_type', () =>
+    invalid(SepaDdCreateMandateSchema, {
+      counterparty_id: 1,
+      mandate_reference: 'MAND001',
+      signature_date: '2026-01-01',
+      sequence_type: 'INVALID',
+      iban: 'SE4550000000058398257466',
+    }))
+  it('SepaDdListMandatesSchema accepts valid', () =>
+    valid(SepaDdListMandatesSchema, { counterparty_id: 1 }))
+  it('SepaDdRevokeMandateSchema accepts valid', () =>
+    valid(SepaDdRevokeMandateSchema, { mandate_id: 1 }))
+  it('SepaDdCreateCollectionSchema accepts valid', () =>
+    valid(SepaDdCreateCollectionSchema, {
+      fiscal_year_id: 1,
+      mandate_id: 1,
+      amount_ore: 50000,
+      collection_date: '2026-02-01',
+    }))
+  it('SepaDdCreateBatchSchema accepts valid', () =>
+    valid(SepaDdCreateBatchSchema, {
+      fiscal_year_id: 1,
+      collection_ids: [1, 2],
+      payment_date: '2026-02-05',
+      account_number: '1930',
+    }))
+  it('SepaDdCreateBatchSchema rejects empty collection_ids', () =>
+    invalid(SepaDdCreateBatchSchema, {
+      fiscal_year_id: 1,
+      collection_ids: [],
+      payment_date: '2026-02-05',
+      account_number: '1930',
+    }))
+  it('SepaDdExportPain008Schema accepts valid', () =>
+    valid(SepaDdExportPain008Schema, { batch_id: 1 }))
+  it('SepaDdListCollectionsSchema accepts valid', () =>
+    valid(SepaDdListCollectionsSchema, { fiscal_year_id: 1 }))
+  it('SepaDdListBatchesSchema accepts valid', () =>
+    valid(SepaDdListBatchesSchema, { fiscal_year_id: 1 }))
+})
+
+// ── Q3: Bank Statement ────────────────────────────────────────────
+
+describe('Bank Statement schemas', () => {
+  it('BankStatementImportSchema accepts valid', () =>
+    valid(BankStatementImportSchema, {
+      company_id: 1,
+      fiscal_year_id: 1,
+      xml_content: '<Document>...</Document>',
+    }))
+  it('BankStatementImportSchema rejects empty xml_content', () =>
+    invalid(BankStatementImportSchema, {
+      company_id: 1,
+      fiscal_year_id: 1,
+      xml_content: '',
+    }))
+  it('BankStatementListSchema accepts valid', () =>
+    valid(BankStatementListSchema, { fiscal_year_id: 1 }))
+  it('BankStatementGetSchema accepts valid', () =>
+    valid(BankStatementGetSchema, { statement_id: 1 }))
+  it('BankStatementSuggestMatchesSchema accepts valid', () =>
+    valid(BankStatementSuggestMatchesSchema, { statement_id: 1 }))
+  it('BankMatchTransactionSchema accepts valid', () =>
+    valid(BankMatchTransactionSchema, {
+      bank_transaction_id: 1,
+      matched_entity_type: 'invoice',
+      matched_entity_id: 1,
+      payment_account: '1930',
+    }))
+  it('BankMatchTransactionSchema rejects invalid entity type', () =>
+    invalid(BankMatchTransactionSchema, {
+      bank_transaction_id: 1,
+      matched_entity_type: 'manual',
+      matched_entity_id: 1,
+      payment_account: '1930',
+    }))
+  it('BankUnmatchTransactionSchema accepts valid', () =>
+    valid(BankUnmatchTransactionSchema, { bank_transaction_id: 1 }))
+  it('BankUnmatchBatchSchema accepts valid', () =>
+    valid(BankUnmatchBatchSchema, { batch_id: 1 }))
+  it('BankCreateFeeEntrySchema accepts valid', () =>
+    valid(BankCreateFeeEntrySchema, {
+      bank_transaction_id: 1,
+      payment_account: '1930',
+    }))
+  it('BankTxMappingUpsertSchema accepts valid', () =>
+    valid(BankTxMappingUpsertSchema, {
+      domain: 'PMNT',
+      family: 'RCDT',
+      subfamily: 'AUTT',
+      classification: 'bank_fee',
+    }))
+  it('BankTxMappingUpsertSchema rejects invalid classification', () =>
+    invalid(BankTxMappingUpsertSchema, {
+      domain: 'PMNT',
+      family: 'RCDT',
+      subfamily: 'AUTT',
+      classification: 'unknown',
+    }))
+  it('BankTxMappingDeleteSchema accepts valid', () =>
+    valid(BankTxMappingDeleteSchema, { id: 1 }))
+})
+
+// ── Q3: Accruals ──────────────────────────────────────────────────
+
+describe('Accrual schemas', () => {
+  const validAccrual = {
+    fiscal_year_id: 1,
+    description: 'Förutbetald hyra',
+    accrual_type: 'prepaid_expense',
+    balance_account: '1710',
+    result_account: '5010',
+    total_amount_ore: 120000,
+    period_count: 3,
+    start_period: 1,
+  }
+  it('AccrualCreateSchema accepts valid', () =>
+    valid(AccrualCreateSchema, validAccrual))
+  it('AccrualCreateSchema rejects period_count < 2', () =>
+    invalid(AccrualCreateSchema, { ...validAccrual, period_count: 1 }))
+  it('AccrualCreateSchema rejects start_period + period_count > 12', () =>
+    invalid(AccrualCreateSchema, {
+      ...validAccrual,
+      start_period: 11,
+      period_count: 3,
+    }))
+  it('AccrualListSchema accepts valid', () =>
+    valid(AccrualListSchema, { fiscal_year_id: 1 }))
+  it('AccrualExecuteSchema accepts valid', () =>
+    valid(AccrualExecuteSchema, { schedule_id: 1, period_number: 3 }))
+  it('AccrualExecuteAllSchema accepts valid', () =>
+    valid(AccrualExecuteAllSchema, { fiscal_year_id: 1, period_number: 3 }))
+  it('AccrualDeactivateSchema accepts valid', () =>
+    valid(AccrualDeactivateSchema, { schedule_id: 1 }))
+})
+
+// ── Q3: Misc ──────────────────────────────────────────────────────
+
+describe('AgingInputSchema', () => {
+  it('accepts valid with date', () =>
+    valid(AgingInputSchema, {
+      fiscal_year_id: 1,
+      as_of_date: '2026-03-31',
+    }))
+  it('accepts without as_of_date', () =>
+    valid(AgingInputSchema, { fiscal_year_id: 1 }))
+  it('rejects bad date format', () =>
+    invalid(AgingInputSchema, {
+      fiscal_year_id: 1,
+      as_of_date: '2026-3-31',
+    }))
+})
+
+describe('CashFlowInputSchema', () => {
+  it('accepts valid', () => valid(CashFlowInputSchema, { fiscal_year_id: 1 }))
+  it('rejects missing fiscal_year_id', () =>
+    invalid(CashFlowInputSchema, {}))
+})
+
+describe('AccountStatementInputSchema', () => {
+  it('accepts valid', () =>
+    valid(AccountStatementInputSchema, {
+      fiscal_year_id: 1,
+      account_number: '1930',
+    }))
+  it('rejects account_number too short', () =>
+    invalid(AccountStatementInputSchema, {
+      fiscal_year_id: 1,
+      account_number: '193',
+    }))
+})
+
+describe('CompanySwitchInputSchema', () => {
+  it('accepts valid', () =>
+    valid(CompanySwitchInputSchema, { company_id: 1 }))
+  it('rejects zero', () =>
+    invalid(CompanySwitchInputSchema, { company_id: 0 }))
+})
+
+describe('Journal Entry Correction schemas', () => {
+  it('CanCorrectSchema accepts valid', () =>
+    valid(CanCorrectSchema, { journal_entry_id: 1 }))
+  it('CorrectJournalEntrySchema accepts valid', () =>
+    valid(CorrectJournalEntrySchema, {
+      journal_entry_id: 1,
+      fiscal_year_id: 1,
+    }))
+  it('CorrectJournalEntrySchema rejects missing fiscal_year_id', () =>
+    invalid(CorrectJournalEntrySchema, { journal_entry_id: 1 }))
+})
+
+describe('Credit Note schemas', () => {
+  it('CreateCreditNoteDraftSchema accepts valid', () =>
+    valid(CreateCreditNoteDraftSchema, {
+      original_invoice_id: 1,
+      fiscal_year_id: 1,
+    }))
+  it('CreateExpenseCreditNoteDraftSchema accepts valid', () =>
+    valid(CreateExpenseCreditNoteDraftSchema, {
+      original_expense_id: 1,
+      fiscal_year_id: 1,
+    }))
+})
+
+describe('GlobalSearchSchema', () => {
+  it('accepts valid', () =>
+    valid(GlobalSearchSchema, { query: 'acme', fiscal_year_id: 1 }))
+  it('rejects query too short', () =>
+    invalid(GlobalSearchSchema, { query: 'a', fiscal_year_id: 1 }))
+  it('accepts with limit', () =>
+    valid(GlobalSearchSchema, {
+      query: 'acme',
+      fiscal_year_id: 1,
+      limit: 10,
+    }))
+})
+
+describe('ListImportedEntriesSchema', () => {
+  it('accepts valid', () =>
+    valid(ListImportedEntriesSchema, { fiscal_year_id: 1 }))
+})
+
+describe('Payment Batch Export schemas', () => {
+  it('PaymentBatchValidateExportSchema accepts valid', () =>
+    valid(PaymentBatchValidateExportSchema, { batch_id: 1 }))
+  it('PaymentBatchExportPain001Schema accepts valid', () =>
+    valid(PaymentBatchExportPain001Schema, { batch_id: 1 }))
+})
+
+describe('Invoice PDF batch + directory schemas', () => {
+  it('SelectDirectorySchema accepts empty', () =>
+    valid(SelectDirectorySchema, {}))
+  it('SavePdfBatchSchema accepts valid', () =>
+    valid(SavePdfBatchSchema, {
+      directory: '/tmp/pdfs',
+      invoices: [{ invoiceId: 1, fileName: 'invoice-001.pdf' }],
+    }))
+  it('SavePdfBatchSchema rejects empty invoices', () =>
+    invalid(SavePdfBatchSchema, { directory: '/tmp', invoices: [] }))
+})
+
+describe('SIE4 Import schemas', () => {
+  it('Sie4SelectFileSchema accepts empty', () =>
+    valid(Sie4SelectFileSchema, {}))
+  it('Sie4ValidateSchema accepts valid', () =>
+    valid(Sie4ValidateSchema, { filePath: '/tmp/file.se' }))
+  it('Sie4ValidateSchema rejects empty filePath', () =>
+    invalid(Sie4ValidateSchema, { filePath: '' }))
+  it('Sie4ImportSchema accepts new strategy', () =>
+    valid(Sie4ImportSchema, { filePath: '/tmp/file.se', strategy: 'new' }))
+  it('Sie4ImportSchema accepts merge strategy', () =>
+    valid(Sie4ImportSchema, {
+      filePath: '/tmp/file.se',
+      strategy: 'merge',
+      fiscal_year_id: 1,
+    }))
+  it('Sie4ImportSchema rejects invalid strategy', () =>
+    invalid(Sie4ImportSchema, {
+      filePath: '/tmp/file.se',
+      strategy: 'replace',
+    }))
+})
+
+describe('SIE5 Import schemas', () => {
+  it('Sie5SelectFileSchema accepts empty', () =>
+    valid(Sie5SelectFileSchema, {}))
+  it('Sie5ValidateSchema accepts valid', () =>
+    valid(Sie5ValidateSchema, { filePath: '/tmp/file.xml' }))
+  it('Sie5ImportSchema accepts new strategy', () =>
+    valid(Sie5ImportSchema, { filePath: '/tmp/file.xml', strategy: 'new' }))
+  it('Sie5ImportSchema rejects invalid strategy', () =>
+    invalid(Sie5ImportSchema, {
+      filePath: '/tmp/file.xml',
+      strategy: 'append',
+    }))
 })
