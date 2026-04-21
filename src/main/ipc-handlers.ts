@@ -1024,10 +1024,16 @@ export function registerIpcHandlers(): void {
           fs.writeFileSync(path.join(parsed.directory, inv.fileName), buffer)
           succeeded.push(inv.invoiceId)
         } catch (err) {
-          failed.push({
-            invoiceId: inv.invoiceId,
-            error: err instanceof Error ? err.message : 'Okänt fel',
-          })
+          const msg =
+            err != null &&
+            typeof err === 'object' &&
+            'error' in err &&
+            typeof (err as { error: unknown }).error === 'string'
+              ? (err as { error: string }).error
+              : err instanceof Error
+                ? err.message
+                : 'Okänt fel'
+          failed.push({ invoiceId: inv.invoiceId, error: msg })
         }
       }
 

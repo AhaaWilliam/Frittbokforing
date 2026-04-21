@@ -37,7 +37,8 @@ export async function generateInvoicePdf(
   invoiceId: number,
 ): Promise<Buffer> {
   const company = getCompany(db)
-  if (!company) throw new Error('Company not configured — cannot generate PDF')
+  if (!company)
+    throw { code: 'VALIDATION_ERROR', error: 'Inget företag konfigurerat för PDF-generering' }
 
   const invoice = getFinalized(db, invoiceId)
 
