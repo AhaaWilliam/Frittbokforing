@@ -198,6 +198,8 @@ contextBridge.exposeInMainWorld('api', {
   }) => ipcRenderer.invoke('journal-entry:correct', data),
   canCorrectJournalEntry: (data: { journal_entry_id: number }) =>
     ipcRenderer.invoke('journal-entry:can-correct', data),
+  listImportedEntries: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('journal-entry:list-imported', data),
   // Excel Export
   exportExcel: (data: {
     fiscal_year_id: number
@@ -245,11 +247,54 @@ contextBridge.exposeInMainWorld('api', {
     fiscal_year_id?: number
     conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
   }) => ipcRenderer.invoke('import:sie4-execute', data),
+  // SIE5 Import (Sprint U2)
+  sie5SelectFile: () => ipcRenderer.invoke('import:sie5-select-file', {}),
+  sie5Validate: (data: { filePath: string }) =>
+    ipcRenderer.invoke('import:sie5-validate', data),
+  sie5Import: (data: {
+    filePath: string
+    strategy: 'new' | 'merge'
+    fiscal_year_id?: number
+    conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
+  }) => ipcRenderer.invoke('import:sie5-execute', data),
   // Payment batch export
   validateBatchExport: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:validate-export', data),
   exportPain001: (data: { batch_id: number }) =>
     ipcRenderer.invoke('payment-batch:export-pain001', data),
+  // SEPA DD (Sprint U1 — backend-only MVP)
+  sepaDdCreateMandate: (data: {
+    counterparty_id: number
+    mandate_reference: string
+    signature_date: string
+    sequence_type: 'OOFF' | 'FRST' | 'RCUR' | 'FNAL'
+    iban: string
+    bic?: string | null
+  }) => ipcRenderer.invoke('sepa-dd:create-mandate', data),
+  sepaDdListMandates: (data: { counterparty_id: number }) =>
+    ipcRenderer.invoke('sepa-dd:list-mandates', data),
+  sepaDdRevokeMandate: (data: { mandate_id: number }) =>
+    ipcRenderer.invoke('sepa-dd:revoke-mandate', data),
+  sepaDdCreateCollection: (data: {
+    fiscal_year_id: number
+    mandate_id: number
+    invoice_id?: number | null
+    amount_ore: number
+    collection_date: string
+  }) => ipcRenderer.invoke('sepa-dd:create-collection', data),
+  sepaDdCreateBatch: (data: {
+    fiscal_year_id: number
+    collection_ids: number[]
+    payment_date: string
+    account_number: string
+    user_note?: string | null
+  }) => ipcRenderer.invoke('sepa-dd:create-batch', data),
+  sepaDdExportPain008: (data: { batch_id: number }) =>
+    ipcRenderer.invoke('sepa-dd:export-pain008', data),
+  sepaDdListCollections: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('sepa-dd:list-collections', data),
+  sepaDdListBatches: (data: { fiscal_year_id: number }) =>
+    ipcRenderer.invoke('sepa-dd:list-batches', data),
   // Accruals
   createAccrualSchedule: (data: {
     fiscal_year_id: number

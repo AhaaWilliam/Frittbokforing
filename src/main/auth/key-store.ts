@@ -26,6 +26,8 @@ export interface KeyStore {
   getTimeoutMs(): number
   /** Change the inactivity timeout. Applies on next touch. */
   setTimeoutMs(ms: number): void
+  /** Milliseconds until auto-lock fires, or null when locked. Never negative. */
+  msUntilLock(): number | null
   /** Register a listener for lock transitions. Returns an unsubscribe fn. */
   onLock(listener: () => void): () => void
 }
@@ -51,10 +53,12 @@ export function createKeyStore(opts: KeyStoreOptions = {}): KeyStore {
   let key: Buffer | null = null
   let userId: string | null = null
   let timerHandle: unknown = null
+  let armedAt: number | null = null
   const listeners = new Set<() => void>()
 
   function armTimer(): void {
     if (timerHandle !== null) clearTimer(timerHandle)
+    armedAt = Date.now()
     timerHandle = setTimer(() => {
       lockInternal()
     }, timeoutMs)
@@ -66,6 +70,7 @@ export function createKeyStore(opts: KeyStoreOptions = {}): KeyStore {
       key = null
     }
     userId = null
+    armedAt = null
     if (timerHandle !== null) {
       clearTimer(timerHandle)
       timerHandle = null
@@ -114,6 +119,12 @@ export function createKeyStore(opts: KeyStoreOptions = {}): KeyStore {
       if (ms <= 0) throw new Error('timeoutMs must be > 0')
       timeoutMs = ms
       if (key !== null) armTimer()
+    },
+    msUntilLock() {
+      if (key === null || armedAt === null) return null
+      const elapsed = Date.now() - armedAt
+      const remaining = timeoutMs - elapsed
+      return remaining > 0 ? remaining : 0
     },
     onLock(listener) {
       listeners.add(listener)

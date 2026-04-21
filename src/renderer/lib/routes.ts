@@ -17,6 +17,7 @@ export const routes: RouteDefinition[] = [
   { pattern: '/fixed-assets', page: 'fixed-assets' },
   { pattern: '/bank-statements/:id', page: 'bank-statements' },
   { pattern: '/bank-statements', page: 'bank-statements' },
+  { pattern: '/sepa-dd', page: 'sepa-dd' },
 
   // Master-detail pages (specific before generic)
   { pattern: '/customers/create', page: 'customers' },
@@ -49,4 +50,6 @@ export const routes: RouteDefinition[] = [
   { pattern: '/manual-entries/edit/:id', page: 'manual-entries' },
   { pattern: '/manual-entries/view/:id', page: 'manual-entries' },
   { pattern: '/manual-entries', page: 'manual-entries' },
+
+  { pattern: '/imported-entries', page: 'imported-entries' },
 ]

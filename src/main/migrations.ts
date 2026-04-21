@@ -1777,6 +1777,25 @@ END;`,
         ON invoices(fiscal_year_id, status, invoice_date);
     `,
   },
+
+  // ── Migration 049 — Sprint U1 — SEPA DD (pain.008) ──
+  //
+  // Del A: Utvidga payment_batches.batch_type CHECK-enum med 'direct_debit'
+  //        (M122 table-recreate pga. inkommande FK från invoice_payments +
+  //         expense_payments + bank_reconciliation_matches).
+  // Del B: Nya tabeller sepa_dd_mandates + sepa_dd_collections.
+  //
+  // Triggers attached till payment_batches (M121-inventering): inga
+  // (bekräftat via samma check som migration 023).
+  //
+  // Cross-table triggers (M141): inga refererar payment_batches.
+  //
+  // FK off krävs för payment_batches table-recreate — se db.ts needsFkOff
+  // (index 48 = migration 049).
+  {
+    sql: '-- Migration 049: SEPA DD (pain.008) (se programmatic)',
+    programmatic: migration049Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -3860,5 +3879,148 @@ function migration047Programmatic(
   }
   if (!/paid_amount_ore\s*>=\s*0/.test(schema)) {
     throw new Error('Migration 047: paid_amount_ore CHECK saknas')
+  }
+}
+
+/**
+ * Migration 049 — Sprint U1 — SEPA DD (pain.008).
+ *
+ * Del A: payment_batches.batch_type CHECK-enum utökas med 'direct_debit'
+ * via M122 table-recreate (inkommande FK + M127 förbjuder CHECK-ändring
+ * via ADD COLUMN). Körs med foreign_keys = OFF utanför transaktionen.
+ *
+ * Del B: sepa_dd_mandates + sepa_dd_collections.
+ */
+function migration049Programmatic(
+  db: import('better-sqlite3').Database,
+): void {
+  // === Del A: payment_batches table-recreate ===
+
+  // M121 pre-flight: inventera triggers attached till tabellen.
+  const pbTriggers = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND tbl_name='payment_batches'",
+    )
+    .all() as { name: string }[]
+  if (pbTriggers.length > 0) {
+    throw new Error(
+      `Migration 049: unexpected triggers on payment_batches: ${pbTriggers
+        .map((t) => t.name)
+        .join(', ')}`,
+    )
+  }
+
+  // Idempotency guard: har CHECK redan utökats?
+  const tableInfo = db
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'",
+    )
+    .get() as { sql: string } | undefined
+  const needsRebuild = !tableInfo?.sql?.includes("'direct_debit'")
+
+  if (needsRebuild) {
+    db.exec(`
+      CREATE TABLE payment_batches_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+        batch_type TEXT NOT NULL CHECK (batch_type IN ('invoice', 'expense', 'direct_debit')),
+        payment_date TEXT NOT NULL,
+        account_number TEXT NOT NULL REFERENCES accounts(account_number),
+        bank_fee_ore INTEGER NOT NULL DEFAULT 0,
+        bank_fee_journal_entry_id INTEGER REFERENCES journal_entries(id),
+        status TEXT NOT NULL DEFAULT 'completed' CHECK (status IN ('completed', 'partial', 'cancelled')),
+        user_note TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        exported_at TEXT DEFAULT NULL,
+        export_format TEXT DEFAULT NULL,
+        export_filename TEXT DEFAULT NULL
+      );
+      INSERT INTO payment_batches_new (
+        id, fiscal_year_id, batch_type, payment_date, account_number,
+        bank_fee_ore, bank_fee_journal_entry_id, status, user_note,
+        created_at, exported_at, export_format, export_filename
+      )
+      SELECT
+        id, fiscal_year_id, batch_type, payment_date, account_number,
+        bank_fee_ore, bank_fee_journal_entry_id, status, user_note,
+        created_at, exported_at, export_format, export_filename
+      FROM payment_batches;
+      DROP INDEX IF EXISTS idx_pb_fiscal_year;
+      DROP TABLE payment_batches;
+      ALTER TABLE payment_batches_new RENAME TO payment_batches;
+    `)
+
+    // Recreate indexes (M121)
+    db.exec(
+      `CREATE INDEX idx_pb_fiscal_year ON payment_batches(fiscal_year_id);`,
+    )
+  }
+
+  // === Del B: sepa_dd_mandates ===
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sepa_dd_mandates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      counterparty_id INTEGER NOT NULL REFERENCES counterparties(id),
+      mandate_reference TEXT NOT NULL UNIQUE,
+      signature_date TEXT NOT NULL,
+      sequence_type TEXT NOT NULL CHECK (sequence_type IN ('OOFF','FRST','RCUR','FNAL')),
+      iban TEXT NOT NULL,
+      bic TEXT,
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','revoked')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_sepa_mandates_counterparty
+      ON sepa_dd_mandates(counterparty_id);
+  `)
+
+  // === Del B: sepa_dd_collections ===
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sepa_dd_collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+      mandate_id INTEGER NOT NULL REFERENCES sepa_dd_mandates(id),
+      invoice_id INTEGER REFERENCES invoices(id),
+      amount_ore INTEGER NOT NULL CHECK (amount_ore > 0),
+      collection_date TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending','exported','settled','failed')),
+      payment_batch_id INTEGER REFERENCES payment_batches(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_sepa_collections_fiscal_year
+      ON sepa_dd_collections(fiscal_year_id);
+    CREATE INDEX IF NOT EXISTS idx_sepa_collections_mandate
+      ON sepa_dd_collections(mandate_id);
+    CREATE INDEX IF NOT EXISTS idx_sepa_collections_batch
+      ON sepa_dd_collections(payment_batch_id)
+      WHERE payment_batch_id IS NOT NULL;
+  `)
+
+  // Verify
+  const pbSchema = db
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_batches'",
+    )
+    .get() as { sql: string } | undefined
+  if (!pbSchema?.sql.includes("'direct_debit'")) {
+    throw new Error(
+      'Migration 049 failed: direct_debit saknas i payment_batches CHECK',
+    )
+  }
+  const mandatesOk = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sepa_dd_mandates'",
+    )
+    .get()
+  if (!mandatesOk) {
+    throw new Error('Migration 049 failed: sepa_dd_mandates saknas')
+  }
+  const collectionsOk = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sepa_dd_collections'",
+    )
+    .get()
+  if (!collectionsOk) {
+    throw new Error('Migration 049 failed: sepa_dd_collections saknas')
   }
 }

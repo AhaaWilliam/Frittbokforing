@@ -81,6 +81,27 @@ export function migrateLegacyToEncrypted(
     const legacyAttachPath = legacyPath.replace(/'/g, "''")
     target.exec(`ATTACH DATABASE '${legacyAttachPath}' AS legacy KEY ''`)
 
+    // 2.5. Drop known orphan triggers from legacy BEFORE schema copy.
+    // Bakgrund: en mellanliggande version av migration 046 skapade
+    // defense-in-depth-triggers för expense_lines.product_id — en kolumn
+    // som inte planerades in i expense_lines (se M158 "Begränsning").
+    // SQLite validerar trigger-kolumnreferenser först vid CREATE TRIGGER
+    // mot ett target-schema där tabellen existerar, så när vi i step 5
+    // nedan kör target.exec(CREATE TRIGGER ...) failar det med
+    // "no such column: NEW.product_id" och hela importen rullar tillbaka.
+    //
+    // Fail-loud-principen bevaras — vi droppar ENDAST namngivna, kända
+    // orphan-triggers från historiska migrations-varianter. Framtida
+    // trasiga triggers ska fortfarande synas och utredas.
+    const KNOWN_ORPHAN_TRIGGERS = [
+      'trg_expense_line_product_company_match_insert',
+      'trg_expense_line_product_company_match_update',
+    ]
+    for (const name of KNOWN_ORPHAN_TRIGGERS) {
+      const ident = `"${name.replace(/"/g, '""')}"`
+      target.exec(`DROP TRIGGER IF EXISTS legacy.${ident}`)
+    }
+
     // 3. Copy schema in the order: tables → indexes → views → triggers.
     // `sqlite_autoindex_*` and `sqlite_sequence` are auto-managed — skip.
     target.exec('BEGIN IMMEDIATE')

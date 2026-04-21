@@ -18,6 +18,7 @@
     "dist:linux": "electron-builder --linux --publish never",
     "publish:github": "electron-builder --mac --publish always",
     "test": "npm rebuild better-sqlite3 better-sqlite3-multiple-ciphers && vitest run",
+    "test:agent": "vitest run --reporter=verbose",
     "test:watch": "vitest",
     "test:system": "vitest run tests/system/",
     "test:security": "vitest run tests/security/",
@@ -53,6 +54,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "@notionhq/client": "^5.20.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@scure/bip39": "^2.0.1",

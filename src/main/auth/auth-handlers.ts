@@ -59,6 +59,7 @@ export interface AuthStatus {
   locked: boolean
   userId: string | null
   timeoutMs: number
+  msUntilLock: number | null
 }
 
 export interface LoginResponse {
@@ -186,6 +187,7 @@ export function registerAuthIpcHandlers(
         locked: keyStore.isLocked(),
         userId: keyStore.getUserId(),
         timeoutMs: keyStore.getTimeoutMs(),
+        msUntilLock: keyStore.msUntilLock(),
       }),
     ),
   )

@@ -7,14 +7,41 @@ import { ImportPreviewPhase } from '../components/import/ImportPreviewPhase'
 import { ImportDonePhase } from '../components/import/ImportDonePhase'
 import type {
   ConflictResolution,
+  ImportFormat,
   ImportResult,
   ImportStrategy,
   Phase,
   ValidationResult,
 } from '../components/import/import-types'
 
+interface FormatApi {
+  selectFile: typeof window.api.sie4SelectFile
+  validate: typeof window.api.sie4Validate
+  import: typeof window.api.sie4Import
+}
+
+function getFormatApi(format: ImportFormat): FormatApi {
+  if (format === 'sie5') {
+    return {
+      selectFile: window.api.sie5SelectFile,
+      validate: window.api.sie5Validate,
+      import: window.api.sie5Import,
+    }
+  }
+  return {
+    selectFile: window.api.sie4SelectFile,
+    validate: window.api.sie4Validate,
+    import: window.api.sie4Import,
+  }
+}
+
+function formatLabel(format: ImportFormat): string {
+  return format === 'sie5' ? 'SIE5' : 'SIE4'
+}
+
 export function PageImport() {
   const [phase, setPhase] = useState<Phase>('select')
+  const [format, setFormat] = useState<ImportFormat>('sie4')
   const [filePath, setFilePath] = useState<string | null>(null)
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [strategy, setStrategy] = useState<ImportStrategy>('new')
@@ -24,14 +51,15 @@ export function PageImport() {
   >({})
 
   async function handleSelectFile() {
+    const api = getFormatApi(format)
     try {
-      const result = await window.api.sie4SelectFile()
+      const result = await api.selectFile()
       if (!result.success || !result.data) return
       const selectedPath = result.data.filePath
       setFilePath(selectedPath)
       setPhase('validating')
 
-      const valResult = await window.api.sie4Validate({
+      const valResult = await api.validate({
         filePath: selectedPath,
       })
       if (!valResult.success) {
@@ -50,9 +78,10 @@ export function PageImport() {
 
   async function handleImport() {
     if (!filePath) return
+    const api = getFormatApi(format)
     setPhase('importing')
     try {
-      const result = await window.api.sie4Import({
+      const result = await api.import({
         filePath,
         strategy,
         ...(Object.keys(conflictResolutions).length > 0
@@ -83,16 +112,20 @@ export function PageImport() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <PageHeader title="Importera SIE4" />
+      <PageHeader title="Importera SIE-fil" />
       <div className="flex-1 overflow-auto px-6 pb-6">
         {phase === 'select' && (
-          <ImportSelectPhase onSelectFile={handleSelectFile} />
+          <ImportSelectPhase
+            format={format}
+            onFormatChange={setFormat}
+            onSelectFile={handleSelectFile}
+          />
         )}
         {phase === 'validating' && (
           <div className="py-16 text-center">
             <LoadingSpinner />
             <p className="mt-2 text-sm text-muted-foreground">
-              Validerar SIE4-fil...
+              Validerar {formatLabel(format)}-fil...
             </p>
           </div>
         )}

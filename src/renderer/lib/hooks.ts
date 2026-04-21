@@ -807,6 +807,14 @@ export function useManualEntry(id: number | undefined) {
   )
 }
 
+export function useImportedEntries(fiscalYearId: number | undefined) {
+  return useIpcQuery(
+    queryKeys.importedEntries(fiscalYearId!),
+    () => window.api.listImportedEntries({ fiscal_year_id: fiscalYearId! }),
+    { enabled: !!fiscalYearId },
+  )
+}
+
 export function useSaveManualEntryDraft() {
   return useIpcMutation<SaveManualEntryDraftInput, { id: number }>(
     (data) => window.api.saveManualEntryDraft(data),

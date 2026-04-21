@@ -18,6 +18,7 @@ import { PageSettings } from './PageSettings'
 import { PageCustomers } from './PageCustomers'
 import { PageProducts } from './PageProducts'
 import { PageManualEntries } from './PageManualEntries'
+import { PageImportedEntries } from './PageImportedEntries'
 import { PageReports } from './PageReports'
 import { PageAccounts } from './PageAccounts'
 import { PageSuppliers } from './PageSuppliers'
@@ -28,6 +29,7 @@ import { PageAccruals } from './PageAccruals'
 import { PageFixedAssets } from './PageFixedAssets'
 import { PageImport } from './PageImport'
 import { PageBankStatements } from './PageBankStatements'
+import { PageSepaDd } from './PageSepaDd'
 
 interface AppShellInnerProps {
   company: Company
@@ -57,6 +59,8 @@ function PageContent({ page }: { page: string }) {
       return <PageProducts />
     case 'manual-entries':
       return <PageManualEntries />
+    case 'imported-entries':
+      return <PageImportedEntries />
     case 'accounts':
       return <PageAccounts />
     case 'suppliers':
@@ -75,6 +79,8 @@ function PageContent({ page }: { page: string }) {
       return <PageImport />
     case 'bank-statements':
       return <PageBankStatements />
+    case 'sepa-dd':
+      return <PageSepaDd />
     default:
       return <PageOverview />
   }

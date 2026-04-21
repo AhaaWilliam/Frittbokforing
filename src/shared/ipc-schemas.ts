@@ -637,6 +637,14 @@ export const ManualEntryListSchema = z
   })
   .strict()
 
+// === Imported Entries (I-serie, source_type='import') ===
+
+export const ListImportedEntriesSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+  })
+  .strict()
+
 // === Journal Entry Corrections ===
 
 export const CorrectJournalEntrySchema = z
@@ -873,6 +881,78 @@ export const Sie4ImportSchema = z
       .record(z.string(), z.enum(['keep', 'overwrite', 'skip']))
       .optional(),
   })
+  .strict()
+
+// === SIE5 Import (Sprint U2) ===
+export const Sie5SelectFileSchema = z.object({}).strict()
+
+export const Sie5ValidateSchema = z
+  .object({
+    filePath: z.string().min(1),
+  })
+  .strict()
+
+export const Sie5ImportSchema = z
+  .object({
+    filePath: z.string().min(1),
+    strategy: z.enum(['new', 'merge']),
+    fiscal_year_id: z.number().int().positive().optional(),
+    conflict_resolutions: z
+      .record(z.string(), z.enum(['keep', 'overwrite', 'skip']))
+      .optional(),
+  })
+  .strict()
+
+// === SEPA DD (Sprint U1) ===
+export const SepaDdCreateMandateSchema = z
+  .object({
+    counterparty_id: z.number().int().positive(),
+    mandate_reference: z.string().min(1).max(35),
+    signature_date: z.string().min(1),
+    sequence_type: z.enum(['OOFF', 'FRST', 'RCUR', 'FNAL']),
+    iban: z.string().min(15).max(40),
+    bic: z.string().min(8).max(11).nullable().optional(),
+  })
+  .strict()
+
+export const SepaDdListMandatesSchema = z
+  .object({ counterparty_id: z.number().int().positive() })
+  .strict()
+
+export const SepaDdRevokeMandateSchema = z
+  .object({ mandate_id: z.number().int().positive() })
+  .strict()
+
+export const SepaDdCreateCollectionSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    mandate_id: z.number().int().positive(),
+    invoice_id: z.number().int().positive().nullable().optional(),
+    amount_ore: z.number().int().positive(),
+    collection_date: z.string().min(1),
+  })
+  .strict()
+
+export const SepaDdCreateBatchSchema = z
+  .object({
+    fiscal_year_id: z.number().int().positive(),
+    collection_ids: z.array(z.number().int().positive()).min(1),
+    payment_date: z.string().min(1),
+    account_number: z.string().min(1),
+    user_note: z.string().nullable().optional(),
+  })
+  .strict()
+
+export const SepaDdExportPain008Schema = z
+  .object({ batch_id: z.number().int().positive() })
+  .strict()
+
+export const SepaDdListCollectionsSchema = z
+  .object({ fiscal_year_id: z.number().int().positive() })
+  .strict()
+
+export const SepaDdListBatchesSchema = z
+  .object({ fiscal_year_id: z.number().int().positive() })
   .strict()
 
 // === Payment Batch Export ===
@@ -1201,6 +1281,7 @@ export const channelMap = {
   // Journal Entry Corrections
   'journal-entry:correct': CorrectJournalEntrySchema,
   'journal-entry:can-correct': CanCorrectSchema,
+  'journal-entry:list-imported': ListImportedEntriesSchema,
 
   // Dashboard & Reports
   'dashboard:summary': DashboardSummaryInputSchema,
@@ -1227,9 +1308,24 @@ export const channelMap = {
   'import:sie4-validate': Sie4ValidateSchema,
   'import:sie4-execute': Sie4ImportSchema,
 
+  // SIE5 Import (Sprint U2)
+  'import:sie5-select-file': Sie5SelectFileSchema,
+  'import:sie5-validate': Sie5ValidateSchema,
+  'import:sie5-execute': Sie5ImportSchema,
+
   // Payment batch export
   'payment-batch:validate-export': PaymentBatchValidateExportSchema,
   'payment-batch:export-pain001': PaymentBatchExportPain001Schema,
+
+  // SEPA DD (Sprint U1 — backend-only MVP)
+  'sepa-dd:create-mandate': SepaDdCreateMandateSchema,
+  'sepa-dd:list-mandates': SepaDdListMandatesSchema,
+  'sepa-dd:revoke-mandate': SepaDdRevokeMandateSchema,
+  'sepa-dd:create-collection': SepaDdCreateCollectionSchema,
+  'sepa-dd:create-batch': SepaDdCreateBatchSchema,
+  'sepa-dd:export-pain008': SepaDdExportPain008Schema,
+  'sepa-dd:list-collections': SepaDdListCollectionsSchema,
+  'sepa-dd:list-batches': SepaDdListBatchesSchema,
 
   // Accruals
   'accrual:create': AccrualCreateSchema,

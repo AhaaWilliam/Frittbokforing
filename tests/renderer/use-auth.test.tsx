@@ -42,7 +42,7 @@ function Probe({
 describe('useAuth — initial state', () => {
   it('starts in loading, resolves to locked on empty status', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: true, userId: null, timeoutMs: 900000 }),
+      ok({ locked: true, userId: null, timeoutMs: 900000, msUntilLock: 900000 }),
     )
     const states: string[] = []
     render(<Probe onRender={(a) => states.push(a.state.kind)} />)
@@ -54,7 +54,7 @@ describe('useAuth — initial state', () => {
 
   it('resolves to unlocked when status returns a userId', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: false, userId: 'abc', timeoutMs: 900000 }),
+      ok({ locked: false, userId: 'abc', timeoutMs: 900000, msUntilLock: 900000 }),
     )
     let last = null as ReturnType<typeof useAuth> | null
     render(<Probe onRender={(a) => (last = a)} />)
@@ -78,7 +78,7 @@ describe('useAuth — initial state', () => {
 describe('useAuth — onUnlocked transitions optimistically', () => {
   it('sets state to unlocked when onUnlocked is called', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: true, userId: null, timeoutMs: 900000 }),
+      ok({ locked: true, userId: null, timeoutMs: 900000, msUntilLock: 900000 }),
     )
     let last = null as ReturnType<typeof useAuth> | null
     render(<Probe onRender={(a) => (last = a)} />)
@@ -97,7 +97,7 @@ describe('useAuth — onUnlocked transitions optimistically', () => {
 describe('useAuth — logout', () => {
   it('calls window.auth.logout and returns to locked', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: false, userId: 'abc', timeoutMs: 900000 }),
+      ok({ locked: false, userId: 'abc', timeoutMs: 900000, msUntilLock: 900000 }),
     )
     let last = null as ReturnType<typeof useAuth> | null
     render(<Probe onRender={(a) => (last = a)} />)
@@ -113,7 +113,7 @@ describe('useAuth — logout', () => {
 describe('useAuth — visibility re-poll (auto-lock recovery)', () => {
   it('re-polls status on visibilitychange=visible', async () => {
     authMock.status.mockResolvedValueOnce(
-      ok({ locked: false, userId: 'abc', timeoutMs: 900000 }),
+      ok({ locked: false, userId: 'abc', timeoutMs: 900000, msUntilLock: 900000 }),
     )
     let last = null as ReturnType<typeof useAuth> | null
     render(<Probe onRender={(a) => (last = a)} />)
@@ -122,7 +122,7 @@ describe('useAuth — visibility re-poll (auto-lock recovery)', () => {
 
     // Simulate auto-lock happening in main between visibilities.
     authMock.status.mockResolvedValueOnce(
-      ok({ locked: true, userId: null, timeoutMs: 900000 }),
+      ok({ locked: true, userId: null, timeoutMs: 900000, msUntilLock: 900000 }),
     )
     Object.defineProperty(document, 'visibilityState', {
       configurable: true,

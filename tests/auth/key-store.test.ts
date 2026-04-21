@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createKeyStore, type KeyStore } from '../../src/main/auth/key-store'
 
 // Fake scheduler — lets tests advance time deterministically.
@@ -204,5 +204,37 @@ describe('key-store — unlock replaces prior key', () => {
     store.unlock('u2', Buffer.alloc(32, 0x22))
     expect(store.getUserId()).toBe('u2')
     expect(store.getKey().equals(Buffer.alloc(32, 0x22))).toBe(true)
+  })
+})
+
+describe('key-store — msUntilLock', () => {
+  it('returns null when locked', () => {
+    expect(store.msUntilLock()).toBeNull()
+  })
+
+  it('returns positive value when unlocked and decreases with elapsed time', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(1_000_000))
+    store.unlock('u1', Buffer.alloc(32, 0x42))
+    expect(store.msUntilLock()).toBe(1000)
+
+    vi.setSystemTime(new Date(1_000_400))
+    expect(store.msUntilLock()).toBe(600)
+
+    vi.setSystemTime(new Date(1_001_500))
+    expect(store.msUntilLock()).toBe(0) // clamped
+
+    vi.useRealTimers()
+  })
+
+  it('touch resets the countdown', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2_000_000))
+    store.unlock('u1', Buffer.alloc(32, 0x42))
+    vi.setSystemTime(new Date(2_000_700))
+    expect(store.msUntilLock()).toBe(300)
+    store.touch()
+    expect(store.msUntilLock()).toBe(1000)
+    vi.useRealTimers()
   })
 })

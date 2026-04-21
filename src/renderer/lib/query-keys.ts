@@ -64,6 +64,7 @@ export const queryKeys = {
   manualEntryDrafts: (fyId: number) => ['manual-entry-drafts', fyId] as const,
   manualEntries: (fyId: number) => ['manual-entries', fyId] as const,
   manualEntry: (id: number) => ['manual-entry', id] as const,
+  importedEntries: (fyId: number) => ['imported-entries', fyId] as const,
 
   // === Rapporter ===
   dashboard: (fyId: number) => ['dashboard', 'summary', fyId] as const,

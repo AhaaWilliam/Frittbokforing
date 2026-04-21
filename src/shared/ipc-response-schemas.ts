@@ -344,6 +344,19 @@ export const channelResponseMap = {
   // Journal Entry Corrections
   'journal-entry:correct': FinalizeReceipt,
   'journal-entry:can-correct': CanCorrect,
+  'journal-entry:list-imported': z.array(
+    z
+      .object({
+        journal_entry_id: z.number(),
+        verification_number: z.number(),
+        verification_series: z.string(),
+        journal_date: z.string(),
+        description: z.string().nullable(),
+        source_reference: z.string().nullable(),
+        total_amount_ore: z.number(),
+      })
+      .passthrough(),
+  ),
 
   // Dashboard & Reports
   'dashboard:summary': DashboardSummarySchema,
@@ -388,6 +401,28 @@ export const channelResponseMap = {
     warnings: z.array(z.string()),
   }),
 
+  // SIE5 Import (Sprint U2)
+  'import:sie5-select-file': z.object({ filePath: z.string() }).nullable(),
+  'import:sie5-validate': z.object({
+    valid: z.boolean(),
+    errors: z.array(
+      z.object({ code: z.string(), message: z.string() }).passthrough(),
+    ),
+    warnings: z.array(
+      z.object({ code: z.string(), message: z.string() }).passthrough(),
+    ),
+    summary: z.object({}).passthrough(),
+  }),
+  'import:sie5-execute': z.object({
+    companyId: z.number(),
+    fiscalYearId: z.number(),
+    accountsAdded: z.number(),
+    accountsUpdated: z.number(),
+    entriesImported: z.number(),
+    linesImported: z.number(),
+    warnings: z.array(z.string()),
+  }),
+
   // Payment batch export
   'payment-batch:validate-export': z
     .object({
@@ -404,6 +439,29 @@ export const channelResponseMap = {
   'payment-batch:export-pain001': z
     .object({ saved: z.boolean() })
     .passthrough(),
+
+  // SEPA DD (Sprint U1)
+  'sepa-dd:create-mandate': z
+    .object({ id: z.number(), mandate_reference: z.string() })
+    .passthrough(),
+  'sepa-dd:list-mandates': z.array(
+    z.object({ id: z.number(), mandate_reference: z.string() }).passthrough(),
+  ),
+  'sepa-dd:revoke-mandate': z.object({ id: z.number() }),
+  'sepa-dd:create-collection': z
+    .object({ id: z.number(), amount_ore: z.number() })
+    .passthrough(),
+  'sepa-dd:create-batch': z.object({
+    batch_id: z.number(),
+    collection_count: z.number(),
+  }),
+  'sepa-dd:export-pain008': z.object({ saved: z.boolean() }).passthrough(),
+  'sepa-dd:list-collections': z.array(
+    z.object({ id: z.number(), amount_ore: z.number() }).passthrough(),
+  ),
+  'sepa-dd:list-batches': z.array(
+    z.object({ id: z.number(), collection_count: z.number() }).passthrough(),
+  ),
 
   // Accruals
   'accrual:create': z.object({ id: z.number() }),

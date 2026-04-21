@@ -28,6 +28,7 @@ beforeEach(() => {
         locked: false,
         userId: '11111111-1111-1111-1111-111111111111',
         timeoutMs: 15 * 60 * 1000,
+        msUntilLock: 15 * 60 * 1000,
       }),
     ),
     changePassword: vi.fn(),

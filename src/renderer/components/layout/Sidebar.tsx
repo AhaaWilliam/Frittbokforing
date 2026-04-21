@@ -19,7 +19,9 @@ import {
   Upload,
   Building2,
   Banknote,
+  CreditCard,
   LogOut,
+  UserCog,
   type LucideIcon,
 } from 'lucide-react'
 import type { Company } from '../../../shared/types'
@@ -28,6 +30,7 @@ import { YearPicker } from './YearPicker'
 import { MonthIndicator } from './MonthIndicator'
 import { GlobalSearch } from './GlobalSearch'
 import { CompanySwitcher } from './CompanySwitcher'
+import { SessionTimeoutBadge } from './SessionTimeoutBadge'
 
 interface SidebarProps {
   company: Company
@@ -169,6 +172,12 @@ export function Sidebar({ company }: SidebarProps) {
           testId="nav-account-statement"
         />
         <SidebarLink
+          to="/imported-entries"
+          icon={Upload}
+          label="Importerade verifikat"
+          testId="nav-imported-entries"
+        />
+        <SidebarLink
           to="/aging"
           icon={Clock}
           label="Åldersanalys"
@@ -200,22 +209,49 @@ export function Sidebar({ company }: SidebarProps) {
         <SidebarLink
           to="/import"
           icon={Upload}
-          label="Importera SIE4"
+          label="Importera SIE"
           testId="nav-import"
+        />
+        <SidebarLink
+          to="/sepa-dd"
+          icon={CreditCard}
+          label="Autogiro (SEPA DD)"
+          testId="nav-sepa-dd"
         />
       </nav>
 
       {/* Footer */}
       <div className="border-t px-2 py-2">
+        <SessionTimeoutBadge />
         <SidebarLink
           to="/settings"
           icon={Settings}
           label="Inställningar"
           testId="nav-settings"
         />
+        <SwitchUserButton />
         <LogoutButton />
       </div>
     </aside>
+  )
+}
+
+async function lockAndReload() {
+  await window.auth.logout()
+  window.location.reload()
+}
+
+function SwitchUserButton() {
+  return (
+    <button
+      type="button"
+      data-testid="nav-switch-user"
+      onClick={lockAndReload}
+      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+    >
+      <UserCog className="h-4 w-4" aria-hidden="true" />
+      Byt användare
+    </button>
   )
 }
 

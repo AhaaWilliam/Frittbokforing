@@ -200,6 +200,70 @@ describe('archiveLegacyDb', () => {
   })
 })
 
+describe('migrateLegacyToEncrypted — orphan trigger cleanup', () => {
+  it('passerar igenom legacy-DB med orphan expense_line product trigger', () => {
+    // Regressionsvakt: en tidig migration 046-variant skapade triggers
+    // för expense_lines.product_id även om kolumnen aldrig fanns. När
+    // schemat kopieras till target failar CREATE TRIGGER med "no such
+    // column: NEW.product_id". Pre-copy-steget ska droppa de kända
+    // orphan-namnen från legacy-schemat innan kopieringen.
+    const db = new Database(legacyPath)
+    // Skapa tabell + seeda data INNAN triggers läggs till — triggerns
+    // NEW.product_id-referens skulle annars blockera INSERT.
+    db.exec(`
+      CREATE TABLE expense_lines (
+        id INTEGER PRIMARY KEY,
+        expense_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL
+      );
+    `)
+    db.prepare(
+      'INSERT INTO expense_lines (id, expense_id, quantity) VALUES (1, 1, 1)',
+    ).run()
+    db.exec(`
+      CREATE TRIGGER trg_expense_line_product_company_match_insert
+      BEFORE INSERT ON expense_lines
+      WHEN NEW.product_id IS NOT NULL
+      BEGIN
+        SELECT RAISE(ABORT, 'orphan');
+      END;
+      CREATE TRIGGER trg_expense_line_product_company_match_update
+      BEFORE UPDATE ON expense_lines
+      WHEN NEW.product_id IS NOT NULL
+      BEGIN
+        SELECT RAISE(ABORT, 'orphan');
+      END;
+    `)
+    db.close()
+
+    expect(() =>
+      migrateLegacyToEncrypted(legacyPath, encryptedPath, MASTER_KEY),
+    ).not.toThrow()
+
+    const target = new EncryptedDatabase(encryptedPath)
+    target.pragma(`cipher='sqlcipher'`)
+    target.pragma(`key="x'${MASTER_KEY.toString('hex')}'"`)
+    const rowCount = (
+      target
+        .prepare('SELECT COUNT(*) AS c FROM expense_lines')
+        .get() as { c: number }
+    ).c
+    const triggerRows = target
+      .prepare(
+        `SELECT name FROM sqlite_master WHERE type='trigger'
+         AND name IN (
+           'trg_expense_line_product_company_match_insert',
+           'trg_expense_line_product_company_match_update'
+         )`,
+      )
+      .all() as { name: string }[]
+    target.close()
+
+    expect(rowCount).toBe(1)
+    expect(triggerRows).toHaveLength(0)
+  })
+})
+
 describe('defaultArchivePath', () => {
   it('produces a timestamped path inside the backups dir', () => {
     const p = defaultArchivePath(

@@ -351,6 +351,9 @@ interface ElectronAPI {
   canCorrectJournalEntry: (data: {
     journal_entry_id: number
   }) => Promise<IpcResult<{ canCorrect: boolean; reason?: string }>>
+  listImportedEntries: (data: {
+    fiscal_year_id: number
+  }) => Promise<IpcResult<import('../shared/types').ImportedEntryListItem[]>>
   // Excel Export
   exportExcel: (input: {
     fiscal_year_id: number
@@ -420,6 +423,23 @@ interface ElectronAPI {
   }) => Promise<
     IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>
   >
+  // SIE5 Import (Sprint U2)
+  sie5SelectFile: () => Promise<IpcResult<{ filePath: string } | null>>
+  sie5Validate: (data: {
+    filePath: string
+  }) => Promise<
+    IpcResult<
+      import('../main/services/sie4/sie4-import-validator').SieValidationResult
+    >
+  >
+  sie5Import: (data: {
+    filePath: string
+    strategy: 'new' | 'merge'
+    fiscal_year_id?: number
+    conflict_resolutions?: Record<string, 'keep' | 'overwrite' | 'skip'>
+  }) => Promise<
+    IpcResult<import('../main/services/sie4/sie4-import-service').ImportResult>
+  >
   // Payment batch export
   validateBatchExport: (data: {
     batch_id: number
@@ -427,6 +447,89 @@ interface ElectronAPI {
   exportPain001: (data: {
     batch_id: number
   }) => Promise<IpcResult<{ saved: boolean; filePath?: string }>>
+  // SEPA DD (Sprint U1 — backend-only MVP)
+  sepaDdCreateMandate: (data: {
+    counterparty_id: number
+    mandate_reference: string
+    signature_date: string
+    sequence_type: 'OOFF' | 'FRST' | 'RCUR' | 'FNAL'
+    iban: string
+    bic?: string | null
+  }) => Promise<
+    IpcResult<
+      import('../main/services/payment/sepa-dd-service').SepaMandate
+    >
+  >
+  sepaDdListMandates: (data: { counterparty_id: number }) => Promise<
+    IpcResult<
+      import('../main/services/payment/sepa-dd-service').SepaMandate[]
+    >
+  >
+  sepaDdRevokeMandate: (data: {
+    mandate_id: number
+  }) => Promise<IpcResult<{ id: number }>>
+  sepaDdCreateCollection: (data: {
+    fiscal_year_id: number
+    mandate_id: number
+    invoice_id?: number | null
+    amount_ore: number
+    collection_date: string
+  }) => Promise<
+    IpcResult<
+      import('../main/services/payment/sepa-dd-service').SepaCollection
+    >
+  >
+  sepaDdCreateBatch: (data: {
+    fiscal_year_id: number
+    collection_ids: number[]
+    payment_date: string
+    account_number: string
+    user_note?: string | null
+  }) => Promise<IpcResult<{ batch_id: number; collection_count: number }>>
+  sepaDdExportPain008: (data: {
+    batch_id: number
+  }) => Promise<IpcResult<{ saved: boolean; filePath?: string }>>
+  sepaDdListCollections: (data: {
+    fiscal_year_id: number
+  }) => Promise<
+    IpcResult<
+      Array<{
+        id: number
+        fiscal_year_id: number
+        mandate_id: number
+        invoice_id: number | null
+        amount_ore: number
+        collection_date: string
+        status: string
+        payment_batch_id: number | null
+        created_at: string
+        mandate_reference: string
+        counterparty_id: number
+        counterparty_name: string
+        invoice_number: number | null
+      }>
+    >
+  >
+  sepaDdListBatches: (data: {
+    fiscal_year_id: number
+  }) => Promise<
+    IpcResult<
+      Array<{
+        id: number
+        fiscal_year_id: number
+        payment_date: string
+        account_number: string
+        status: string
+        user_note: string | null
+        exported_at: string | null
+        export_format: string | null
+        export_filename: string | null
+        created_at: string
+        collection_count: number
+        total_amount_ore: number
+      }>
+    >
+  >
   // Accruals
   createAccrualSchedule: (
     data: import('../shared/types').CreateAccrualScheduleInput,
@@ -608,6 +711,7 @@ export interface AuthStatus {
   locked: boolean
   userId: string | null
   timeoutMs: number
+  msUntilLock: number | null
 }
 
 export interface AuthAPI {

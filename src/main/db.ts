@@ -159,6 +159,7 @@ function runMigrations(database: Db): void {
     // Migration 044 (index 43): bank_statements.source_format CHECK-utökning ('mt940','bgmax') T3.d.
     // Migration 045 (index 44): MC3 stamdata-scoping — counterparties/products/price_lists.
     // Migration 047 (index 46): F-TT-003 expenses table-recreate för CHECKs.
+    // Migration 049 (index 48): Sprint U1 SEPA DD — payment_batches CHECK-utökning.
     const needsFkOff =
       i === 20 ||
       i === 21 ||
@@ -167,7 +168,8 @@ function runMigrations(database: Db): void {
       i === 42 ||
       i === 43 ||
       i === 44 ||
-      i === 46
+      i === 46 ||
+      i === 48
     if (needsFkOff) database.pragma('foreign_keys = OFF')
 
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch

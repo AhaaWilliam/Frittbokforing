@@ -651,6 +651,16 @@ export interface ManualEntryListItem {
   corrected_by_id: number | null
 }
 
+export interface ImportedEntryListItem {
+  journal_entry_id: number
+  verification_number: number
+  verification_series: string
+  journal_date: string
+  description: string | null
+  source_reference: string | null
+  total_amount_ore: number
+}
+
 // === Report types ===
 export interface AccountBalance {
   account_number: string

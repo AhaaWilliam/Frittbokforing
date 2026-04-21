@@ -1,5 +1,7 @@
 export type ImportStrategy = 'new' | 'merge'
 
+export type ImportFormat = 'sie4' | 'sie5'
+
 export interface ValidationSummary {
   accounts: number
   entries: number

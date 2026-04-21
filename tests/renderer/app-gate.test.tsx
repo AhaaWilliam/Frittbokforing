@@ -76,7 +76,7 @@ describe('App auth gate', () => {
 
   it('shows LockScreen when auth is locked', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: true, userId: null, timeoutMs: 900000 }),
+      ok({ locked: true, userId: null, timeoutMs: 900000, msUntilLock: 900000 }),
     )
     renderApp()
     // LockScreen's empty-state lands on the create form (no users).
@@ -93,7 +93,7 @@ describe('App auth gate', () => {
       createdAt: '2026-04-19T10:00:00Z',
     }
     authMock.status.mockResolvedValue(
-      ok({ locked: true, userId: null, timeoutMs: 900000 }),
+      ok({ locked: true, userId: null, timeoutMs: 900000, msUntilLock: 900000 }),
     )
     authMock.listUsers.mockResolvedValue(ok([alice]))
     authMock.login.mockResolvedValue(ok({ user: alice }))
@@ -112,7 +112,7 @@ describe('App auth gate', () => {
 
   it('skips lock screen entirely if status returns unlocked', async () => {
     authMock.status.mockResolvedValue(
-      ok({ locked: false, userId: 'abc', timeoutMs: 900000 }),
+      ok({ locked: false, userId: 'abc', timeoutMs: 900000, msUntilLock: 900000 }),
     )
     renderApp()
     // Goes directly past loading into the authenticated app.

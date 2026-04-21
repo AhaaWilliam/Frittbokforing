@@ -82,6 +82,7 @@ import {
   listManualEntries,
   finalizeManualEntry,
 } from './services/manual-entry-service'
+import { listImportedEntries } from './services/imported-entry-service'
 import { exportSie4 } from './services/sie4/sie4-export-service'
 import { exportExcel } from './services/excel/excel-export-service'
 import {
@@ -111,11 +112,27 @@ import {
   detectAccountConflicts,
 } from './services/sie4/sie4-import-validator'
 import { importSie4 } from './services/sie4/sie4-import-service'
+import { parseSie5 } from './services/sie5/sie5-import-parser'
+import {
+  validateSie5ParseResult,
+  detectSie5AccountConflicts,
+} from './services/sie5/sie5-import-validator'
+import { importSie5 } from './services/sie5/sie5-import-service'
 import {
   validateBatchForExport,
   generatePain001,
   markBatchExported,
 } from './services/payment/pain001-export-service'
+import {
+  createMandate,
+  listMandates,
+  revokeMandate,
+  createCollection,
+  createDirectDebitBatch,
+  listCollections as listSepaCollections,
+  listDirectDebitBatches,
+} from './services/payment/sepa-dd-service'
+import { generatePain008 } from './services/payment/pain008-export-service'
 import {
   createAccrualSchedule,
   getAccrualSchedules,
@@ -203,6 +220,7 @@ import {
   ManualEntryIdSchema,
   ManualEntryFinalizeSchema,
   ManualEntryListSchema,
+  ListImportedEntriesSchema,
   FiscalYearCreateNewInputSchema,
   FiscalYearSwitchInputSchema,
   NetResultInputSchema,
@@ -221,8 +239,19 @@ import {
   Sie4SelectFileSchema,
   Sie4ValidateSchema,
   Sie4ImportSchema,
+  Sie5SelectFileSchema,
+  Sie5ValidateSchema,
+  Sie5ImportSchema,
   PaymentBatchValidateExportSchema,
   PaymentBatchExportPain001Schema,
+  SepaDdCreateMandateSchema,
+  SepaDdListMandatesSchema,
+  SepaDdRevokeMandateSchema,
+  SepaDdCreateCollectionSchema,
+  SepaDdCreateBatchSchema,
+  SepaDdExportPain008Schema,
+  SepaDdListCollectionsSchema,
+  SepaDdListBatchesSchema,
   AccrualCreateSchema,
   AccrualListSchema,
   AccrualExecuteSchema,
@@ -820,6 +849,13 @@ export function registerIpcHandlers(): void {
     ),
   )
 
+  ipcMain.handle(
+    'journal-entry:list-imported',
+    wrapIpcHandler(ListImportedEntriesSchema, (data) =>
+      listImportedEntries(db, data.fiscal_year_id),
+    ),
+  )
+
   // === Excel Export ===
   ipcMain.handle(
     'export:excel',
@@ -1089,6 +1125,75 @@ export function registerIpcHandlers(): void {
     }),
   )
 
+  // === SIE5 Import (Sprint U2) ===
+  ipcMain.handle(
+    'import:sie5-select-file',
+    wrapIpcHandler(Sie5SelectFileSchema, async () => {
+      // E2E dialog bypass (M147) — E2E_MOCK_OPEN_FILE env points to fixture
+      const e2eMockPath = getE2EMockOpenFile()
+      if (e2eMockPath) return { filePath: e2eMockPath }
+
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openFile'],
+        filters: [{ name: 'SIE5', extensions: ['sie', 'xml', 'se'] }],
+      })
+      if (result.canceled || !result.filePaths[0]) return null
+      return { filePath: result.filePaths[0] }
+    }),
+  )
+
+  ipcMain.handle(
+    'import:sie5-validate',
+    wrapIpcHandler(Sie5ValidateSchema, (data) => {
+      const buffer = fs.readFileSync(data.filePath)
+      const parseResult = parseSie5(buffer)
+      const validation = validateSie5ParseResult(parseResult)
+      validation.conflicts = detectSie5AccountConflicts(db, parseResult)
+      return validation
+    }),
+  )
+
+  ipcMain.handle(
+    'import:sie5-execute',
+    wrapIpcHandler(Sie5ImportSchema, (data) => {
+      const buffer = fs.readFileSync(data.filePath)
+      const parseResult = parseSie5(buffer)
+      const validation = validateSie5ParseResult(parseResult)
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: `SIE5-filen har ${validation.errors.length} fel: ${validation.errors[0]?.message ?? ''}`,
+          code: 'VALIDATION_ERROR',
+        } as const
+      }
+      let filteredResolutions:
+        | Record<string, 'keep' | 'overwrite' | 'skip'>
+        | undefined
+      if (data.conflict_resolutions) {
+        const conflicts = detectSie5AccountConflicts(db, parseResult)
+        const validKeys = new Set(conflicts.map((c) => c.account_number))
+        filteredResolutions = {}
+        for (const [key, val] of Object.entries(data.conflict_resolutions)) {
+          if (validKeys.has(key)) {
+            filteredResolutions[key] = val
+          } else {
+            log.warn(
+              `sie5-execute: ignorerar conflict_resolutions[${key}] — ingen konflikt för detta konto`,
+            )
+          }
+        }
+      }
+      return importSie5(db, parseResult, {
+        strategy: data.strategy,
+        fiscalYearId: data.fiscal_year_id,
+        targetCompanyId: getActiveCompanyId(db, loadSettings()) ?? undefined,
+        conflict_resolutions: filteredResolutions,
+      })
+    }),
+  )
+
   // === Payment Batch Export ===
   ipcMain.handle(
     'payment-batch:validate-export',
@@ -1123,6 +1228,79 @@ export function registerIpcHandlers(): void {
 
       fs.writeFileSync(filePath, genResult.data.xml, 'utf8')
       markBatchExported(db, data.batch_id, 'pain001', filePath)
+      return { saved: true, filePath }
+    }),
+  )
+
+  // === SEPA DD (Sprint U1 — backend-only MVP) ===
+  ipcMain.handle(
+    'sepa-dd:create-mandate',
+    wrapIpcHandler(SepaDdCreateMandateSchema, (data) =>
+      createMandate(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:list-mandates',
+    wrapIpcHandler(SepaDdListMandatesSchema, (data) =>
+      listMandates(db, data.counterparty_id),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:revoke-mandate',
+    wrapIpcHandler(SepaDdRevokeMandateSchema, (data) =>
+      revokeMandate(db, data.mandate_id),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:create-collection',
+    wrapIpcHandler(SepaDdCreateCollectionSchema, (data) =>
+      createCollection(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:create-batch',
+    wrapIpcHandler(SepaDdCreateBatchSchema, (data) =>
+      createDirectDebitBatch(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:list-collections',
+    wrapIpcHandler(SepaDdListCollectionsSchema, (data) =>
+      listSepaCollections(db, data.fiscal_year_id),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:list-batches',
+    wrapIpcHandler(SepaDdListBatchesSchema, (data) =>
+      listDirectDebitBatches(db, data.fiscal_year_id),
+    ),
+  )
+  ipcMain.handle(
+    'sepa-dd:export-pain008',
+    wrapIpcHandler(SepaDdExportPain008Schema, async (data) => {
+      const genResult = generatePain008(db, data.batch_id)
+      if (!genResult.success) return genResult
+
+      // E2E dialog bypass (M63 / M147)
+      const e2ePath = getE2EFilePath(genResult.data.filename, 'save')
+      if (e2ePath) {
+        fs.writeFileSync(e2ePath, genResult.data.xml, 'utf8')
+        markBatchExported(db, data.batch_id, 'pain008', e2ePath)
+        return { saved: true, filePath: e2ePath }
+      }
+
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const { canceled, filePath } = await dialog.showSaveDialog(win!, {
+        defaultPath: genResult.data.filename,
+        filters: [{ name: 'XML', extensions: ['xml'] }],
+      })
+      if (canceled || !filePath) {
+        return { saved: false }
+      }
+
+      fs.writeFileSync(filePath, genResult.data.xml, 'utf8')
+      markBatchExported(db, data.batch_id, 'pain008', filePath)
       return { saved: true, filePath }
     }),
   )
