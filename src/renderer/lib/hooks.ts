@@ -1108,7 +1108,7 @@ export function useAccrualSchedules(fiscalYearId: number | undefined) {
 export function useCreateAccrual() {
   return useIpcMutation<CreateAccrualScheduleInput, { id: number }>(
     (data) => window.api.createAccrualSchedule(data),
-    { invalidateAll: true },
+    { invalidate: (_data, input) => [queryKeys.accrualSchedules(input.fiscal_year_id)] },
   )
 }
 
@@ -1129,7 +1129,7 @@ export function useExecuteAllAccruals() {
 export function useDeactivateAccrual() {
   return useIpcMutation<{ schedule_id: number }, void>(
     (data) => window.api.deactivateAccrual(data),
-    { invalidateAll: true },
+    { invalidate: [queryKeys.allAccruals()] },
   )
 }
 
@@ -1246,7 +1246,12 @@ export function useSaveBudgetTargets() {
   return useIpcMutation<
     { fiscal_year_id: number; targets: SaveBudgetTargetItem[] },
     { count: number }
-  >((data) => window.api.saveBudgetTargets(data), { invalidateAll: true })
+  >((data) => window.api.saveBudgetTargets(data), {
+    invalidate: (_data, input) => [
+      queryKeys.budgetTargets(input.fiscal_year_id),
+      queryKeys.budgetVariance(input.fiscal_year_id),
+    ],
+  })
 }
 
 export function useCopyBudgetFromPreviousFy() {
@@ -1254,7 +1259,10 @@ export function useCopyBudgetFromPreviousFy() {
     { target_fiscal_year_id: number; source_fiscal_year_id: number },
     { count: number }
   >((data) => window.api.copyBudgetFromPreviousFy(data), {
-    invalidateAll: true,
+    invalidate: (_data, input) => [
+      queryKeys.budgetTargets(input.target_fiscal_year_id),
+      queryKeys.budgetVariance(input.target_fiscal_year_id),
+    ],
   })
 }
 
