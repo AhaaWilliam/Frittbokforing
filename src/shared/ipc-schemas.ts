@@ -188,6 +188,7 @@ export const UpdateCompanyInputSchema = z
     plusgiro: z.string().max(20).nullable().optional(),
     website: z.string().max(200).nullable().optional(),
     board_members: z.string().max(500).nullable().optional(),
+    approved_for_f_tax: z.number().int().min(0).max(1).optional(),
   })
   .strict()
 

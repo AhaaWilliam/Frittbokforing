@@ -275,6 +275,7 @@ export function updateCompany(
     'board_members',
     'fiscal_rule',
     'base_currency',
+    'approved_for_f_tax',
   ])
 
   const data = parsed.data as Record<string, unknown>

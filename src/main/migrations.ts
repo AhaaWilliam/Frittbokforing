@@ -1796,6 +1796,17 @@ END;`,
     sql: '-- Migration 049: SEPA DD (pain.008) (se programmatic)',
     programmatic: migration049Programmatic,
   },
+
+  // ── Migration 050 — F-skatt-flagga på companies ──
+  //
+  // Lägger till approved_for_f_tax (INTEGER NOT NULL DEFAULT 1) på companies.
+  // Befintliga bolag får DEFAULT=1 (godkänd). PDF renderar "Godkänd för F-skatt"
+  // villkorligt baserat på flaggan.
+  // ADD COLUMN med konstant DEFAULT är tillåtet per M127 (inga uttryck i parenteser).
+  // CHECK-constraint tillåts inte i ADD COLUMN (SQLite-begränsning) — valideras i service.
+  {
+    sql: `ALTER TABLE companies ADD COLUMN approved_for_f_tax INTEGER NOT NULL DEFAULT 1`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

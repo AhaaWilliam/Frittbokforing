@@ -97,6 +97,7 @@ export interface Company {
   bankgiro: string | null
   plusgiro: string | null
   website: string | null
+  approved_for_f_tax: number
   created_at: string
 }
 
@@ -190,6 +191,7 @@ export interface UpdateCompanyInput {
   plusgiro?: string | null
   website?: string | null
   board_members?: string | null
+  approved_for_f_tax?: number
 }
 
 // === Counterparty Input ===
