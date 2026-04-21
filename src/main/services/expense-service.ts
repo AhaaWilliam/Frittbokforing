@@ -1098,7 +1098,7 @@ export function payExpensesBulk(
           failed.push({
             id: p.expense_id,
             error: err.error ?? 'Okänt fel',
-            code: err.code ?? 'TRANSACTION_ERROR',
+            code: err.code ?? 'UNEXPECTED_ERROR',
           })
         }
       }

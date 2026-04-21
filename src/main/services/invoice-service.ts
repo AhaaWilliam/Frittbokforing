@@ -1375,7 +1375,7 @@ export function payInvoicesBulk(
           failed.push({
             id: p.invoice_id,
             error: err.error ?? 'Okänt fel',
-            code: err.code ?? 'TRANSACTION_ERROR',
+            code: err.code ?? 'UNEXPECTED_ERROR',
           })
         }
       }
