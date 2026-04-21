@@ -297,6 +297,7 @@ function _unmatchPaymentCore(
     WHEN COALESCE((SELECT SUM(amount_ore) FROM ${paymentTable} WHERE ${fkCol} = :id), 0) < total_amount_ore THEN 'partial'
     ELSE 'paid' END`
   db.prepare(
+    // dynamic-update exempt — polymorf entitets-tabell per M146 (binärt val {invoices|expenses}, ingen user-input)
     `UPDATE ${entityTable} SET
        paid_amount_ore = COALESCE((SELECT SUM(amount_ore) FROM ${paymentTable} WHERE ${fkCol} = :id), 0),
        status = ${newStatus}

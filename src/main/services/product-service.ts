@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { rebuildSearchIndex } from './search-service'
+import { buildUpdate } from '../utils/build-update'
 import type {
   Product,
   CustomerPrice,
@@ -160,23 +161,13 @@ export function updateProduct(
   }
 
   try {
-    const sets: string[] = []
-    const params: unknown[] = []
-
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined && ALLOWED_PRODUCT_COLUMNS.has(key)) {
-        sets.push(`${key} = ?`)
-        params.push(value ?? null)
-      }
-    }
-
-    if (sets.length > 0) {
-      sets.push("updated_at = datetime('now','localtime')")
-      params.push(id, companyId)
-      db.prepare(
-        `UPDATE products SET ${sets.join(', ')} WHERE id = ? AND company_id = ?`,
-      ).run(...params)
-    }
+    const built = buildUpdate(
+      db,
+      'products',
+      data as Record<string, unknown>,
+      { allowedColumns: ALLOWED_PRODUCT_COLUMNS, touchUpdatedAt: true },
+    )
+    if (built) built.run('id = ? AND company_id = ?', [id, companyId])
 
     const updated = db
       .prepare('SELECT * FROM products WHERE id = ?')

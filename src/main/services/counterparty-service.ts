@@ -10,7 +10,31 @@ import {
   COUNTERPARTY_UNIQUE_MAPPINGS,
 } from './error-helpers'
 import { rebuildSearchIndex } from './search-service'
+import { buildUpdate } from '../utils/build-update'
 import log from 'electron-log'
+
+const ALLOWED_COUNTERPARTY_COLUMNS = new Set([
+  'name',
+  'type',
+  'org_number',
+  'vat_number',
+  'email',
+  'phone',
+  'address_line1',
+  'postal_code',
+  'city',
+  'country',
+  'contact_person',
+  'payment_terms',
+  'bankgiro',
+  'plusgiro',
+  'bank_account',
+  'bank_clearing',
+])
+
+const COUNTERPARTY_FIELD_MAP: Record<string, string> = {
+  default_payment_terms: 'payment_terms',
+}
 
 // Map DB row to Counterparty type (payment_terms → default_payment_terms)
 function mapRow(row: Record<string, unknown>): Counterparty {
@@ -173,53 +197,18 @@ export function updateCounterparty(
       code: 'COUNTERPARTY_NOT_FOUND',
     }
 
-  const ALLOWED_COUNTERPARTY_COLUMNS = new Set([
-    'name',
-    'type',
-    'org_number',
-    'vat_number',
-    'email',
-    'phone',
-    'address_line1',
-    'postal_code',
-    'city',
-    'country',
-    'contact_person',
-    'payment_terms',
-    'bankgiro',
-    'plusgiro',
-    'bank_account',
-    'bank_clearing',
-  ])
-
   try {
-    const sets: string[] = []
-    const params: unknown[] = []
-
-    const fieldMap: Record<string, string> = {
-      default_payment_terms: 'payment_terms',
-    }
-
-    const entries = Object.entries(data).filter(([key]) => {
-      const dbCol = fieldMap[key] ?? key
-      return ALLOWED_COUNTERPARTY_COLUMNS.has(dbCol)
-    })
-
-    for (const [key, value] of entries) {
-      if (value !== undefined) {
-        const dbCol = fieldMap[key] ?? key
-        sets.push(`"${dbCol}" = ?`)
-        params.push(value ?? null)
-      }
-    }
-
-    if (sets.length > 0) {
-      sets.push("updated_at = datetime('now','localtime')")
-      params.push(id)
-      db.prepare(
-        `UPDATE counterparties SET ${sets.join(', ')} WHERE id = ?`,
-      ).run(...params)
-    }
+    const built = buildUpdate(
+      db,
+      'counterparties',
+      data as Record<string, unknown>,
+      {
+        allowedColumns: ALLOWED_COUNTERPARTY_COLUMNS,
+        fieldMap: COUNTERPARTY_FIELD_MAP,
+        touchUpdatedAt: true,
+      },
+    )
+    if (built) built.run('id = ?', [id])
 
     const updated = getCounterparty(db, id, _company_id)!
     try {

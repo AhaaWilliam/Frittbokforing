@@ -19,6 +19,13 @@ import type {
 } from '../../shared/types'
 import log from 'electron-log'
 import { SaveDraftInputSchema, UpdateDraftInputSchema } from '../ipc-schemas'
+import { buildUpdate } from '../utils/build-update'
+
+const UPDATE_SENT_INVOICE_COLUMNS = new Set([
+  'notes',
+  'payment_terms',
+  'due_date',
+])
 
 function getDraftInternal(
   db: Database.Database,
@@ -746,27 +753,21 @@ export function updateSentInvoice(
         code: 'INVOICE_NOT_DRAFT',
       }
 
-    const updates: string[] = []
-    const params: unknown[] = []
-    if (input.notes !== undefined) {
-      updates.push('notes = ?')
-      params.push(input.notes)
-    }
-    if (input.payment_terms !== undefined) {
-      updates.push('payment_terms = ?')
-      params.push(input.payment_terms)
-    }
-    if (input.due_date !== undefined) {
-      updates.push('due_date = ?')
-      params.push(input.due_date)
-    }
-    if (updates.length === 0) return { success: true, data: invoice }
-
-    updates.push("updated_at = datetime('now','localtime')")
-    params.push(input.id)
-    db.prepare(`UPDATE invoices SET ${updates.join(', ')} WHERE id = ?`).run(
-      ...params,
+    const built = buildUpdate(
+      db,
+      'invoices',
+      {
+        notes: input.notes,
+        payment_terms: input.payment_terms,
+        due_date: input.due_date,
+      },
+      {
+        allowedColumns: UPDATE_SENT_INVOICE_COLUMNS,
+        touchUpdatedAt: true,
+      },
     )
+    if (!built) return { success: true, data: invoice }
+    built.run('id = ?', [input.id])
 
     const updated = db
       .prepare('SELECT * FROM invoices WHERE id = ?')

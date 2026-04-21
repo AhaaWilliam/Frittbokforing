@@ -9,6 +9,7 @@ import {
   COMPANY_UNIQUE_MAPPINGS,
 } from './error-helpers'
 import log from 'electron-log'
+import { buildUpdate } from '../utils/build-update'
 
 export interface GeneratedPeriod {
   period_number: number
@@ -257,45 +258,34 @@ export function updateCompany(
     }
   }
 
-  const ALLOWED_COMPANY_COLUMNS = new Set([
-    'name',
-    'org_number',
-    'vat_number',
-    'email',
-    'phone',
-    'address_line1',
-    'address_line2',
-    'postal_code',
-    'city',
-    'country',
-    'bankgiro',
-    'plusgiro',
-    'website',
-    'share_capital',
-    'board_members',
-    'fiscal_rule',
-    'base_currency',
-    'approved_for_f_tax',
-  ])
-
-  const data = parsed.data as Record<string, unknown>
-  const entries = Object.entries(data).filter(
-    ([key, value]) => value !== undefined && ALLOWED_COMPANY_COLUMNS.has(key),
+  const built = buildUpdate(
+    db,
+    'companies',
+    parsed.data as Record<string, unknown>,
+    { allowedColumns: ALLOWED_COMPANY_COLUMNS },
   )
-  const sets: string[] = []
-  const params: unknown[] = []
-
-  for (const [key, value] of entries) {
-    sets.push(`"${key}" = ?`)
-    params.push(value ?? null)
-  }
-
-  if (sets.length > 0) {
-    params.push(company.id)
-    db.prepare(`UPDATE companies SET ${sets.join(', ')} WHERE id = ?`).run(
-      ...params,
-    )
-  }
+  if (built) built.run('id = ?', [company.id])
 
   return { success: true, data: getCompany(db)! }
 }
+
+const ALLOWED_COMPANY_COLUMNS = new Set([
+  'name',
+  'org_number',
+  'vat_number',
+  'email',
+  'phone',
+  'address_line1',
+  'address_line2',
+  'postal_code',
+  'city',
+  'country',
+  'bankgiro',
+  'plusgiro',
+  'website',
+  'share_capital',
+  'board_members',
+  'fiscal_rule',
+  'base_currency',
+  'approved_for_f_tax',
+])

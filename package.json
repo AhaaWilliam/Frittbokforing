@@ -38,6 +38,8 @@
     "check:m133": "node scripts/check-m133.mjs",
     "check:m133-ast": "node scripts/check-m133-ast.mjs --self-test && node scripts/check-m133-ast.mjs",
     "check:m153": "node scripts/check-m153.mjs",
+    "check:dynamic-update": "node scripts/check-dynamic-update.mjs",
+    "check:ipc-handlers": "node scripts/check-ipc-handler-patterns.mjs",
     "test:mutation": "stryker run",
     "test:property": "vitest run tests/property/",
     "test:invariants": "vitest run tests/invariants/",
