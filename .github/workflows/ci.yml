@@ -53,9 +53,9 @@ jobs:
           node-version-file: '.node-version'
           cache: 'npm'
       - run: npm ci
-      # Stryker körs bara mot src/shared/money.ts (F-TT-002: upstream-
-      # inkompatibilitet Stryker 9.6 × Vitest 4 × better-sqlite3 blockar
-      # mutation mot services). Scope utvidgas när upstream-fix landar.
+      # Stryker körs mot result-service, chronology-guard, vat-report-service,
+      # correction-service (vitest.config.stryker.ts). Scope begränsat av
+      # isolate:false-kravet för better-sqlite3 × Vitest 4. Utvidgas när F-TT-002 åtgärdas.
       - run: npm run test:mutation
       - name: Upload mutation report
         if: always()
