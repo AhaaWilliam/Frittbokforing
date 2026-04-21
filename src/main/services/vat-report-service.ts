@@ -76,10 +76,12 @@ export function getVatReport(
       .all(fiscalYearId) as QuarterFrame[]
 
     if (quarterFrames.length !== 4) {
-      throw new Error(
-        `Expected 4 quarters but got ${quarterFrames.length}. ` +
+      throw {
+        code: 'VALIDATION_ERROR',
+        error:
+          `Expected 4 quarters but got ${quarterFrames.length}. ` +
           `Only 12-month fiscal years are supported in v1.`,
-      )
+      }
     }
 
     // Query 2: VAT data per quarter — parameterized (F20)
