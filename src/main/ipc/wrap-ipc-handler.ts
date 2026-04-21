@@ -89,7 +89,7 @@ export function wrapIpcHandler<TPayload, TResult>(
         return {
           success: false as const,
           code: 'UNEXPECTED_ERROR' as const,
-          error: err.message,
+          error: err.name === 'SqliteError' ? 'Ett databasfel inträffade' : err.message,
         }
       }
 
