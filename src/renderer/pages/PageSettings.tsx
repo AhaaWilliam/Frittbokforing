@@ -376,6 +376,7 @@ export function PageSettings() {
   const [plusgiro, setPlusgiro] = useState('')
   const [website, setWebsite] = useState('')
   const [boardMembers, setBoardMembers] = useState('')
+  const [approvedForFTax, setApprovedForFTax] = useState(true)
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -392,6 +393,7 @@ export function PageSettings() {
       setPlusgiro(company.plusgiro ?? '')
       setWebsite(company.website ?? '')
       setBoardMembers(company.board_members ?? '')
+      setApprovedForFTax(company.approved_for_f_tax !== 0)
     }
   }, [company])
 
@@ -422,6 +424,7 @@ export function PageSettings() {
       plusgiro: plusgiro.trim() || null,
       website: website.trim() || null,
       board_members: boardMembers.trim() || null,
+      approved_for_f_tax: approvedForFTax ? 1 : 0,
     }
 
     try {
@@ -636,6 +639,22 @@ export function PageSettings() {
                 placeholder="T.ex. Anna Andersson (ordförande), Erik Eriksson"
                 className={inputClass}
               />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                id="approved_for_f_tax"
+                type="checkbox"
+                checked={approvedForFTax}
+                onChange={(e) => setApprovedForFTax(e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-primary"
+              />
+              <label
+                htmlFor="approved_for_f_tax"
+                className="text-sm text-foreground"
+              >
+                Godkänd för F-skatt (visas på fakturor)
+              </label>
             </div>
 
             <div className="pt-4">

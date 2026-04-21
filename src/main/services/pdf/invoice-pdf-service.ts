@@ -433,9 +433,10 @@ function renderFooter(doc: PDFKit.PDFDocument, company: Company | null): void {
 
   doc.font(FONT_NORMAL).fontSize(FONT_SIZE_LABEL)
 
-  // Godkänd för F-skatt
-  // TODO: Gör konfigurerbart om systemet utökas till enskilda firmor
-  let footerText = `${company.name} | Org.nr: ${company.org_number} | Godkänd för F-skatt`
+  let footerText = `${company.name} | Org.nr: ${company.org_number}`
+  if (company.approved_for_f_tax) {
+    footerText += ' | Godkänd för F-skatt'
+  }
   if (company.vat_number) {
     footerText += ` | VAT: ${company.vat_number}`
   }
