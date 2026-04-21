@@ -2,6 +2,11 @@ import { app, BrowserWindow, Menu, dialog, session } from 'electron'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
+
+// E1: Explicit log-rotation (5 MB per fil)
+log.transports.file.maxSize = 5 * 1024 * 1024 // 5 MB
+log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}'
+
 import { registerIpcHandlers, runPostUnlockStartup } from './ipc-handlers'
 import { closeDb, openEncryptedDb } from './db'
 import { createPreUpdateBackup } from './pre-update-backup'
