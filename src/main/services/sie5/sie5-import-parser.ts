@@ -38,6 +38,7 @@
  * periodBalances.
  */
 import { DOMParser } from '@xmldom/xmldom'
+import { sie4AmountToOre } from '../sie4/sie4-amount-parser'
 import type {
   SieAccount,
   SieBalance,
@@ -52,13 +53,9 @@ const SIE5_NS = 'http://www.sie.se/sie5'
 
 /** Parse ett decimaltal i kronor (t.ex. "100.00" eller "-50.50") → öre. */
 function sie5AmountToOre(raw: string): number {
-  const s = raw.trim()
-  if (s === '') return 0
-  // Accept "." eller "," som decimalavgränsare
-  const normalized = s.replace(',', '.')
-  const f = parseFloat(normalized)
-  if (!Number.isFinite(f)) return 0
-  return Math.round(f * 100)
+  // Accept "," som decimalavgränsare (normalisera till ".")
+  const normalized = raw.replace(',', '.')
+  return sie4AmountToOre(normalized)
 }
 
 /** Hämta första child-element med givet local-name (ignorera namespace). */

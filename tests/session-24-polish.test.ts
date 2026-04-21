@@ -226,7 +226,7 @@ describe('Session 24 regression', () => {
   it('user_version = 14', () => {
     db = createTestDb()
     const version = db.pragma('user_version', { simple: true }) as number
-    expect(version).toBe(48) // S58: Uppdatera vid nya migrationer
+    expect(version).toBe(49) // S58: Uppdatera vid nya migrationer
   })
 
   it('22 tabeller', () => {
@@ -236,6 +236,6 @@ describe('Session 24 regression', () => {
         "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
       )
       .get() as { count: number }
-    expect(tables.count).toBe(37)
+    expect(tables.count).toBe(39)
   })
 })

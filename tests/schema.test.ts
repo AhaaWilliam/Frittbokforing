@@ -120,11 +120,13 @@ describe('Struktur', () => {
       'search_index_data',
       'search_index_docsize',
       'search_index_idx',
+      'sepa_dd_collections',
+      'sepa_dd_mandates',
       'users',
       'vat_codes',
     ]
     expect(names).toEqual(expected)
-    expect(tables.length).toBe(37)
+    expect(tables.length).toBe(39)
   })
 
   it('2. Minst 85 konton i accounts', () => {
@@ -143,7 +145,7 @@ describe('Struktur', () => {
 
   it('4. user_version = 11', () => {
     const v = db.pragma('user_version', { simple: true })
-    expect(v).toBe(48) // S58: Uppdatera vid nya migrationer
+    expect(v).toBe(49) // S58: Uppdatera vid nya migrationer
   })
 
   it('5. foreign_keys = ON', () => {
