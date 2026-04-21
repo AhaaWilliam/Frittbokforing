@@ -3,7 +3,9 @@ import { addDays } from '../../shared/date-utils'
 import { todayLocalFromNow } from '../utils/now'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { checkChronology } from './chronology-guard'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
+import { createBatchBankFeeJournalEntry } from './payment/batch-bank-fee'
+import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
@@ -39,25 +41,13 @@ function processExpenseLines(
     sort_order?: number
   }[],
 ) {
-  const allVatCodes = db
-    .prepare(
-      "SELECT id, rate_percent, vat_account FROM vat_codes WHERE vat_type = 'incoming'",
-    )
-    .all() as { id: number; rate_percent: number; vat_account: string | null }[]
-  const vatMap = new Map(
-    allVatCodes.map((vc) => [
-      vc.id,
-      { rate: vc.rate_percent, vat_account: vc.vat_account },
-    ]),
-  )
-
+  const vatMap = loadVatCodeMap(db, 'incoming')
   let totalNet = 0
   let totalVat = 0
   const processed = lines.map((line) => {
-    // M92: quantity * unit_price_ore = line_total_ore (heltal-aritmetik, ingen division)
+    // M92/M130: quantity är heltal → enkel multiplikation, ingen M131 behövs
     const lineTotal = line.quantity * line.unit_price_ore
-    const vatInfo = vatMap.get(line.vat_code_id)
-    const vatAmount = vatInfo ? Math.round((lineTotal * vatInfo.rate) / 100) : 0
+    const vatAmount = computeLineVat(vatMap, line.vat_code_id, lineTotal)
     totalNet += lineTotal
     totalVat += vatAmount
     return {
@@ -598,11 +588,7 @@ export function finalizeExpense(
         data: { id, verification_number: nextVer },
       }
     })()
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* rebuild failure non-fatal */
-    }
+    safeRebuildSearchIndex(db)
     return result
   } catch (err: unknown) {
     const e = err as {
@@ -949,11 +935,7 @@ export function payExpense(
 
   try {
     const result = db.transaction(() => _payExpenseTx(db, input))()
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* rebuild failure non-fatal */
-    }
+    safeRebuildSearchIndex(db)
     return {
       success: true,
       data: { expense: result.expense, payment: result.payment },
@@ -1151,64 +1133,14 @@ export function payExpensesBulk(
       // Bank fee journal entry — B-serie for expenses
       let bankFeeJournalEntryId: number | null = null
       if (bankFeeOre > 0) {
-        const nextVer = db
-          .prepare(
-            "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'B'",
-          )
-          .get(paymentYear.id) as { next_ver: number }
-
-        const description = `Bankavgift bulk-betalning ${input.payment_date}`
-
-        const feeCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
-        const entryResult = db
-          .prepare(
-            `INSERT INTO journal_entries (
-              company_id, fiscal_year_id, verification_number, verification_series,
-              journal_date, description, status, source_type, source_reference
-            ) VALUES (
-              ?, ?, ?, 'B',
-              ?, ?, 'draft', 'auto_bank_fee', ?
-            )`,
-          )
-          .run(
-            feeCompanyId,
-            paymentYear.id,
-            nextVer.next_ver,
-            input.payment_date,
-            description,
-            `batch:${batchId}`,
-          )
-        bankFeeJournalEntryId = Number(entryResult.lastInsertRowid)
-
-        const insertLine = db.prepare(
-          `INSERT INTO journal_entry_lines (
-            journal_entry_id, line_number, account_number,
-            debit_ore, credit_ore, description
-          ) VALUES (?, ?, ?, ?, ?, ?)`,
-        )
-        insertLine.run(
-          bankFeeJournalEntryId,
-          1,
-          '6570',
+        bankFeeJournalEntryId = createBatchBankFeeJournalEntry(db, {
+          fiscalYearId: paymentYear.id,
+          series: 'B',
           bankFeeOre,
-          0,
-          description,
-        )
-        insertLine.run(
-          bankFeeJournalEntryId,
-          2,
-          input.account_number,
-          0,
-          bankFeeOre,
-          description,
-        )
-
-        db.prepare(
-          "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
-        ).run(bankFeeJournalEntryId)
-        db.prepare(
-          'UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?',
-        ).run(bankFeeJournalEntryId, batchId)
+          bankAccountNumber: input.account_number,
+          paymentDate: input.payment_date,
+          batchId,
+        })
       }
 
       return {

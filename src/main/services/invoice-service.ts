@@ -2,7 +2,9 @@ import type Database from 'better-sqlite3'
 import { todayLocalFromNow } from '../utils/now'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { checkChronology } from './chronology-guard'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
+import { createBatchBankFeeJournalEntry } from './payment/batch-bank-fee'
+import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
@@ -63,12 +65,7 @@ function processLines(
     account_number?: string | null
   }[],
 ) {
-  // Pre-fetch ALL vat codes to a Map (avoid N+1)
-  const allVatCodes = db
-    .prepare('SELECT id, rate_percent FROM vat_codes')
-    .all() as { id: number; rate_percent: number }[]
-  const vatRateMap = new Map(allVatCodes.map((vc) => [vc.id, vc.rate_percent]))
-
+  const vatCodeMap = loadVatCodeMap(db, 'all')
   let totalAmount = 0
   let vatAmount = 0
   const processed = lines.map((line) => {
@@ -76,10 +73,7 @@ function processLines(
     const lineTotal = Math.round(
       (Math.round(line.quantity * 100) * line.unit_price_ore) / 100,
     )
-    const rate = vatRateMap.get(line.vat_code_id) ?? 0
-    // rate_percent is stored as 25, 12, 6, 0 — convert to decimal
-    const effectiveRate = rate / 100
-    const lineVat = Math.round(lineTotal * effectiveRate)
+    const lineVat = computeLineVat(vatCodeMap, line.vat_code_id, lineTotal)
     totalAmount += lineTotal
     vatAmount += lineVat
     return { ...line, line_total_ore: lineTotal, vat_amount_ore: lineVat }
@@ -684,11 +678,7 @@ export function finalizeDraft(
       return { invoiceNumber, verificationNumber, journalEntryId }
     })()
 
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* rebuild failure non-fatal */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: getDraftInternal(db, id)! }
   } catch (err: unknown) {
     const e = err as {
@@ -895,7 +885,7 @@ export function listInvoices(
       i.net_amount_ore, i.vat_amount_ore, i.total_amount_ore,
       i.status, i.payment_terms, i.journal_entry_id,
       i.credits_invoice_id,
-      (SELECT 1 FROM invoices cn WHERE cn.credits_invoice_id = i.id LIMIT 1) as has_credit_note,
+      EXISTS (SELECT 1 FROM invoices cn WHERE cn.credits_invoice_id = i.id) as has_credit_note,
       c.name as counterparty_name,
       je.verification_number,
       i.paid_amount_ore as total_paid,
@@ -1212,11 +1202,7 @@ export function payInvoice(
 
   try {
     const result = db.transaction(() => _payInvoiceTx(db, input))()
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* rebuild failure non-fatal */
-    }
+    safeRebuildSearchIndex(db)
     // Strip journalEntryId from public contract
     return {
       success: true,
@@ -1429,73 +1415,17 @@ export function payInvoicesBulk(
         updateBatch.run(batchId, s.payment_id)
       }
 
-      // Bank fee journal entry (if > 0 and at least 1 succeeded)
+      // Bank fee journal entry (M114, M126)
       let bankFeeJournalEntryId: number | null = null
       if (bankFeeOre > 0) {
-        // Allocate A-series verification number
-        const nextVer = db
-          .prepare(
-            "SELECT COALESCE(MAX(verification_number), 0) + 1 as next_ver FROM journal_entries WHERE fiscal_year_id = ? AND verification_series = 'A'",
-          )
-          .get(paymentYear.id) as { next_ver: number }
-
-        const description = `Bankavgift bulk-betalning ${input.payment_date}`
-
-        // INSERT as draft with source_type and source_reference already set
-        const feeCompanyId = getCompanyIdForFiscalYear(db, paymentYear.id)
-        const entryResult = db
-          .prepare(
-            `INSERT INTO journal_entries (
-              company_id, fiscal_year_id, verification_number, verification_series,
-              journal_date, description, status, source_type, source_reference
-            ) VALUES (
-              ?, ?, ?, 'A',
-              ?, ?, 'draft', 'auto_bank_fee', ?
-            )`,
-          )
-          .run(
-            feeCompanyId,
-            paymentYear.id,
-            nextVer.next_ver,
-            input.payment_date,
-            description,
-            `batch:${batchId}`,
-          )
-        bankFeeJournalEntryId = Number(entryResult.lastInsertRowid)
-
-        // 2 journal lines: debet 6570, kredit bank account
-        const insertLine = db.prepare(
-          `INSERT INTO journal_entry_lines (
-            journal_entry_id, line_number, account_number,
-            debit_ore, credit_ore, description
-          ) VALUES (?, ?, ?, ?, ?, ?)`,
-        )
-        insertLine.run(
-          bankFeeJournalEntryId,
-          1,
-          '6570',
+        bankFeeJournalEntryId = createBatchBankFeeJournalEntry(db, {
+          fiscalYearId: paymentYear.id,
+          series: 'A',
           bankFeeOre,
-          0,
-          description,
-        )
-        insertLine.run(
-          bankFeeJournalEntryId,
-          2,
-          input.account_number,
-          0,
-          bankFeeOre,
-          description,
-        )
-
-        // Book (triggers validate balance)
-        db.prepare(
-          "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
-        ).run(bankFeeJournalEntryId)
-
-        // Link bank fee to batch
-        db.prepare(
-          'UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?',
-        ).run(bankFeeJournalEntryId, batchId)
+          bankAccountNumber: input.account_number,
+          paymentDate: input.payment_date,
+          batchId,
+        })
       }
 
       return {
