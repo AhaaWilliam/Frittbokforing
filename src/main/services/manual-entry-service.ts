@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3'
 import { validateAccountsActive } from './account-service'
 import { checkChronology } from './chronology-guard'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
 import type {
   ManualEntry,
   ManualEntryWithLines,
@@ -333,18 +333,23 @@ export function finalizeManualEntry(
       if (period && period.is_closed)
         throw { code: 'YEAR_IS_CLOSED' as const, error: 'Perioden är stängd.' }
 
-      // 8. Validate accounts exist
-      for (const line of lines) {
-        const acct = db
-          .prepare(
-            'SELECT account_number FROM accounts WHERE account_number = ?',
-          )
-          .get(line.account_number)
-        if (!acct)
-          throw {
-            code: 'ACCOUNT_NOT_FOUND' as const,
-            error: `Ogiltigt konto: ${line.account_number}`,
-          }
+      // 8. Validate accounts exist (batch, ej N+1)
+      const accountNumbers = Array.from(
+        new Set(lines.map((l) => l.account_number)),
+      )
+      const placeholders = accountNumbers.map(() => '?').join(', ')
+      const existingRows = db
+        .prepare(
+          `SELECT account_number FROM accounts WHERE account_number IN (${placeholders})`,
+        )
+        .all(...accountNumbers) as { account_number: string }[]
+      const existingSet = new Set(existingRows.map((r) => r.account_number))
+      const missing = accountNumbers.find((a) => !existingSet.has(a))
+      if (missing) {
+        throw {
+          code: 'ACCOUNT_NOT_FOUND' as const,
+          error: `Ogiltigt konto: ${missing}`,
+        }
       }
 
       // 8b. Validate all referenced accounts are active
@@ -417,11 +422,7 @@ export function finalizeManualEntry(
       return { journalEntryId, verificationNumber }
     })()
 
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: result }
   } catch (err: unknown) {
     // M100: Strukturerade fel från validation helpers och interna throw-sites

@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3'
 import { escapeLikePattern } from '../../shared/escape-like'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
 import { buildUpdate } from '../utils/build-update'
 import type {
   Product,
@@ -109,11 +109,7 @@ export function createProduct(
       .prepare('SELECT * FROM products WHERE id = ?')
       .get(Number(result.lastInsertRowid)) as Product
 
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: product }
   } catch (err) {
     log.error('[product-service] createProduct failed:', err)
@@ -172,11 +168,7 @@ export function updateProduct(
     const updated = db
       .prepare('SELECT * FROM products WHERE id = ?')
       .get(id) as Product
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: updated }
   } catch (err) {
     log.error('[product-service] updateProduct failed:', err)

@@ -15,7 +15,7 @@ import log from 'electron-log'
 import type { SieParseResult } from './sie4-import-parser'
 import type { IpcResult } from '../../../shared/types'
 import { localDateFromDate } from '../../utils/now'
-import { rebuildSearchIndex } from '../search-service'
+import { safeRebuildSearchIndex } from '../search-service'
 import { createCompany } from '../company-service'
 
 export type ImportStrategy = 'new' | 'merge'
@@ -329,11 +329,7 @@ export function importSie4(
       }
 
       // ═══ 5. FTS5 rebuild (M143) ═══
-      try {
-        rebuildSearchIndex(db)
-      } catch (err) {
-        log.warn('FTS5 rebuild failed in sie4-import-service:', err)
-      }
+      safeRebuildSearchIndex(db)
 
       return {
         success: true as const,

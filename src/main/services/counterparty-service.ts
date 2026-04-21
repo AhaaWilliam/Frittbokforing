@@ -9,7 +9,7 @@ import {
   mapUniqueConstraintError,
   COUNTERPARTY_UNIQUE_MAPPINGS,
 } from './error-helpers'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
 import { buildUpdate } from '../utils/build-update'
 import log from 'electron-log'
 
@@ -151,11 +151,7 @@ export function createCounterparty(
         error: 'Kunde inte hämta skapad kund',
         code: 'UNEXPECTED_ERROR',
       }
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: cp }
   } catch (err: unknown) {
     const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)
@@ -211,11 +207,7 @@ export function updateCounterparty(
     if (built) built.run('id = ?', [id])
 
     const updated = getCounterparty(db, id, _company_id)!
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: updated }
   } catch (err: unknown) {
     const mapped = mapUniqueConstraintError(err, COUNTERPARTY_UNIQUE_MAPPINGS)

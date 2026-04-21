@@ -3,7 +3,7 @@ import log from 'electron-log'
 import { todayLocalFromNow } from '../utils/now'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import type { ErrorCode, IpcResult } from '../../shared/types'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -301,11 +301,7 @@ export function createCorrectionEntry(
       }
     })()
 
-    try {
-      rebuildSearchIndex(db)
-    } catch {
-      /* log only */
-    }
+    safeRebuildSearchIndex(db)
     return { success: true, data: result }
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err) {

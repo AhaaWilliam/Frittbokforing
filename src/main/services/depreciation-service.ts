@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3'
 import log from 'electron-log'
 import { checkChronology } from './chronology-guard'
 import { validateAccountsActive } from './account-service'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
 import { todayLocalFromNow } from '../utils/now'
 import type {
   IpcResult,
@@ -843,11 +843,7 @@ export function disposeFixedAsset(
       `UPDATE depreciation_schedules SET status = 'skipped' WHERE fixed_asset_id = ? AND status = 'pending'`,
     ).run(id)
 
-    try {
-      rebuildSearchIndex(db)
-    } catch (err) {
-      log.warn('FTS5 rebuild failed in depreciation-service (disposeAsset):', err)
-    }
+    safeRebuildSearchIndex(db)
 
     return { success: true as const, data: undefined }
   })()
@@ -990,11 +986,7 @@ export function executeDepreciationPeriod(
         throw new Error(ROLLBACK_SENTINEL)
       }
 
-      try {
-        rebuildSearchIndex(db)
-      } catch (err) {
-        log.warn('FTS5 rebuild failed in depreciation-service (executeBatch):', err)
-      }
+      safeRebuildSearchIndex(db)
     })()
   } catch (err: unknown) {
     if (err instanceof Error && err.message === ROLLBACK_SENTINEL) {

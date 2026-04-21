@@ -1860,6 +1860,14 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
     sql: '-- Migration 052: expense_lines unit_price_ore >= 0 CHECK (se programmatic)',
     programmatic: migration052Programmatic,
   },
+  // Sprint Natt: accrual_entries UNIQUE-constraint per (schedule, period, entry_type)
+  // Förhindrar dubbel-exekvering av samma periodisering.
+  // Unique-index, inte table-recreate — idempotent även om befintliga duplicates finns
+  // (pre-flight-query fångar dem).
+  {
+    sql: '-- Migration 053: accrual_entries unique per (schedule, period, type) (se programmatic)',
+    programmatic: migration053Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -4139,5 +4147,46 @@ function migration052Programmatic(
     throw new Error(
       'Migration 052 failed: expense_lines saknar CHECK (unit_price_ore >= 0)',
     )
+  }
+}
+
+function migration053Programmatic(
+  db: import('better-sqlite3').Database,
+): void {
+  // Pre-flight: inga befintliga dubletter får finnas
+  const dupes = db
+    .prepare(
+      `SELECT accrual_schedule_id, period_number, entry_type, COUNT(*) as cnt
+       FROM accrual_entries
+       GROUP BY accrual_schedule_id, period_number, entry_type
+       HAVING cnt > 1`,
+    )
+    .all() as Array<{
+    accrual_schedule_id: number
+    period_number: number
+    entry_type: string
+    cnt: number
+  }>
+  if (dupes.length > 0) {
+    throw new Error(
+      `Migration 053 failed: ${dupes.length} dubbletter i accrual_entries. ` +
+        `Första: schedule=${dupes[0]?.accrual_schedule_id} period=${dupes[0]?.period_number} ` +
+        `type=${dupes[0]?.entry_type} cnt=${dupes[0]?.cnt}. Manuell rensning krävs.`,
+    )
+  }
+
+  db.exec(`
+    CREATE UNIQUE INDEX idx_accrual_entries_unique
+      ON accrual_entries (accrual_schedule_id, period_number, entry_type);
+  `)
+
+  // Verify
+  const idx = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accrual_entries_unique'",
+    )
+    .get()
+  if (!idx) {
+    throw new Error('Migration 053 failed: idx_accrual_entries_unique skapades inte')
   }
 }

@@ -3,7 +3,11 @@ import log from 'electron-log'
 import { checkChronology } from './chronology-guard'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { validateAccountsActive } from './account-service'
-import { rebuildSearchIndex } from './search-service'
+import { safeRebuildSearchIndex } from './search-service'
+import {
+  mapUniqueConstraintError,
+  ACCRUAL_UNIQUE_MAPPINGS,
+} from './error-helpers'
 import type {
   IpcResult,
   CreateAccrualScheduleInput,
@@ -340,15 +344,13 @@ export function executeAccrualForPeriod(
       ).run(scheduleId, journalEntryId, periodNumber, amountOre)
 
       // 12. FTS5 rebuild (M143)
-      try {
-        rebuildSearchIndex(db)
-      } catch (err) {
-        log.warn('FTS5 rebuild failed in accrual-service:', err)
-      }
+      safeRebuildSearchIndex(db)
 
       return { success: true as const, data: { journalEntryId } }
     })()
   } catch (err: unknown) {
+    const mapped = mapUniqueConstraintError(err, ACCRUAL_UNIQUE_MAPPINGS)
+    if (mapped) return { success: false, ...mapped }
     if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
       const e = err as { code: string; error: string; field?: string }
       return {
