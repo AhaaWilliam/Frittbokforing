@@ -3,7 +3,7 @@
 // Return shape is always `IpcResult<T>` (M144). AuthError → { success:false,
 // code, error, retryAfterMs? }. Unknown errors → UNEXPECTED_ERROR.
 
-import { ipcMain } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import { z } from 'zod'
 import log from 'electron-log'
 import type { IpcResult } from '../../shared/types'
@@ -171,6 +171,26 @@ export function registerAuthIpcHandlers(
       await hooks.onUnlock(userId)
     } catch (err) {
       keyStore.lock()
+      // B3: Visa informativ dialog vid migrations-krasch istället för tyst
+      // auth-fail. Utan dialogen ser användaren bara att inloggningen misslyckas
+      // utan förklaring, och kan inte avgöra om det är fel lösenord eller
+      // en teknisk bugg.
+      const msg = err instanceof Error ? err.message : String(err)
+      const isMigrationError =
+        msg.includes('Migration') || msg.includes('migration')
+      if (isMigrationError) {
+        log.error('[auth] Migration failed during unlock:', msg)
+        dialog.showErrorBox(
+          'Databasuppgradering misslyckades',
+          `Programmet kunde inte uppgradera databasen och kan inte logga in.\n\n` +
+            `Fel: ${msg}\n\n` +
+            `Återhämtning:\n` +
+            `1. Stäng programmet\n` +
+            `2. Återställ en säkerhetskopia via Finder (filen ligger i ` +
+            `Dokument/Fritt Bokföring/)\n` +
+            `3. Kontakta support om problemet kvarstår`,
+        )
+      }
       throw err
     }
   }
