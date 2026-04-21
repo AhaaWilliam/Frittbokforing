@@ -198,9 +198,7 @@ test.describe('Kundfakturor', () => {
       await expect(ctx.window.getByTestId('page-income')).toBeVisible({
         timeout: 10_000,
       })
-      // Ge refresh tid att köra
-      await ctx.window.waitForTimeout(1500)
-
+      // page-income visible confirms navigation; IPC via __testApi reads DB directly
       const invoices = await getInvoices(ctx.window, fiscalYearId)
       expect(invoices[0].status).toBe('overdue')
     } finally {

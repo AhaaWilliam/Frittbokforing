@@ -41,7 +41,10 @@ test.describe('Export', () => {
         timeout: 10_000,
       })
       await ctx.window.getByText('Exportera SIE4').click()
-      await ctx.window.waitForTimeout(2000)
+      // Wait for PageExport feedback text confirming file was saved
+      await expect(ctx.window.getByText(/✓ Exporterad till/)).toBeVisible({
+        timeout: 15_000,
+      })
 
       const files = fs
         .readdirSync(ctx.downloadDir)
@@ -89,7 +92,10 @@ test.describe('Export', () => {
         timeout: 10_000,
       })
       await ctx.window.getByText('Exportera SIE5').click()
-      await ctx.window.waitForTimeout(2000)
+      // Wait for PageExport feedback text confirming file was saved
+      await expect(ctx.window.getByText(/✓ Exporterad till/)).toBeVisible({
+        timeout: 15_000,
+      })
 
       const files = fs
         .readdirSync(ctx.downloadDir)

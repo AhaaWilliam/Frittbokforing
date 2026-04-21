@@ -108,7 +108,10 @@ test.describe('E2E-infrastruktur', () => {
         },
       )
       await composeEmptyK2(ctx.window)
-      await ctx.window.waitForTimeout(3000)
+      // Wait for app-ready after reload inside composeEmptyK2
+      await expect(ctx.window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
       expect(violations).toEqual([])
     } finally {
       await ctx.cleanup()

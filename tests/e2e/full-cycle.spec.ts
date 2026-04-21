@@ -104,8 +104,8 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
       .filter({ hasText: /Registrera/i })
     await submitPayBtn.click()
 
-    // Wait for toast/success
-    await window.waitForTimeout(1000)
+    // Wait for payment dialog to close (confirms IPC round-trip complete)
+    await expect(payDialog).not.toBeVisible({ timeout: 8_000 })
 
     // ── 4. UI: skapa manuell C-entry ───────────────────────────────
     await window.evaluate(() => {
@@ -134,7 +134,8 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     // Add second line
     await window.getByText('+ Lägg till rad').click()
-    await window.waitForTimeout(200)
+    // Wait for second account input to appear before filling it
+    await expect(window.locator('input[placeholder="1910"]').nth(1)).toBeVisible()
 
     // Line 2: account 1930, credit 500
     const accountInputs2 = window.locator('input[placeholder="1910"]')
@@ -149,8 +150,10 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     await expect(bookBtn).toBeEnabled({ timeout: 3_000 })
     await bookBtn.click()
 
-    // Wait for confirmation/success
-    await window.waitForTimeout(1000)
+    // Wait for manual entry form to disappear (onSave → navigation)
+    await expect(window.getByText('Ny bokföringsorder')).not.toBeVisible({
+      timeout: 8_000,
+    })
 
     // ── 5. Verify verifications via __testApi ──────────────────────
     const { entries } = await getJournalEntries(window, fyId)
@@ -174,8 +177,10 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
 
     await window.getByText('Exportera SIE4').click()
 
-    // Wait for export success (file saved via E2E bypass to downloadDir)
-    await window.waitForTimeout(2000)
+    // Wait for export success feedback text (set by PageExport on onSuccess)
+    await expect(window.getByText(/✓ Exporterad till/)).toBeVisible({
+      timeout: 15_000,
+    })
 
     // ── 7. Read and verify SIE4 file ───────────────────────────────
     const files = fs.readdirSync(downloadDir)

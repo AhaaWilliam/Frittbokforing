@@ -36,8 +36,12 @@ test.describe('Rapporter', () => {
         timeout: 10_000,
       })
 
-      // RR och BR renderas samtidigt (tabs) — båda testids kan finnas
-      await ctx.window.waitForTimeout(1500)
+      // Wait for report data: arets-resultat-value gets data-raw-ore when loaded
+      await ctx.window
+        .locator('[data-testid="arets-resultat-value"]')
+        .first()
+        .waitFor({ state: 'visible', timeout: 10_000 })
+        .catch(() => {})
 
       const rrValue = await ctx.window
         .locator('[data-testid="arets-resultat-value"]')

@@ -66,8 +66,7 @@ test.describe('Onboarding', () => {
       // Klicka Nästa — borde antingen förhindras eller visa fel
       await ctx.window.getByText('Nästa').click()
 
-      // Förblir på wizard (inte flyttar till app-ready)
-      await ctx.window.waitForTimeout(500)
+      // Förblir på wizard (inte flyttar till app-ready) — expect har inbyggd timeout
       await expect(ctx.window.getByTestId('wizard')).toBeVisible()
       // Vi har inte gått till app-ready
       const appReady = await ctx.window.getByTestId('app-ready').count()
