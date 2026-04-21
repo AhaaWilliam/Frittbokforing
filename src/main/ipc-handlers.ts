@@ -99,6 +99,7 @@ import {
   toggleAccountActive,
 } from './services/account-service'
 import { createBackup, restoreBackup } from './services/backup-service'
+import { vacuumDatabase } from './services/maintenance-service'
 import { getAccountStatement } from './services/account-statement-service'
 import {
   createCorrectionEntry,
@@ -663,6 +664,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('backup:restore-dialog', async () => {
     return restoreBackup(db)
   })
+
+  ipcMain.handle(
+    'maintenance:vacuum',
+    wrapIpcHandler(null, () => vacuumDatabase(db)),
+  )
 
   // === Invoices ===
   ipcMain.handle('invoice:save-draft', (_event, input: unknown) =>
