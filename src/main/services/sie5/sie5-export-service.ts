@@ -22,6 +22,7 @@ import {
   getExpensePayments,
 } from './sie5-data-queries'
 import type { PaymentInfo } from './sie5-data-queries'
+import { isBalanceSheetAccount } from '../../../shared/account-ranges'
 
 const SIE5_NS = 'http://www.sie.se/sie5'
 const XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -36,10 +37,6 @@ interface AccountPeriodBalance {
   month: string // YYYY-MM
   openingBalance: number // öre
   closingBalance: number // öre
-}
-
-function isBalanceSheetAccount(accountNumber: string): boolean {
-  return accountNumber.startsWith('1') || accountNumber.startsWith('2')
 }
 
 function computePeriodBalances(

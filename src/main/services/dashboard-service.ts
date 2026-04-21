@@ -1,6 +1,12 @@
 import type Database from 'better-sqlite3'
 import type { DashboardSummary } from '../../shared/types'
 import { calculateResultBreakdown } from './result-service'
+import {
+  VAT_OUTGOING_ACCOUNTS,
+  VAT_IN_ACCOUNT,
+} from '../../shared/vat-accounts'
+
+const VAT_OUT_PLACEHOLDERS = VAT_OUTGOING_ACCOUNTS.map(() => '?').join(', ')
 
 export function getDashboardSummary(
   db: Database.Database,
@@ -9,19 +15,18 @@ export function getDashboardSummary(
   const run = db.transaction((): DashboardSummary => {
     const breakdown = calculateResultBreakdown(db, fiscalYearId)
 
-    // VAT: still uses direct SQL (VAT accounts are not part of income statement config)
     const vatRow = db
       .prepare(
         `
       SELECT
         COALESCE(SUM(CASE
-          WHEN jel.account_number IN ('2610', '2620', '2630')
+          WHEN jel.account_number IN (${VAT_OUT_PLACEHOLDERS})
           THEN jel.credit_ore
           ELSE 0
         END), 0) AS vat_outgoing,
 
         COALESCE(SUM(CASE
-          WHEN jel.account_number = '2640'
+          WHEN jel.account_number = ?
           THEN jel.debit_ore
           ELSE 0
         END), 0) AS vat_incoming
@@ -32,7 +37,7 @@ export function getDashboardSummary(
         AND je.status = 'booked'
     `,
       )
-      .get(fiscalYearId) as {
+      .get(...VAT_OUTGOING_ACCOUNTS, VAT_IN_ACCOUNT, fiscalYearId) as {
       vat_outgoing: number
       vat_incoming: number
     }

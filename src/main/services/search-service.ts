@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import log from 'electron-log'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { escapeFtsQuery } from '../../shared/escape-fts'
 import type { IpcResult } from '../../shared/types'
@@ -21,14 +22,14 @@ const STATUS_LABELS: Record<string, string> = {
   credited: 'krediterad',
 }
 
+import { formatOreToKr } from '../../shared/format-currency'
+
 function formatOreKr(ore: number): string {
-  const kr = Math.abs(ore) / 100
-  return (
-    new Intl.NumberFormat('sv-SE', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(kr) + ' kr'
-  )
+  return formatOreToKr(ore, {
+    absolute: true,
+    suffix: true,
+    minFractionDigits: 0,
+  })
 }
 
 const ACCOUNT_CLASS_NAMES: Record<number, string> = {
@@ -44,6 +45,20 @@ const ACCOUNT_CLASS_NAMES: Record<number, string> = {
 }
 
 // ── FTS5 rebuild ─────────────────────────────────────────────────────
+
+/**
+ * M143-wrapper: rebuild är sekundär i förhållande till redan committad data.
+ * Failar vi här faller sökning tillbaka till LIKE (D4). Log.warn, kasta aldrig.
+ *
+ * Callsites i services ska använda DENNA helper, inte rebuildSearchIndex direkt.
+ */
+export function safeRebuildSearchIndex(db: Database.Database): void {
+  try {
+    rebuildSearchIndex(db)
+  } catch (err) {
+    log.warn('[search] rebuildSearchIndex failed (non-fatal, M143):', err)
+  }
+}
 
 export function rebuildSearchIndex(db: Database.Database): void {
   db.transaction(() => {

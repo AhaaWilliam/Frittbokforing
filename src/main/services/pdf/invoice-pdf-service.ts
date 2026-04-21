@@ -53,15 +53,11 @@ export async function generateInvoicePdf(
   return renderPdf({ company, invoice, vatSummary, totalAmount, ocr })
 }
 
+import { formatOreToKr } from '../../../shared/format-currency'
+
 // --- Formatering ---
 function formatKronor(ore: number): string {
-  const kr = ore / 100
-  return kr
-    .toLocaleString('sv-SE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-    .replace(/\s/g, '\u00A0') // Non-breaking space som tusentalsavskiljare
+  return formatOreToKr(ore, { nbspGroup: true })
 }
 
 // --- VAT-summering ---

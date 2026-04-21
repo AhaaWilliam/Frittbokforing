@@ -15,6 +15,7 @@ import {
   getBookedJournalEntries,
   getAllJournalEntryLines,
 } from '../export/export-data-queries'
+import { isBalanceSheetAccount } from '../../../shared/account-ranges'
 
 export interface Sie4ExportOptions {
   fiscalYearId: number
@@ -38,9 +39,6 @@ function quoteField(text: string): string {
   return `"${escapeText(text)}"`
 }
 
-function isBalanceSheetAccount(accountNumber: string): boolean {
-  return accountNumber.startsWith('1') || accountNumber.startsWith('2')
-}
 
 export function exportSie4(
   db: Database.Database,

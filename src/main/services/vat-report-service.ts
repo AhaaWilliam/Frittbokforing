@@ -1,12 +1,11 @@
 import type Database from 'better-sqlite3'
 import type { VatQuarterReport, VatReport } from '../../shared/types'
-
-// Momskonton — hårdkodade i v1
-// Tech debt: dynamisk mappning via vat_codes krävs för EU-moms (2614/2615)
-const VAT_OUT_25_ACCOUNT = '2610'
-const VAT_OUT_12_ACCOUNT = '2620'
-const VAT_OUT_6_ACCOUNT = '2630'
-const VAT_IN_ACCOUNT = '2640'
+import {
+  VAT_OUT_25_ACCOUNT,
+  VAT_OUT_12_ACCOUNT,
+  VAT_OUT_6_ACCOUNT,
+  VAT_IN_ACCOUNT,
+} from '../../shared/vat-accounts'
 
 const SWEDISH_MONTHS = [
   'jan',

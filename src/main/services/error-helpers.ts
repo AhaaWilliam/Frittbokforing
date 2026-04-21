@@ -10,6 +10,40 @@ import type { ErrorCode } from '../../shared/types'
  *
  * Compound-index-meddelanden listar alla kolumner kommaseparerade.
  * Matchning sker via substring för att vara robust mot framtida SQLite-versioner.
+ *
+ * ── Hur nya mappningar läggs till ────────────────────────────────────
+ *
+ * 1. Hitta UNIQUE-index-definitionen i migrations.ts. Notera tabellnamn
+ *    och alla kolumnnamn som ingår (både single och compound).
+ *
+ * 2. Skapa en ny `MAPPINGS`-konstant nedanför:
+ *    ```
+ *    export const MY_TABLE_UNIQUE_MAPPINGS: UniqueConstraintMapping[] = [
+ *      {
+ *        messageContains: ['my_table', 'my_column'],  // ALLA måste matcha
+ *        code: 'MY_NEW_ERROR_CODE',                   // lägg till i ErrorCode-typen
+ *        field: 'my_column',                          // för useEntityForm-fältfel
+ *        error: 'Svenskt felmeddelande.',
+ *      },
+ *    ]
+ *    ```
+ *
+ * 3. Compound-index: lista samtliga kolumner i `messageContains`. Ordning
+ *    spelar ingen roll (substring-match), men alla måste vara med.
+ *    Exempel: `['counterparties', 'company_id', 'org_number']` för
+ *    `UNIQUE(company_id, org_number)` — men det räcker ofta med
+ *    `['counterparties', 'org_number']` om `org_number` bara finns
+ *    i det ena UNIQUE-indexet på tabellen.
+ *
+ * 4. Anropa från service-catch-block som första steg:
+ *    ```
+ *    const mapped = mapUniqueConstraintError(err, MY_TABLE_UNIQUE_MAPPINGS)
+ *    if (mapped) return { success: false, ...mapped }
+ *    ```
+ *
+ * 5. Lägg till regressions-test som triggar UNIQUE och verifierar att
+ *    rätt `code` returneras (se `tests/s46-unique-mappings.test.ts` för
+ *    mönster).
  */
 
 export interface UniqueConstraintMapping {
@@ -81,5 +115,14 @@ export const EXPENSE_UNIQUE_MAPPINGS: UniqueConstraintMapping[] = [
     field: 'supplier_invoice_number',
     error:
       'En kostnad med detta leverantörsfakturanummer finns redan för denna leverantör.',
+  },
+]
+
+export const ACCRUAL_UNIQUE_MAPPINGS: UniqueConstraintMapping[] = [
+  {
+    messageContains: ['accrual_entries', 'accrual_schedule_id'],
+    code: 'ACCRUAL_ALREADY_EXECUTED',
+    error:
+      'Periodiseringen har redan exekverats för denna period. Ingen dubblett skapades.',
   },
 ]

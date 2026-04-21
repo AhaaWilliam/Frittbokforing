@@ -57,9 +57,7 @@ function isLastDayOfMonth(dateStr: string): boolean {
   return d === lastDay
 }
 
-function oreToKr(ore: number): number {
-  return ore / 100
-}
+import { oreToKr } from '../../../shared/format-currency'
 
 function isBalanceSheet(accountNumber: string): boolean {
   return accountNumber.startsWith('1') || accountNumber.startsWith('2')
