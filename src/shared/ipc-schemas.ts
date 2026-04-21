@@ -429,7 +429,7 @@ export const PayInvoiceInputSchema = z
     invoice_id: z.number().int().positive(),
     amount_ore: z.number().int().positive(),
     payment_date: z.string().min(10).max(10),
-    payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
+    payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant', 'bank']),
     account_number: z.string().min(4).max(4),
     bank_fee_ore: z.number().int().min(0).optional(),
   })
@@ -517,7 +517,7 @@ export const PayExpenseInputSchema = z
     expense_id: z.number().int().positive(),
     amount_ore: z.number().int().positive(),
     payment_date: z.string().min(10).max(10),
-    payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant']),
+    payment_method: z.enum(['bankgiro', 'swish', 'kort', 'kontant', 'bank']),
     account_number: z.string().min(4).max(4),
     bank_fee_ore: z.number().int().min(0).optional(),
   })
