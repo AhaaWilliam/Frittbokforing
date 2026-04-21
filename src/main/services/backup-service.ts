@@ -4,7 +4,7 @@ import type Database from 'better-sqlite3'
 import fs from 'fs'
 import { getE2EFilePath } from '../utils/e2e-helpers'
 import { todayLocalFromNow, localTimestampFromNow } from '../utils/now'
-import { migrations } from '../migrations'
+import { migrations, NEEDS_FK_OFF } from '../migrations'
 import { closeDb, getDbPath } from '../db'
 import log from 'electron-log/main'
 
@@ -101,7 +101,7 @@ function runMigrationsOnFile(filePath: string): void {
 
     for (let i = currentVersion; i < migrations.length; i++) {
       const migration = migrations[i]
-      const needsFkOff = i === 20 || i === 21 || i === 22
+      const needsFkOff = NEEDS_FK_OFF.has(i)
       if (needsFkOff) tempDb.pragma('foreign_keys = OFF')
 
       tempDb.exec('BEGIN EXCLUSIVE')

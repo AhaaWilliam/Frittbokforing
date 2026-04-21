@@ -596,6 +596,34 @@ export interface MigrationEntry {
   programmatic?: (db: import('better-sqlite3').Database) => void
 }
 
+/**
+ * Migrations som kräver PRAGMA foreign_keys = OFF utanför transaktionen (M122).
+ * Index = 0-baserat (migration N har index N-1).
+ *
+ * Index 20 = migration 021: journal_entries CHECK-rebuild + payment_batches.
+ * Index 21 = migration 022: invoices + payment tables öre-suffix rename.
+ * Index 22 = migration 023: payment_batches FK on account_number.
+ * Index 37 = migration 038: journal_entries verification_series CHECK + fixed_assets.
+ * Index 42 = migration 043: bank_statements source_format CHECK.
+ * Index 43 = migration 044: bank_statements source_format CHECK (mt940/bgmax).
+ * Index 44 = migration 045: MC3 stamdata-scoping.
+ * Index 46 = migration 047: expenses table-recreate.
+ * Index 48 = migration 049: SEPA DD — payment_batches CHECK.
+ *
+ * Importeras av db.ts och backup-service.ts för att garantera synkronisering (C1).
+ */
+export const NEEDS_FK_OFF = new Set<number>([
+  20, // migration 021
+  21, // migration 022
+  22, // migration 023
+  37, // migration 038
+  42, // migration 043
+  43, // migration 044
+  44, // migration 045
+  46, // migration 047
+  48, // migration 049
+])
+
 function getTableColumns(
   db: import('better-sqlite3').Database,
   table: string,

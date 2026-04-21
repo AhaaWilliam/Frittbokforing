@@ -3,7 +3,7 @@ import type BetterSqlite3 from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
 import fs from 'fs'
-import { migrations } from './migrations'
+import { migrations, NEEDS_FK_OFF } from './migrations'
 import { registerCustomFunctions } from './db-functions'
 import { rebuildSearchIndex } from './services/search-service'
 
@@ -151,25 +151,8 @@ function runMigrations(database: Db): void {
 
     // Table-recreate migrations on tables with inbound FK (M122) require
     // PRAGMA foreign_keys = OFF outside the transaction (SQLite limitation).
-    // Migration 021 (index 20): journal_entries CHECK-rebuild (auto_bank_fee) + payment_batches.
-    // Migration 022 (index 21): invoices + payment tables öre-suffix rename.
-    // Migration 023 (index 22): payment_batches FK on account_number.
-    // Migration 038 (index 37): journal_entries CHECK-rebuild (verification_series) + fixed_assets + depreciation_schedules.
-    // Migration 043 (index 42): bank_statements.source_format CHECK-utökning ('camt.053','camt.054').
-    // Migration 044 (index 43): bank_statements.source_format CHECK-utökning ('mt940','bgmax') T3.d.
-    // Migration 045 (index 44): MC3 stamdata-scoping — counterparties/products/price_lists.
-    // Migration 047 (index 46): F-TT-003 expenses table-recreate för CHECKs.
-    // Migration 049 (index 48): Sprint U1 SEPA DD — payment_batches CHECK-utökning.
-    const needsFkOff =
-      i === 20 ||
-      i === 21 ||
-      i === 22 ||
-      i === 37 ||
-      i === 42 ||
-      i === 43 ||
-      i === 44 ||
-      i === 46 ||
-      i === 48
+    // Listan är delad med backup-service.ts via NEEDS_FK_OFF (C1).
+    const needsFkOff = NEEDS_FK_OFF.has(i)
     if (needsFkOff) database.pragma('foreign_keys = OFF')
 
     // BEGIN EXCLUSIVE förhindrar korruption vid krasch
