@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import log from 'electron-log'
 import { checkChronology } from './chronology-guard'
 import { getCompanyIdForFiscalYear } from '../utils/active-context'
 import { validateAccountsActive } from './account-service'
@@ -340,8 +341,8 @@ export function executeAccrualForPeriod(
       // 12. FTS5 rebuild (M143)
       try {
         rebuildSearchIndex(db)
-      } catch {
-        // Non-blocking
+      } catch (err) {
+        log.warn('FTS5 rebuild failed in accrual-service:', err)
       }
 
       return { success: true as const, data: { journalEntryId } }

@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3'
+import log from 'electron-log'
 import { checkChronology } from './chronology-guard'
 import { validateAccountsActive } from './account-service'
 import { rebuildSearchIndex } from './search-service'
@@ -844,8 +845,8 @@ export function disposeFixedAsset(
 
     try {
       rebuildSearchIndex(db)
-    } catch {
-      // M143: rebuild failure får inte bryta bokföringsoperation
+    } catch (err) {
+      log.warn('FTS5 rebuild failed in depreciation-service (disposeAsset):', err)
     }
 
     return { success: true as const, data: undefined }
@@ -994,8 +995,8 @@ export function executeDepreciationPeriod(
 
       try {
         rebuildSearchIndex(db)
-      } catch {
-        // non-blocking (M143)
+      } catch (err) {
+        log.warn('FTS5 rebuild failed in depreciation-service (executeBatch):', err)
       }
     })()
   } catch (err: unknown) {

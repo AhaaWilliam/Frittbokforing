@@ -11,6 +11,7 @@
  * status='booked' via direct INSERT (bypasses period-check trigger — M138-style exempt for historical data)
  */
 import type Database from 'better-sqlite3'
+import log from 'electron-log'
 import type { SieParseResult } from './sie4-import-parser'
 import type { IpcResult } from '../../../shared/types'
 import { localDateFromDate } from '../../utils/now'
@@ -330,8 +331,8 @@ export function importSie4(
       // ═══ 5. FTS5 rebuild (M143) ═══
       try {
         rebuildSearchIndex(db)
-      } catch {
-        // Non-blocking
+      } catch (err) {
+        log.warn('FTS5 rebuild failed in sie4-import-service:', err)
       }
 
       return {
