@@ -149,12 +149,13 @@ export async function restoreBackup(
   const win =
     BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
 
-  // E2E dialog bypass
-  const e2ePath = getE2EFilePath('', 'open')
+  // E2E dialog bypass — use E2E_MOCK_OPEN_FILE for arbitrary-filename open
+  // dialogs (same pattern as SIE4 import, M147).
+  const e2eOpenPath = getE2EMockOpenFile()
   let selectedPath: string | null = null
 
-  if (e2ePath) {
-    selectedPath = e2ePath
+  if (e2eOpenPath) {
+    selectedPath = e2eOpenPath
   } else {
     const result = await dialog.showOpenDialog(win!, {
       title: 'Välj säkerhetskopia att återställa',
