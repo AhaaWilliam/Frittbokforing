@@ -21,8 +21,10 @@ const REPO_ROOT  = path.resolve(__dirname, "..");
 
 const NOTION_TOKEN   = process.env.NOTION_TOKEN;
 const DATABASE_ID    = process.env.NOTION_DB_ID;
+const RUN_LOG_DB_ID  = process.env.NOTION_RUN_LOG_DB_ID || "";            // Valfri — loggning skippas om tom
 const POLL_INTERVAL  = parseInt(process.env.POLL_INTERVAL_MS || "300000"); // 5 min
 const MAX_ITERATIONS = parseInt(process.env.MAX_ITERATIONS || "0");        // 0 = oändligt
+const AGENT_MODEL    = process.env.AGENT_MODEL || "default";
 
 const RUN_AGENT      = path.join(REPO_ROOT, "scripts", "run-agent.sh");
 const LOCK_FILE      = path.join(REPO_ROOT, ".agent.lock");
@@ -116,6 +118,61 @@ function getDescription(page) {
   return page.properties?.Beskrivning?.rich_text?.[0]?.plain_text || "";
 }
 
+async function createRunLog(taskPageId, taskTitle) {
+  if (!RUN_LOG_DB_ID) return null;
+  const startedAt = new Date().toISOString();
+  try {
+    const page = await notion.pages.create({
+      parent: { database_id: RUN_LOG_DB_ID },
+      properties: {
+        Namn:      { title: [{ text: { content: `Körning — ${startedAt.slice(0, 16)} — ${taskTitle}`.slice(0, 200) } }] },
+        Task:      { relation: [{ id: taskPageId }] },
+        Startad:   { date: { start: startedAt } },
+        Status:    { select: { name: "Pågår" } },
+        Modell:    { rich_text: [{ text: { content: AGENT_MODEL } }] },
+      },
+    });
+    return page.id;
+  } catch (err) {
+    console.warn(`   ⚠️  Kunde inte skapa run-log-sida: ${err.message}`);
+    return null;
+  }
+}
+
+async function finalizeRunLog(runLogPageId, { exitCode, commits, logPath }) {
+  if (!runLogPageId) return;
+  const endedAt = new Date().toISOString();
+  const status = exitCode === 0 && commits.length > 0 ? "Lyckades" : "Misslyckades";
+  const shaText = commits.map((c) => c.split(" ")[0]).join(", ").slice(0, 1900);
+  try {
+    await notion.pages.update({
+      page_id: runLogPageId,
+      properties: {
+        Avslutad:        { date: { start: endedAt } },
+        "Exit code":     { number: exitCode },
+        "Antal commits": { number: commits.length },
+        "Commit SHAs":   { rich_text: [{ text: { content: shaText || "(inga)" } }] },
+        "Logg-sökväg":   { rich_text: [{ text: { content: logPath || "" } }] },
+        Status:          { select: { name: status } },
+      },
+    });
+  } catch (err) {
+    console.warn(`   ⚠️  Kunde inte uppdatera run-log-sida: ${err.message}`);
+  }
+}
+
+function findLatestAgentLog() {
+  try {
+    const logDir = path.join(REPO_ROOT, ".agent-logs");
+    if (!existsSync(logDir)) return "";
+    const files = execSync(`ls -t "${logDir}" | head -1`, { cwd: REPO_ROOT })
+      .toString().trim();
+    return files ? path.join(logDir, files) : "";
+  } catch {
+    return "";
+  }
+}
+
 async function appendCommitsAsComment(pageId, commits) {
   if (commits.length === 0) return;
   let text = "Agent-commits:\n" + commits.map((c) => `• ${c}`).join("\n");
@@ -156,15 +213,18 @@ async function poll() {
 
   // Markera som pågående INNAN körning (förhindrar dubbelstart)
   await setStatus(page.id, STATUS_RUNNING);
+  const runLogId = await createRunLog(page.id, title);
 
   const startSha = getCurrentGitSha();
   const exitCode = await runAgent(fullTask);
   const commits = getNewCommits(startSha);
+  const logPath = findLatestAgentLog();
 
   // Uppdatera Notion baserat på resultat
   const finalStatus = exitCode === 0 && commits.length > 0 ? STATUS_DONE : STATUS_FAILED;
   await setStatus(page.id, finalStatus);
   await appendCommitsAsComment(page.id, commits);
+  await finalizeRunLog(runLogId, { exitCode, commits, logPath });
 
   console.log(`   ${exitCode === 0 ? "✅" : "❌"} Agent klar (exit ${exitCode}, ${commits.length} commits)`);
   console.log(`   📝 Notion → "${finalStatus}"`);
@@ -175,7 +235,8 @@ async function poll() {
 console.log("═══════════════════════════════════════════");
 console.log("  Fritt Bokföring — Notion → Claude Code");
 console.log(`  Repo:         ${REPO_ROOT}`);
-console.log(`  Databas:      ${DATABASE_ID}`);
+console.log(`  Task-databas:  ${DATABASE_ID}`);
+console.log(`  Logg-databas:  ${RUN_LOG_DB_ID || "(avstängd — sätt NOTION_RUN_LOG_DB_ID)"}`);
 console.log(`  Poll-interval: ${POLL_INTERVAL / 1000}s`);
 console.log("═══════════════════════════════════════════\n");
 
