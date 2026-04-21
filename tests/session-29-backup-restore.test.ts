@@ -179,6 +179,40 @@ describe('Backup migration upgrade', () => {
   })
 })
 
+describe('Restore path — vault-aware (Sprint T regression)', () => {
+  it('db.name returns the file path used to open the DB (invariant restoreBackup relies on)', () => {
+    // restoreBackup uses db.name instead of getDbPath() after Sprint T.
+    // This test documents the BetterSqlite3 invariant the fix depends on:
+    // db.name === the path passed to new Database(path).
+    const vaultStylePath = path.join(
+      tempDir,
+      'auth',
+      'users',
+      'some-uuid',
+      'app.db',
+    )
+    fs.mkdirSync(path.dirname(vaultStylePath), { recursive: true })
+    const db = new Database(vaultStylePath)
+    expect(db.name).toBe(vaultStylePath)
+    db.close()
+  })
+
+  it('db.name differs from legacy FRITT_DB_PATH when using vault-style path', () => {
+    const legacyPath = path.join(tempDir, 'data.db')
+    const vaultPath = path.join(tempDir, 'auth', 'users', 'abc', 'app.db')
+    fs.mkdirSync(path.dirname(vaultPath), { recursive: true })
+
+    const legacyDb = new Database(legacyPath)
+    const vaultDb = new Database(vaultPath)
+
+    expect(vaultDb.name).toBe(vaultPath)
+    expect(vaultDb.name).not.toBe(legacyDb.name)
+
+    legacyDb.close()
+    vaultDb.close()
+  })
+})
+
 describe('Pre-restore backup creation', () => {
   it('fs.copyFileSync creates exact copy', () => {
     const originalPath = createValidBackup()

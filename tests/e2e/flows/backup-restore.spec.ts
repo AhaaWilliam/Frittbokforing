@@ -11,11 +11,12 @@
  *   (a) backup:restore-dialog calls app.exit(0), which kills the Playwright
  *       session — impossible to assert post-restore state from the same
  *       Playwright connection.
- *   (b) Production restoreBackup writes to getDbPath() (legacy/FRITT_DB_PATH
- *       constant), not to the per-user vault path. The vault path is
- *       determined at auth-unlock time and is not accessible via getDbPath().
- *       This makes backup:restore-dialog incompatible with the post-auth
- *       encrypted vault architecture.
+ *   (b) backup:restore-dialog calls app.exit(0) after the rename, which kills
+ *       the Playwright session — impossible to assert post-restore state from
+ *       the same Playwright connection. Production restoreBackup now correctly
+ *       writes to db.name (vault path) rather than the legacy getDbPath()
+ *       constant (Sprint T regression fixed). The file-copy simulation below
+ *       mirrors exactly what production restoreBackup does.
  *
  * Test approach (Alt A — re-launch with same userData):
  *   • backup:create is exercised via the real production IPC, which writes an

@@ -2,10 +2,10 @@ import { dialog, BrowserWindow, app } from 'electron'
 import BetterSqlite3 from 'better-sqlite3'
 import type Database from 'better-sqlite3'
 import fs from 'fs'
-import { getE2EFilePath } from '../utils/e2e-helpers'
+import { getE2EFilePath, getE2EMockOpenFile } from '../utils/e2e-helpers'
 import { todayLocalFromNow, localTimestampFromNow } from '../utils/now'
 import { migrations, NEEDS_FK_OFF } from '../migrations'
-import { closeDb, getDbPath } from '../db'
+import { closeDb } from '../db'
 import log from 'electron-log/main'
 
 export async function createBackup(
@@ -152,7 +152,7 @@ export async function restoreBackup(
   // E2E dialog bypass — use E2E_MOCK_OPEN_FILE for arbitrary-filename open
   // dialogs (same pattern as SIE4 import, M147).
   const e2eOpenPath = getE2EMockOpenFile()
-  let selectedPath: string | null = null
+  let selectedPath: string
 
   if (e2eOpenPath) {
     selectedPath = e2eOpenPath
@@ -174,7 +174,12 @@ export async function restoreBackup(
     return { restored: false, message: validationError }
   }
 
-  const dbPath = getDbPath()
+  // Use db.name (the actual open connection path) not getDbPath() (legacy path).
+  // After Sprint T auth, db is always the per-user vault DB at
+  // <userData>/auth/users/<userId>/app.db — not the legacy Documents/data.db.
+  const dbPath = db.name
+  const walPath = `${dbPath}-wal`
+  const shmPath = `${dbPath}-shm`
   const restoringPath = `${dbPath}.restoring`
   const timestamp = localTimestampFromNow().replace(/[:.]/g, '-')
   const preRestorePath = `${dbPath}.pre-restore-${timestamp}.db`
