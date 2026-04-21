@@ -150,10 +150,10 @@ describe('M112-M114 — bulk-payments', () => {
     expect(batches.c).toBe(0)
   })
 
-  // M114 bank-fee-verifikat-flödet involverar period-check + chronology.
-  // Skippad pga test-setup behöver bokföringsklass 6 aktiverat i BAS-kontoplan.
-  // M114 täcks indirekt av system-test S13-bulk-payment.
-  it.skip('M114: bank_fee på batch bokförs via source_type=auto_bank_fee', () => {
+  // M114 bank-fee-verifikat-flödet. Konto 6570 (Bankkostnader) och 1930
+  // (Företagskonto) är förselade via migrationer — inget extra setup krävs.
+  // Fullständig coverage även i S13-bulk-payment.test.ts.
+  it('M114: bank_fee på batch bokförs via source_type=auto_bank_fee', () => {
     const { db, invoiceIds } = seed(2)
     const r = ok(
       payInvoicesBulk(db, {
