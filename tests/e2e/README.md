@@ -53,6 +53,7 @@ bypassar också wrappern. Samma regel: rebuild manuellt efter körning.
 - Fixed assets page: `page-fixed-assets`, `fa-create`, `fa-execute-period`, `fa-list`, `fa-row-{id}`, `fa-toggle-{id}`, `fa-detail-row-{id}`, `fa-dispose-{id}`, `fa-delete-{id}`, `fa-edit-{id}`
 - Fixed asset form dialog: `fixed-asset-form-dialog`, `fa-name`, `fa-cost`, `fa-submit`
 - Pagination: `pag-invoices-position`, `pag-invoices-next`, `pag-invoices-prev`, `pag-expenses-position`, `pag-expenses-next`, `pag-expenses-prev` — state synced to URL query `?invoices_page=N` / `?expenses_page=N` (Sprint C B1)
+- Bank reconciliation: `bank-import-input` — file input for CAMT/MT940/BGMax import, `bank-match-dialog` — match confirmation dialog, `bank-match-submit` — submit button inside match dialog, `bank-match-entity-select` — entity type/id selector inside match dialog
 
 ## How to run
 
