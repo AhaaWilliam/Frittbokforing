@@ -990,6 +990,8 @@ export function executeDepreciationPeriod(
       }
 
       if (succeeded.length === 0 && failed.length > 0) {
+        // Intentional rollback sentinel — caught by outer try-catch to return
+        // cancelled status while ensuring the transaction is rolled back.
         throw new Error(ROLLBACK_SENTINEL)
       }
 
