@@ -9,8 +9,8 @@
  *   kanaler i `channelMap` tvingar kompileringsfel om motsvarande
  *   entry saknas här. Ingen tyst fallback.
  * - Täta schemas bevaras för de ~30 kanaler som hade dem. Övriga
- *   kanaler får explicit `z.unknown()` med kommentar — dessa är
- *   TODO-kandidater för progressiv åtskärpning.
+ *   kanaler använder passthrough-objekt (`AnyEntity`, `LooseObject`,
+ *   `VoidOrReceipt` etc.) — ingen kanal använder `z.unknown()`.
  *
  * Obs: schemat validerar `data`-fältet INUTI `IpcResult.data` (success-
  * grenen). Error-grenen och IpcResult-shape valideras separat i mock-ipc.
