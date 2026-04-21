@@ -9,6 +9,12 @@
  *
  * All services share the SAME db instance (integration testing, not unit testing).
  * Disk-based SQLite (not :memory:) for WAL-mode compatibility.
+ *
+ * Namnkonvention:
+ * - Entitetsnamn i seed-helpers (kunder, leverantörer) är STATISKA ('Kund Alfa',
+ *   'Leverantör Alfa') — Date.now() i namn ger onödig icke-determinism i tester.
+ * - DB-filsökvägar (createTemplateDb, createSystemTestContext) BEHÅLLER Date.now()
+ *   för isolering: varje test-körning får sin egen DB-fil utan kollisioner.
  */
 
 import Database from 'better-sqlite3'
@@ -644,7 +650,7 @@ export function seedAndFinalizeInvoice(
     ? (ctx.db
         .prepare('SELECT * FROM counterparties WHERE id = ?')
         .get(overrides.counterpartyId) as Counterparty)
-    : seedCustomer(ctx, { name: `Kund ${Date.now()}` })
+    : seedCustomer(ctx, { name: 'Kund Alfa' })
 
   const vatCode = getVatCode25Out(ctx)
   const invoiceDate = overrides?.invoiceDate ?? '2026-03-15'
@@ -703,7 +709,7 @@ export function seedAndPayInvoice(
 
   const customer = overrides?.counterpartyId
     ? undefined
-    : seedCustomer(ctx, { name: `Kund ${Date.now()}` })
+    : seedCustomer(ctx, { name: 'Kund Alfa' })
 
   const vatCode = getVatCode25Out(ctx)
 
@@ -760,7 +766,7 @@ export function seedAndFinalizeExpense(
     ? (ctx.db
         .prepare('SELECT * FROM counterparties WHERE id = ?')
         .get(overrides.counterpartyId) as Counterparty)
-    : seedSupplier(ctx, { name: `Leverantör ${Date.now()}` })
+    : seedSupplier(ctx, { name: 'Leverantör Alfa' })
 
   const vatCode = getVatCode25In(ctx)
   const expenseDate = overrides?.expenseDate ?? '2026-03-15'
