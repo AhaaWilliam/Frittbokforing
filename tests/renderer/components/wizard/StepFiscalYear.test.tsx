@@ -15,6 +15,17 @@ describe('computeFiscalYear', () => {
     expect(result).toEqual({ start: '2026-01-01', end: '2026-12-31' })
   })
 
+  it('short first FY (BFL 3:3): start = registreringsdatum, slut = 31 dec', () => {
+    const result = computeFiscalYear('2026-04-22', false, 1, true)
+    expect(result).toEqual({ start: '2026-04-22', end: '2026-12-31' })
+  })
+
+  it('short first FY + brutet: ignoreras, faller tillbaka till standard brutet', () => {
+    // Kortat + brutet stöds ej (kan överskrida 12 perioder)
+    const result = computeFiscalYear('2026-04-22', true, 7, true)
+    expect(result).toEqual({ start: '2026-07-01', end: '2027-06-30' })
+  })
+
   it('broken FY start_month=7: jul → jun next year', () => {
     const result = computeFiscalYear('2026-01-01', true, 7)
     expect(result).toEqual({ start: '2026-07-01', end: '2027-06-30' })
@@ -47,6 +58,7 @@ const DEFAULT_PROPS = {
   registration_date: '2026-01-01',
   use_broken_fiscal_year: false,
   fiscal_year_start_month: 1,
+  use_short_first_fy: false,
   onChange: vi.fn(),
   onNext: vi.fn(),
   onBack: vi.fn(),
@@ -89,12 +101,30 @@ describe('StepFiscalYear', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 
-  it('shows warning when company registered < 12 months ago', () => {
+  it('shows info about short first FY when company registered < 12 months ago', () => {
     // System time is 2026-06-15, registration 6 months ago
     renderStep({ registration_date: '2026-01-01' })
     expect(
-      screen.getByText(/räkenskapsår på 12 hela månader/),
+      screen.getByText(/kortat första\s*räkenskapsår/i),
     ).toBeInTheDocument()
+  })
+
+  it('shows short-FY checkbox when registration_date is mid-month', () => {
+    renderStep({ registration_date: '2026-04-22' })
+    expect(screen.getByTestId('wizard-short-fy-toggle')).toBeInTheDocument()
+  })
+
+  it('hides short-FY checkbox when registration_date is Jan 1 calendar-year', () => {
+    renderStep({ registration_date: '2026-01-01' })
+    expect(
+      screen.queryByTestId('wizard-short-fy-toggle'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('short-FY toggle updates state via onChange', async () => {
+    const { props } = renderStep({ registration_date: '2026-04-22' })
+    await userEvent.click(screen.getByTestId('wizard-short-fy-toggle'))
+    expect(props.onChange).toHaveBeenCalledWith('use_short_first_fy', true)
   })
 
   it('axe-check passes', async () => {

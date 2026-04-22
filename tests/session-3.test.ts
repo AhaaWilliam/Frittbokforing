@@ -150,6 +150,7 @@ describe('Periodgenerering', () => {
     const testCases = [
       { start: '2026-01-01', end: '2026-12-31' },
       { start: '2026-07-01', end: '2027-06-30' },
+      { start: '2026-04-22', end: '2026-12-31' }, // Kortat första FY
     ]
     for (const tc of testCases) {
       const periods = generatePeriods(tc.start, tc.end)
@@ -163,6 +164,59 @@ describe('Periodgenerering', () => {
         expect(periods[i].start_date).toBe(expStr)
       }
     }
+  })
+
+  it('9a. Kortat första FY (BFL 3:3): reg 2026-04-22 → 9 perioder, stub-period först', () => {
+    const periods = generatePeriods('2026-04-22', '2026-12-31')
+    expect(periods.length).toBe(9)
+    expect(periods[0]).toEqual({
+      period_number: 1,
+      start_date: '2026-04-22',
+      end_date: '2026-04-30',
+    })
+    expect(periods[1]).toEqual({
+      period_number: 2,
+      start_date: '2026-05-01',
+      end_date: '2026-05-31',
+    })
+    expect(periods[8]).toEqual({
+      period_number: 9,
+      start_date: '2026-12-01',
+      end_date: '2026-12-31',
+    })
+  })
+
+  it('9b. Kortat brutet FY: reg 2026-03-10 → stub mars + 13 hela månader? max 12', () => {
+    // 2026-03-10 → 2027-04-30 = 14 perioder (mars-stub + 13 hela)
+    // Detta ska kasta eftersom det överskrider 12 perioder
+    expect(() => generatePeriods('2026-03-10', '2027-04-30')).toThrow(
+      /periods\.length .*måste vara mellan 1 och 12/,
+    )
+  })
+
+  it('9c. Kortat FY till kalenderårsslut: reg 2026-01-15 → 12 perioder', () => {
+    const periods = generatePeriods('2026-01-15', '2026-12-31')
+    expect(periods.length).toBe(12)
+    expect(periods[0]).toEqual({
+      period_number: 1,
+      start_date: '2026-01-15',
+      end_date: '2026-01-31',
+    })
+    expect(periods[11]).toEqual({
+      period_number: 12,
+      start_date: '2026-12-01',
+      end_date: '2026-12-31',
+    })
+  })
+
+  it('9d. 1-dags stub-period är tillåten (reg sista dagen i månaden)', () => {
+    const periods = generatePeriods('2026-04-30', '2026-12-31')
+    expect(periods.length).toBe(9)
+    expect(periods[0]).toEqual({
+      period_number: 1,
+      start_date: '2026-04-30',
+      end_date: '2026-04-30',
+    })
   })
 
   it('10. Trigger 8-kompatibilitet — bokföring i genererade perioder fungerar', () => {

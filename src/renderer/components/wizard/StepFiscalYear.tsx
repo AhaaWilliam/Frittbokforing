@@ -4,6 +4,8 @@ interface StepFiscalYearProps {
   registration_date: string
   use_broken_fiscal_year: boolean
   fiscal_year_start_month: number
+  /** BFL 3:3 — kortat första FY startar på registreringsdatum. */
+  use_short_first_fy: boolean
   onChange: (field: string, value: string | boolean | number) => void
   onNext: () => void
   onBack: () => void
@@ -32,10 +34,22 @@ export function computeFiscalYear(
   registration_date: string,
   use_broken: boolean,
   start_month: number,
+  use_short: boolean = false,
 ): { start: string; end: string } {
   const regYear = registration_date
     ? new Date(registration_date).getFullYear()
     : new Date().getFullYear()
+
+  // BFL 3:3 — kortat första FY startar vid registreringsdatum och
+  // slutar på sista dagen i kalenderårets december. Kombinationen
+  // kortat+brutet räkenskapsår kan överskrida 12 perioder och stöds
+  // inte i denna version — use_short ignoreras vid use_broken=true.
+  if (use_short && !use_broken && registration_date) {
+    return {
+      start: registration_date,
+      end: `${regYear}-12-31`,
+    }
+  }
 
   if (!use_broken) {
     return {
@@ -62,6 +76,7 @@ export function StepFiscalYear({
   registration_date,
   use_broken_fiscal_year,
   fiscal_year_start_month,
+  use_short_first_fy,
   onChange,
   onNext,
   onBack,
@@ -70,6 +85,7 @@ export function StepFiscalYear({
     registration_date,
     use_broken_fiscal_year,
     fiscal_year_start_month,
+    use_short_first_fy,
   )
 
   const regDate = registration_date ? new Date(registration_date) : null
@@ -80,6 +96,13 @@ export function StepFiscalYear({
       regDate.getMonth()
     : 999
 
+  // Kortat första FY stöds bara med kalenderår (inte brutet) i denna
+  // version — annars kan antalet perioder överskrida 12 (DB-begränsning).
+  // Visas när reg-datum inte är 1 januari (då kortat = standard).
+  const regIsJan1 = registration_date === `${registration_date.slice(0, 4)}-01-01`
+  const showShortOption =
+    !!registration_date && !use_broken_fiscal_year && !regIsJan1
+
   return (
     <div className="space-y-5">
       <div className="rounded-md border border-border bg-muted/30 p-4">
@@ -89,12 +112,36 @@ export function StepFiscalYear({
         </p>
       </div>
 
-      {monthsSinceReg < 12 && (
+      {monthsSinceReg < 12 && !use_short_first_fy && (
         <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-          Just nu stöder Fritt Bokföring räkenskapsår på 12 hela månader. Stöd
-          för förkortat eller förlängt första räkenskapsår (som är vanligt för
-          nystartade bolag) kommer i en senare version.
+          För nystartade bolag är det vanligt att välja <em>kortat första
+          räkenskapsår</em> som startar vid registreringsdatumet (BFL 3 kap
+          3§). Bocka i alternativet nedan om du vill.
         </div>
+      )}
+
+      {showShortOption && (
+        <label
+          className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+          data-testid="wizard-short-fy-toggle-label"
+        >
+          <input
+            type="checkbox"
+            checked={use_short_first_fy}
+            onChange={(e) => onChange('use_short_first_fy', e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border"
+            data-testid="wizard-short-fy-toggle"
+          />
+          <div>
+            <div className="text-sm font-medium">
+              Kortat första räkenskapsår (BFL 3:3)
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Första räkenskapsåret börjar på registreringsdatumet istället
+              för 1:a i månaden. Följande räkenskapsår blir 12 hela månader.
+            </div>
+          </div>
+        </label>
       )}
 
       <label className="flex cursor-pointer items-center gap-3">

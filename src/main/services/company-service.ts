@@ -18,45 +18,64 @@ export interface GeneratedPeriod {
 }
 
 /**
- * Genererar 12 perioder för ett räkenskapsår.
+ * Genererar 1–12 perioder för ett räkenskapsår. Stödjer både
+ * standard-FY (12 kalendermånader från 1:a i månaden) och kortat
+ * första FY per BFL 3 kap 3§ (start på godtyckligt datum, stub-period
+ * till sista dagen i startmånaden, därefter hela kalendermånader).
  *
  * Regler:
- * - Varje period = 1 kalendermånad
- * - start_date = 1:a i månaden
- * - end_date = sista dagen i månaden
- * - Hanterar skottår (feb 29)
- * - Hanterar brutet räkenskapsår
+ * - Första period: start = fiscalYearStart, end = sista dagen i start-
+ *   månaden (eller fiscalYearEnd om det inträffar tidigare).
+ * - Mellanperioder: start = 1:a i månaden, end = sista dagen i samma
+ *   månad.
+ * - Sista period: start = 1:a i slutmånaden, end = fiscalYearEnd
+ *   (fiscalYearEnd MÅSTE vara sista dagen i sin månad för ≤ 12
+ *   perioder — enforced i schema, inte här).
+ * - Hanterar skottår (feb 29) via JS `new Date(y, m+1, 0)`.
+ * - Hanterar brutet räkenskapsår.
  *
  * Invarianter:
- * 1. Exakt 12 perioder
+ * 1. 1 ≤ periods.length ≤ 12 (DB CHECK `period_number <= 12`)
  * 2. periods[0].start_date === fiscalYearStart
- * 3. periods[11].end_date === fiscalYearEnd
- * 4. Varje period: end_date > start_date
- * 5. Inga gap
- * 6. Inga överlapp
+ * 3. periods[last].end_date === fiscalYearEnd
+ * 4. Varje period: end_date >= start_date (stub kan vara 1-dags)
+ * 5. Inga gap — periods[i+1].start_date === periods[i].end_date + 1 dag
+ * 6. Inga överlapp (följer av #5)
  */
 export function generatePeriods(
   fiscalYearStart: string,
   fiscalYearEnd: string,
 ): GeneratedPeriod[] {
   const periods: GeneratedPeriod[] = []
-  const start = new Date(fiscalYearStart + 'T00:00:00')
+  const endDate = new Date(fiscalYearEnd + 'T00:00:00')
+  let cursor = new Date(fiscalYearStart + 'T00:00:00')
+  let periodNumber = 1
 
-  for (let i = 0; i < 12; i++) {
-    const periodStart = new Date(start.getFullYear(), start.getMonth() + i, 1)
-
-    // Sista dagen i månaden: gå till 1:a nästa månad, backa 1 dag
-    const periodEnd = new Date(
-      periodStart.getFullYear(),
-      periodStart.getMonth() + 1,
+  while (cursor.getTime() <= endDate.getTime() && periodNumber <= 13) {
+    // Sista dagen i aktuell månad
+    const lastOfMonth = new Date(
+      cursor.getFullYear(),
+      cursor.getMonth() + 1,
       0,
     )
+    // Period slutar vid sista-dagen-i-månaden eller fiscalYearEnd,
+    // beroende av vilket som kommer först.
+    const periodEnd =
+      lastOfMonth.getTime() <= endDate.getTime() ? lastOfMonth : endDate
 
     periods.push({
-      period_number: i + 1,
-      start_date: formatDate(periodStart),
+      period_number: periodNumber,
+      start_date: formatDate(cursor),
       end_date: formatDate(periodEnd),
     })
+
+    // Nästa period börjar dagen efter denna slutar
+    cursor = new Date(
+      periodEnd.getFullYear(),
+      periodEnd.getMonth(),
+      periodEnd.getDate() + 1,
+    )
+    periodNumber++
   }
 
   validatePeriodInvariants(periods, fiscalYearStart, fiscalYearEnd)
@@ -76,23 +95,27 @@ function validatePeriodInvariants(
   fyStart: string,
   fyEnd: string,
 ): void {
-  if (periods.length !== 12) {
-    throw new Error(`Invariant: Förväntade 12 perioder, fick ${periods.length}`)
+  if (periods.length < 1 || periods.length > 12) {
+    throw new Error(
+      `Invariant: periods.length (${periods.length}) måste vara mellan 1 och 12 (DB CHECK period_number <= 12)`,
+    )
   }
   if (periods[0].start_date !== fyStart) {
     throw new Error(
       `Invariant: Period 1 start (${periods[0].start_date}) ≠ räkenskapsår start (${fyStart})`,
     )
   }
-  if (periods[11].end_date !== fyEnd) {
+  const last = periods[periods.length - 1]
+  if (last.end_date !== fyEnd) {
     throw new Error(
-      `Invariant: Period 12 slut (${periods[11].end_date}) ≠ räkenskapsår slut (${fyEnd})`,
+      `Invariant: Sista periodens slut (${last.end_date}) ≠ räkenskapsår slut (${fyEnd})`,
     )
   }
   for (let i = 0; i < periods.length; i++) {
-    if (periods[i].end_date <= periods[i].start_date) {
+    // Stub-perioder kan vara 1 dag långa (start_date === end_date är OK).
+    if (periods[i].end_date < periods[i].start_date) {
       throw new Error(
-        `Invariant: Period ${i + 1} end_date (${periods[i].end_date}) <= start_date (${periods[i].start_date})`,
+        `Invariant: Period ${i + 1} end_date (${periods[i].end_date}) < start_date (${periods[i].start_date})`,
       )
     }
     if (i > 0) {

@@ -84,6 +84,12 @@ export const CreateCompanyInputSchema = z
   )
   .refine(
     (data) => {
+      // BFL 3:3 — första räkenskapsåret får starta vid registreringsdatum
+      // (kortat första FY). Övriga första-FY måste starta 1:a i en
+      // BFL-tillåten månad.
+      if (data.fiscal_year_start === data.registration_date) return true
+      const startDay = parseInt(data.fiscal_year_start.substring(8, 10), 10)
+      if (startDay !== 1) return false
       const startMonth = parseInt(data.fiscal_year_start.substring(5, 7), 10)
       return BFL_ALLOWED_START_MONTHS.includes(
         startMonth as (typeof BFL_ALLOWED_START_MONTHS)[number],
@@ -92,6 +98,43 @@ export const CreateCompanyInputSchema = z
     {
       message: ERR_MSG_INVALID_FY_START_MONTH,
       path: ['fiscal_year_start'],
+    },
+  )
+  .refine(
+    (data) => {
+      // fiscal_year_end MÅSTE vara sista dagen i sin månad — annars kan
+      // generatePeriods producera > 12 perioder och bryta DB CHECK.
+      const endDate = new Date(data.fiscal_year_end + 'T00:00:00')
+      const nextDay = new Date(endDate)
+      nextDay.setDate(nextDay.getDate() + 1)
+      return nextDay.getDate() === 1 // dag efter slut är 1:a i nästa månad
+    },
+    {
+      message: 'Räkenskapsårets slut måste vara sista dagen i en månad',
+      path: ['fiscal_year_end'],
+    },
+  )
+  .refine(
+    (data) => {
+      // Max 12 perioder (begränsat av DB CHECK period_number <= 12). För
+      // kortat första FY betyder detta att FY-slutet måste ligga inom
+      // start-månadens år + max 11 hela kalendermånader efteråt.
+      const start = new Date(data.fiscal_year_start + 'T00:00:00')
+      const end = new Date(data.fiscal_year_end + 'T00:00:00')
+      const startOfStartMonth = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        1,
+      )
+      const monthsDiff =
+        (end.getFullYear() - startOfStartMonth.getFullYear()) * 12 +
+        (end.getMonth() - startOfStartMonth.getMonth())
+      return monthsDiff <= 11 // 0 = samma månad (1 period), 11 = 12 månader (12 perioder)
+    },
+    {
+      message:
+        'Räkenskapsåret får omfatta högst 12 perioder (kalendermånader). För förlängt första FY — kontakta utvecklaren.',
+      path: ['fiscal_year_end'],
     },
   )
 
