@@ -1879,6 +1879,21 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
       CREATE INDEX IF NOT EXISTS idx_expenses_fiscal_year ON expenses(fiscal_year_id);
     `,
   },
+  // ── Migration 055 — Fynd 6: UNIQUE (fiscal_year_id, series, number) ──
+  //
+  // Verifikationsnummer tilldelas via
+  //   SELECT COALESCE(MAX(verification_number), 0) + 1 ...
+  // per (fiscal_year_id, series). Utan unique-constraint skyddas inte mot
+  // parallella transaktioner som läser samma MAX och skriver samma nummer.
+  // Partial index (WHERE verification_number IS NOT NULL) så drafts med
+  // NULL-nummer inte blockeras.
+  //
+  // Pre-flight: bekräfta att inga befintliga dubbletter finns — om så,
+  // kasta fel innan index skapas (manuell rensning krävs).
+  {
+    sql: '-- Migration 055: UNIQUE (fiscal_year_id, series, verification_number) (se programmatic)',
+    programmatic: migration055Programmatic,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
@@ -4157,6 +4172,50 @@ function migration052Programmatic(
   if (!schema.sql.includes('unit_price_ore >= 0')) {
     throw new Error(
       'Migration 052 failed: expense_lines saknar CHECK (unit_price_ore >= 0)',
+    )
+  }
+}
+
+function migration055Programmatic(
+  db: import('better-sqlite3').Database,
+): void {
+  // Pre-flight: verifiera inga dubbletter
+  const dupes = db
+    .prepare(
+      `SELECT fiscal_year_id, verification_series, verification_number, COUNT(*) AS cnt
+       FROM journal_entries
+       WHERE verification_number IS NOT NULL
+       GROUP BY fiscal_year_id, verification_series, verification_number
+       HAVING cnt > 1`,
+    )
+    .all() as Array<{
+    fiscal_year_id: number
+    verification_series: string
+    verification_number: number
+    cnt: number
+  }>
+  if (dupes.length > 0) {
+    throw new Error(
+      `Migration 055 failed: ${dupes.length} duplicate verifikationsnummer. ` +
+        `Första: fy=${dupes[0]?.fiscal_year_id} serie=${dupes[0]?.verification_series} ` +
+        `nr=${dupes[0]?.verification_number} cnt=${dupes[0]?.cnt}. Manuell rensning krävs.`,
+    )
+  }
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_journal_entries_uniq_verno
+      ON journal_entries(fiscal_year_id, verification_series, verification_number)
+      WHERE verification_number IS NOT NULL;
+  `)
+
+  const idx = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_journal_entries_uniq_verno'",
+    )
+    .get()
+  if (!idx) {
+    throw new Error(
+      'Migration 055 failed: idx_journal_entries_uniq_verno skapades inte',
     )
   }
 }
