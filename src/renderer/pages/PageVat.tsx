@@ -1,8 +1,11 @@
+import { useState } from 'react'
+import { Copy, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useVatReport } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { formatKr } from '../lib/format'
-import type { VatQuarterReport } from '../../shared/types'
+import type { VatQuarterReport, VatReport } from '../../shared/types'
 
 function Cell({
   ore,
@@ -87,15 +90,81 @@ function ReportRow({
   )
 }
 
+function oreToKrFlat(ore: number): string {
+  // Helår-summa som heltal (SKV accepterar heltal kronor i e-tjänsten)
+  return Math.round(ore / 100).toString()
+}
+
+function formatReportForClipboard(report: VatReport): string {
+  const y = report.yearTotal
+  const lines = [
+    'Momsdeklaration — sammanställning (helår)',
+    '',
+    'Momspliktig försäljning (underlag):',
+    `  25 %:                     ${oreToKrFlat(y.taxableBase25Ore)} kr`,
+    `  12 %:                     ${oreToKrFlat(y.taxableBase12Ore)} kr`,
+    `   6 %:                     ${oreToKrFlat(y.taxableBase6Ore)} kr`,
+    '',
+    'Utgående moms:',
+    `  25 %:                     ${oreToKrFlat(y.vatOut25Ore)} kr`,
+    `  12 %:                     ${oreToKrFlat(y.vatOut12Ore)} kr`,
+    `   6 %:                     ${oreToKrFlat(y.vatOut6Ore)} kr`,
+    `  Summa utgående:           ${oreToKrFlat(y.vatOutTotalOre)} kr`,
+    '',
+    `Ingående moms att dra av:   ${oreToKrFlat(y.vatInOre)} kr`,
+    '',
+    `Moms att ${y.vatNetOre >= 0 ? 'betala' : 'få tillbaka'}:         ${oreToKrFlat(Math.abs(y.vatNetOre))} kr`,
+    '',
+    '---',
+    'Avser inrikes transaktioner. Export/omvänd skattskyldighet ingår ej.',
+    'Verifiera alltid box-nummer mot aktuellt formulär hos Skatteverket.',
+  ]
+  return lines.join('\n')
+}
+
 export function PageVat() {
   const { activeFiscalYear } = useFiscalYearContext()
   const { data: report, isLoading, error } = useVatReport(activeFiscalYear?.id)
+  const [copied, setCopied] = useState(false)
 
   const allEmpty = report && !report.quarters.some((q) => q.hasData)
 
+  async function handleCopy() {
+    if (!report) return
+    try {
+      await navigator.clipboard.writeText(formatReportForClipboard(report))
+      setCopied(true)
+      toast.success('Momsdeklaration kopierad till urklipp')
+      setTimeout(() => setCopied(false), 2500)
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte kopiera till urklipp',
+      )
+    }
+  }
+
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <PageHeader title="Momsrapport" />
+      <PageHeader
+        title="Momsrapport"
+        action={
+          report && !allEmpty ? (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+              data-testid="vat-copy-clipboard"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              {copied ? 'Kopierat' : 'Kopiera deklaration'}
+            </button>
+          ) : null
+        }
+      />
 
       <div className="space-y-6 p-8">
         {/* Info banner */}
@@ -105,7 +174,10 @@ export function PageVat() {
           skattskyldighet stöds inte i denna version. Underlagen för 12% och 6%
           moms är approximationer (±1 öres avrundning). Rapporten visar moms
           aggregerad per kvartal som översikt. Din faktiska redovisningsperiod
-          hos Skatteverket kan vara månadsvis eller årsvis.
+          hos Skatteverket kan vara månadsvis eller årsvis. Använd
+          "Kopiera deklaration" för att klistra in helårssumman i SKV
+          e-tjänsten — verifiera alltid att box-nummer matchar aktuellt
+          formulär.
         </div>
 
         {error && (
