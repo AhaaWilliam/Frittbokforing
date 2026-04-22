@@ -131,11 +131,11 @@ CREATE TABLE journal_entry_lines (
     journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
     line_number INTEGER NOT NULL,
     account_number TEXT NOT NULL REFERENCES accounts(account_number),
-    debit_amount INTEGER NOT NULL DEFAULT 0,
-    credit_amount INTEGER NOT NULL DEFAULT 0,
+    debit_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
+    credit_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
     description TEXT,
     vat_code TEXT,
-    vat_amount INTEGER DEFAULT 0,
+    vat_amount INTEGER DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     CHECK (debit_amount >= 0),
     CHECK (credit_amount >= 0),
@@ -175,12 +175,12 @@ CREATE TABLE invoices (
     invoice_number TEXT NOT NULL,
     invoice_date TEXT NOT NULL,
     due_date TEXT NOT NULL,
-    net_amount INTEGER NOT NULL,
-    vat_amount INTEGER NOT NULL DEFAULT 0,
-    total_amount INTEGER NOT NULL,
+    net_amount INTEGER NOT NULL, -- M119 exempt: legacy, renamed in later migration
+    vat_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
+    total_amount INTEGER NOT NULL, -- M119 exempt: legacy, renamed in later migration
     currency TEXT NOT NULL DEFAULT 'SEK',
     status TEXT NOT NULL DEFAULT 'draft',
-    paid_amount INTEGER NOT NULL DEFAULT 0,
+    paid_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
     journal_entry_id INTEGER REFERENCES journal_entries(id),
     ocr_number TEXT,
     notes TEXT,
@@ -204,7 +204,7 @@ CREATE TABLE invoice_payments (
     invoice_id INTEGER NOT NULL REFERENCES invoices(id),
     journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
     payment_date TEXT NOT NULL,
-    amount INTEGER NOT NULL,
+    amount INTEGER NOT NULL, -- M119 exempt: legacy, renamed in later migration
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     CHECK (amount > 0)
 );
@@ -232,7 +232,7 @@ CREATE TABLE opening_balances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
     account_number TEXT NOT NULL REFERENCES accounts(account_number),
-    balance INTEGER NOT NULL,
+    balance INTEGER NOT NULL, -- M119 exempt: legacy, renamed in later migration
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (fiscal_year_id, account_number)
 );
@@ -544,7 +544,7 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT,
   unit TEXT NOT NULL DEFAULT 'timme'
     CHECK(unit IN ('timme','styck','dag','månad','km','pauschal')),
-  default_price INTEGER NOT NULL DEFAULT 0,
+  default_price INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
   vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
   account_id INTEGER NOT NULL REFERENCES accounts(id),
   article_type TEXT NOT NULL DEFAULT 'service'
@@ -566,7 +566,7 @@ CREATE TABLE IF NOT EXISTS price_list_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   price_list_id INTEGER NOT NULL REFERENCES price_lists(id),
   product_id INTEGER NOT NULL REFERENCES products(id),
-  price INTEGER NOT NULL,
+  price INTEGER NOT NULL, -- M119 exempt: legacy, renamed in later migration
   UNIQUE(price_list_id, product_id)
 );
 
@@ -684,10 +684,10 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
   product_id INTEGER REFERENCES products(id),
   description TEXT NOT NULL,
   quantity REAL NOT NULL DEFAULT 1,
-  unit_price INTEGER NOT NULL DEFAULT 0,
+  unit_price INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
   vat_code_id INTEGER NOT NULL REFERENCES vat_codes(id),
-  line_total INTEGER NOT NULL DEFAULT 0,
-  vat_amount INTEGER NOT NULL DEFAULT 0,
+  line_total INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
+  vat_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   CHECK (quantity > 0),
@@ -814,7 +814,7 @@ CREATE TABLE IF NOT EXISTS expense_payments (
   expense_id INTEGER NOT NULL REFERENCES expenses(id),
   journal_entry_id INTEGER NOT NULL REFERENCES journal_entries(id),
   payment_date TEXT NOT NULL,
-  amount INTEGER NOT NULL CHECK(amount > 0),
+  amount INTEGER NOT NULL CHECK(amount > 0), -- M119 exempt: legacy, renamed in later migration
   payment_method TEXT,
   account_number TEXT DEFAULT '1930' REFERENCES accounts(account_number),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -852,8 +852,8 @@ CREATE TABLE IF NOT EXISTS manual_entry_lines (
   manual_entry_id INTEGER NOT NULL REFERENCES manual_entries(id) ON DELETE CASCADE,
   line_number INTEGER NOT NULL,
   account_number TEXT NOT NULL,
-  debit_amount INTEGER NOT NULL DEFAULT 0,
-  credit_amount INTEGER NOT NULL DEFAULT 0,
+  debit_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
+  credit_amount INTEGER NOT NULL DEFAULT 0, -- M119 exempt: legacy, renamed in later migration
   description TEXT,
   UNIQUE(manual_entry_id, line_number)
 );
