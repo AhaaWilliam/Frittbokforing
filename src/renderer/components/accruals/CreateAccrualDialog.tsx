@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useCreateAccrual, useAccounts } from '../../lib/hooks'
 import type { AccrualType } from '../../../shared/types'
 import { ACCRUAL_TYPES, kronorToOre } from './accrual-constants'
+import { errorIdFor } from '../../lib/a11y'
 
 export function CreateAccrualDialog({
   open,
@@ -34,6 +35,7 @@ export function CreateAccrualDialog({
     period_count: 3,
     start_period: 1,
   })
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   if (!open) return null
 
@@ -47,9 +49,10 @@ export function CreateAccrualDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setFieldErrors({})
     const totalOre = kronorToOre(form.amount_kr)
     if (totalOre <= 0) {
-      toast.error('Belopp måste vara positivt')
+      setFieldErrors({ amount_kr: 'Belopp måste vara positivt' })
       return
     }
 
@@ -75,6 +78,7 @@ export function CreateAccrualDialog({
         period_count: 3,
         start_period: 1,
       })
+      setFieldErrors({})
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Kunde inte skapa periodisering',
@@ -208,8 +212,19 @@ export function CreateAccrualDialog({
                 setForm((f) => ({ ...f, amount_kr: e.target.value }))
               }
               required
+              aria-invalid={!!fieldErrors.amount_kr}
+              aria-describedby={fieldErrors.amount_kr ? errorIdFor('accrual-amount') : undefined}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
+            {fieldErrors.amount_kr && (
+              <p
+                role="alert"
+                id={errorIdFor('accrual-amount')}
+                className="mt-1 text-xs text-red-600"
+              >
+                {fieldErrors.amount_kr}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
