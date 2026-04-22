@@ -401,7 +401,8 @@ function seedMonthlyPeriods(
 
   let periodNumber = 1
   let current = new Date(start)
-  while (current <= end && periodNumber <= 12) {
+  // M161: FY kan ha 1–13 perioder (kortat/förlängt första FY per BFL 3:3).
+  while (current <= end && periodNumber <= 13) {
     const periodStart = new Date(current)
     current.setMonth(current.getMonth() + 1)
     current.setDate(0) // Last day of the month

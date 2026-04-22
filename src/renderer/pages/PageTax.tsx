@@ -19,9 +19,13 @@ export function PageTax() {
 
   const isLoss = forecast && forecast.operatingProfitOre < 0
 
-  // Visa helårsprognos bara när 1–10 månader har avslutats
+  // Visa helårsprognos när minst 1 period avslutats men inte de sista.
+  // fiscalYearMonths = 1–13 per M161 (kortat/förlängt första FY).
+  const fiscalYearMonths = forecast?.fiscalYearMonths ?? 12
   const showProjection =
-    forecast && forecast.monthsElapsed >= 1 && forecast.monthsElapsed <= 10
+    forecast &&
+    forecast.monthsElapsed >= 1 &&
+    forecast.monthsElapsed <= fiscalYearMonths - 2
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
@@ -139,7 +143,7 @@ export function PageTax() {
             </section>
 
             {/* Info om nästan avslutat år */}
-            {forecast && forecast.monthsElapsed >= 11 && (
+            {forecast && forecast.monthsElapsed >= fiscalYearMonths - 1 && (
               <p className="text-sm text-muted-foreground">
                 Räkenskapsåret är nästan avslutat — år-till-datum-siffran är mer
                 tillförlitlig än en prognos.
@@ -153,9 +157,9 @@ export function PageTax() {
                   Helårsprognos
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Baserat på {forecast.monthsElapsed} av 12 avslutade månader.
-                  Linjär extrapolering — tar inte hänsyn till
-                  säsongsvariationer.
+                  Baserat på {forecast.monthsElapsed} av{' '}
+                  {forecast.fiscalYearMonths} avslutade månader. Linjär
+                  extrapolering — tar inte hänsyn till säsongsvariationer.
                 </p>
 
                 {(() => {
