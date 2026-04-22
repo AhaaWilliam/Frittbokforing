@@ -80,10 +80,50 @@ export function validateSieParseResult(
   const errors: SieValidationResult['errors'] = []
   const warnings: SieValidationResult['warnings'] = []
 
+  // E6: Non-finite amounts (NaN/Infinity) i transactions eller balances.
+  // sie4AmountToOre returnerar NaN för ogiltig amount-syntax (M145). Utan
+  // denna check skulle NaN bypassa E1 (Math.abs(NaN) > 1 === false) och
+  // skriva NaN-öre till DB vid import.
+  for (const entry of result.entries) {
+    for (const t of entry.transactions) {
+      if (!Number.isFinite(t.amountOre)) {
+        errors.push({
+          code: 'E6',
+          message: `Verifikat ${entry.series}${entry.number} har ogiltigt belopp för konto ${t.accountNumber}`,
+          context: `${entry.series}${entry.number}`,
+        })
+      }
+    }
+  }
+  for (const b of [
+    ...result.openingBalances,
+    ...result.closingBalances,
+    ...result.results,
+  ]) {
+    if (!Number.isFinite(b.amountOre)) {
+      errors.push({
+        code: 'E6',
+        message: `Ogiltigt belopp för konto ${b.accountNumber}`,
+        context: b.accountNumber,
+      })
+    }
+  }
+  for (const pb of result.periodBalances) {
+    if (!Number.isFinite(pb.amountOre)) {
+      errors.push({
+        code: 'E6',
+        message: `Ogiltigt periodbelopp för konto ${pb.accountNumber}`,
+        context: pb.accountNumber,
+      })
+    }
+  }
+
   // E1: Unbalanced vouchers
   for (const entry of result.entries) {
     // SIE4 uses signed amounts: positive = debit, negative = credit
     // Balance check: sum of all amounts should be 0
+    // Skip if any amount is non-finite (already flagged by E6)
+    if (entry.transactions.some((t) => !Number.isFinite(t.amountOre))) continue
     const sum = entry.transactions.reduce((s, t) => s + t.amountOre, 0)
     if (Math.abs(sum) > 1) {
       errors.push({
