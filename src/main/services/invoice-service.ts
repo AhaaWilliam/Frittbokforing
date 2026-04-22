@@ -782,15 +782,19 @@ export function updateSentInvoice(
 // Invoice List + Overdue — Session 8
 // ═══════════════════════════════════════════════════════════
 
-export function refreshInvoiceStatuses(db: Database.Database): number {
+export function refreshInvoiceStatuses(
+  db: Database.Database,
+  fiscalYearId: number,
+): number {
   const result = db
     .prepare(
       `UPDATE invoices
      SET status = 'overdue', updated_at = datetime('now','localtime')
      WHERE status = 'unpaid'
-       AND due_date < date('now','localtime')`,
+       AND due_date < date('now','localtime')
+       AND fiscal_year_id = ?`,
     )
-    .run()
+    .run(fiscalYearId)
   return result.changes
 }
 
@@ -811,7 +815,7 @@ export function listInvoices(
   counts: InvoiceStatusCounts
   total_items: number
 } {
-  refreshInvoiceStatuses(db)
+  refreshInvoiceStatuses(db, input.fiscal_year_id)
 
   // Status counts
   const countRows = db

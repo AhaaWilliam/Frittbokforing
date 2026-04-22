@@ -192,7 +192,7 @@ describe('Overdue-logik', () => {
       "UPDATE invoices SET due_date = date('now', '-1 day') WHERE id = ?",
     ).run(d.data.id)
 
-    const changed = refreshInvoiceStatuses(db)
+    const changed = refreshInvoiceStatuses(db, seed.fiscalYearId)
     expect(changed).toBe(1)
 
     const inv = db
@@ -212,7 +212,7 @@ describe('Overdue-logik', () => {
       "UPDATE invoices SET due_date = date('now', '+1 day') WHERE id = ?",
     ).run(d.data.id)
 
-    refreshInvoiceStatuses(db)
+    refreshInvoiceStatuses(db, seed.fiscalYearId)
 
     const inv = db
       .prepare('SELECT status FROM invoices WHERE id = ?')
@@ -229,7 +229,7 @@ describe('Overdue-logik', () => {
       "UPDATE invoices SET due_date = date('now', '-1 day') WHERE id = ?",
     ).run(d.data.id)
 
-    refreshInvoiceStatuses(db)
+    refreshInvoiceStatuses(db, seed.fiscalYearId)
 
     const inv = db
       .prepare('SELECT status FROM invoices WHERE id = ?')

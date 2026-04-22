@@ -1175,7 +1175,10 @@ export function payExpensesBulk(
 // ════════════════════════════════════════════════════════════
 // refreshExpenseStatuses — marks overdue expenses
 // ════════════════════════════════════════════════════════════
-export function refreshExpenseStatuses(db: Database.Database): number {
+export function refreshExpenseStatuses(
+  db: Database.Database,
+  fiscalYearId: number,
+): number {
   const result = db
     .prepare(
       `UPDATE expenses
@@ -1183,9 +1186,10 @@ export function refreshExpenseStatuses(db: Database.Database): number {
      WHERE status = 'unpaid'
        AND due_date IS NOT NULL
        AND due_date != ''
-       AND due_date < date('now','localtime')`,
+       AND due_date < date('now','localtime')
+       AND fiscal_year_id = ?`,
     )
-    .run()
+    .run(fiscalYearId)
   return result.changes
 }
 
@@ -1209,7 +1213,7 @@ export function listExpenses(
   counts: ExpenseStatusCounts
   total_items: number
 } {
-  refreshExpenseStatuses(db)
+  refreshExpenseStatuses(db, input.fiscal_year_id)
 
   // Status counts
   const countRows = db

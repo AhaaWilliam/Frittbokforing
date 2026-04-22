@@ -267,7 +267,7 @@ describe('Session 12: refreshExpenseStatuses', () => {
       "UPDATE expenses SET due_date = date('now', '-1 day') WHERE id = ?",
     ).run(id)
 
-    const changed = refreshExpenseStatuses(db)
+    const changed = refreshExpenseStatuses(db, seed.fiscalYearId)
     expect(changed).toBe(1)
 
     const exp = db
@@ -284,7 +284,7 @@ describe('Session 12: refreshExpenseStatuses', () => {
       "UPDATE expenses SET due_date = date('now', '+1 day') WHERE id = ?",
     ).run(id)
 
-    refreshExpenseStatuses(db)
+    refreshExpenseStatuses(db, seed.fiscalYearId)
 
     const exp = db
       .prepare('SELECT status FROM expenses WHERE id = ?')
@@ -300,7 +300,7 @@ describe('Session 12: refreshExpenseStatuses', () => {
       "UPDATE expenses SET due_date = date('now', '-1 day') WHERE id = ?",
     ).run(id)
 
-    refreshExpenseStatuses(db)
+    refreshExpenseStatuses(db, seed.fiscalYearId)
 
     const exp = db
       .prepare('SELECT status FROM expenses WHERE id = ?')
@@ -314,7 +314,7 @@ describe('Session 12: refreshExpenseStatuses', () => {
     // Set due_date to NULL
     db.prepare('UPDATE expenses SET due_date = NULL WHERE id = ?').run(id)
 
-    refreshExpenseStatuses(db)
+    refreshExpenseStatuses(db, seed.fiscalYearId)
 
     const exp = db
       .prepare('SELECT status FROM expenses WHERE id = ?')

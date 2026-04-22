@@ -48,7 +48,6 @@ import {
   finalizeDraft,
   updateSentInvoice,
   listInvoices,
-  refreshInvoiceStatuses,
   payInvoice,
   payInvoicesBulk,
   getPayments,
@@ -65,7 +64,6 @@ import {
   payExpensesBulk,
   getExpensePayments,
   getExpense,
-  refreshExpenseStatuses,
   listExpenses,
   createExpenseCreditNoteDraft,
 } from './services/expense-service'
@@ -304,10 +302,10 @@ import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
  * just-opened connection, which may differ between users.
  */
 export function runPostUnlockStartup(): void {
-  const db = dbProxy
   // Indexes flyttade till migration 048 (F13).
-  refreshInvoiceStatuses(db)
-  refreshExpenseStatuses(db)
+  // refreshInvoice/ExpenseStatuses scopas numera per fiscal_year_id
+  // (regel 14) och körs on-demand från listInvoices/listExpenses.
+  // Ingen global overdue-refresh vid login.
 }
 
 export function registerIpcHandlers(): void {
