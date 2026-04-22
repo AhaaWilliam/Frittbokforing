@@ -341,6 +341,37 @@ describe('getTaxForecast', () => {
     expect(r.fiscalYearMonths).toBe(12)
   })
 
+  // Sprint M / M161: fiscalYearMonths reflekterar faktisk FY-längd,
+  // inte hårdkodad 12. Skapa en FY med 9 perioder och verifiera.
+  it('M161: fiscalYearMonths = antal perioder i FY (kortat FY)', () => {
+    const companyRow = db
+      .prepare('SELECT id FROM companies LIMIT 1')
+      .get() as { id: number }
+    // Skapa en FY med 9 perioder (kortat första FY: april-dec 2029)
+    const fyShortId = db
+      .prepare(
+        `INSERT INTO fiscal_years (company_id, year_label, start_date, end_date)
+         VALUES (?, '2029-kort', '2029-04-22', '2029-12-31')`,
+      )
+      .run(companyRow.id).lastInsertRowid as number
+    // Stub-period + 8 hela månader = 9 perioder
+    db.prepare(
+      `INSERT INTO accounting_periods (company_id, fiscal_year_id, period_number, start_date, end_date)
+       VALUES (?, ?, 1, '2029-04-22', '2029-04-30')`,
+    ).run(companyRow.id, fyShortId)
+    for (let m = 5; m <= 12; m++) {
+      const start = `2029-${String(m).padStart(2, '0')}-01`
+      const endDay = new Date(2029, m, 0).getDate()
+      const end = `2029-${String(m).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`
+      db.prepare(
+        `INSERT INTO accounting_periods (company_id, fiscal_year_id, period_number, start_date, end_date)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).run(companyRow.id, fyShortId, m - 3, start, end)
+    }
+    const r = getTaxForecast(db, fyShortId)
+    expect(r.fiscalYearMonths).toBe(9)
+  })
+
   // Test 12: Regression — no migration
   it('regression: user_version=10, 20 tabeller', () => {
     const version = db.pragma('user_version', { simple: true }) as number
