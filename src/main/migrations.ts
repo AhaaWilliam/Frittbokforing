@@ -1894,6 +1894,35 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
     sql: '-- Migration 055: UNIQUE (fiscal_year_id, series, verification_number) (se programmatic)',
     programmatic: migration055Programmatic,
   },
+  // ── Migration 056 — Relaxa budget_targets.period_number till 1–13 ──
+  //
+  // Sprint E relaxade accounting_periods till ≤13 perioder (förlängt
+  // första FY per BFL 3:3). budget_targets hade fortfarande
+  // CHECK (period_number <= 12) vilket gjorde det omöjligt att sätta
+  // budgetmål för period 13. budget_targets är bladtabell (inga
+  // inbound FK, inga triggers) → M121 räcker (trigger-reattach ej
+  // nödvändig eftersom inga triggers finns).
+  {
+    sql: `
+      CREATE TABLE budget_targets_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+        line_id TEXT NOT NULL,
+        period_number INTEGER NOT NULL CHECK (period_number >= 1 AND period_number <= 13),
+        amount_ore INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(fiscal_year_id, line_id, period_number)
+      );
+      INSERT INTO budget_targets_new
+        (id, fiscal_year_id, line_id, period_number, amount_ore, created_at, updated_at)
+        SELECT id, fiscal_year_id, line_id, period_number, amount_ore, created_at, updated_at
+        FROM budget_targets;
+      DROP TABLE budget_targets;
+      ALTER TABLE budget_targets_new RENAME TO budget_targets;
+      CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

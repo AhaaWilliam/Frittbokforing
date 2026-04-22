@@ -58,12 +58,23 @@ describe('BudgetSaveSchema', () => {
     ).toBe(false)
   })
 
-  it('rejects period_number > 12', () => {
+  it('accepts period_number=13 (förlängt första FY)', () => {
     expect(
       BudgetSaveSchema.safeParse({
         fiscal_year_id: 1,
         targets: [
           { line_id: 'net_revenue', period_number: 13, amount_ore: 100 },
+        ],
+      }).success,
+    ).toBe(true)
+  })
+
+  it('rejects period_number > 13', () => {
+    expect(
+      BudgetSaveSchema.safeParse({
+        fiscal_year_id: 1,
+        targets: [
+          { line_id: 'net_revenue', period_number: 14, amount_ore: 100 },
         ],
       }).success,
     ).toBe(false)

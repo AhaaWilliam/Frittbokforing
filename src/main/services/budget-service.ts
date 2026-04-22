@@ -84,6 +84,17 @@ export function getBudgetVsActual(
   db: Database.Database,
   fiscalYearId: number,
 ): IpcResult<BudgetVarianceReport> {
+  // 0. Determine actual period count for this FY (1–13 per Sprint D/E —
+  // förkortat/förlängt första räkenskapsår). Variance-rapporten måste
+  // iterera över faktiska perioder, inte hårdkodade 12.
+  const periodCountRow = db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM accounting_periods
+       WHERE fiscal_year_id = ?`,
+    )
+    .get(fiscalYearId) as { cnt: number } | undefined
+  const periodCount = Math.max(1, Math.min(13, periodCountRow?.cnt ?? 12))
+
   // 1. Fetch budget targets
   const budgetRows = db
     .prepare(
@@ -146,7 +157,7 @@ export function getBudgetVsActual(
     let totalBudgetOre = 0
     let totalActualOre = 0
 
-    for (let p = 1; p <= 12; p++) {
+    for (let p = 1; p <= periodCount; p++) {
       const budgetOre = budgetPeriods?.get(p) ?? 0
       const actualOre = actualPeriods?.get(p) ?? 0
       const varianceOre = actualOre - budgetOre

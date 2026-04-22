@@ -881,7 +881,7 @@ export const BudgetSaveSchema = z
       .array(
         z.object({
           line_id: z.string().min(1),
-          period_number: z.number().int().min(1).max(12),
+          period_number: z.number().int().min(1).max(13),
           amount_ore: z.number().int(),
         }),
       )
