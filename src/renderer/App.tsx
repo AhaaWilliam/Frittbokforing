@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from 'sonner'
 import { useCompanies } from './lib/hooks'
 import { ActiveCompanyProvider } from './contexts/ActiveCompanyContext'
 import { OnboardingWizard } from './pages/OnboardingWizard'
+import { FirstRunImport } from './pages/FirstRunImport'
 import { AppShell } from './pages/AppShell'
 import { LockScreen } from './pages/LockScreen'
 import { ErrorFallback } from './components/ui/ErrorFallback'
@@ -46,6 +48,9 @@ export default function App() {
 
 function AuthenticatedApp() {
   const { data: companies = [], isLoading } = useCompanies()
+  const [firstRunMode, setFirstRunMode] = useState<'wizard' | 'import'>(
+    'wizard',
+  )
 
   if (isLoading) {
     return (
@@ -59,7 +64,12 @@ function AuthenticatedApp() {
   }
 
   if (companies.length === 0) {
-    return <OnboardingWizard />
+    if (firstRunMode === 'import') {
+      return <FirstRunImport onBack={() => setFirstRunMode('wizard')} />
+    }
+    return (
+      <OnboardingWizard onImportInstead={() => setFirstRunMode('import')} />
+    )
   }
 
   return (

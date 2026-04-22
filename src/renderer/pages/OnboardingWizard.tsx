@@ -52,11 +52,14 @@ interface OnboardingWizardProps {
   onCancel?: () => void
   /** Triggas efter framgångsrikt skapat bolag (add-company-modal). */
   onSuccess?: (company: Company) => void
+  /** Triggas när användaren väljer SIE-import istället (endast first-run). */
+  onImportInstead?: () => void
 }
 
 export function OnboardingWizard({
   onCancel,
   onSuccess,
+  onImportInstead,
 }: OnboardingWizardProps = {}) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const createCompany = useCreateCompany()
@@ -94,7 +97,9 @@ export function OnboardingWizard({
           {onCancel ? 'Lägg till bolag' : 'Fritt Bokföring'}
         </h1>
         <p className="mb-6 text-center text-sm text-muted-foreground">
-          {onCancel ? 'Skapa ett nytt bolag' : 'Kom igång med din bokföring'}
+          {onCancel
+            ? 'Skapa ett nytt bolag'
+            : 'Bokföring för svenska aktiebolag'}
         </p>
         {onCancel && (
           <div className="mb-4 text-center">
@@ -174,6 +179,22 @@ export function OnboardingWizard({
             />
           )}
         </div>
+
+        {onImportInstead && state.step === 1 && (
+          <div className="mt-6 text-center text-sm">
+            <p className="text-muted-foreground">
+              Har du en SIE-fil från ditt gamla bokföringssystem?
+            </p>
+            <button
+              type="button"
+              onClick={onImportInstead}
+              className="mt-1 text-primary underline hover:no-underline"
+              data-testid="wizard-import-instead"
+            >
+              Importera från SIE-fil istället
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
