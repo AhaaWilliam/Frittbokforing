@@ -100,16 +100,33 @@ export function rotateBackups(folder: string, retain = BACKUP_RETAIN): number {
 }
 
 /**
+ * Dependencies som kan injekteras för testbarhet. Default-implementationer
+ * läser/skriver settings från userData (kräver Electron app-runtime).
+ */
+export interface AutoBackupDeps {
+  loadSettings?: () => Record<string, unknown>
+  saveSettings?: (data: Record<string, unknown>) => void
+  getDefaultFolder?: () => string
+}
+
+/**
  * Skapar en auto-backup till default-mappen om det är dags. Tyst —
  * loggar endast via electron-log och uppdaterar settings.last_backup_date.
  * Anropas efter DB är öppen (post-unlock).
  *
  * Returnerar true om backup skapades, false annars.
+ *
+ * Deps är injekteringsbar för vitest-testning utan Electron-runtime.
  */
 export async function performAutoBackupIfDue(
   db: Database.Database,
+  deps: AutoBackupDeps = {},
 ): Promise<boolean> {
-  const settings = loadSettings()
+  const loadFn = deps.loadSettings ?? loadSettings
+  const saveFn = deps.saveSettings ?? saveSettings
+  const defaultFolderFn = deps.getDefaultFolder ?? getDefaultBackupFolder
+
+  const settings = loadFn()
   const check = isAutoBackupDue(settings)
   if (!check.due) {
     log.info(
@@ -121,7 +138,7 @@ export async function performAutoBackupIfDue(
   const folder =
     (typeof settings.auto_backup_folder === 'string' &&
       settings.auto_backup_folder) ||
-    getDefaultBackupFolder()
+    defaultFolderFn()
 
   try {
     fs.mkdirSync(folder, { recursive: true })
@@ -139,7 +156,7 @@ export async function performAutoBackupIfDue(
   try {
     await db.backup(filePath)
     const now = getNow().toISOString()
-    saveSettings({ ...settings, last_backup_date: now })
+    saveFn({ ...settings, last_backup_date: now })
     log.info(`[auto-backup] Skapade backup: ${filePath}`)
   } catch (err) {
     log.error('[auto-backup] Backup misslyckades:', err)

@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { migrations } from '../src/main/migrations'
+import { migrations, NEEDS_FK_OFF } from '../src/main/migrations'
 
 // Test backup validation logic directly via a temp DB
 // The full restoreBackup flow requires Electron (dialog, app.relaunch)
@@ -29,7 +29,7 @@ function createValidBackup(version?: number): string {
   const targetVersion = version ?? migrations.length
   for (let i = 0; i < targetVersion; i++) {
     const migration = migrations[i]
-    const needsFkOff = i === 20 || i === 21 || i === 22
+    const needsFkOff = NEEDS_FK_OFF.has(i)
     if (needsFkOff) db.pragma('foreign_keys = OFF')
 
     db.exec('BEGIN EXCLUSIVE')
