@@ -1,4 +1,5 @@
-import { FileText, Users, Package, Upload } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { FileText, Users, Package, Upload, ShieldAlert } from 'lucide-react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { MetricCard } from '../components/overview/MetricCard'
 import { PeriodList } from '../components/overview/PeriodList'
@@ -7,6 +8,55 @@ import { useDashboardSummary } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useNavigate } from '../lib/router'
 import { formatKr } from '../lib/format'
+
+const BACKUP_WARN_DAYS = 30
+
+function daysSince(iso: string): number {
+  const then = new Date(iso)
+  const now = new Date()
+  const ms = now.getTime() - then.getTime()
+  return Math.floor(ms / (1000 * 60 * 60 * 24))
+}
+
+function BackupReminder({
+  navigate,
+  lastBackup,
+}: {
+  navigate: (path: string) => void
+  lastBackup: string | null
+}) {
+  const age = lastBackup ? daysSince(lastBackup) : null
+  const needsAttention = age === null || age >= BACKUP_WARN_DAYS
+  if (!needsAttention) return null
+
+  return (
+    <div
+      className="mb-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      data-testid="backup-reminder"
+      role="alert"
+    >
+      <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+      <div className="flex-1">
+        <p className="font-medium">
+          {age === null
+            ? 'Ingen säkerhetskopia har skapats ännu'
+            : `Senaste säkerhetskopia är ${age} dagar gammal`}
+        </p>
+        <p className="mt-0.5 text-xs text-amber-800">
+          Bokföringslagen 7 kap kräver arkivering i 7 år. Skapa en
+          säkerhetskopia regelbundet — datafilen är helt lokal.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/settings')}
+        className="flex-shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+      >
+        Öppna inställningar
+      </button>
+    </div>
+  )
+}
 
 function isFreshInstall(summary: {
   revenueOre: number
@@ -90,6 +140,13 @@ export function PageOverview() {
     error,
   } = useDashboardSummary(activeFiscalYear?.id)
 
+  const [lastBackup, setLastBackup] = useState<string | null>(null)
+  useEffect(() => {
+    window.api.getSetting('last_backup_date').then((val) => {
+      if (typeof val === 'string') setLastBackup(val)
+    })
+  }, [])
+
   const showWelcome = summary != null && isFreshInstall(summary)
 
   return (
@@ -100,6 +157,10 @@ export function PageOverview() {
           <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
             Kunde inte ladda dashboard-data.
           </div>
+        )}
+
+        {!error && !showWelcome && (
+          <BackupReminder navigate={navigate} lastBackup={lastBackup} />
         )}
 
         {!error && showWelcome && <WelcomeCtas navigate={navigate} />}
