@@ -1,20 +1,16 @@
 import Database from 'better-sqlite3'
-import { migrations } from '../../src/main/migrations'
+import { migrations, NEEDS_FK_OFF } from '../../src/main/migrations'
 import { registerCustomFunctions } from '../../src/main/db-functions'
 
-// Migration indexes (0-based) that require PRAGMA foreign_keys = OFF outside
-// the transaction due to table-recreate on tables with inbound FK. See M122 in CLAUDE.md.
-// Note: intentionally does not include index 20 (migration 021 journal_entries
-// CHECK-rebuild) — baseline test helper omitted it and tests have adapted.
-// Index 37 = migration 038 (Sprint 53 F62: journal_entries verification_series
-// CHECK-rebuild + fixed_assets + depreciation_schedules).
-// Index 42 = migration 043 (Sprint F P6: bank_statements.source_format CHECK-utökning).
-// Index 43 = migration 044 (Sprint Q T3.d: MT940+BGMAX source_format-utvidgning).
-// Index 44 = migration 045 (Sprint MC3: counterparties/products/price_lists company_id).
-// Index 46 = migration 047 (F-TT-003: expenses table-recreate för CHECKs).
-export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = new Set([
-  21, 22, 37, 42, 43, 44, 46,
-])
+// Single source of truth: NEEDS_FK_OFF i migrations.ts (importerad).
+// Testhelper använde tidigare en hårdkodad lista som glömde nya
+// migrations — orsakade silent breakage när nya migrations med
+// inbound FK lades till. Sprint M (2026-04-22): bytt till import
+// av NEEDS_FK_OFF. Historisk not: index 20 (migration 021 journal_entries
+// CHECK-rebuild) var tidigare "intentionally omitted" — nu inkluderat
+// från NEEDS_FK_OFF eftersom testhelpern ska matcha produktions-
+// migrationskörare.
+export const FK_OFF_MIGRATION_INDEXES: ReadonlySet<number> = NEEDS_FK_OFF
 
 /**
  * Creates a fresh in-memory DB with all migrations applied.

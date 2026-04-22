@@ -572,7 +572,7 @@ export interface VatQuarterReport {
 }
 
 export interface VatReport {
-  quarters: VatQuarterReport[] // Alltid 4 element
+  quarters: VatQuarterReport[] // 1–5 element (normalt 4; kortat/förlängt första FY ger 1–5 per M161)
   yearTotal: VatQuarterReport // quarterIndex: -1, quarterLabel: "Helår"
   fiscalYearId: number
 }

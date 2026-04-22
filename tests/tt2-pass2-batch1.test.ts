@@ -9,7 +9,10 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
-import { createTestDb } from './helpers/create-test-db'
+import {
+  createTestDb,
+  FK_OFF_MIGRATION_INDEXES,
+} from './helpers/create-test-db'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import {
@@ -380,20 +383,12 @@ describe('M122 — table-recreate FK-helper FK_OFF_MIGRATION_INDEXES', () => {
   })
 
   it('FK_OFF_MIGRATION_INDEXES är icke-tom (M122 används aktivt)', () => {
-    // Importeras för att verifiera att helpern faktiskt deklarerar några
-    // recreate-migrationer — om setet töms av misstag försvinner skyddet
-    const helper = readFileSync(
-      path.join(process.cwd(), 'tests/helpers/create-test-db.ts'),
-      'utf8',
-    )
-    const m = helper.match(/new Set\(\[([^\]]+)\]\)/)
-    expect(m).not.toBeNull()
-    if (!m) return
-    const items = m[1]
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-    expect(items.length).toBeGreaterThan(3)
+    // Sprint M: create-test-db.ts importerar nu NEEDS_FK_OFF direkt
+    // från migrations.ts (single source of truth istället för
+    // duplicerad lista). Testet verifierar att setet faktiskt
+    // innehåller M122-migrationer — om det töms av misstag
+    // försvinner test-helperns skydd.
+    expect(FK_OFF_MIGRATION_INDEXES.size).toBeGreaterThan(3)
   })
 })
 

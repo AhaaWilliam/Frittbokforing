@@ -15,18 +15,22 @@ export function getTaxForecast(
   const run = db.transaction((): TaxForecast => {
     const operatingProfitOre = calculateOperatingResult(db, fiscalYearId)
 
-    // ── Avslutade perioder (för helårsprognos) ──
+    // ── Avslutade perioder + faktisk FY-längd (för helårsprognos) ──
     // En period räknas som avslutad först dagen EFTER end_date (< istället för <=)
+    // fiscalYearMonths = totalt antal perioder i FY (1–13 per M161 / BFL 3:3 —
+    // kortat eller förlängt första räkenskapsår). Annualisering skalar
+    // operating-resultat från förflutna perioder till FY-helhet, inte kalenderår.
     const monthsRow = db
       .prepare(
         `
-      SELECT COUNT(*) AS months_elapsed
+      SELECT
+        COUNT(*) AS months_total,
+        SUM(CASE WHEN date(end_date) < date('now', 'localtime') THEN 1 ELSE 0 END) AS months_elapsed
       FROM accounting_periods
       WHERE fiscal_year_id = ?
-        AND date(end_date) < date('now', 'localtime')
     `,
       )
-      .get(fiscalYearId) as { months_elapsed: number }
+      .get(fiscalYearId) as { months_total: number; months_elapsed: number }
 
     // ── Beräkningar (all logik i main process — princip #1) ──
 
@@ -52,13 +56,14 @@ export function getTaxForecast(
 
     // Helårsprognos — null om inga avslutade perioder
     const monthsElapsed = monthsRow.months_elapsed
+    const fiscalYearMonths = Math.max(1, monthsRow.months_total)
     let projectedFullYearIncomeOre: number | null = null
     let projectedFullYearTaxOre: number | null = null
     let projectedFullYearTaxAfterFondOre: number | null = null
 
     if (monthsElapsed > 0) {
       projectedFullYearIncomeOre = Math.round(
-        (operatingProfitOre * 12) / monthsElapsed,
+        (operatingProfitOre * fiscalYearMonths) / monthsElapsed,
       )
 
       const projectedTaxableOre = Math.max(0, projectedFullYearIncomeOre)
@@ -86,7 +91,7 @@ export function getTaxForecast(
       corporateTaxAfterFondOre,
       taxSavingsFromFondOre,
       monthsElapsed,
-      fiscalYearMonths: 12,
+      fiscalYearMonths,
       projectedFullYearIncomeOre,
       projectedFullYearTaxOre,
       projectedFullYearTaxAfterFondOre,

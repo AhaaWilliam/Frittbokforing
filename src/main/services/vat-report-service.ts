@@ -60,7 +60,10 @@ export function getVatReport(
   fiscalYearId: number,
 ): VatReport {
   const run = db.transaction((): VatReport => {
-    // Query 1: Quarter skeleton (always 4 rows)
+    // Query 1: Quarter skeleton. Normalt 4 rader, men kortat/förlängt
+    // första FY (M161 / BFL 3:3) kan ge 1–5 kvartal eftersom FY har
+    // 1–13 perioder. Query grupperar på ((period_number - 1) / 3), så:
+    // 1–3 perioder → 1 kvartal, 4–6 → 2, 7–9 → 3, 10–12 → 4, 13 → 5.
     const quarterFrames = db
       .prepare(
         `SELECT
@@ -74,12 +77,10 @@ export function getVatReport(
       )
       .all(fiscalYearId) as QuarterFrame[]
 
-    if (quarterFrames.length !== 4) {
+    if (quarterFrames.length === 0) {
       throw {
         code: 'VALIDATION_ERROR',
-        error:
-          `Expected 4 quarters but got ${quarterFrames.length}. ` +
-          `Only 12-month fiscal years are supported in v1.`,
+        error: 'Räkenskapsåret saknar perioder.',
       }
     }
 
@@ -182,7 +183,7 @@ export function getVatReport(
       quarterIndex: -1,
       quarterLabel: 'Helår',
       startDate: quarters[0].startDate,
-      endDate: quarters[3].endDate,
+      endDate: quarters[quarters.length - 1].endDate,
       hasData: quarters.some((q) => q.hasData),
 
       vatOut25Ore: ytVatOut25,

@@ -273,6 +273,57 @@ describe('getVatReport', () => {
     expect(r.yearTotal.hasData).toBe(false)
   })
 
+  // Test 6b (Sprint M / M161): kortat första FY ger 1–4 kvartal
+  it('kortat första FY (9 perioder) → 3 kvartal', () => {
+    // Separate company/FY med kortat FY (9 perioder: apr-dec 2026)
+    db = createTestDb()
+    const create = createCompany(db, {
+      name: 'Kortat AB',
+      org_number: '556036-0793',
+      fiscal_rule: 'K2' as const,
+      share_capital: 2_500_000,
+      registration_date: '2026-04-22',
+      fiscal_year_start: '2026-04-22',
+      fiscal_year_end: '2026-12-31',
+    })
+    if (!create.success)
+      throw new Error('createCompany failed: ' + create.error)
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    const r = getVatReport(db, fy.id)
+    // 9 perioder → quarter_index: 0,0,0,1,1,1,2,2,2 = 3 kvartal
+    expect(r.quarters.length).toBe(3)
+    expect(r.quarters.every((q) => !q.hasData)).toBe(true)
+    expect(r.yearTotal.startDate).toBe('2026-04-22')
+    expect(r.yearTotal.endDate).toBe('2026-12-31')
+  })
+
+  // Test 6c (Sprint M / M161): förlängt första FY (13 perioder) → 5 kvartal
+  it('förlängt första FY (13 perioder) → 5 kvartal', () => {
+    db = createTestDb()
+    // reg 2025-12-15 (i det förflutna) → FY 2025-12-15..2026-12-31 = 13 perioder
+    const create = createCompany(db, {
+      name: 'Förlängt AB',
+      org_number: '556036-0793',
+      fiscal_rule: 'K2' as const,
+      share_capital: 2_500_000,
+      registration_date: '2025-12-15',
+      fiscal_year_start: '2025-12-15',
+      fiscal_year_end: '2026-12-31',
+    })
+    if (!create.success)
+      throw new Error('createCompany failed: ' + create.error)
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
+    const r = getVatReport(db, fy.id)
+    // 13 perioder → quarter_index: 0,0,0,1,1,1,2,2,2,3,3,3,4 = 5 kvartal
+    expect(r.quarters.length).toBe(5)
+    expect(r.yearTotal.startDate).toBe('2025-12-15')
+    expect(r.yearTotal.endDate).toBe('2026-12-31')
+  })
+
   // Test 7: Year total = sum of quarters (algebraic invariant)
   it('årstotal = summa kvartal', () => {
     bookInvoice(db, {
