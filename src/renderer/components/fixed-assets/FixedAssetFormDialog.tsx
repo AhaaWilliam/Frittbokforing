@@ -12,6 +12,7 @@ import type {
   DepreciationMethod,
   FixedAssetWithAccumulation,
 } from '../../../shared/types'
+import { errorIdFor } from '../../lib/a11y'
 
 interface Props {
   open: boolean
@@ -73,6 +74,7 @@ export function FixedAssetFormDialog({
       ? initialAsset.account_depreciation_expense
       : '7832',
   )
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
 
   function resetForm() {
@@ -86,6 +88,7 @@ export function FixedAssetFormDialog({
     setAssetAccount('1220')
     setAccAccount('1229')
     setExpAccount('7832')
+    setFieldErrors({})
     setFormError(null)
   }
 
@@ -102,6 +105,7 @@ export function FixedAssetFormDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setFieldErrors({})
     setFormError(null)
 
     const costOre = Math.round(parseDecimal(costKr) * 100)
@@ -110,11 +114,11 @@ export function FixedAssetFormDialog({
 
     if (!name.trim()) return setFormError('Namn krävs')
     if (!Number.isFinite(costOre) || costOre < 0)
-      return setFormError('Ange giltigt anskaffningsvärde')
+      return setFieldErrors({ cost: 'Ange giltigt anskaffningsvärde' })
     if (residualOre > costOre)
-      return setFormError('Restvärde kan inte överstiga anskaffningsvärde')
+      return setFieldErrors({ residual: 'Restvärde kan inte överstiga anskaffningsvärde' })
     if (!Number.isFinite(monthsNum) || monthsNum < 1)
-      return setFormError('Nyttjandeperiod måste vara minst 1 månad')
+      return setFieldErrors({ months: 'Nyttjandeperiod måste vara minst 1 månad' })
 
     const payload: CreateFixedAssetInput = {
       name: name.trim(),
@@ -245,7 +249,14 @@ export function FixedAssetFormDialog({
                 onChange={(e) => setMonths(e.target.value)}
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 required
+                aria-invalid={!!fieldErrors.months}
+                aria-describedby={fieldErrors.months ? errorIdFor('fa-months') : undefined}
               />
+              {fieldErrors.months && (
+                <p role="alert" id={errorIdFor('fa-months')} className="mt-1 text-xs text-red-600">
+                  {fieldErrors.months}
+                </p>
+              )}
             </div>
           </div>
 
@@ -267,7 +278,14 @@ export function FixedAssetFormDialog({
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 required
                 data-testid="fa-cost"
+                aria-invalid={!!fieldErrors.cost}
+                aria-describedby={fieldErrors.cost ? errorIdFor('fa-cost') : undefined}
               />
+              {fieldErrors.cost && (
+                <p role="alert" id={errorIdFor('fa-cost')} className="mt-1 text-xs text-red-600">
+                  {fieldErrors.cost}
+                </p>
+              )}
             </div>
             <div>
               <label
@@ -284,7 +302,14 @@ export function FixedAssetFormDialog({
                 value={residualKr}
                 onChange={(e) => setResidualKr(e.target.value)}
                 className="w-full rounded-md border px-3 py-2 text-sm"
+                aria-invalid={!!fieldErrors.residual}
+                aria-describedby={fieldErrors.residual ? errorIdFor('fa-residual') : undefined}
               />
+              {fieldErrors.residual && (
+                <p role="alert" id={errorIdFor('fa-residual')} className="mt-1 text-xs text-red-600">
+                  {fieldErrors.residual}
+                </p>
+              )}
             </div>
           </div>
 
