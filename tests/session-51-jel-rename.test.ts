@@ -47,7 +47,7 @@ describe('Migration 018 — journal_entry_lines rename', () => {
     const uv = db.prepare('PRAGMA user_version').get() as {
       user_version: number
     }
-    expect(uv.user_version).toBe(53)
+    expect(uv.user_version).toBe(54)
   })
 
   it('journal_entry_lines has debit_ore, credit_ore, vat_ore columns', () => {

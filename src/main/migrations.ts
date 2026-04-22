@@ -1868,6 +1868,17 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
     sql: '-- Migration 053: accrual_entries unique per (schedule, period, type) (se programmatic)',
     programmatic: migration053Programmatic,
   },
+  // ── Migration 054 — Fynd 1: Index på fiscal_year_id för invoices/expenses ──
+  //
+  // Samtliga queries mot invoices/expenses scopas till fiscal_year_id (regel 14).
+  // Ett dedikerat B-tree-index på kolumnen undviker full table scan vid list +
+  // aggregeringar. Idempotent (IF NOT EXISTS).
+  {
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_invoices_fiscal_year ON invoices(fiscal_year_id);
+      CREATE INDEX IF NOT EXISTS idx_expenses_fiscal_year ON expenses(fiscal_year_id);
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
