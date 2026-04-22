@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Printer } from 'lucide-react'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
-import { useBudgetLines } from '../lib/hooks'
+import { useBudgetLines, useFiscalPeriods } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { BudgetInputGrid } from '../components/budget/BudgetInputGrid'
@@ -17,6 +17,8 @@ export function PageBudget() {
     isLoading: linesLoading,
     error: linesError,
   } = useBudgetLines()
+  const { data: periods } = useFiscalPeriods(activeFiscalYear?.id)
+  const periodCount = periods?.length ?? 12
 
   if (!activeFiscalYear) {
     return (
@@ -81,7 +83,11 @@ export function PageBudget() {
         ) : linesLoading ? (
           <LoadingSpinner />
         ) : !lines ? null : activeTab === 'budget' ? (
-          <BudgetInputGrid lines={lines} fiscalYearId={activeFiscalYear.id} />
+          <BudgetInputGrid
+            lines={lines}
+            fiscalYearId={activeFiscalYear.id}
+            periodCount={periodCount}
+          />
         ) : (
           <VarianceGrid fiscalYearId={activeFiscalYear.id} />
         )}

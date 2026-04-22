@@ -27,3 +27,13 @@ export function krToOre(kr: string): number {
 }
 
 export const PERIOD_LABELS = Array.from({ length: 12 }, (_, i) => `P${i + 1}`)
+
+/**
+ * Dynamiska period-etiketter för räkenskapsår med annat antal perioder
+ * än 12 (kortat eller förlängt första FY, BFL 3:3 — Sprint D/E).
+ * Returnerar ['P1', 'P2', ..., 'PN'] där N = periodCount (1–13).
+ */
+export function makePeriodLabels(periodCount: number): string[] {
+  const safeCount = Math.max(1, Math.min(13, periodCount))
+  return Array.from({ length: safeCount }, (_, i) => `P${i + 1}`)
+}

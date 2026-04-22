@@ -1,13 +1,19 @@
 import { useBudgetVariance } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
-import { PERIOD_LABELS } from './budget-grid-utils'
+import { makePeriodLabels } from './budget-grid-utils'
 
 export function VarianceGrid({ fiscalYearId }: { fiscalYearId: number }) {
   const { data: report, isLoading } = useBudgetVariance(fiscalYearId)
 
   if (isLoading) return <LoadingSpinner />
   if (!report) return null
+
+  // Deriv period-count från första rad; fallback till 12 om inga rader
+  const periodCount = report.lines[0]?.periods.length ?? 12
+  const PERIOD_LABELS = makePeriodLabels(periodCount)
+  // colSpan = 1 etikett + (N + 1 för helår) × 3 sub-headers
+  const groupHeaderColSpan = 1 + (periodCount + 1) * 3
 
   let currentGroupId = ''
 
@@ -53,6 +59,7 @@ export function VarianceGrid({ fiscalYearId }: { fiscalYearId: number }) {
                 key={line.lineId}
                 line={line}
                 showGroupHeader={showGroup}
+                groupHeaderColSpan={groupHeaderColSpan}
               />
             )
           })}
@@ -75,16 +82,18 @@ function VarianceSubHeaders() {
 function VarianceRow({
   line,
   showGroupHeader,
+  groupHeaderColSpan,
 }: {
   line: import('../../../shared/types').BudgetVarianceLine
   showGroupHeader: boolean
+  groupHeaderColSpan: number
 }) {
   return (
     <>
       {showGroupHeader && (
         <tr>
           <td
-            colSpan={40}
+            colSpan={groupHeaderColSpan}
             className="bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
           >
             {line.groupLabel}

@@ -13,17 +13,21 @@ import {
   buildGridFromTargets,
   krToOre,
   oreToKr,
-  PERIOD_LABELS,
+  makePeriodLabels,
   type GridState,
 } from './budget-grid-utils'
 
 export function BudgetInputGrid({
   lines,
   fiscalYearId,
+  periodCount = 12,
 }: {
   lines: BudgetLineMeta[]
   fiscalYearId: number
+  /** Antal perioder i FY (1–13). Default 12 för bakåtkompatibilitet. */
+  periodCount?: number
 }) {
+  const PERIOD_LABELS = makePeriodLabels(periodCount)
   const { data: targets, isLoading } = useBudgetTargets(fiscalYearId)
   const saveMutation = useSaveBudgetTargets()
   const copyMutation = useCopyBudgetFromPreviousFy()
@@ -112,11 +116,11 @@ export function BudgetInputGrid({
       for (const line of lines) {
         const total = getLineTotal(line.lineId)
         if (total === 0) continue
-        const perPeriod = Math.floor(total / 12)
-        const remainder = total - perPeriod * 12
+        const perPeriod = Math.floor(total / periodCount)
+        const remainder = total - perPeriod * periodCount
         const periods: Record<number, number> = {}
-        for (let p = 1; p <= 12; p++) {
-          periods[p] = perPeriod + (p === 12 ? remainder : 0)
+        for (let p = 1; p <= periodCount; p++) {
+          periods[p] = perPeriod + (p === periodCount ? remainder : 0)
         }
         next[line.lineId] = periods
       }
@@ -191,6 +195,7 @@ export function BudgetInputGrid({
                   showGroupHeader={showGroup}
                   onCellChange={setCellValue}
                   lineTotal={getLineTotal(line.lineId)}
+                  periodLabels={PERIOD_LABELS}
                 />
               )
             })}
@@ -207,19 +212,23 @@ function BudgetInputRow({
   showGroupHeader,
   onCellChange,
   lineTotal,
+  periodLabels,
 }: {
   line: BudgetLineMeta
   grid: GridState
   showGroupHeader: boolean
   onCellChange: (lineId: string, period: number, value: string) => void
   lineTotal: number
+  periodLabels: string[]
 }) {
+  // colSpan = 1 etikett-kolumn + N perioder + 1 totalt-kolumn
+  const colSpan = 2 + periodLabels.length
   return (
     <>
       {showGroupHeader && (
         <tr>
           <td
-            colSpan={14}
+            colSpan={colSpan}
             className="bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground"
           >
             {line.groupLabel}
@@ -230,7 +239,7 @@ function BudgetInputRow({
         <td className="sticky left-0 bg-background px-3 py-1.5 text-sm">
           {line.label}
         </td>
-        {PERIOD_LABELS.map((_, i) => {
+        {periodLabels.map((_, i) => {
           const period = i + 1
           const ore = grid[line.lineId]?.[period] ?? 0
           return (
@@ -243,7 +252,7 @@ function BudgetInputRow({
                   onCellChange(line.lineId, period, e.target.value)
                 }
                 className="w-full rounded border border-input bg-background px-2 py-1 text-right text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
-                aria-label={`${line.label} ${PERIOD_LABELS[i]}`}
+                aria-label={`${line.label} ${periodLabels[i]}`}
               />
             </td>
           )
