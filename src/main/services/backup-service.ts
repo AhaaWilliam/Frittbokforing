@@ -217,13 +217,13 @@ export async function restoreBackup(
     // Clean up WAL/SHM from old DB (new DB starts fresh)
     try {
       if (fs.existsSync(walPath)) fs.unlinkSync(walPath)
-    } catch {
-      /* best effort */
+    } catch (err) {
+      log.warn('[backup] WAL cleanup failed:', err)
     }
     try {
       if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath)
-    } catch {
-      /* best effort */
+    } catch (err) {
+      log.warn('[backup] SHM cleanup failed:', err)
     }
 
     log.info('[backup] Restore complete, relaunching app')
