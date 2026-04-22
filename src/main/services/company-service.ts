@@ -35,7 +35,7 @@ export interface GeneratedPeriod {
  * - Hanterar brutet räkenskapsår.
  *
  * Invarianter:
- * 1. 1 ≤ periods.length ≤ 12 (DB CHECK `period_number <= 12`)
+ * 1. 1 ≤ periods.length ≤ 13 (DB CHECK `period_number BETWEEN 1 AND 13`)
  * 2. periods[0].start_date === fiscalYearStart
  * 3. periods[last].end_date === fiscalYearEnd
  * 4. Varje period: end_date >= start_date (stub kan vara 1-dags)
@@ -51,7 +51,7 @@ export function generatePeriods(
   let cursor = new Date(fiscalYearStart + 'T00:00:00')
   let periodNumber = 1
 
-  while (cursor.getTime() <= endDate.getTime() && periodNumber <= 13) {
+  while (cursor.getTime() <= endDate.getTime() && periodNumber <= 14) {
     // Sista dagen i aktuell månad
     const lastOfMonth = new Date(
       cursor.getFullYear(),
@@ -95,9 +95,9 @@ function validatePeriodInvariants(
   fyStart: string,
   fyEnd: string,
 ): void {
-  if (periods.length < 1 || periods.length > 12) {
+  if (periods.length < 1 || periods.length > 13) {
     throw new Error(
-      `Invariant: periods.length (${periods.length}) måste vara mellan 1 och 12 (DB CHECK period_number <= 12)`,
+      `Invariant: periods.length (${periods.length}) måste vara mellan 1 och 13 (DB CHECK period_number BETWEEN 1 AND 13)`,
     )
   }
   if (periods[0].start_date !== fyStart) {

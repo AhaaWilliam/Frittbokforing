@@ -6,6 +6,8 @@ interface StepFiscalYearProps {
   fiscal_year_start_month: number
   /** BFL 3:3 — kortat första FY startar på registreringsdatum. */
   use_short_first_fy: boolean
+  /** BFL 3:3 — förlängt första FY (start vid reg, slut 31 dec nästa år). */
+  use_extended_first_fy: boolean
   onChange: (field: string, value: string | boolean | number) => void
   onNext: () => void
   onBack: () => void
@@ -35,14 +37,25 @@ export function computeFiscalYear(
   use_broken: boolean,
   start_month: number,
   use_short: boolean = false,
+  use_extended: boolean = false,
 ): { start: string; end: string } {
   const regYear = registration_date
     ? new Date(registration_date).getFullYear()
     : new Date().getFullYear()
 
+  // BFL 3:3 — förlängt första FY startar vid registreringsdatum och
+  // slutar 31 dec året efter (max 13 perioder). Endast kalenderår
+  // stöds i denna version.
+  if (use_extended && !use_broken && registration_date) {
+    return {
+      start: registration_date,
+      end: `${regYear + 1}-12-31`,
+    }
+  }
+
   // BFL 3:3 — kortat första FY startar vid registreringsdatum och
   // slutar på sista dagen i kalenderårets december. Kombinationen
-  // kortat+brutet räkenskapsår kan överskrida 12 perioder och stöds
+  // kortat+brutet räkenskapsår kan överskrida 13 perioder och stöds
   // inte i denna version — use_short ignoreras vid use_broken=true.
   if (use_short && !use_broken && registration_date) {
     return {
@@ -77,6 +90,7 @@ export function StepFiscalYear({
   use_broken_fiscal_year,
   fiscal_year_start_month,
   use_short_first_fy,
+  use_extended_first_fy,
   onChange,
   onNext,
   onBack,
@@ -86,6 +100,7 @@ export function StepFiscalYear({
     use_broken_fiscal_year,
     fiscal_year_start_month,
     use_short_first_fy,
+    use_extended_first_fy,
   )
 
   const regDate = registration_date ? new Date(registration_date) : null
@@ -121,27 +136,55 @@ export function StepFiscalYear({
       )}
 
       {showShortOption && (
-        <label
-          className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
-          data-testid="wizard-short-fy-toggle-label"
-        >
-          <input
-            type="checkbox"
-            checked={use_short_first_fy}
-            onChange={(e) => onChange('use_short_first_fy', e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-border"
-            data-testid="wizard-short-fy-toggle"
-          />
-          <div>
-            <div className="text-sm font-medium">
-              Kortat första räkenskapsår (BFL 3:3)
+        <>
+          <label
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+            data-testid="wizard-short-fy-toggle-label"
+          >
+            <input
+              type="checkbox"
+              checked={use_short_first_fy}
+              disabled={use_extended_first_fy}
+              onChange={(e) => onChange('use_short_first_fy', e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border"
+              data-testid="wizard-short-fy-toggle"
+            />
+            <div>
+              <div className="text-sm font-medium">
+                Kortat första räkenskapsår (BFL 3:3)
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Första räkenskapsåret börjar på registreringsdatumet istället
+                för 1:a i månaden. Följande räkenskapsår blir 12 hela månader.
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Första räkenskapsåret börjar på registreringsdatumet istället
-              för 1:a i månaden. Följande räkenskapsår blir 12 hela månader.
+          </label>
+          <label
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+            data-testid="wizard-extended-fy-toggle-label"
+          >
+            <input
+              type="checkbox"
+              checked={use_extended_first_fy}
+              disabled={use_short_first_fy}
+              onChange={(e) =>
+                onChange('use_extended_first_fy', e.target.checked)
+              }
+              className="mt-0.5 h-4 w-4 rounded border-border"
+              data-testid="wizard-extended-fy-toggle"
+            />
+            <div>
+              <div className="text-sm font-medium">
+                Förlängt första räkenskapsår (BFL 3:3)
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Första räkenskapsåret börjar vid registreringsdatumet och
+                slutar 31 dec året efter (max 13 månader). Vanligt vid
+                registrering sent på året.
+              </div>
             </div>
-          </div>
-        </label>
+          </label>
+        </>
       )}
 
       <label className="flex cursor-pointer items-center gap-3">

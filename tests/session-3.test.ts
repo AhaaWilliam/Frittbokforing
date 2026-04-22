@@ -186,11 +186,11 @@ describe('Periodgenerering', () => {
     })
   })
 
-  it('9b. Kortat brutet FY: reg 2026-03-10 → stub mars + 13 hela månader? max 12', () => {
+  it('9b. Kortat brutet FY: reg 2026-03-10 → stub mars + 13 hela månader = 14 perioder (för många)', () => {
     // 2026-03-10 → 2027-04-30 = 14 perioder (mars-stub + 13 hela)
-    // Detta ska kasta eftersom det överskrider 12 perioder
+    // Detta ska kasta eftersom det överskrider 13 perioder
     expect(() => generatePeriods('2026-03-10', '2027-04-30')).toThrow(
-      /periods\.length .*måste vara mellan 1 och 12/,
+      /periods\.length .*måste vara mellan 1 och 13/,
     )
   })
 
@@ -217,6 +217,28 @@ describe('Periodgenerering', () => {
       start_date: '2026-04-30',
       end_date: '2026-04-30',
     })
+  })
+
+  it('9e. Förlängt första FY: reg sent på året → 13 perioder', () => {
+    // Reg 2026-12-15 → 2027-12-31 = 1 stub (dec 15-31) + 12 hela = 13 perioder
+    const periods = generatePeriods('2026-12-15', '2027-12-31')
+    expect(periods.length).toBe(13)
+    expect(periods[0]).toEqual({
+      period_number: 1,
+      start_date: '2026-12-15',
+      end_date: '2026-12-31',
+    })
+    expect(periods[12]).toEqual({
+      period_number: 13,
+      start_date: '2027-12-01',
+      end_date: '2027-12-31',
+    })
+  })
+
+  it('9f. 14 perioder kastar invariant-error', () => {
+    expect(() => generatePeriods('2026-11-15', '2027-12-31')).toThrow(
+      /periods\.length .*måste vara mellan 1 och 13/,
+    )
   })
 
   it('10. Trigger 8-kompatibilitet — bokföring i genererade perioder fungerar', () => {

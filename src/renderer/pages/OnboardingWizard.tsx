@@ -21,6 +21,8 @@ interface WizardState {
   fiscal_year_start_month: number
   /** Kortat första FY per BFL 3:3 — start = registreringsdatum. */
   use_short_first_fy: boolean
+  /** Förlängt första FY per BFL 3:3 — upp till 13 månader framåt. */
+  use_extended_first_fy: boolean
 }
 
 type WizardAction =
@@ -37,6 +39,7 @@ const initialState: WizardState = {
   use_broken_fiscal_year: false,
   fiscal_year_start_month: 1,
   use_short_first_fy: false,
+  use_extended_first_fy: false,
 }
 
 function reducer(state: WizardState, action: WizardAction): WizardState {
@@ -83,6 +86,7 @@ export function OnboardingWizard({
     state.use_broken_fiscal_year,
     state.fiscal_year_start_month,
     state.use_short_first_fy,
+    state.use_extended_first_fy,
   )
 
   const handleSubmit = (data: CreateCompanyInput) => {
@@ -163,6 +167,7 @@ export function OnboardingWizard({
               use_broken_fiscal_year={state.use_broken_fiscal_year}
               fiscal_year_start_month={state.fiscal_year_start_month}
               use_short_first_fy={state.use_short_first_fy}
+              use_extended_first_fy={state.use_extended_first_fy}
               onChange={setField}
               onNext={() => dispatch({ type: 'SET_STEP', step: 3 })}
               onBack={() => dispatch({ type: 'SET_STEP', step: 1 })}

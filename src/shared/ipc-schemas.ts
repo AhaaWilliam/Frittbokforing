@@ -116,9 +116,9 @@ export const CreateCompanyInputSchema = z
   )
   .refine(
     (data) => {
-      // Max 12 perioder (begränsat av DB CHECK period_number <= 12). För
-      // kortat första FY betyder detta att FY-slutet måste ligga inom
-      // start-månadens år + max 11 hela kalendermånader efteråt.
+      // Max 13 perioder (DB CHECK period_number BETWEEN 1 AND 13). För
+      // förlängt första FY (BFL 3:3) tillåts upp till 13 kalendermånader
+      // från start-månadens första dag till fiscal_year_end.
       const start = new Date(data.fiscal_year_start + 'T00:00:00')
       const end = new Date(data.fiscal_year_end + 'T00:00:00')
       const startOfStartMonth = new Date(
@@ -129,11 +129,11 @@ export const CreateCompanyInputSchema = z
       const monthsDiff =
         (end.getFullYear() - startOfStartMonth.getFullYear()) * 12 +
         (end.getMonth() - startOfStartMonth.getMonth())
-      return monthsDiff <= 11 // 0 = samma månad (1 period), 11 = 12 månader (12 perioder)
+      return monthsDiff <= 12 // 0 = samma månad (1 period), 12 = 13 månader (13 perioder)
     },
     {
       message:
-        'Räkenskapsåret får omfatta högst 12 perioder (kalendermånader). För förlängt första FY — kontakta utvecklaren.',
+        'Räkenskapsåret får omfatta högst 13 perioder (kalendermånader).',
       path: ['fiscal_year_end'],
     },
   )

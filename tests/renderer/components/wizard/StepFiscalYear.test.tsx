@@ -21,8 +21,18 @@ describe('computeFiscalYear', () => {
   })
 
   it('short first FY + brutet: ignoreras, faller tillbaka till standard brutet', () => {
-    // Kortat + brutet stöds ej (kan överskrida 12 perioder)
+    // Kortat + brutet stöds ej (kan överskrida 13 perioder)
     const result = computeFiscalYear('2026-04-22', true, 7, true)
+    expect(result).toEqual({ start: '2026-07-01', end: '2027-06-30' })
+  })
+
+  it('extended first FY: reg 2026-12-15 → 2027-12-31', () => {
+    const result = computeFiscalYear('2026-12-15', false, 1, false, true)
+    expect(result).toEqual({ start: '2026-12-15', end: '2027-12-31' })
+  })
+
+  it('extended first FY + brutet: ignoreras, faller tillbaka till standard brutet', () => {
+    const result = computeFiscalYear('2026-04-22', true, 7, false, true)
     expect(result).toEqual({ start: '2026-07-01', end: '2027-06-30' })
   })
 
@@ -59,6 +69,7 @@ const DEFAULT_PROPS = {
   use_broken_fiscal_year: false,
   fiscal_year_start_month: 1,
   use_short_first_fy: false,
+  use_extended_first_fy: false,
   onChange: vi.fn(),
   onNext: vi.fn(),
   onBack: vi.fn(),
@@ -125,6 +136,19 @@ describe('StepFiscalYear', () => {
     const { props } = renderStep({ registration_date: '2026-04-22' })
     await userEvent.click(screen.getByTestId('wizard-short-fy-toggle'))
     expect(props.onChange).toHaveBeenCalledWith('use_short_first_fy', true)
+  })
+
+  it('shows extended-FY checkbox when reg is mid-month, not broken', () => {
+    renderStep({ registration_date: '2026-12-15' })
+    expect(screen.getByTestId('wizard-extended-fy-toggle')).toBeInTheDocument()
+  })
+
+  it('short + extended are mutually exclusive (disables other)', () => {
+    renderStep({
+      registration_date: '2026-04-22',
+      use_short_first_fy: true,
+    })
+    expect(screen.getByTestId('wizard-extended-fy-toggle')).toBeDisabled()
   })
 
   it('axe-check passes', async () => {
