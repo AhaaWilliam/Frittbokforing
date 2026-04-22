@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 
 import { todayLocal } from '../../lib/format'
 import { parseDecimal } from '../../../shared/money'
+import { luhnCheck } from '../../../shared/ipc-schemas'
 
 interface StepCompanyProps {
   name: string
@@ -34,7 +35,9 @@ export function StepCompany({
     onChange('org_number', formatOrgNumber(e.target.value))
   }
 
-  const orgNumberValid = /^[5-9]\d{5}-\d{4}$/.test(org_number)
+  const orgFormatValid = /^[5-9]\d{5}-\d{4}$/.test(org_number)
+  const orgLuhnValid = orgFormatValid && luhnCheck(org_number)
+  const orgNumberValid = orgFormatValid && orgLuhnValid
   const shareCapitalNum = parseDecimal(share_capital)
   const shareCapitalValid = !isNaN(shareCapitalNum) && shareCapitalNum >= 25000
   const registrationDateValid =
@@ -80,10 +83,13 @@ export function StepCompany({
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           placeholder="NNNNNN-NNNN"
         />
-        {org_number.length > 0 && !orgNumberValid ? (
+        {org_number.length > 0 && !orgFormatValid ? (
           <p className="mt-1 text-xs text-red-500" role="alert">
-            Måste ha 10 siffror och börja med 5–9 (aktiebolag, enskild firma, HB
-            m.fl.)
+            Måste ha 10 siffror och börja med 5–9 (aktiebolag)
+          </p>
+        ) : org_number.length > 0 && !orgLuhnValid ? (
+          <p className="mt-1 text-xs text-red-500" role="alert">
+            Kontrollsiffran stämmer inte — dubbelkolla numret
           </p>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">

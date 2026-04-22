@@ -13,7 +13,7 @@ import {
  * Input: NNNNNN-NNNN format (t.ex. "556036-0793").
  * Returnerar true om sista siffran är korrekt kontrollsiffra.
  */
-function luhnCheck(orgNumber: string): boolean {
+export function luhnCheck(orgNumber: string): boolean {
   const digits = orgNumber.replace('-', '')
   if (digits.length !== 10) return false
 
@@ -48,7 +48,7 @@ export const CreateCompanyInputSchema = z
       .string()
       .regex(
         /^[5-9]\d{5}-\d{4}$/,
-        'Organisationsnummer måste ha formatet NNNNNN-NNNN där första siffran är 5-9',
+        'Organisationsnummer måste ha formatet NNNNNN-NNNN där första siffran är 5-9 (aktiebolag). Denna version stöder endast aktiebolag.',
       )
       .refine(
         luhnCheck,
