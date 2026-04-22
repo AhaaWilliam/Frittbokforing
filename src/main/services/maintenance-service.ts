@@ -46,7 +46,7 @@ export function vacuumDatabase(db: Database.Database): IpcResult<VacuumResult> {
     }
     if (err instanceof Error) {
       log.error('[maintenance] vacuumDatabase fel:', err)
-      return { success: false, code: 'UNEXPECTED_ERROR', error: err.message }
+      return { success: false, code: 'UNEXPECTED_ERROR', error: 'VACUUM misslyckades' }
     }
     log.error('[maintenance] vacuumDatabase okänt fel:', err)
     return { success: false, code: 'UNEXPECTED_ERROR', error: 'VACUUM misslyckades' }

@@ -431,30 +431,20 @@ export function registerIpcHandlers(): void {
     }),
   )
 
-  ipcMain.handle('opening-balance:re-transfer', () => {
-    try {
+  ipcMain.handle(
+    'opening-balance:re-transfer',
+    wrapIpcHandler(null, () => {
       const settings = loadSettings()
       const activeFyId = settings.last_fiscal_year_id as number | undefined
-      if (!activeFyId)
-        return {
-          success: false,
+      if (!activeFyId) {
+        throw {
+          code: 'VALIDATION_ERROR',
           error: 'Inget aktivt räkenskapsår.',
-          code: 'VALIDATION_ERROR' as const,
         }
-      const result = reTransferOpeningBalance(db, activeFyId)
-      return { success: true, data: result }
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'code' in err) {
-        const e = err as { code: string; error: string; field?: string }
-        return { success: false, error: e.error, code: e.code, field: e.field }
       }
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Kunde inte uppdatera IB.',
-        code: 'UNEXPECTED_ERROR' as const,
-      }
-    }
-  })
+      return reTransferOpeningBalance(db, activeFyId)
+    }),
+  )
 
   ipcMain.handle(
     'opening-balance:net-result',
@@ -1030,15 +1020,20 @@ export function registerIpcHandlers(): void {
           fs.writeFileSync(path.join(parsed.directory, inv.fileName), buffer)
           succeeded.push(inv.invoiceId)
         } catch (err) {
-          const msg =
+          // Strukturerat fel från service → använd fältet; annars logga och
+          // returnera generisk text (err.message kan innehålla intern info).
+          let msg: string
+          if (
             err != null &&
             typeof err === 'object' &&
             'error' in err &&
             typeof (err as { error: unknown }).error === 'string'
-              ? (err as { error: string }).error
-              : err instanceof Error
-                ? err.message
-                : 'Okänt fel'
+          ) {
+            msg = (err as { error: string }).error
+          } else {
+            log.error('[invoice:save-pdf-batch] PDF failed:', err)
+            msg = 'PDF-generering misslyckades'
+          }
           failed.push({ invoiceId: inv.invoiceId, error: msg })
         }
       }

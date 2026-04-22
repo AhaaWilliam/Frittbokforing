@@ -93,7 +93,7 @@ describe('wrapIpcHandler', () => {
     expect(result).toEqual({
       success: false,
       code: 'UNEXPECTED_ERROR',
-      error: 'DB connection lost',
+      error: 'Ett oväntat fel inträffade',
     })
     expect(log.error).toHaveBeenCalledWith(
       'IPC handler error:',

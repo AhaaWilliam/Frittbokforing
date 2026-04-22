@@ -244,9 +244,11 @@ export async function restoreBackup(
       restoringPath,
     )
 
-    const msg =
-      err instanceof Error ? err.message : 'Okänt fel vid återställning'
-    log.error('[backup] Restore failed:', msg)
-    return { restored: false, message: `Återställningen misslyckades: ${msg}` }
+    log.error('[backup] Restore failed:', err)
+    return {
+      restored: false,
+      message:
+        'Återställningen misslyckades. Se applikationsloggen för detaljer.',
+    }
   }
 }
