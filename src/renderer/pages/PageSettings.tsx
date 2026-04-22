@@ -10,6 +10,7 @@ import {
 import type { UpdateCompanyInput } from '../../shared/types'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { SecuritySection } from '../components/settings/SecuritySection'
+import { AboutLegalSection } from '../components/settings/AboutLegalSection'
 
 function BackupSection() {
   const [lastBackup, setLastBackup] = useState<string | null>(null)
@@ -458,6 +459,9 @@ export function PageSettings() {
 
         {/* Backup */}
         <BackupSection />
+
+        {/* Om & juridik */}
+        <AboutLegalSection />
 
         {/* Bank-kodsmappningar */}
         <BankTxMappingsSection />

@@ -765,6 +765,8 @@ declare global {
     api: ElectronAPI
     auth: AuthAPI
   }
+  /** Bakad vid build från package.json via vite define. */
+  const __APP_VERSION__: string
 }
 
 export {}
