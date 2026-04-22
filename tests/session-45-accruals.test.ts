@@ -104,7 +104,9 @@ describe('S45: Accrual service', () => {
     expect(result.field).toBe('result_account')
   })
 
-  it('A4: rejects period overflow (start + count > 12)', () => {
+  it('A4: rejects period overflow (start + count > 13)', () => {
+    // Sprint I: gräns höjd till 13 perioder för förlängt första FY.
+    // Testfall: 10 + 5 - 1 = 14 → utanför gränsen.
     const result = createAccrualSchedule(db, {
       fiscal_year_id: fyId,
       description: 'Overflow',
@@ -112,8 +114,8 @@ describe('S45: Accrual service', () => {
       balance_account: '1710',
       result_account: '5010',
       total_amount_ore: 10000_00,
-      period_count: 6,
-      start_period: 8,
+      period_count: 5,
+      start_period: 10,
     })
     expect(result.success).toBe(false)
     if (result.success) throw new Error('Expected failure')

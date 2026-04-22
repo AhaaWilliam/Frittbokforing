@@ -839,11 +839,11 @@ describe('Accrual schemas', () => {
     valid(AccrualCreateSchema, validAccrual))
   it('AccrualCreateSchema rejects period_count < 2', () =>
     invalid(AccrualCreateSchema, { ...validAccrual, period_count: 1 }))
-  it('AccrualCreateSchema rejects start_period + period_count > 12', () =>
+  it('AccrualCreateSchema rejects start_period + period_count > 13', () =>
     invalid(AccrualCreateSchema, {
       ...validAccrual,
       start_period: 11,
-      period_count: 3,
+      period_count: 4,
     }))
   it('AccrualListSchema accepts valid', () =>
     valid(AccrualListSchema, { fiscal_year_id: 1 }))

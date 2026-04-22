@@ -46,12 +46,24 @@ describe('AccrualCreateSchema', () => {
     ).toBe(false)
   })
 
-  it('rejects start_period + period_count > 12', () => {
+  it('accepts start_period + period_count = 13 (förlängt första FY)', () => {
+    // 8 + 6 - 1 = 13 → inom förlängt-FY-gränsen
     expect(
       AccrualCreateSchema.safeParse({
         ...valid,
         start_period: 8,
         period_count: 6,
+      }).success,
+    ).toBe(true)
+  })
+
+  it('rejects start_period + period_count > 13', () => {
+    // 10 + 5 - 1 = 14 → utanför gränsen
+    expect(
+      AccrualCreateSchema.safeParse({
+        ...valid,
+        start_period: 10,
+        period_count: 5,
       }).success,
     ).toBe(false)
   })
@@ -95,9 +107,16 @@ describe('AccrualExecuteSchema', () => {
     ).toBe(true)
   })
 
-  it('rejects period_number > 12', () => {
+  it('accepts period_number = 13 (förlängt första FY)', () => {
     expect(
       AccrualExecuteSchema.safeParse({ schedule_id: 1, period_number: 13 })
+        .success,
+    ).toBe(true)
+  })
+
+  it('rejects period_number > 13', () => {
+    expect(
+      AccrualExecuteSchema.safeParse({ schedule_id: 1, period_number: 14 })
         .success,
     ).toBe(false)
   })

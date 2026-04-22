@@ -7,6 +7,7 @@ import {
   useExecuteAccrual,
   useExecuteAllAccruals,
   useDeactivateAccrual,
+  useFiscalPeriods,
 } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
@@ -22,6 +23,8 @@ export function PageAccruals() {
   const { data: schedules, isLoading } = useAccrualSchedules(
     activeFiscalYear?.id,
   )
+  const { data: periods } = useFiscalPeriods(activeFiscalYear?.id)
+  const periodCount = periods?.length ?? 12
   const executeMutation = useExecuteAccrual()
   const executeAllMutation = useExecuteAllAccruals()
   const deactivateMutation = useDeactivateAccrual()
@@ -169,6 +172,7 @@ export function PageAccruals() {
         onOpenChange={setShowCreate}
         fiscalYearId={activeFiscalYear.id}
         fiscalRule="K2"
+        periodCount={periodCount}
       />
 
       {showExecuteAllPreview !== null && (

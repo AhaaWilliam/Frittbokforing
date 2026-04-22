@@ -1032,11 +1032,11 @@ export const AccrualCreateSchema = z
     balance_account: z.string().min(1),
     result_account: z.string().min(1),
     total_amount_ore: z.number().int().positive(),
-    period_count: z.number().int().min(2).max(12),
-    start_period: z.number().int().min(1).max(12),
+    period_count: z.number().int().min(2).max(13),
+    start_period: z.number().int().min(1).max(13),
   })
   .strict()
-  .refine((d) => d.start_period + d.period_count - 1 <= 12, {
+  .refine((d) => d.start_period + d.period_count - 1 <= 13, {
     message: 'Periodiseringen får inte sträcka sig utanför räkenskapsåret',
   })
 
@@ -1049,14 +1049,14 @@ export const AccrualListSchema = z
 export const AccrualExecuteSchema = z
   .object({
     schedule_id: z.number().int().positive(),
-    period_number: z.number().int().min(1).max(12),
+    period_number: z.number().int().min(1).max(13),
   })
   .strict()
 
 export const AccrualExecuteAllSchema = z
   .object({
     fiscal_year_id: z.number().int().positive(),
-    period_number: z.number().int().min(1).max(12),
+    period_number: z.number().int().min(1).max(13),
   })
   .strict()
 

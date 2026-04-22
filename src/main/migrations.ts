@@ -622,6 +622,7 @@ export const NEEDS_FK_OFF = new Set<number>([
   44, // migration 045
   46, // migration 047
   48, // migration 049
+  56, // migration 057 — accrual_schedules relax till ≤13 (inbound FK från accrual_entries)
 ])
 
 function getTableColumns(
@@ -1921,6 +1922,51 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
       DROP TABLE budget_targets;
       ALTER TABLE budget_targets_new RENAME TO budget_targets;
       CREATE INDEX idx_budget_fy ON budget_targets (fiscal_year_id);
+    `,
+  },
+  // ── Migration 057 — Relaxa accrual_schedules till period_count/start_period ≤ 13 ──
+  //
+  // Sprint D/E/F/H relaxade övriga lager (accounting_periods, budget_targets,
+  // budget-service-iteration, renderer-UI). Accruals (periodiseringar) är
+  // sista platsen där 12-taket fortfarande gäller. En periodisering för ett
+  // förlängt första räkenskapsår (13 månader) kan behöva start_period=1 +
+  // period_count=13, vilket blockeras av CHECK före denna migration.
+  //
+  // accrual_schedules har inbound FK från accrual_entries → M122 krävs
+  // (NEEDS_FK_OFF för index 56). Migration 053 (Fynd 7) lade till
+  // idx_accrual_entries_unique på accrual_entries — oförändrad av denna
+  // migration (annan tabell).
+  //
+  // Inga triggers på accrual_schedules (M121 trigger-reattach behövs inte).
+  // Inga cross-table-triggers refererar accrual_schedules (M141-inventering
+  // genomförd: endast accrual_entries har FK hit).
+  {
+    sql: `
+      CREATE TABLE accrual_schedules_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fiscal_year_id INTEGER NOT NULL REFERENCES fiscal_years(id),
+        description TEXT NOT NULL,
+        accrual_type TEXT NOT NULL CHECK (accrual_type IN (
+          'prepaid_expense', 'accrued_expense', 'prepaid_income', 'accrued_income'
+        )),
+        balance_account TEXT NOT NULL REFERENCES accounts(account_number),
+        result_account TEXT NOT NULL REFERENCES accounts(account_number),
+        total_amount_ore INTEGER NOT NULL CHECK (total_amount_ore > 0),
+        period_count INTEGER NOT NULL CHECK (period_count >= 2 AND period_count <= 13),
+        start_period INTEGER NOT NULL CHECK (start_period >= 1 AND start_period <= 13),
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO accrual_schedules_new
+        (id, fiscal_year_id, description, accrual_type, balance_account,
+         result_account, total_amount_ore, period_count, start_period,
+         is_active, created_at)
+        SELECT id, fiscal_year_id, description, accrual_type, balance_account,
+               result_account, total_amount_ore, period_count, start_period,
+               is_active, created_at
+        FROM accrual_schedules;
+      DROP TABLE accrual_schedules;
+      ALTER TABLE accrual_schedules_new RENAME TO accrual_schedules;
     `,
   },
 ]

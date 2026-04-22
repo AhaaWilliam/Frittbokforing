@@ -9,11 +9,14 @@ export function CreateAccrualDialog({
   onOpenChange,
   fiscalYearId,
   fiscalRule,
+  periodCount = 12,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   fiscalYearId: number
   fiscalRule: string
+  /** Antal perioder i FY (1–13). Default 12 för bakåtkompatibilitet. */
+  periodCount?: number
 }) {
   const createMutation = useCreateAccrual()
   const { data: balanceAccounts } = useAccounts(
@@ -34,7 +37,7 @@ export function CreateAccrualDialog({
 
   if (!open) return null
 
-  const maxPeriods = 12 - form.start_period + 1
+  const maxPeriods = periodCount - form.start_period + 1
 
   function getAccountName(accountNumber: string): string {
     if (!balanceAccounts || !accountNumber) return ''
@@ -225,12 +228,15 @@ export function CreateAccrualDialog({
                   setForm((f) => ({
                     ...f,
                     start_period: sp,
-                    period_count: Math.min(f.period_count, 12 - sp + 1),
+                    period_count: Math.min(f.period_count, periodCount - sp + 1),
                   }))
                 }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                {Array.from({ length: 11 }, (_, i) => i + 1).map((p) => (
+                {Array.from(
+                  { length: Math.max(periodCount - 1, 1) },
+                  (_, i) => i + 1,
+                ).map((p) => (
                   <option key={p} value={p}>
                     Period {p}
                   </option>

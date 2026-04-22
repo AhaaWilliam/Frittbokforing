@@ -69,8 +69,9 @@ export function createAccrualSchedule(
     }
   }
 
-  // Validate period range within FY
-  if (input.start_period + input.period_count - 1 > 12) {
+  // Validate period range within FY. DB CHECK accepterar period_number ≤ 13
+  // (Sprint D/E förlängt första FY per BFL 3:3, migration 057).
+  if (input.start_period + input.period_count - 1 > 13) {
     return {
       success: false,
       error: 'Periodiseringen får inte sträcka sig utanför räkenskapsåret',
