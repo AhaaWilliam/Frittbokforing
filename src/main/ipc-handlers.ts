@@ -97,6 +97,7 @@ import {
   toggleAccountActive,
 } from './services/account-service'
 import { createBackup, restoreBackup } from './services/backup-service'
+import { performAutoBackupIfDue } from './services/auto-backup-service'
 import { vacuumDatabase } from './services/maintenance-service'
 import { getAccountStatement } from './services/account-statement-service'
 import {
@@ -306,6 +307,15 @@ export function runPostUnlockStartup(): void {
   // refreshInvoice/ExpenseStatuses scopas numera per fiscal_year_id
   // (regel 14) och körs on-demand från listInvoices/listExpenses.
   // Ingen global overdue-refresh vid login.
+
+  // Sprint G: auto-backup om det är dags. Tyst i bakgrunden — blockerar
+  // inte unlock-flödet. Test-mode skippas (E2E bör inte skriva filer
+  // till Documents-mappen).
+  if (process.env.FRITT_TEST !== '1' && process.env.E2E_TESTING !== 'true') {
+    performAutoBackupIfDue(dbProxy).catch((err) => {
+      log.error('[auto-backup] Oväntat fel vid post-unlock-backup:', err)
+    })
+  }
 }
 
 export function registerIpcHandlers(): void {

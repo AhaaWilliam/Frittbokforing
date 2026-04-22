@@ -14,6 +14,7 @@ import { AboutLegalSection } from '../components/settings/AboutLegalSection'
 
 function BackupSection() {
   const [lastBackup, setLastBackup] = useState<string | null>(null)
+  const [autoBackupEnabled, setAutoBackupEnabled] = useState<boolean>(true)
   const [backupMessage, setBackupMessage] = useState<string | null>(null)
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
@@ -23,7 +24,16 @@ function BackupSection() {
     window.api.getSetting('last_backup_date').then((val) => {
       if (typeof val === 'string') setLastBackup(val)
     })
+    window.api.getSetting('auto_backup_enabled').then((val) => {
+      // default true om osatt
+      setAutoBackupEnabled(val !== false)
+    })
   }, [])
+
+  async function handleAutoBackupToggle(enabled: boolean) {
+    setAutoBackupEnabled(enabled)
+    await window.api.setSetting('auto_backup_enabled', enabled)
+  }
 
   async function handleBackup() {
     setIsBackingUp(true)
@@ -55,6 +65,24 @@ function BackupSection() {
           ? `Senaste backup: ${formatBackupDate(lastBackup)}`
           : 'Ingen säkerhetskopia har skapats ännu.'}
       </p>
+      <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50">
+        <input
+          type="checkbox"
+          checked={autoBackupEnabled}
+          onChange={(e) => handleAutoBackupToggle(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-border"
+          data-testid="auto-backup-toggle"
+        />
+        <div>
+          <div className="text-sm font-medium">
+            Automatisk säkerhetskopia (var 7:e dag)
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Sparas tyst till ~/Documents/Fritt Bokföring/backups när du
+            öppnar appen. Senaste 30 backupper behålls.
+          </div>
+        </div>
+      </label>
       <button
         onClick={handleBackup}
         disabled={isBackingUp}
