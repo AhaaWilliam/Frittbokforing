@@ -25,6 +25,7 @@ function makeCompany(overrides?: Partial<Company>): Company {
     bankgiro: null,
     plusgiro: null,
     website: null,
+    approved_for_f_tax: 0,
     created_at: '2020-01-01T00:00:00Z',
     ...overrides,
   }

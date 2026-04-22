@@ -125,6 +125,7 @@ export async function renderWithProviders(
     plusgiro: null,
     website: null,
     board_members: null,
+    approved_for_f_tax: 0,
     created_at: '2025-01-01 00:00:00',
   } as Company)
   mockIpcResponse('company:list', { success: true, data: [activeCompany] })

@@ -977,6 +977,74 @@ motsvarande cross-bolag-triggers införas analogt med invoice_lines.
 **Referens:** Sprint MC3, migration 045 + 046,
 `tests/sprint-mc3-stamdata-isolation.test.ts`.
 
+## 63. BFL 3:3 period-flexibilitet — 1 till 13 perioder (M161)
+
+**M161.** Ett räkenskapsår kan omfatta 1–13 perioder (kalendermånader).
+Standard är 12 (ett vanligt räkenskapsår); undantag är:
+
+- **Kortat första räkenskapsår:** reg-datum mid-månad → sista dagen i
+  en senare månad. Första period är en "stub" från reg-datum till
+  sista-i-månaden. Exempel: reg 2026-04-22 → FY 2026-04-22..2026-12-31
+  = 9 perioder (8 dagars stub + 8 hela månader).
+- **Förlängt första räkenskapsår:** reg-datum → 31 dec året efter.
+  Max 13 perioder (stub + 12 hela månader). Exempel: reg 2026-12-15
+  → FY 2026-12-15..2027-12-31 = 13 perioder (17 dagars stub + 12 hela).
+
+Endast det **första** räkenskapsåret får vara kortat/förlängt (BFL 3:3).
+Efterföljande FY är alltid 12 månader. Kortat/förlängt + brutet
+räkenskapsår stöds inte i denna version (skulle kunna producera
+> 13 perioder; separat scope).
+
+**DB-lager (alla CHECK-constraints ≤ 13):**
+- `accounting_periods.period_number BETWEEN 1 AND 13` (migration 001)
+- `budget_targets.period_number <= 13` (migration 056, M121 bladtabell)
+- `accrual_schedules.period_count / start_period <= 13` (migration 057,
+  M122 inbound FK från accrual_entries)
+
+**Service-lager:**
+- `generatePeriods(start, end)` producerar variable antal perioder. Första
+  period kan vara en stub, sista period slutar på fiscal_year_end.
+  `validatePeriodInvariants` kräver 1–13 perioder, `periods[0].start_date
+  === fyStart`, `periods[last].end_date === fyEnd`, inga gap.
+- `getBudgetVsActual` itererar faktiskt period-antal (via
+  `SELECT COUNT(*) FROM accounting_periods WHERE fiscal_year_id = ?`)
+  istället för hårdkodade 12.
+- `createAccrualSchedule` validerar `start + count - 1 ≤ 13`.
+
+**IPC-scheman:**
+- `CreateCompanyInputSchema` har fyra refine-check: FY-start måste vara
+  antingen reg-datum eller 1:a i BFL-allowed månad, FY-end sista-dag-i-
+  månaden, total duration ≤ 13 perioder.
+- `BudgetSaveSchema`, `AccrualCreateSchema`, `AccrualExecuteSchema`,
+  `AccrualExecuteAllSchema`: `.max(13)` på period_number.
+
+**Renderer-lager:**
+- `makePeriodLabels(periodCount)` i
+  `src/renderer/components/budget/budget-grid-utils.ts` returnerar
+  `['P1', ..., 'PN']` med clamp [1, 13]. Legacy `PERIOD_LABELS`
+  (12-element) behålls för bakåtkompatibilitet.
+- Budget- och accrual-UI tar `periodCount` som prop (default 12).
+  `PageBudget` och `PageAccruals` propagerar från
+  `useFiscalPeriods(fyId).data?.length ?? 12`.
+- `computeFiscalYear` i `StepFiscalYear.tsx` tar extra parametrar
+  `use_short` och `use_extended`. Kortat/förlängt + brutet kombineras
+  inte (use_broken prioriterar).
+
+**Konsekvens:** Framtida kod som hanterar perioder ska **aldrig**
+hårdkoda `12`. Bläddra fram periodräknaren via
+`useFiscalPeriods`/`SELECT COUNT(*)`. Review-regel: PR som introducerar
+`for (p = 1..12)` eller `period <= 12` i period-kontexter avvisas.
+
+**Referens:** Sprint D-I (2026-04-22), migrations 056 + 057,
+`tests/session-3.test.ts` (generatePeriods-invarianter),
+`tests/renderer/components/budget/budget-grid-utils.test.ts`
+(makePeriodLabels).
+
+**Begränsning som kräver framtida scope:** Kortat/förlängt +
+brutet räkenskapsår kan producera upp till 20 perioder för typiska
+kombinationer. Relax till 18 enligt BFL 3:3 max-duration kräver ny
+migration + motsvarande schema-refines + renderer-clamp-uppdateringar.
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.

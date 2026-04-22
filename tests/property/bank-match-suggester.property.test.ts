@@ -345,7 +345,7 @@ describe('classifyCandidates — K5-klassificering', () => {
     fc.assert(
       fc.property(
         fc.array(
-          fc.integer({ min: 1, max: 200 }).map((s, i) => makeCandidate(i, s)),
+          fc.integer({ min: 1, max: 200 }).map((s) => makeCandidate(s, s)),
           { minLength: 6, maxLength: 20 },
         ),
         (candidates) => {
@@ -372,7 +372,7 @@ describe('classifyCandidates — K5-klassificering', () => {
   it('score < 80 → filtreras bort', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.integer({ min: 0, max: 79 }).map((s, i) => makeCandidate(i, s)), {
+        fc.array(fc.integer({ min: 0, max: 79 }).map((s) => makeCandidate(s, s)), {
           minLength: 1,
           maxLength: 10,
         }),
@@ -401,7 +401,7 @@ describe('classifyCandidates — K5-klassificering', () => {
   it('sorteras på score DESC (högst score hamnar först)', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.integer({ min: 80, max: 200 }).map((s, i) => makeCandidate(i, s)), {
+        fc.array(fc.integer({ min: 80, max: 200 }).map((s) => makeCandidate(s, s)), {
           minLength: 2,
           maxLength: 10,
         }),
