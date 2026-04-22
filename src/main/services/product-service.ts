@@ -7,12 +7,15 @@ import type {
   CustomerPrice,
   PriceResult,
   IpcResult,
+  ErrorCode,
 } from '../../shared/types'
 import {
   CreateProductInputSchema,
   UpdateProductInputSchema,
 } from '../ipc-schemas'
+import { validateWithZod } from './validate-with-zod'
 import log from 'electron-log'
+import type { z } from 'zod'
 
 export function listProducts(
   db: Database.Database,
@@ -78,15 +81,17 @@ export function createProduct(
   db: Database.Database,
   input: unknown,
 ): IpcResult<Product> {
-  const parsed = CreateProductInputSchema.safeParse(input)
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues.map((i) => i.message).join('; '),
-      code: 'VALIDATION_ERROR',
+  // Fynd 8: validateWithZod kastar strukturerat fel vid ogiltig input.
+  let data: z.infer<typeof CreateProductInputSchema>
+  try {
+    data = validateWithZod(CreateProductInputSchema, input)
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: string; error: string; field?: string }
+      return { success: false, code: e.code as ErrorCode, error: e.error, ...(e.field ? { field: e.field } : {}) }
     }
+    throw err
   }
-  const data = parsed.data
 
   try {
     const result = db

@@ -11,7 +11,9 @@ import {
 } from './error-helpers'
 import { safeRebuildSearchIndex } from './search-service'
 import { buildUpdate } from '../utils/build-update'
+import { validateWithZod } from './validate-with-zod'
 import log from 'electron-log'
+import type { z } from 'zod'
 
 const ALLOWED_COUNTERPARTY_COLUMNS = new Set([
   'name',
@@ -107,17 +109,19 @@ export function createCounterparty(
   db: Database.Database,
   input: unknown,
 ): IpcResult<Counterparty> {
-  const parsed = CreateCounterpartyInputSchema.safeParse(input)
-  if (!parsed.success) {
-    const firstIssue = parsed.error.issues[0]
-    return {
-      success: false,
-      error: parsed.error.issues.map((i) => i.message).join('; '),
-      code: 'VALIDATION_ERROR',
-      field: firstIssue?.path?.[0]?.toString(),
+  // Fynd 8: validateWithZod kastar strukturerat fel; fångas nedan och
+  // mappas till IpcResult. Samma beteende som tidigare inline-safeParse,
+  // men utan duplicerad felbyggar-kod.
+  let data: z.infer<typeof CreateCounterpartyInputSchema>
+  try {
+    data = validateWithZod(CreateCounterpartyInputSchema, input)
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const e = err as { code: string; error: string; field?: string }
+      return { success: false, code: e.code as ErrorCode, error: e.error, ...(e.field ? { field: e.field } : {}) }
     }
+    throw err
   }
-  const data = parsed.data
 
   try {
     const result = db
