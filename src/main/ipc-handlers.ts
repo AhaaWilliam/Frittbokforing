@@ -283,6 +283,16 @@ import {
   BankTxMappingDeleteSchema,
   BankCreateFeeEntrySchema,
   CompanySwitchInputSchema,
+  CreateCompanyInputSchema,
+  UpdateCompanyInputSchema,
+  CreateCounterpartyInputSchema,
+  UpdateCounterpartyInputSchema,
+  CreateProductInputSchema,
+  UpdateProductInputSchema,
+  SaveExpenseDraftSchema,
+  UpdateExpenseDraftSchema,
+  SaveDraftInputSchema,
+  UpdateDraftInputSchema,
 } from './ipc-schemas'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -318,8 +328,9 @@ export function registerIpcHandlers(): void {
   })
 
   // === Company ===
-  ipcMain.handle('company:create', (_event, input: unknown) =>
-    createCompany(db, input),
+  ipcMain.handle(
+    'company:create',
+    wrapIpcHandler(CreateCompanyInputSchema, (data) => createCompany(db, data)),
   )
   ipcMain.handle(
     'company:get',
@@ -351,8 +362,9 @@ export function registerIpcHandlers(): void {
       return company
     }),
   )
-  ipcMain.handle('company:update', (_event, input: unknown) =>
-    updateCompany(db, input),
+  ipcMain.handle(
+    'company:update',
+    wrapIpcHandler(UpdateCompanyInputSchema, (data) => updateCompany(db, data)),
   )
 
   // === Fiscal Years ===
@@ -469,12 +481,18 @@ export function registerIpcHandlers(): void {
     ),
   )
 
-  ipcMain.handle('counterparty:create', (_event, input: unknown) =>
-    createCounterparty(db, input),
+  ipcMain.handle(
+    'counterparty:create',
+    wrapIpcHandler(CreateCounterpartyInputSchema, (data) =>
+      createCounterparty(db, data),
+    ),
   )
 
-  ipcMain.handle('counterparty:update', (_event, input: unknown) =>
-    updateCounterparty(db, input),
+  ipcMain.handle(
+    'counterparty:update',
+    wrapIpcHandler(UpdateCounterpartyInputSchema, (data) =>
+      updateCounterparty(db, data),
+    ),
   )
 
   ipcMain.handle(
@@ -497,12 +515,14 @@ export function registerIpcHandlers(): void {
     ),
   )
 
-  ipcMain.handle('product:create', (_event, input: unknown) =>
-    createProduct(db, input),
+  ipcMain.handle(
+    'product:create',
+    wrapIpcHandler(CreateProductInputSchema, (data) => createProduct(db, data)),
   )
 
-  ipcMain.handle('product:update', (_event, input: unknown) =>
-    updateProduct(db, input),
+  ipcMain.handle(
+    'product:update',
+    wrapIpcHandler(UpdateProductInputSchema, (data) => updateProduct(db, data)),
   )
 
   ipcMain.handle(
@@ -535,8 +555,11 @@ export function registerIpcHandlers(): void {
   )
 
   // === Expenses ===
-  ipcMain.handle('expense:save-draft', (_event, input: unknown) =>
-    saveExpenseDraft(db, input),
+  ipcMain.handle(
+    'expense:save-draft',
+    wrapIpcHandler(SaveExpenseDraftSchema, (data) =>
+      saveExpenseDraft(db, data),
+    ),
   )
 
   ipcMain.handle(
@@ -544,8 +567,11 @@ export function registerIpcHandlers(): void {
     wrapIpcHandler(ExpenseIdSchema, (data) => getExpenseDraft(db, data.id)),
   )
 
-  ipcMain.handle('expense:update-draft', (_event, input: unknown) =>
-    updateExpenseDraft(db, input),
+  ipcMain.handle(
+    'expense:update-draft',
+    wrapIpcHandler(UpdateExpenseDraftSchema, (data) =>
+      updateExpenseDraft(db, data),
+    ),
   )
 
   ipcMain.handle(
@@ -661,8 +687,9 @@ export function registerIpcHandlers(): void {
   )
 
   // === Invoices ===
-  ipcMain.handle('invoice:save-draft', (_event, input: unknown) =>
-    saveDraft(db, input),
+  ipcMain.handle(
+    'invoice:save-draft',
+    wrapIpcHandler(SaveDraftInputSchema, (data) => saveDraft(db, data)),
   )
 
   ipcMain.handle(
@@ -670,8 +697,9 @@ export function registerIpcHandlers(): void {
     wrapIpcHandler(InvoiceIdSchema, (data) => getDraft(db, data.id)),
   )
 
-  ipcMain.handle('invoice:update-draft', (_event, input: unknown) =>
-    updateDraft(db, input),
+  ipcMain.handle(
+    'invoice:update-draft',
+    wrapIpcHandler(UpdateDraftInputSchema, (data) => updateDraft(db, data)),
   )
 
   ipcMain.handle(
