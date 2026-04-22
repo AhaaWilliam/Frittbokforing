@@ -553,21 +553,21 @@ export interface VatQuarterReport {
   endDate: string
   hasData: boolean
 
-  // Utgående moms (SKV box 10/11/12)
+  // Utgående moms (SKV rad 10 = 25 %, rad 11 = 12 %, rad 12 = 6 %)
   vatOut25Ore: number
   vatOut12Ore: number
   vatOut6Ore: number
   vatOutTotalOre: number
 
-  // Momspliktiga underlag
+  // Momspliktiga underlag (SKV rad 05 = 25 %, rad 06 = 12 %, rad 07 = 6 %)
   taxableBase25Ore: number
   taxableBase12Ore: number
   taxableBase6Ore: number
 
-  // Ingående moms (SKV box 20)
+  // Ingående moms att dra av (SKV rad 48)
   vatInOre: number
 
-  // Netto (SKV box 30)
+  // Netto att betala/få tillbaka (SKV rad 49)
   vatNetOre: number // + = att betala, - = fordran
 }
 
