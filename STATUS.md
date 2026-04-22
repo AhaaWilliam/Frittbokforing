@@ -1,5 +1,97 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint A–K -- Autonom release-readiness ✅ KLAR
+
+Session 2026-04-22 (14 h autonom körning från `120ec3d`). 15 commits
+mellan `2ac107d` och `a9601f4`. Ett onboarding-dogfood-arbete som
+expanderade till release-readiness-paket.
+
+**Huvudteman:**
+
+**Sprint A — Onboarding-polish.** Luhn-kontroll i StepCompany istället
+för först vid submit. SIE-import-väg från OnboardingWizard (ny
+`FirstRunImport.tsx` + `firstRunMode`-state i App.tsx så migrerande
+användare slipper catch-22). Välkomst-CTAs på tom dashboard. Tydlig
+AB-positionering i wizard-undertitel + felmeddelanden (ärlig
+begränsning — EF/HB stöds inte).
+
+**Sprint B — Trust.** AboutLegalSection i Inställningar med app-
+version (via `__APP_VERSION__` vite-define), utkast-ToS +
+Integritetspolicy (Radix Dialog per M156), support-mailto som
+för-ifyller version + plattform.
+
+**Sprint C-light — SKV assist.** "Kopiera deklaration"-knapp på
+PageVat som formaterar helårs-momssumma som plain-text för SKV
+e-tjänst med explicit radnummer (Rad 05/06/07/10/11/12/48/49 enligt
+blankett SKV 4700). Fixade också felaktiga "box 20/30"-kommentarer
+i types.ts (var rad 48/49).
+
+**Sprint D/E/H/I — BFL 3:3 period-flexibilitet (M161).** Rework av
+hela period-stacken från 12 hårdkodat till 1–13 variabelt:
+- `generatePeriods` + `validatePeriodInvariants` hanterar stub-
+  perioder (mid-månads-start)
+- Kortat + förlängt första FY stöds via nya wizard-kryss
+- Migration 056 relaxar `budget_targets` CHECK till ≤13 (M121
+  bladtabell)
+- Migration 057 relaxar `accrual_schedules` CHECK till ≤13 (M122
+  inbound FK från `accrual_entries`)
+- budget-service hämtar faktiskt periodCount via
+  `useFiscalPeriods`/SELECT COUNT
+- Renderer `makePeriodLabels(N)` ersätter PERIOD_LABELS
+- Kortat/förlängt + brutet räkenskapsår lämnas som backlog
+  (skulle kräva relax till 18 perioder)
+
+**Sprint F/G — Datasäkerhet.** BackupReminder-komponent på Översikt
+som varnar vid backup ≥ 30 dagar eller aldrig. Auto-backup-service
+(`performAutoBackupIfDue` i `src/main/services/auto-backup-service.ts`)
+med 7-dags-intervall, 30-filers retention via `rotateBackups`, tyst
+trigger i `runPostUnlockStartup` efter DB öppnas. Injekteringsbara
+deps (loadSettings/saveSettings/getDefaultFolder) för testbarhet.
+
+**Sprint J — Konsolidering.** Ny M161-princip i CLAUDE.md.
+Pre-existing TS-skuld städad: `approved_for_f_tax`-fixtures i 3
+testfiler, `fast-check Arbitrary.map((s, i) => ...)`-pattern i
+property-tests. Typecheck helt ren efter denna commit.
+
+**Sprint K — Testbarhet.** 7 nya integration-tester för
+`performAutoBackupIfDue` som verifierar alla reason-grenar (never/
+stale/recent/disabled), custom-folder-override, backup-roundtrip,
+och rotation. session-29 backup-test bytte hårdkodad FK-off-lista
+mot `NEEDS_FK_OFF`-konstant (single source of truth).
+
+**Testbaslinje:** 3460 → **3530 vitest gröna** (+70). 1 pre-existing
+flaky auth-timing (variance-threshold). **PRAGMA user_version:
+54 → 57** (migrations 056 + 057).
+
+**Release-status efter A–K:**
+- ✅ Onboarding för både nya AB (kortat/förlängt FY) och migrerande
+  (SIE-import från första skärmen)
+- ✅ Luhn + welcome-CTAs + backup-påminnelse + auto-backup
+- ✅ Momsrapport kopierbar till SKV e-tjänst med radnummer
+- ✅ Om & juridik-utkast + version + support-mailto
+- ⚠️ Legal-utkast (ToS + Integritetspolicy) kräver juridisk
+  granskning innan kommersiellt släpp
+- ⚠️ Ingen extern crash-reporting (Sentry kräver konfigbeslut)
+- ⚠️ Ingen SRU-XML-momsexport (kopiera-knapp täcker 80%-caset)
+
+**Backlog kvar:**
+- Kortat/förlängt + brutet räkenskapsår (>13 perioder — kräver
+  ytterligare DB-relax till 18)
+- Sentry/extern telemetri (externt beslut om backend)
+- SRU-XML-momsexport (SKV-spec-arbete)
+- K10-deklaration / årsredovisning-PDF
+- Legal-texter behöver juridisk granskning
+
+**Kritisk konvention (M161 + review-regel):** Ny kod får inte
+hårdkoda `12` i period-kontexter — bläddra fram periodräknaren via
+`useFiscalPeriods(fy.id)` i renderer eller
+`SELECT COUNT(*) FROM accounting_periods WHERE fiscal_year_id = ?`
+i main-process.
+
+**Varje ny migration:** ~22 regressions-tester som verifierar
+user_version måste uppdateras samtidigt. Snabb bulk-fix:
+`grep -rln "toBe(N)" tests/ | xargs -I {} sed -i '' 's/toBe(N)/toBe(N+1)/g' {}`.
+
 ## Sprint S -- Test-infra-åtstramning + F68 locale + M157 combobox ✅ KLAR
 
 Session SS (2026-04-19). 5 logiskt separata leveranser över en session:
