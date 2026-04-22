@@ -328,6 +328,64 @@ export function getJournalEntryLines(
  *
  * ORDER BY journal_entry_id, line_number säkerställer determinism.
  */
+/**
+ * Batch-variant: ladda lines för en delmängd av journal_entry_ids.
+ *
+ * Används av SIE4/SIE5-export när journal-entries är många nog att hela-
+ * årets-lines-map skulle orsaka peak-memory-tryck. Callern itererar entries
+ * i batches om `chunkSize` och anropar denna per batch.
+ *
+ * Deterministisk ORDER BY journal_entry_id, line_number (samma som
+ * getAllJournalEntryLines).
+ *
+ * Fynd 9 (Sprint Natt).
+ */
+export function getJournalEntryLinesForEntries(
+  db: Database.Database,
+  entryIds: readonly number[],
+): Map<number, JournalLineInfo[]> {
+  const map = new Map<number, JournalLineInfo[]>()
+  if (entryIds.length === 0) return map
+
+  // SQLite IN-list: bind via placeholders för säker parametrisering.
+  const placeholders = entryIds.map(() => '?').join(',')
+  const rows = db
+    .prepare(
+      `SELECT
+        journal_entry_id,
+        account_number,
+        debit_ore,
+        credit_ore,
+        description
+       FROM journal_entry_lines
+       WHERE journal_entry_id IN (${placeholders})
+       ORDER BY journal_entry_id, line_number`,
+    )
+    .all(...entryIds) as {
+    journal_entry_id: number
+    account_number: string
+    debit_ore: number
+    credit_ore: number
+    description: string | null
+  }[]
+
+  for (const row of rows) {
+    const existing = map.get(row.journal_entry_id)
+    const line: JournalLineInfo = {
+      account_number: row.account_number,
+      debit_ore: row.debit_ore,
+      credit_ore: row.credit_ore,
+      description: row.description,
+    }
+    if (existing) {
+      existing.push(line)
+    } else {
+      map.set(row.journal_entry_id, [line])
+    }
+  }
+  return map
+}
+
 export function getAllJournalEntryLines(
   db: Database.Database,
   fiscalYearId: number,

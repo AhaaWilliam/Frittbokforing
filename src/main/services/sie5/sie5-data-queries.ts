@@ -21,6 +21,7 @@ export {
   getBookedJournalEntries,
   getJournalEntryLines,
   getAllJournalEntryLines,
+  getJournalEntryLinesForEntries,
   getCustomers,
   getSuppliers,
   getBookedInvoices,

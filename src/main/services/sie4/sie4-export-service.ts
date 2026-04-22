@@ -13,7 +13,7 @@ import {
   getOpeningBalancesFromPreviousYear,
   getMonthlyTotals,
   getBookedJournalEntries,
-  getAllJournalEntryLines,
+  getJournalEntryLinesForEntries,
 } from '../export/export-data-queries'
 import { isBalanceSheetAccount } from '../../../shared/account-ranges'
 
@@ -57,7 +57,8 @@ export function exportSie4(
     : new Map<string, number>()
   const monthlyTotals = getMonthlyTotals(db, fiscalYearId)
   const entries = getBookedJournalEntries(db, fiscalYearId)
-  const linesMap = getAllJournalEntryLines(db, fiscalYearId)
+  // Fynd 9: Ladda lines lazily i chunks om 1000 entries för att minska peak-
+  // memory vid stora export. linesMap byggs upp cross-batch nedan i ver-loopen.
 
   // Previous year data (for #RAR -1, #IB -1, #UB -1, #RES -1)
   let prevFy: { start_date: string; end_date: string } | null = null
@@ -212,29 +213,37 @@ export function exportSie4(
     seriesMap.get(series)!.push(e)
   }
 
+  const CHUNK_SIZE = 1000
   for (const [, seriesEntries] of seriesMap) {
-    for (const entry of seriesEntries) {
-      const series = entry.verification_series || 'A'
-      const verDate = dateToSie4(entry.journal_date)
-      const regDate = dateToSie4(entry.created_at.substring(0, 10))
-      lines.push(
-        `#VER "${series}" ${entry.verification_number} ${verDate} ${quoteField(entry.description)} ${regDate}`,
+    for (let i = 0; i < seriesEntries.length; i += CHUNK_SIZE) {
+      const chunk = seriesEntries.slice(i, i + CHUNK_SIZE)
+      const chunkLines = getJournalEntryLinesForEntries(
+        db,
+        chunk.map((e) => e.id),
       )
-      lines.push('{')
-
-      const entryLines = linesMap.get(entry.id) ?? []
-      for (const line of entryLines) {
-        const amount = oreToSie4Amount(line.debit_ore - line.credit_ore)
-        const transDate = verDate
-        const text = line.description
-          ? quoteField(line.description)
-          : quoteField(entry.description)
+      for (const entry of chunk) {
+        const series = entry.verification_series || 'A'
+        const verDate = dateToSie4(entry.journal_date)
+        const regDate = dateToSie4(entry.created_at.substring(0, 10))
         lines.push(
-          `#TRANS ${line.account_number} {} ${amount} ${transDate} ${text}`,
+          `#VER "${series}" ${entry.verification_number} ${verDate} ${quoteField(entry.description)} ${regDate}`,
         )
-      }
+        lines.push('{')
 
-      lines.push('}')
+        const entryLines = chunkLines.get(entry.id) ?? []
+        for (const line of entryLines) {
+          const amount = oreToSie4Amount(line.debit_ore - line.credit_ore)
+          const transDate = verDate
+          const text = line.description
+            ? quoteField(line.description)
+            : quoteField(entry.description)
+          lines.push(
+            `#TRANS ${line.account_number} {} ${amount} ${transDate} ${text}`,
+          )
+        }
+
+        lines.push('}')
+      }
     }
   }
 

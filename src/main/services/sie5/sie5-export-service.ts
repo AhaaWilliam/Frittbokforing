@@ -13,7 +13,7 @@ import {
   getOpeningBalancesFromPreviousYear,
   getMonthlyTotals,
   getBookedJournalEntries,
-  getAllJournalEntryLines,
+  getJournalEntryLinesForEntries,
   getCustomers,
   getSuppliers,
   getBookedInvoices,
@@ -121,7 +121,7 @@ export function exportSie5(
     : new Map<string, number>()
   const monthlyTotals = getMonthlyTotals(db, fiscalYearId)
   const entries = getBookedJournalEntries(db, fiscalYearId)
-  const linesMap = getAllJournalEntryLines(db, fiscalYearId)
+  // Fynd 9: Lines laddas lazy i chunks om 1000 entries (nedan i ver-loopen).
   const customers = getCustomers(db)
   const suppliers = getSuppliers(db)
   const invoices = getBookedInvoices(db, fiscalYearId)
@@ -382,6 +382,7 @@ export function exportSie5(
     O: 'Ingående balanser',
   }
 
+  const CHUNK_SIZE = 1000
   for (const [series, seriesEntries] of seriesMap) {
     if (seriesEntries.length === 0) continue
 
@@ -390,26 +391,33 @@ export function exportSie5(
       .att('id', series)
       .att('name', seriesNames[series] || `Serie ${series}`)
 
-    for (const entry of seriesEntries) {
-      const entryEl = journalEl
-        .ele(SIE5_NS, 'JournalEntry')
-        .att('id', String(entry.verification_number))
-        .att('journalDate', entry.journal_date)
-        .att('text', entry.description)
+    for (let i = 0; i < seriesEntries.length; i += CHUNK_SIZE) {
+      const chunk = seriesEntries.slice(i, i + CHUNK_SIZE)
+      const chunkLines = getJournalEntryLinesForEntries(
+        db,
+        chunk.map((e) => e.id),
+      )
+      for (const entry of chunk) {
+        const entryEl = journalEl
+          .ele(SIE5_NS, 'JournalEntry')
+          .att('id', String(entry.verification_number))
+          .att('journalDate', entry.journal_date)
+          .att('text', entry.description)
 
-      entryEl
-        .ele(SIE5_NS, 'EntryInfo')
-        .att('date', entry.created_at.substring(0, 10))
-        .att('by', 'Fritt Bokföring')
+        entryEl
+          .ele(SIE5_NS, 'EntryInfo')
+          .att('date', entry.created_at.substring(0, 10))
+          .att('by', 'Fritt Bokföring')
 
-      const lines = linesMap.get(entry.id) ?? []
-      for (const line of lines) {
-        ;(entryEl.ele(SIE5_NS, 'LedgerEntry') as XMLBuilder)
-          .att('accountId', line.account_number)
-          .att(
-            'amount',
-            debitCreditToSie5Amount(line.debit_ore, line.credit_ore),
-          )
+        const lines = chunkLines.get(entry.id) ?? []
+        for (const line of lines) {
+          ;(entryEl.ele(SIE5_NS, 'LedgerEntry') as XMLBuilder)
+            .att('accountId', line.account_number)
+            .att(
+              'amount',
+              debitCreditToSie5Amount(line.debit_ore, line.credit_ore),
+            )
+        }
       }
     }
   }
