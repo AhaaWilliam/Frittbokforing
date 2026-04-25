@@ -121,10 +121,10 @@ export function parseSie5(input: Buffer | string): SieParseResult {
 
   const errors: string[] = []
   const parser = new DOMParser({
-    errorHandler: {
-      warning: (msg) => warnings.push(`XML-varning: ${String(msg)}`),
-      error: (msg) => errors.push(`XML-fel: ${String(msg)}`),
-      fatalError: (msg) => errors.push(`XML-fatalt fel: ${String(msg)}`),
+    onError: (level: 'warning' | 'error' | 'fatalError', msg: string) => {
+      if (level === 'warning') warnings.push(`XML-varning: ${msg}`)
+      else if (level === 'fatalError') errors.push(`XML-fatalt fel: ${msg}`)
+      else errors.push(`XML-fel: ${msg}`)
     },
   })
 
