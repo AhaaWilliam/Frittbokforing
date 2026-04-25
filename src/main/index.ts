@@ -155,14 +155,18 @@ app.whenReady().then(() => {
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 
-  // CSP — defense-in-depth for renderer
+  // CSP — defense-in-depth for renderer.
+  // Dev: relax script-src + connect-src för Vites HMR-preamble (inline) + ws/http till localhost:5173.
+  // Prod: strikt 'self'.
+  const isDev = process.env.NODE_ENV === 'development'
+  const csp = isDev
+    ? "default-src 'self' http://localhost:5173 ws://localhost:5173; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173; style-src 'self' 'unsafe-inline' http://localhost:5173; connect-src 'self' http://localhost:5173 ws://localhost:5173; img-src 'self' data:; font-src 'self' data:"
+    : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'",
-        ],
+        'Content-Security-Policy': [csp],
       },
     })
   })
