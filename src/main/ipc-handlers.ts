@@ -292,7 +292,9 @@ import {
   UpdateExpenseDraftSchema,
   SaveDraftInputSchema,
   UpdateDraftInputSchema,
+  PreviewJournalLinesInputSchema,
 } from './ipc-schemas'
+import { previewJournalLines } from './services/preview-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
 import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
@@ -1582,6 +1584,15 @@ export function registerIpcHandlers(): void {
     settings[key] = value
     saveSettings(settings)
   })
+
+  // Sprint 16 — Live verifikat-preview (ADR 006). Read-only kanal som
+  // beräknar journal-lines från form-input utan att skriva till DB.
+  ipcMain.handle(
+    'preview:journal-lines',
+    wrapIpcHandler(PreviewJournalLinesInputSchema, (data) =>
+      previewJournalLines(db, data),
+    ),
+  )
 
   // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1.
   // Conditional require undviker att ladda test-handlers i produktion;

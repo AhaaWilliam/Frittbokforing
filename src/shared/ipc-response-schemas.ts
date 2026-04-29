@@ -176,9 +176,7 @@ const PaymentReceipt = z
   .passthrough()
 /** Payment-lista (invoice:payments / expense:payments). */
 const PaymentList = z.array(
-  z
-    .object({ id: z.number(), amount_ore: z.number() })
-    .passthrough(),
+  z.object({ id: z.number(), amount_ore: z.number() }).passthrough(),
 )
 /** PDF-generering: handler returnerar `{ data: string }` (base64). */
 const PdfResult = z.object({ data: z.string() }).passthrough()
@@ -203,9 +201,7 @@ const AgingReport = z
   })
   .passthrough()
 /** Income statement / Balance sheet / Cash flow — alla returnerar groups+totals. */
-const ReportPayload = z
-  .object({})
-  .passthrough()
+const ReportPayload = z.object({}).passthrough()
 /** Search-resultat: `{ results: SearchResult[], total_count: number }`. */
 const SearchResult = z
   .object({
@@ -216,17 +212,13 @@ const SearchResult = z
 /** Next-number (invoice): service returnerar `{ preview: number }`. */
 const NextNumber = z.object({ preview: z.number() }).passthrough()
 /** Journal-entry can-correct: `{ canCorrect, reason? }`. */
-const CanCorrect = z
-  .object({ canCorrect: z.boolean() })
-  .passthrough()
+const CanCorrect = z.object({ canCorrect: z.boolean() }).passthrough()
 /** VAT-rapport: struct med boxar + perioder. */
 const VatReport = z.object({}).passthrough()
 /** Tax forecast: struct med totals. */
 const TaxForecast = z.object({}).passthrough()
 /** Bank-statement import: summary av rader + matches. */
-const BankImportResult = z
-  .object({ statementId: z.number() })
-  .passthrough()
+const BankImportResult = z.object({ statementId: z.number() }).passthrough()
 /** Bank-tx suggest: array av match-förslag. */
 const BankSuggestions = z.array(z.object({}).passthrough())
 
@@ -536,6 +528,9 @@ export const channelResponseMap = {
   'bank-tx-mapping:list': AnyEntityList,
   'bank-tx-mapping:upsert': EntityId,
   'bank-tx-mapping:delete': VoidOrReceipt,
+  // Sprint 16 — Live verifikat-preview (ADR 006). Lös passthrough-spec
+  // räcker här eftersom data konsumeras typat via electron.d.ts.
+  'preview:journal-lines': LooseObject,
 } as const satisfies Record<ChannelName, z.ZodType>
 
 export type ChannelResponseMap = typeof channelResponseMap

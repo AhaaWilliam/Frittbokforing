@@ -429,6 +429,9 @@ contextBridge.exposeInMainWorld('api', {
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: unknown) =>
     ipcRenderer.invoke('settings:set', key, value),
+  // Sprint 16 — Live verifikat-preview (ADR 006)
+  previewJournalLines: (data: Record<string, unknown>) =>
+    ipcRenderer.invoke('preview:journal-lines', data),
 })
 
 // Auth — separate namespace (window.auth.*) for the local-login + SQLCipher
@@ -467,10 +470,8 @@ contextBridge.exposeInMainWorld('auth', {
 // Test-only auth API — separate from window.__testApi; lives on window.__authTestApi
 if (process.env.FRITT_TEST === '1') {
   contextBridge.exposeInMainWorld('__authTestApi', {
-    createAndLoginUser: (data?: {
-      displayName?: string
-      password?: string
-    }) => ipcRenderer.invoke('__test:createAndLoginUser', data ?? {}),
+    createAndLoginUser: (data?: { displayName?: string; password?: string }) =>
+      ipcRenderer.invoke('__test:createAndLoginUser', data ?? {}),
     lockNow: () => ipcRenderer.invoke('__test:lockNow'),
     setTimeoutMs: (ms: number) => ipcRenderer.invoke('__test:setTimeoutMs', ms),
   })

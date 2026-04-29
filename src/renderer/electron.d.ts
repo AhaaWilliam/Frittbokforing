@@ -456,14 +456,12 @@ interface ElectronAPI {
     iban: string
     bic?: string | null
   }) => Promise<
-    IpcResult<
-      import('../main/services/payment/sepa-dd-service').SepaMandate
-    >
+    IpcResult<import('../main/services/payment/sepa-dd-service').SepaMandate>
   >
-  sepaDdListMandates: (data: { counterparty_id: number }) => Promise<
-    IpcResult<
-      import('../main/services/payment/sepa-dd-service').SepaMandate[]
-    >
+  sepaDdListMandates: (data: {
+    counterparty_id: number
+  }) => Promise<
+    IpcResult<import('../main/services/payment/sepa-dd-service').SepaMandate[]>
   >
   sepaDdRevokeMandate: (data: {
     mandate_id: number
@@ -475,9 +473,7 @@ interface ElectronAPI {
     amount_ore: number
     collection_date: string
   }) => Promise<
-    IpcResult<
-      import('../main/services/payment/sepa-dd-service').SepaCollection
-    >
+    IpcResult<import('../main/services/payment/sepa-dd-service').SepaCollection>
   >
   sepaDdCreateBatch: (data: {
     fiscal_year_id: number
@@ -489,9 +485,7 @@ interface ElectronAPI {
   sepaDdExportPain008: (data: {
     batch_id: number
   }) => Promise<IpcResult<{ saved: boolean; filePath?: string }>>
-  sepaDdListCollections: (data: {
-    fiscal_year_id: number
-  }) => Promise<
+  sepaDdListCollections: (data: { fiscal_year_id: number }) => Promise<
     IpcResult<
       Array<{
         id: number
@@ -510,9 +504,7 @@ interface ElectronAPI {
       }>
     >
   >
-  sepaDdListBatches: (data: {
-    fiscal_year_id: number
-  }) => Promise<
+  sepaDdListBatches: (data: { fiscal_year_id: number }) => Promise<
     IpcResult<
       Array<{
         id: number
@@ -699,6 +691,36 @@ interface ElectronAPI {
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
+  // Sprint 16 — Live verifikat-preview (ADR 006)
+  previewJournalLines: (data: {
+    source: 'manual'
+    fiscal_year_id: number
+    entry_date?: string
+    description?: string
+    lines: ReadonlyArray<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+      description?: string
+    }>
+  }) => Promise<
+    IpcResult<{
+      source: 'manual'
+      lines: Array<{
+        account_number: string
+        account_name: string | null
+        debit_ore: number
+        credit_ore: number
+        description: string | null
+      }>
+      total_debit_ore: number
+      total_credit_ore: number
+      balanced: boolean
+      entry_date: string
+      description: string | null
+      warnings: ReadonlyArray<string>
+    }>
+  >
 }
 
 export interface UserMeta {
@@ -742,9 +764,7 @@ export interface AuthAPI {
     userId: string
     displayName: string
   }) => Promise<IpcResult<{ ok: true }>>
-  deleteUser: (data: {
-    userId: string
-  }) => Promise<IpcResult<{ ok: true }>>
+  deleteUser: (data: { userId: string }) => Promise<IpcResult<{ ok: true }>>
   touch: () => Promise<IpcResult<{ ok: true }>>
   setTimeout: (data: {
     timeoutMs: number
@@ -752,12 +772,8 @@ export interface AuthAPI {
   legacyCheck: () => Promise<
     IpcResult<{ exists: boolean; path: string | null }>
   >
-  legacyImport: () => Promise<
-    IpcResult<{ ok: true; archivedTo: string }>
-  >
-  legacySkip: () => Promise<
-    IpcResult<{ ok: true; archivedTo: string | null }>
-  >
+  legacyImport: () => Promise<IpcResult<{ ok: true; archivedTo: string }>>
+  legacySkip: () => Promise<IpcResult<{ ok: true; archivedTo: string | null }>>
 }
 
 declare global {

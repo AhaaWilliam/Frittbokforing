@@ -644,6 +644,25 @@ const ManualEntryLineInputSchema = z
   })
   .strict()
 
+// === Sprint 16 — Preview schemas (ADR 006) ===
+//
+// Read-only preview av journal-lines för live-feedback i forms.
+// Per ADR 006: ingen DB-skrivning, ingen transaktion. Renderer-callsites
+// debouncar mot detta schema; failures returneras som IpcResult-fel
+// (inte exceptions) så form-state inte avbryts.
+
+export const PreviewJournalLinesInputSchema = z.discriminatedUnion('source', [
+  z
+    .object({
+      source: z.literal('manual'),
+      fiscal_year_id: z.number().int().positive(),
+      entry_date: z.string().optional(),
+      description: z.string().optional(),
+      lines: z.array(ManualEntryLineInputSchema).min(1),
+    })
+    .strict(),
+])
+
 export const SaveManualEntryDraftSchema = z
   .object({
     fiscal_year_id: z.number().int().positive(),
@@ -1415,6 +1434,7 @@ export const channelMap = {
   'bank-tx-mapping:list': z.void(),
   'bank-tx-mapping:upsert': BankTxMappingUpsertSchema,
   'bank-tx-mapping:delete': BankTxMappingDeleteSchema,
+  'preview:journal-lines': PreviewJournalLinesInputSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap
