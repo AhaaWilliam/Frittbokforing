@@ -34,6 +34,7 @@ import {
 import { ExpenseLineRow } from './ExpenseLineRow'
 import { ExpenseTotals } from './ExpenseTotals'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { Callout } from '../ui/Callout'
 
 // === Helpers ===
 
@@ -310,11 +311,8 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
       >
         <div className="space-y-6 px-8 py-6">
           {form.submitError && (
-            <div
-              role="alert"
-              className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-              {form.submitError}
+            <div className="mb-4">
+              <Callout variant="danger">{form.submitError}</Callout>
             </div>
           )}
 

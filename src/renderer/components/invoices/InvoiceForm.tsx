@@ -22,6 +22,7 @@ import {
   type InvoiceLineForm,
 } from '../../lib/form-schemas/invoice'
 import { errorIdFor } from '../../lib/a11y'
+import { Callout } from '../ui/Callout'
 import { CustomerPicker } from './CustomerPicker'
 import { InvoiceLineRow } from './InvoiceLineRow'
 import { InvoiceTotals } from './InvoiceTotals'
@@ -227,11 +228,8 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
       <div className="space-y-6 px-8 py-6">
         {form.submitError && (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {form.submitError}
+          <div className="mb-4">
+            <Callout variant="danger">{form.submitError}</Callout>
           </div>
         )}
 

@@ -10,6 +10,7 @@ import {
   useCompany,
 } from '../../lib/hooks'
 import { useEntityForm } from '../../lib/use-entity-form'
+import { Callout } from '../ui/Callout'
 import {
   ProductFormStateSchema,
   ProductPayloadSchema,
@@ -120,8 +121,8 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
       </h2>
 
       {form.submitError && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {form.submitError}
+        <div className="mb-4">
+          <Callout variant="danger">{form.submitError}</Callout>
         </div>
       )}
 

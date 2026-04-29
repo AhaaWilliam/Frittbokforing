@@ -13,6 +13,7 @@ import { errorIdFor } from '../../lib/a11y'
 import { useEntityForm } from '../../lib/use-entity-form'
 import { useJournalPreview } from '../../lib/use-journal-preview'
 import { ConsequencePane } from '../consequence/ConsequencePane'
+import { Callout } from '../ui/Callout'
 import {
   ManualEntryFormStateSchema,
   ManualEntrySavePayloadSchema,
@@ -266,11 +267,8 @@ export function ManualEntryForm({
         </h2>
 
         {form.submitError && (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {form.submitError}
+          <div className="mb-4">
+            <Callout variant="danger">{form.submitError}</Callout>
           </div>
         )}
 
