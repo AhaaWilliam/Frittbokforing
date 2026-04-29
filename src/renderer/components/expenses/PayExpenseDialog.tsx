@@ -3,6 +3,7 @@ import type { ExpenseDetail } from '../../../shared/types'
 import { usePayExpense } from '../../lib/hooks'
 import { formatKr, toOre, toKr, todayLocal } from '../../lib/format'
 import { parseDecimal } from '../../../shared/money'
+import { Callout } from '../ui/Callout'
 
 interface PayExpenseDialogProps {
   expense: ExpenseDetail
@@ -183,9 +184,9 @@ export function PayExpenseDialog({
         </div>
 
         {error && (
-          <p role="alert" className="mt-3 text-sm text-red-600">
-            {error}
-          </p>
+          <div className="mt-3">
+            <Callout variant="danger">{error}</Callout>
+          </div>
         )}
 
         <div className="flex justify-end gap-3 mt-6">

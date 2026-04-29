@@ -14,6 +14,7 @@ import type {
 } from '../../../shared/types'
 import { errorIdFor } from '../../lib/a11y'
 import { FieldError } from '../ui/FieldError'
+import { Callout } from '../ui/Callout'
 
 interface Props {
   open: boolean
@@ -426,11 +427,7 @@ export function FixedAssetFormDialog({
             </div>
           </fieldset>
 
-          {formError && (
-            <p role="alert" className="text-sm text-destructive">
-              {formError}
-            </p>
-          )}
+          {formError && <Callout variant="danger">{formError}</Callout>}
 
           <div className="flex justify-end gap-2 pt-2">
             <button

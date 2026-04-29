@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { UserMeta } from '../electron'
+import { Callout } from '../components/ui/Callout'
 
 type Mode =
   | { kind: 'list' }
@@ -56,9 +57,9 @@ export function LockScreen({ onUnlocked }: Props) {
         <h1 className="mb-4 text-xl font-semibold">Fritt Bokföring</h1>
 
         {error && (
-          <p role="alert" className="mb-3 text-sm text-red-600">
-            {error}
-          </p>
+          <div className="mb-3">
+            <Callout variant="danger">{error}</Callout>
+          </div>
         )}
 
         {mode.kind === 'list' && (

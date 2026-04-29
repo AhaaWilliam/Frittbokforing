@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { Callout } from '../components/ui/Callout'
 import { CustomerPicker } from '../components/invoices/CustomerPicker'
 import { useIpcQuery } from '../lib/use-ipc-query'
 import { useIpcMutation } from '../lib/use-ipc-mutation'
@@ -460,11 +461,7 @@ function CreateMandateForm({
         </FieldBlock>
       </FieldRow>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <Callout variant="danger">{error}</Callout>}
 
       <div className="flex justify-end gap-2">
         <button
@@ -669,11 +666,7 @@ function CreateCollectionForm({
         </FieldBlock>
       </FieldRow>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <Callout variant="danger">{error}</Callout>}
 
       <div className="flex justify-end gap-2">
         <button
@@ -957,11 +950,7 @@ function CreateBatchForm({
         />
       </FieldBlock>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <Callout variant="danger">{error}</Callout>}
 
       <div className="flex justify-end gap-2">
         <button

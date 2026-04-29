@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Callout } from '../ui/Callout'
 
 /**
  * Security / account settings — change password, rotate recovery key,
@@ -94,9 +95,9 @@ function ChangePasswordBlock() {
         />
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-xs text-red-600">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Callout variant="danger">{error}</Callout>
+        </div>
       )}
       {success && (
         <p
@@ -225,9 +226,9 @@ function RotateRecoveryBlock() {
         </div>
       )}
       {error && (
-        <p role="alert" className="mt-3 text-xs text-red-600">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Callout variant="danger">{error}</Callout>
+        </div>
       )}
     </div>
   )
@@ -310,9 +311,9 @@ function AutoLockBlock() {
         </button>
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-xs text-red-600">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Callout variant="danger">{error}</Callout>
+        </div>
       )}
       {saved && (
         <p
