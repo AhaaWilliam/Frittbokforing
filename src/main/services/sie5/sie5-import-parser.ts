@@ -49,8 +49,6 @@ import type {
   SieTransaction,
 } from '../sie4/sie4-import-parser'
 
-const SIE5_NS = 'http://www.sie.se/sie5'
-
 /** Parse ett decimaltal i kronor (t.ex. "100.00" eller "-50.50") → öre. */
 function sie5AmountToOre(raw: string): number {
   // Accept "," som decimalavgränsare (normalisera till ".")

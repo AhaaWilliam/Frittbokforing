@@ -1,5 +1,4 @@
 import type Database from 'better-sqlite3'
-import log from 'electron-log'
 import { checkChronology } from './chronology-guard'
 import { validateAccountsActive } from './account-service'
 import { safeRebuildSearchIndex } from './search-service'

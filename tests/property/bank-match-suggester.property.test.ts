@@ -148,7 +148,7 @@ describe('computeScore — score-komponenter', () => {
 
   it('exakt datum adderar exakt 30 jämfört med datum 60 dagar bort (ingen datumpoäng)', () => {
     fc.assert(
-      fc.property(oreGen, dateGen, (amount, date) => {
+      fc.property(oreGen, dateGen, (amount, _date) => {
         // Beräkna ett datum >30 dagar bort för att säkerställa 0 datumpoäng
         const farDate = '2026-12-31'
         const nearDate = '2026-01-01'
