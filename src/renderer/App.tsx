@@ -9,6 +9,8 @@ import { AppShell } from './pages/AppShell'
 import { LockScreen } from './pages/LockScreen'
 import { ErrorFallback } from './components/ui/ErrorFallback'
 import { useAuth } from './lib/use-auth'
+import { useUiMode } from './lib/use-ui-mode'
+import { VardagApp } from './modes/vardag/VardagApp'
 
 export default function App() {
   const auth = useAuth()
@@ -79,7 +81,7 @@ function AuthenticatedApp() {
         onReset={() => window.location.reload()}
       >
         <ActiveCompanyProvider>
-          <AppShell />
+          <ModeRouter />
         </ActiveCompanyProvider>
       </ErrorBoundary>
       <Toaster
@@ -91,4 +93,24 @@ function AuthenticatedApp() {
       />
     </>
   )
+}
+
+// Sprint 17 — Mode-router (ADR 005). Splittar mellan Vardag- och
+// Bokförar-skalen baserat på `useUiMode`. Mode persisteras i settings
+// (key: `ui_mode`) — vid sessionsbyte återställs till samma läge.
+function ModeRouter() {
+  const { mode, loading } = useUiMode()
+
+  if (loading) {
+    return (
+      <div
+        className="flex h-screen items-center justify-center"
+        data-testid="mode-loading"
+      >
+        <p className="text-muted-foreground">Laddar...</p>
+      </div>
+    )
+  }
+
+  return mode === 'vardag' ? <VardagApp /> : <AppShell />
 }

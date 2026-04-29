@@ -1,13 +1,20 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Company } from '../../shared/types'
 import { FiscalYearProvider } from '../contexts/FiscalYearContext'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { SkipLinksProvider } from '../contexts/SkipLinksContext'
-import { HashRouter, useRoute } from '../lib/router'
+import { HashRouter, useRoute, useNavigate } from '../lib/router'
 import { routes } from '../lib/routes'
 import { Sidebar } from '../components/layout/Sidebar'
 import { SkipLinks } from '../components/layout/SkipLinks'
 import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
+import { CommandPalette } from '../components/command-palette/CommandPalette'
+import {
+  buildBokforareCommands,
+  buildSystemCommands,
+} from '../components/command-palette/commands'
+import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts'
+import { useUiMode } from '../lib/use-ui-mode'
 import { PageOverview } from './PageOverview'
 import { PageIncome } from './PageIncome'
 import { PageExpenses } from './PageExpenses'
@@ -88,6 +95,21 @@ function PageContent({ page }: { page: string }) {
 
 function AppShellInner({ company }: AppShellInnerProps) {
   const { page } = useRoute()
+  const navigate = useNavigate()
+  const { setMode } = useUiMode()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  // Sprint 15 — ⌘K command palette + Sprint 17 system-commands
+  const commands = useMemo(
+    () => [
+      ...buildBokforareCommands(navigate),
+      ...buildSystemCommands({ switchToVardag: () => setMode('vardag') }),
+    ],
+    [navigate, setMode],
+  )
+  useKeyboardShortcuts({
+    'mod+k': () => setPaletteOpen((open) => !open),
+  })
 
   useEffect(() => {
     document.title = `Fritt Bokföring — ${company.name}`
@@ -106,6 +128,12 @@ function AppShellInner({ company }: AppShellInnerProps) {
           <PageContent page={page} />
         </div>
       </main>
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        commands={commands}
+        mode="bokforare"
+      />
     </div>
   )
 }
