@@ -1,5 +1,6 @@
 import type { CreateCompanyInput } from '../../../shared/types'
 import { parseDecimal } from '../../../shared/money'
+import { Callout } from '../ui/Callout'
 
 interface StepConfirmProps {
   name: string
@@ -102,11 +103,7 @@ export function StepConfirm({
         </dl>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <Callout variant="danger">{error}</Callout>}
 
       <div className="flex gap-3">
         <button

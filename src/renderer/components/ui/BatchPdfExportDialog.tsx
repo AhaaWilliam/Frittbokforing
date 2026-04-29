@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { Callout } from './Callout'
 
 interface BatchPdfExportDialogProps {
   open: boolean
@@ -71,17 +72,16 @@ export function BatchPdfExportDialog({
               </p>
 
               {result.failed.length > 0 && (
-                <div className="mb-4 max-h-40 overflow-auto rounded-md border border-red-200 bg-red-50 p-3">
-                  <p className="mb-2 text-xs font-medium text-red-700">
-                    Misslyckades:
-                  </p>
-                  <ul className="space-y-1 text-xs text-red-600">
-                    {result.failed.map((f) => (
-                      <li key={f.invoiceId}>
-                        Faktura ID {f.invoiceId}: {f.error}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="mb-4 max-h-40 overflow-auto">
+                  <Callout variant="danger" title="Misslyckades">
+                    <ul className="space-y-1">
+                      {result.failed.map((f) => (
+                        <li key={f.invoiceId}>
+                          Faktura ID {f.invoiceId}: {f.error}
+                        </li>
+                      ))}
+                    </ul>
+                  </Callout>
                 </div>
               )}
             </>

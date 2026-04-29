@@ -1,4 +1,5 @@
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle } from 'lucide-react'
+import { Callout } from '../ui/Callout'
 import type {
   ImportStrategy,
   ValidationResult,
@@ -79,33 +80,33 @@ export function ImportPreviewPhase({
       </div>
 
       {errors.length > 0 && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
-          <h3 className="mb-2 text-sm font-medium text-red-700">
-            Blockerande fel
-          </h3>
-          <ul className="space-y-1 text-xs text-red-600">
-            {errors.map((e, i) => (
-              <li key={i}>
-                <span className="font-mono">[{e.code}]</span> {e.message}
-              </li>
-            ))}
-          </ul>
+        <div className="mb-4">
+          <Callout variant="danger" title="Blockerande fel">
+            <ul className="space-y-1">
+              {errors.map((e, i) => (
+                <li key={i}>
+                  <span className="font-mono">[{e.code}]</span> {e.message}
+                </li>
+              ))}
+            </ul>
+          </Callout>
         </div>
       )}
 
       {warnings.length > 0 && (
-        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-700">
-            <AlertTriangle className="h-4 w-4" />
-            {warnings.length} varningar (icke-blockerande)
-          </div>
-          <ul className="max-h-32 space-y-1 overflow-auto text-xs text-amber-700">
-            {warnings.map((w, i) => (
-              <li key={i}>
-                <span className="font-mono">[{w.code}]</span> {w.message}
-              </li>
-            ))}
-          </ul>
+        <div className="mb-4">
+          <Callout
+            variant="warning"
+            title={`${warnings.length} varningar (icke-blockerande)`}
+          >
+            <ul className="max-h-32 space-y-1 overflow-auto">
+              {warnings.map((w, i) => (
+                <li key={i}>
+                  <span className="font-mono">[{w.code}]</span> {w.message}
+                </li>
+              ))}
+            </ul>
+          </Callout>
         </div>
       )}
 

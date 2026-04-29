@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import type { BulkPaymentResult } from '../../../shared/types'
+import { Callout } from './Callout'
 
 interface BulkPaymentResultDialogProps {
   open: boolean
@@ -91,17 +92,16 @@ export function BulkPaymentResultDialog({
           </Dialog.Description>
 
           {hasFailures && (
-            <div className="mb-4 max-h-40 overflow-auto rounded-md border border-red-200 bg-red-50 p-3">
-              <p className="mb-2 text-xs font-medium text-red-700">
-                Misslyckades:
-              </p>
-              <ul className="space-y-1 text-xs text-red-600">
-                {result.failed.map((f) => (
-                  <li key={f.id}>
-                    ID {f.id}: {f.error}
-                  </li>
-                ))}
-              </ul>
+            <div className="mb-4 max-h-40 overflow-auto">
+              <Callout variant="danger" title="Misslyckades">
+                <ul className="space-y-1">
+                  {result.failed.map((f) => (
+                    <li key={f.id}>
+                      ID {f.id}: {f.error}
+                    </li>
+                  ))}
+                </ul>
+              </Callout>
             </div>
           )}
 
