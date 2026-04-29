@@ -1,7 +1,7 @@
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { InvoiceWithLines } from '../../../shared/types'
-import { toKr, todayLocal, addDaysLocal } from '../../lib/format'
+import { toKr, toOre, todayLocal, addDaysLocal } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import {
   useSaveDraft,
@@ -23,6 +23,8 @@ import {
 } from '../../lib/form-schemas/invoice'
 import { errorIdFor } from '../../lib/a11y'
 import { Callout } from '../ui/Callout'
+import { useJournalPreview } from '../../lib/use-journal-preview'
+import { ConsequencePane } from '../consequence/ConsequencePane'
 import { CustomerPicker } from './CustomerPicker'
 import { InvoiceLineRow } from './InvoiceLineRow'
 import { InvoiceTotals } from './InvoiceTotals'
@@ -193,6 +195,46 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
     )
   }
 
+  // Sprint 25 — Live preview (ADR 006). Bygg PreviewInput från form-state
+  // och hämta preview via useJournalPreview-hook. `null` när ingen kund
+  // valts eller inga giltiga rader finns — ConsequencePane fallback:ar
+  // till idle-state utan IPC-call.
+  const invoiceDate = form.getField('invoiceDate') as string
+  const invoiceType = form.getField('invoice_type') as
+    | 'customer_invoice'
+    | 'credit_note'
+  const previewInput = useMemo(() => {
+    if (!activeFiscalYear) return null
+    const validLines = lines
+      .filter(
+        (l) =>
+          l.quantity > 0 &&
+          l.unit_price_kr !== 0 &&
+          l.vat_code_id > 0 &&
+          (l.product_id != null || (l.account_number?.length ?? 0) >= 4),
+      )
+      .map((l) => ({
+        product_id: l.product_id ?? undefined,
+        account_number: l.product_id
+          ? undefined
+          : (l.account_number ?? undefined),
+        description: l.description,
+        quantity: l.quantity,
+        unit_price_ore: toOre(l.unit_price_kr),
+        vat_code_id: l.vat_code_id,
+      }))
+    if (validLines.length === 0) return null
+    return {
+      source: 'invoice' as const,
+      fiscal_year_id: activeFiscalYear.id,
+      invoice_date: invoiceDate || undefined,
+      invoice_type: invoiceType,
+      lines: validLines,
+    }
+  }, [lines, invoiceDate, invoiceType, activeFiscalYear])
+
+  const preview = useJournalPreview(previewInput)
+
   // F49: Focus-management on submit failure
   const formRef = useRef<HTMLDivElement>(null)
   const submitCountRef = useRef(0)
@@ -225,254 +267,276 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
   }
 
   return (
-    <div ref={formRef} className="flex flex-1 flex-col overflow-auto">
-      <div className="space-y-6 px-8 py-6">
-        {form.submitError && (
-          <div className="mb-4">
-            <Callout variant="danger">{form.submitError}</Callout>
-          </div>
-        )}
-
-        {/* Credit note indicator */}
-        {(form.getField('invoice_type') as string) === 'credit_note' && (
-          <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
-            <span className="font-medium">Kreditfaktura (utkast)</span>
-            {draft?.notes && (
-              <span className="ml-1">&mdash; {draft.notes}</span>
-            )}
-          </div>
-        )}
-
-        {/* Customer */}
-        <div>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- CustomerPicker exponerar label via aria-label internt */}
-          <label className="mb-1 block text-sm font-medium">Kund</label>
-          <CustomerPicker
-            value={form.getField('_customer') as InvoiceFormState['_customer']}
-            onChange={handleCustomerChange}
-            aria-invalid={!!form.errors._customer}
-            aria-describedby={
-              form.errors._customer ? errorIdFor('invoice-customer') : undefined
-            }
-          />
-          {form.errors._customer && (
-            <p
-              role="alert"
-              id={errorIdFor('invoice-customer')}
-              className="mt-1 text-xs text-red-600"
-            >
-              {form.errors._customer}
-            </p>
+    <div className="flex flex-1 overflow-hidden">
+      <div
+        ref={formRef}
+        className="flex flex-1 flex-col overflow-auto"
+        data-testid="invoice-form-pane"
+      >
+        <div className="space-y-6 px-8 py-6">
+          {form.submitError && (
+            <div className="mb-4">
+              <Callout variant="danger">{form.submitError}</Callout>
+            </div>
           )}
-        </div>
 
-        {/* Invoice details */}
-        <div className="grid grid-cols-4 gap-4">
+          {/* Credit note indicator */}
+          {(form.getField('invoice_type') as string) === 'credit_note' && (
+            <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
+              <span className="font-medium">Kreditfaktura (utkast)</span>
+              {draft?.notes && (
+                <span className="ml-1">&mdash; {draft.notes}</span>
+              )}
+            </div>
+          )}
+
+          {/* Customer */}
           <div>
-            <label
-              htmlFor="invoice-number"
-              className="mb-1 block text-sm font-medium"
-            >
-              Fakturanummer
-            </label>
-            <input
-              id="invoice-number"
-              type="text"
-              readOnly
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- CustomerPicker exponerar label via aria-label internt */}
+            <label className="mb-1 block text-sm font-medium">Kund</label>
+            <CustomerPicker
               value={
-                draft
-                  ? draft.invoice_number
-                  : nextNum
-                    ? String(nextNum.preview)
-                    : ''
+                form.getField('_customer') as InvoiceFormState['_customer']
               }
-              className="block w-full rounded-md border border-input bg-muted px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="invoice-date"
-              className="mb-1 block text-sm font-medium"
-            >
-              Fakturadatum
-            </label>
-            <input
-              id="invoice-date"
-              type="date"
-              value={form.getField('invoiceDate') as string}
-              onChange={(e) => handleDateChange(e.target.value)}
-              aria-invalid={!!form.errors.invoiceDate}
+              onChange={handleCustomerChange}
+              aria-invalid={!!form.errors._customer}
               aria-describedby={
-                form.errors.invoiceDate ? 'invoice-date-error' : undefined
+                form.errors._customer
+                  ? errorIdFor('invoice-customer')
+                  : undefined
               }
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
-            {form.errors.invoiceDate && (
+            {form.errors._customer && (
               <p
-                id="invoice-date-error"
                 role="alert"
-                data-testid="invoice-date-error"
+                id={errorIdFor('invoice-customer')}
                 className="mt-1 text-xs text-red-600"
               >
-                {form.errors.invoiceDate}
+                {form.errors._customer}
               </p>
             )}
           </div>
-          <div>
-            <label
-              htmlFor="invoice-payment-terms"
-              className="mb-1 block text-sm font-medium"
-            >
-              Betalningsvillkor
-            </label>
-            <select
-              id="invoice-payment-terms"
-              value={form.getField('paymentTerms') as number}
-              onChange={(e) =>
-                handlePaymentTermsChange(parseInt(e.target.value, 10))
-              }
-              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              {PAYMENT_TERMS_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t} dagar
-                </option>
-              ))}
-            </select>
+
+          {/* Invoice details */}
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <label
+                htmlFor="invoice-number"
+                className="mb-1 block text-sm font-medium"
+              >
+                Fakturanummer
+              </label>
+              <input
+                id="invoice-number"
+                type="text"
+                readOnly
+                value={
+                  draft
+                    ? draft.invoice_number
+                    : nextNum
+                      ? String(nextNum.preview)
+                      : ''
+                }
+                className="block w-full rounded-md border border-input bg-muted px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="invoice-date"
+                className="mb-1 block text-sm font-medium"
+              >
+                Fakturadatum
+              </label>
+              <input
+                id="invoice-date"
+                type="date"
+                value={form.getField('invoiceDate') as string}
+                onChange={(e) => handleDateChange(e.target.value)}
+                aria-invalid={!!form.errors.invoiceDate}
+                aria-describedby={
+                  form.errors.invoiceDate ? 'invoice-date-error' : undefined
+                }
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {form.errors.invoiceDate && (
+                <p
+                  id="invoice-date-error"
+                  role="alert"
+                  data-testid="invoice-date-error"
+                  className="mt-1 text-xs text-red-600"
+                >
+                  {form.errors.invoiceDate}
+                </p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="invoice-payment-terms"
+                className="mb-1 block text-sm font-medium"
+              >
+                Betalningsvillkor
+              </label>
+              <select
+                id="invoice-payment-terms"
+                value={form.getField('paymentTerms') as number}
+                onChange={(e) =>
+                  handlePaymentTermsChange(parseInt(e.target.value, 10))
+                }
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {PAYMENT_TERMS_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t} dagar
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="invoice-due-date"
+                className="mb-1 block text-sm font-medium"
+              >
+                F&ouml;rfallodatum
+              </label>
+              <input
+                id="invoice-due-date"
+                type="date"
+                readOnly
+                value={form.getField('dueDate') as string}
+                className="block w-full rounded-md border border-input bg-muted px-3 py-2 text-sm"
+              />
+            </div>
           </div>
+
+          {/* Notes */}
           <div>
             <label
-              htmlFor="invoice-due-date"
+              htmlFor="invoice-notes"
               className="mb-1 block text-sm font-medium"
             >
-              F&ouml;rfallodatum
+              Anteckningar
             </label>
-            <input
-              id="invoice-due-date"
-              type="date"
-              readOnly
-              value={form.getField('dueDate') as string}
-              className="block w-full rounded-md border border-input bg-muted px-3 py-2 text-sm"
+            <textarea
+              id="invoice-notes"
+              value={form.getField('notes') as string}
+              onChange={(e) =>
+                form.setField(
+                  'notes',
+                  e.target.value as InvoiceFormState['notes'],
+                )
+              }
+              rows={2}
+              className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
-        </div>
 
-        {/* Notes */}
-        <div>
-          <label
-            htmlFor="invoice-notes"
-            className="mb-1 block text-sm font-medium"
-          >
-            Anteckningar
-          </label>
-          <textarea
-            id="invoice-notes"
-            value={form.getField('notes') as string}
-            onChange={(e) =>
-              form.setField(
-                'notes',
-                e.target.value as InvoiceFormState['notes'],
-              )
-            }
-            rows={2}
-            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-
-        {/* Invoice lines */}
-        <div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                <th className="px-2 py-2 w-40">Artikel</th>
-                <th className="px-2 py-2">Beskrivning</th>
-                <th className="px-2 py-2 w-20">Antal</th>
-                <th className="px-2 py-2 w-24">Pris (kr)</th>
-                <th className="px-2 py-2 w-28">Moms</th>
-                <th className="px-2 py-2 w-24 text-right">Summa</th>
-                <th className="px-2 py-2 w-10">
-                  <span className="sr-only">Åtgärd</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody aria-live="polite">
-              {lines.map((line, i) => (
-                <InvoiceLineRow
-                  key={line.temp_id}
-                  line={line}
-                  index={i}
-                  counterpartyId={
-                    (
-                      form.getField(
-                        '_customer',
-                      ) as InvoiceFormState['_customer']
-                    )?.id ?? null
-                  }
-                  onUpdate={updateLine}
-                  onRemove={removeLine}
-                />
-              ))}
-            </tbody>
-          </table>
-          <button
-            type="button"
-            onClick={addLine}
-            className="mt-2 rounded-md border border-dashed border-input px-3 py-1.5 text-sm text-muted-foreground hover:border-primary hover:text-primary"
-          >
-            L&auml;gg till rad
-          </button>
-          {form.errors.lines && (
-            <p
-              role="alert"
-              id={errorIdFor('invoice-lines')}
-              className="mt-1 text-xs text-red-600"
-            >
-              {form.errors.lines}
-            </p>
-          )}
-        </div>
-
-        {/* Totals */}
-        <InvoiceTotals lines={lines} />
-
-        {/* Actions */}
-        <div className="flex items-center gap-3 border-t pt-4">
-          <button
-            type="button"
-            onClick={() => handleSubmitWithFocus()}
-            disabled={!activeFiscalYear || form.isSubmitting}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {form.isSubmitting ? 'Sparar...' : 'Spara utkast'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Avbryt
-          </button>
-          {draft && draft.status === 'draft' && (
+          {/* Invoice lines */}
+          <div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-2 py-2 w-40">Artikel</th>
+                  <th className="px-2 py-2">Beskrivning</th>
+                  <th className="px-2 py-2 w-20">Antal</th>
+                  <th className="px-2 py-2 w-24">Pris (kr)</th>
+                  <th className="px-2 py-2 w-28">Moms</th>
+                  <th className="px-2 py-2 w-24 text-right">Summa</th>
+                  <th className="px-2 py-2 w-10">
+                    <span className="sr-only">Åtgärd</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody aria-live="polite">
+                {lines.map((line, i) => (
+                  <InvoiceLineRow
+                    key={line.temp_id}
+                    line={line}
+                    index={i}
+                    counterpartyId={
+                      (
+                        form.getField(
+                          '_customer',
+                        ) as InvoiceFormState['_customer']
+                      )?.id ?? null
+                    }
+                    onUpdate={updateLine}
+                    onRemove={removeLine}
+                  />
+                ))}
+              </tbody>
+            </table>
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={isDeleting}
-              className="ml-auto rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              onClick={addLine}
+              className="mt-2 rounded-md border border-dashed border-input px-3 py-1.5 text-sm text-muted-foreground hover:border-primary hover:text-primary"
             >
-              {isDeleting ? 'Tar bort...' : 'Ta bort'}
+              L&auml;gg till rad
             </button>
-          )}
+            {form.errors.lines && (
+              <p
+                role="alert"
+                id={errorIdFor('invoice-lines')}
+                className="mt-1 text-xs text-red-600"
+              >
+                {form.errors.lines}
+              </p>
+            )}
+          </div>
+
+          {/* Totals */}
+          <InvoiceTotals lines={lines} />
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 border-t pt-4">
+            <button
+              type="button"
+              onClick={() => handleSubmitWithFocus()}
+              disabled={!activeFiscalYear || form.isSubmitting}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {form.isSubmitting ? 'Sparar...' : 'Spara utkast'}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              Avbryt
+            </button>
+            {draft && draft.status === 'draft' && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+                className="ml-auto rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                {isDeleting ? 'Tar bort...' : 'Ta bort'}
+              </button>
+            )}
+          </div>
         </div>
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="Ta bort utkast"
+          description="Vill du verkligen ta bort detta utkast? Åtgärden kan inte ångras."
+          confirmLabel="Ta bort"
+          variant="danger"
+          onConfirm={handleDeleteConfirmed}
+        />
       </div>
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="Ta bort utkast"
-        description="Vill du verkligen ta bort detta utkast? Åtgärden kan inte ångras."
-        confirmLabel="Ta bort"
-        variant="danger"
-        onConfirm={handleDeleteConfirmed}
-      />
+      <aside
+        className="hidden w-[360px] shrink-0 overflow-y-auto border-l border-[var(--border-default)] bg-[var(--surface)] lg:block"
+        aria-label="Konsekvens"
+        data-testid="invoice-consequence"
+      >
+        <ConsequencePane
+          preview={preview.preview}
+          pending={preview.pending}
+          error={preview.error}
+          idleHint="Lägg till kund och fakturarader för att se verifikatet förhandsgranskas."
+        />
+      </aside>
     </div>
   )
 }

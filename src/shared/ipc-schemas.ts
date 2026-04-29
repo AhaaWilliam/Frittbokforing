@@ -664,6 +664,30 @@ const PreviewExpenseLineSchema = z
   })
   .strict()
 
+// Sprint 25 — invoice-line-shape för preview.
+// product_id ELLER account_number måste vara satt (inte båda, inte ingen).
+// Refine i discriminated-union-objektet eftersom Zod inte klarar XOR
+// inom samma object utan refine.
+const PreviewInvoiceLineSchema = z
+  .object({
+    product_id: z.number().int().positive().nullable().optional(),
+    account_number: z.string().min(4).max(5).nullable().optional(),
+    description: z.string().optional().default(''),
+    quantity: z.number().min(0.01).max(99999),
+    unit_price_ore: z.number().int(),
+    vat_code_id: z.number().int().positive(),
+  })
+  .strict()
+  .refine(
+    (v) =>
+      (v.product_id != null && !v.account_number) ||
+      (v.product_id == null && v.account_number != null),
+    {
+      message:
+        'Antingen product_id eller account_number måste vara satt (inte båda, inte ingen).',
+    },
+  )
+
 export const PreviewJournalLinesInputSchema = z.discriminatedUnion('source', [
   z
     .object({
@@ -681,6 +705,18 @@ export const PreviewJournalLinesInputSchema = z.discriminatedUnion('source', [
       expense_date: z.string().optional(),
       description: z.string().optional(),
       lines: z.array(PreviewExpenseLineSchema).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      source: z.literal('invoice'),
+      fiscal_year_id: z.number().int().positive(),
+      invoice_date: z.string().optional(),
+      invoice_type: z
+        .enum(['customer_invoice', 'credit_note'])
+        .default('customer_invoice'),
+      description: z.string().optional(),
+      lines: z.array(PreviewInvoiceLineSchema).min(1),
     })
     .strict(),
 ])

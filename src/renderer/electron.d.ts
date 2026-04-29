@@ -719,10 +719,25 @@ interface ElectronAPI {
             unit_price_ore: number
             vat_code_id: number
           }>
+        }
+      | {
+          source: 'invoice'
+          fiscal_year_id: number
+          invoice_date?: string
+          invoice_type?: 'customer_invoice' | 'credit_note'
+          description?: string
+          lines: ReadonlyArray<{
+            product_id?: number
+            account_number?: string
+            description?: string
+            quantity: number
+            unit_price_ore: number
+            vat_code_id: number
+          }>
         },
   ) => Promise<
     IpcResult<{
-      source: 'manual' | 'expense'
+      source: 'manual' | 'expense' | 'invoice'
       lines: Array<{
         account_number: string
         account_name: string | null
