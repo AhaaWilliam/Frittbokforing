@@ -1,29 +1,33 @@
 import type { ReactNode } from 'react'
 import { useUiMode } from '../../lib/use-ui-mode'
+import { VardagBottomNav } from './VardagBottomNav'
 
 /**
  * Sprint 17 — VardagShell (ADR 005).
+ * Sprint 22 — Lägg till bottom-nav för fyra Vardag-flöden.
  *
- * Minimal viable Vardag-skal. Renderar:
+ * Layout (Vardag):
  * - Ljus top-bar med bolags-namn + mode-switcher
- * - Center: aktiv Vardag-page
- * - Ingen sidebar (Vardag-läget använder bottom-nav i framtida iterationer)
+ * - Center: aktiv Vardag-page (routes via HashRouter i VardagApp)
+ * - Bottom-nav: Inkorg / Kostnad / Faktura / Status
  *
- * **MVP-status.** Sprint 17 levererar skalet och första page (Overview).
- * Bottom-sheets, snabb-input, och full Vardag-routing-träd byggs i
- * efterföljande sprintar när denna grundstomme har funnits ett tag och
- * lärdomar samlats.
+ * Mode-switcher persisterar via `useUiMode` (settings-key `ui_mode`).
  *
- * Mode-switcher är medvetet enkel — knapp som växlar tillbaka till
- * Bokförare. Persistens hanteras via `useUiMode`.
+ * **showBottomNav-prop**: default true. Kan disablas i tester eller
+ * vid framtida sub-views (t.ex. ny-kostnad-flöde i full-screen).
  */
 
 interface VardagShellProps {
   companyName: string
   children: ReactNode
+  showBottomNav?: boolean
 }
 
-export function VardagShell({ companyName, children }: VardagShellProps) {
+export function VardagShell({
+  companyName,
+  children,
+  showBottomNav = true,
+}: VardagShellProps) {
   const { setMode } = useUiMode()
 
   return (
@@ -59,6 +63,8 @@ export function VardagShell({ companyName, children }: VardagShellProps) {
       >
         {children}
       </main>
+
+      {showBottomNav && <VardagBottomNav />}
     </div>
   )
 }
