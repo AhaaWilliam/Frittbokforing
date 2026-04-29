@@ -191,6 +191,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   listBankTxMappings: 'bank-tx-mapping:list',
   upsertBankTxMapping: 'bank-tx-mapping:upsert',
   deleteBankTxMapping: 'bank-tx-mapping:delete',
+  // Sprint 16: Live verifikat-preview (ADR 006)
+  previewJournalLines: 'preview:journal-lines',
 }
 
 // ── Override storage ──────────────────────────────────────────────────
