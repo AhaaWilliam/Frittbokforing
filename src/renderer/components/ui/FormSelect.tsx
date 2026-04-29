@@ -1,5 +1,6 @@
 import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from './FieldError'
 
 interface FormSelectProps<TForm extends object> {
   form: UseEntityFormReturn<TForm>
@@ -54,11 +55,7 @@ export function FormSelect<TForm extends object>({
           </option>
         ))}
       </select>
-      {error && (
-        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id={errId}>{error}</FieldError>}
     </div>
   )
 }

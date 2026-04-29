@@ -1,5 +1,6 @@
 import type { UseEntityFormReturn } from '../../lib/use-entity-form'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from './FieldError'
 
 interface FormTextareaProps<TForm extends object> {
   form: UseEntityFormReturn<TForm>
@@ -52,11 +53,7 @@ export function FormTextarea<TForm extends object>({
         aria-describedby={errId}
         className={textareaClass}
       />
-      {error && (
-        <p role="alert" id={errId} className="mt-1 text-xs text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <FieldError id={errId}>{error}</FieldError>}
       {hint && !error && (
         <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       )}
