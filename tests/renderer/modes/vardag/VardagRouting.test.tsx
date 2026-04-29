@@ -124,7 +124,7 @@ describe('Vardag pages', () => {
 
   it('VardagPageStatus renders three KPI-cards', async () => {
     await renderWithProviders(<VardagPageStatus />)
-    expect(screen.getByText('Likvidt netto')).toBeInTheDocument()
+    expect(screen.getByText('Bank-saldo')).toBeInTheDocument()
     expect(screen.getByText('Moms (netto)')).toBeInTheDocument()
     expect(screen.getByText('Resultat YTD')).toBeInTheDocument()
   })

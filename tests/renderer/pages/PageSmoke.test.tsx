@@ -69,6 +69,7 @@ const DASHBOARD = {
   vatNetOre: 0,
   unpaidReceivablesOre: 0,
   unpaidPayablesOre: 0,
+  bankBalanceOre: 0,
 }
 
 const EMPTY_REPORT = {
