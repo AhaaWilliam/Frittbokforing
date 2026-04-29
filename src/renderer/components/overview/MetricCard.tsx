@@ -1,3 +1,25 @@
+import type { ReactNode } from 'react'
+import { StatusCard } from '../ui/StatusCard'
+
+/**
+ * MetricCard — KPI-kort på dashboarden.
+ *
+ * Sprint 13b (finish): wrap-implementation ovanpå StatusCard-primitiven
+ * (Sprint 13a). Bevarar publik API så PageOverview-callsites är
+ * oförändrade, men ärver token-baserad styling, display-typsnitt på
+ * värdet och tighter spacing från StatusCard.
+ *
+ * Mapping:
+ * - label   → StatusCard.title
+ * - value   → StatusCard.value (skeleton-placeholder vid undefined+loading)
+ * - sublabel → StatusCard.hint
+ * - isLoading + value undefined → animerad skeleton som value
+ * - variant: 'positive'/'negative' → färgtonad value via inline span
+ *   (StatusCard.variant 'default'/'accent'/'muted' kan inte uttrycka
+ *   green/red — det är dashboard-specifikt och ligger fortsatt här)
+ * - onClick → StatusCard.onClick (förblir <button> med focus-ring)
+ */
+
 interface MetricCardProps {
   label: string
   value?: string
@@ -11,6 +33,14 @@ interface MetricCardProps {
   onClick?: () => void
 }
 
+function variantValueClass(
+  variant: 'default' | 'positive' | 'negative',
+): string {
+  if (variant === 'positive') return 'text-success-500'
+  if (variant === 'negative') return 'text-danger-500'
+  return ''
+}
+
 export function MetricCard({
   label,
   value,
@@ -19,38 +49,23 @@ export function MetricCard({
   variant = 'default',
   onClick,
 }: MetricCardProps) {
-  const valueClass =
-    variant === 'positive'
-      ? 'text-green-600'
-      : variant === 'negative'
-        ? 'text-red-600'
-        : ''
-
-  const content = (
-    <>
-      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
-      {isLoading && value === undefined ? (
-        <div className="h-7 w-24 animate-pulse rounded bg-muted" />
-      ) : (
-        <p className={`text-xl font-medium ${valueClass}`}>{value ?? '–'}</p>
-      )}
-      {sublabel && (
-        <p className="mt-1 text-xs text-muted-foreground">{sublabel}</p>
-      )}
-    </>
-  )
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full rounded-lg bg-muted/50 p-4 text-left transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-        {content}
-      </button>
+  const valueNode: ReactNode =
+    isLoading && value === undefined ? (
+      <span className="inline-block h-7 w-24 animate-pulse rounded bg-neutral-100 align-middle" />
+    ) : variant === 'default' ? (
+      (value ?? '–')
+    ) : (
+      <span className={variantValueClass(variant)}>{value ?? '–'}</span>
     )
-  }
 
-  return <div className="rounded-lg bg-muted/50 p-4">{content}</div>
+  return (
+    <StatusCard
+      title={label}
+      value={valueNode}
+      hint={sublabel}
+      onClick={onClick}
+      ariaLabel={onClick ? `${label} — klicka för detaljer` : undefined}
+      mono
+    />
+  )
 }

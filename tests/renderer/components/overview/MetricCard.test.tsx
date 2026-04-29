@@ -13,16 +13,18 @@ describe('MetricCard', () => {
     expect(screen.getByText('10 000 kr')).toBeInTheDocument()
   })
 
-  it('variant=positive gives green text', () => {
+  it('variant=positive gives success-tonad text (token-baserad)', () => {
+    // Sprint 13b: Tailwind-palett (text-green-*) → token-aliaser
+    // (text-success-*). Tester assertar mot semantik, inte specifik palett.
     render(<MetricCard label="Resultat" value="5 000 kr" variant="positive" />)
     const valueEl = screen.getByText('5 000 kr')
-    expect(valueEl.className).toContain('text-green')
+    expect(valueEl.className).toMatch(/text-(green|success)/)
   })
 
-  it('variant=negative gives red text', () => {
+  it('variant=negative gives danger-tonad text (token-baserad)', () => {
     render(<MetricCard label="Resultat" value="-2 000 kr" variant="negative" />)
     const valueEl = screen.getByText('-2 000 kr')
-    expect(valueEl.className).toContain('text-red')
+    expect(valueEl.className).toMatch(/text-(red|danger)/)
   })
 
   it('shows skeleton when isLoading and no value', () => {
@@ -54,13 +56,7 @@ describe('MetricCard', () => {
   })
 
   it('med onClick renderas som button (fokuserbar)', () => {
-    render(
-      <MetricCard
-        label="Intäkter"
-        value="10 000 kr"
-        onClick={() => {}}
-      />,
-    )
+    render(<MetricCard label="Intäkter" value="10 000 kr" onClick={() => {}} />)
     const btn = screen.getByRole('button')
     expect(btn).toBeInTheDocument()
     expect(btn.getAttribute('type')).toBe('button')
@@ -68,18 +64,14 @@ describe('MetricCard', () => {
 
   it('klick på button triggar onClick', async () => {
     const onClick = vi.fn()
-    render(
-      <MetricCard label="Intäkter" value="10 000 kr" onClick={onClick} />,
-    )
+    render(<MetricCard label="Intäkter" value="10 000 kr" onClick={onClick} />)
     await userEvent.click(screen.getByRole('button'))
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
   it('Enter på fokuserad button triggar onClick', async () => {
     const onClick = vi.fn()
-    render(
-      <MetricCard label="Intäkter" value="10 000 kr" onClick={onClick} />,
-    )
+    render(<MetricCard label="Intäkter" value="10 000 kr" onClick={onClick} />)
     const btn = screen.getByRole('button')
     btn.focus()
     expect(document.activeElement).toBe(btn)
@@ -87,11 +79,11 @@ describe('MetricCard', () => {
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
-  it('button har focus:ring-styling', () => {
-    render(
-      <MetricCard label="Intäkter" value="10 000 kr" onClick={() => {}} />,
-    )
+  it('button har focus-ring-styling (focus eller focus-visible)', () => {
+    // Sprint 13b: StatusCard använder focus-visible (mer a11y-vänligt än
+    // raw focus). Vi assertar mot semantik: någon focus-ring-utility finns.
+    render(<MetricCard label="Intäkter" value="10 000 kr" onClick={() => {}} />)
     const btn = screen.getByRole('button')
-    expect(btn.className).toContain('focus:ring-2')
+    expect(btn.className).toMatch(/(focus|focus-visible):ring-2/)
   })
 })
