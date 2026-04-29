@@ -2,12 +2,15 @@ import { memo } from 'react'
 import { FileDown, CheckCircle, CreditCard } from 'lucide-react'
 import type { InvoiceListItem } from '../../../shared/types'
 import { formatKr } from '../../lib/format'
+import { Pill, type PillVariant } from '../ui/Pill'
 
-const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Utkast' },
-  unpaid: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Obetald' },
-  paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Betald' },
-  overdue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Förfallen' },
+// Sprint 13b — Pill-migration. Tidigare inline-badge med Tailwind-palett
+// (bg-amber-100 etc.) bytt mot Pill med token-baserade variants.
+const STATUS_PILL: Record<string, { variant: PillVariant; label: string }> = {
+  draft: { variant: 'neutral', label: 'Utkast' },
+  unpaid: { variant: 'warning', label: 'Obetald' },
+  paid: { variant: 'success', label: 'Betald' },
+  overdue: { variant: 'danger', label: 'Förfallen' },
 }
 
 interface InvoiceListRowProps {
@@ -23,7 +26,11 @@ interface InvoiceListRowProps {
   onFinalizeClick: (item: InvoiceListItem) => void
   onPayClick: (item: InvoiceListItem) => void
   onCreateCreditNote: (item: InvoiceListItem) => void
-  onGeneratePdf: (e: React.MouseEvent, invoiceId: number, invoiceNumber: string) => void
+  onGeneratePdf: (
+    e: React.MouseEvent,
+    invoiceId: number,
+    invoiceNumber: string,
+  ) => void
 }
 
 export const InvoiceListRow = memo(function InvoiceListRow({
@@ -41,7 +48,7 @@ export const InvoiceListRow = memo(function InvoiceListRow({
   onCreateCreditNote,
   onGeneratePdf,
 }: InvoiceListRowProps) {
-  const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.draft
+  const pill = STATUS_PILL[item.status] ?? STATUS_PILL.draft
   return (
     <tr
       ref={onRef}
@@ -66,13 +73,17 @@ export const InvoiceListRow = memo(function InvoiceListRow({
       <td className="px-4 py-3">
         {item.invoice_number || '\u2014'}
         {item.invoice_type === 'credit_note' && (
-          <span className="ml-1.5 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
-            Kredit
+          <span className="ml-1.5">
+            <Pill variant="brand" size="sm">
+              Kredit
+            </Pill>
           </span>
         )}
         {!!item.has_credit_note && item.invoice_type !== 'credit_note' && (
-          <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-            Krediterad
+          <span className="ml-1.5">
+            <Pill variant="neutral" size="sm">
+              Krediterad
+            </Pill>
           </span>
         )}
       </td>
@@ -80,15 +91,15 @@ export const InvoiceListRow = memo(function InvoiceListRow({
       <td className="px-4 py-3">{item.counterparty_name}</td>
       <td className="px-4 py-3 text-right">{formatKr(item.net_amount_ore)}</td>
       <td className="px-4 py-3 text-right">{formatKr(item.vat_amount_ore)}</td>
-      <td className="px-4 py-3 text-right font-medium">{formatKr(item.total_amount_ore)}</td>
-      <td className="px-4 py-3">
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.bg} ${badge.text}`}
-        >
-          {badge.label}
-        </span>
+      <td className="px-4 py-3 text-right font-medium">
+        {formatKr(item.total_amount_ore)}
       </td>
-      <td className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}>
+      <td className="px-4 py-3">
+        <Pill variant={pill.variant}>{pill.label}</Pill>
+      </td>
+      <td
+        className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}
+      >
         {item.due_date}
       </td>
       <td className="px-4 py-3">

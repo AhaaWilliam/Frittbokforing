@@ -2,6 +2,7 @@ import type { ExpenseDraftListItem } from '../../../shared/types'
 import { useExpenseDrafts } from '../../lib/hooks'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
+import { Pill } from '../ui/Pill'
 
 interface ExpenseDraftListProps {
   onSelect: (id: number) => void
@@ -54,9 +55,7 @@ export function ExpenseDraftList({ onSelect }: ExpenseDraftListProps) {
                 {formatKr(expense.total_amount_ore)}
               </td>
               <td className="px-4 py-3">
-                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                  Utkast
-                </span>
+                <Pill variant="warning">Utkast</Pill>
               </td>
             </tr>
           ))}

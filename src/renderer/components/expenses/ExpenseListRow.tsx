@@ -2,13 +2,15 @@ import { memo } from 'react'
 import { CheckCircle, CreditCard } from 'lucide-react'
 import type { ExpenseListItem } from '../../../shared/types'
 import { formatKr } from '../../lib/format'
+import { Pill, type PillVariant } from '../ui/Pill'
 
-const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Utkast' },
-  unpaid: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Obetald' },
-  partial: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Delbetald' },
-  paid: { bg: 'bg-green-100', text: 'text-green-700', label: 'Betald' },
-  overdue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Förfallen' },
+// Sprint 13b — Pill-migration. Speglar InvoiceListRow.
+const STATUS_PILL: Record<string, { variant: PillVariant; label: string }> = {
+  draft: { variant: 'neutral', label: 'Utkast' },
+  unpaid: { variant: 'warning', label: 'Obetald' },
+  partial: { variant: 'info', label: 'Delbetald' },
+  paid: { variant: 'success', label: 'Betald' },
+  overdue: { variant: 'danger', label: 'Förfallen' },
 }
 
 interface ExpenseListRowProps {
@@ -40,7 +42,7 @@ export const ExpenseListRow = memo(function ExpenseListRow({
   onPayClick,
   onCreateCreditNote,
 }: ExpenseListRowProps) {
-  const badge = STATUS_BADGE[item.status] ?? STATUS_BADGE.draft
+  const pill = STATUS_PILL[item.status] ?? STATUS_PILL.draft
   return (
     <tr
       ref={onRef}
@@ -67,30 +69,34 @@ export const ExpenseListRow = memo(function ExpenseListRow({
       <td className="max-w-[200px] truncate px-4 py-3">
         {item.description}
         {item.expense_type === 'credit_note' && (
-          <span className="ml-1.5 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
-            Kredit
+          <span className="ml-1.5">
+            <Pill variant="brand" size="sm">
+              Kredit
+            </Pill>
           </span>
         )}
         {!!item.has_credit_note && item.expense_type !== 'credit_note' && (
-          <span className="ml-1.5 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
-            Krediterad
+          <span className="ml-1.5">
+            <Pill variant="neutral" size="sm">
+              Krediterad
+            </Pill>
           </span>
         )}
       </td>
       <td className="px-4 py-3">{item.supplier_invoice_number || '\u2014'}</td>
-      <td className="px-4 py-3 text-right font-medium">{formatKr(item.total_amount_ore)}</td>
+      <td className="px-4 py-3 text-right font-medium">
+        {formatKr(item.total_amount_ore)}
+      </td>
       <td className="px-4 py-3 text-right">
         {item.total_paid > 0 ? formatKr(item.total_paid) : ''}
       </td>
       <td className="px-4 py-3 text-right">{formatKr(item.remaining)}</td>
       <td className="px-4 py-3">
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${badge.bg} ${badge.text}`}
-        >
-          {badge.label}
-        </span>
+        <Pill variant={pill.variant}>{pill.label}</Pill>
       </td>
-      <td className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}>
+      <td
+        className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}
+      >
         {item.due_date || '\u2014'}
       </td>
       <td className="px-4 py-3">
