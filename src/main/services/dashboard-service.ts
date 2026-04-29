@@ -5,8 +5,10 @@ import {
   VAT_OUTGOING_ACCOUNTS,
   VAT_IN_ACCOUNT,
 } from '../../shared/vat-accounts'
+import { BANK_ACCOUNTS } from '../../shared/bank-accounts'
 
 const VAT_OUT_PLACEHOLDERS = VAT_OUTGOING_ACCOUNTS.map(() => '?').join(', ')
+const BANK_PLACEHOLDERS = BANK_ACCOUNTS.map(() => '?').join(', ')
 
 export function getDashboardSummary(
   db: Database.Database,
@@ -72,6 +74,25 @@ export function getDashboardSummary(
       )
       .get(fiscalYearId) as { unpaid_payables: number }
 
+    // Bank balance — sum av (debit - credit) för bank-/kassa-konton i bokade
+    // verifikat. Inkluderar IB (source_type='opening_balance' som också är
+    // booked) så detta är ett YTD running balance, inte en period-rörelse.
+    const bankRow = db
+      .prepare(
+        `
+      SELECT COALESCE(
+        SUM(jel.debit_ore - jel.credit_ore),
+        0
+      ) AS bank_balance
+      FROM journal_entry_lines jel
+      JOIN journal_entries je ON je.id = jel.journal_entry_id
+      WHERE je.fiscal_year_id = ?
+        AND je.status = 'booked'
+        AND jel.account_number IN (${BANK_PLACEHOLDERS})
+    `,
+      )
+      .get(fiscalYearId, ...BANK_ACCOUNTS) as { bank_balance: number }
+
     return {
       revenueOre: breakdown.revenueOre,
       expensesOre: breakdown.expensesOre,
@@ -81,6 +102,7 @@ export function getDashboardSummary(
       vatNetOre: vatRow.vat_outgoing - vatRow.vat_incoming,
       unpaidReceivablesOre: receivablesRow.unpaid_receivables,
       unpaidPayablesOre: payablesRow.unpaid_payables,
+      bankBalanceOre: bankRow.bank_balance,
     }
   })
 

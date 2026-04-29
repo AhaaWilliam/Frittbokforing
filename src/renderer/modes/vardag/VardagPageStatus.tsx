@@ -7,22 +7,16 @@ import { formatKr } from '../../lib/format'
 /**
  * Sprint 22 — Vardag status (placeholder).
  * Sprint 26 — Riktiga data via useDashboardSummary.
+ * Sprint 31 — Riktigt bank-saldo via summary.bankBalanceOre (BAS 1910/1920/1930).
  *
- * Tre KPI: bank-saldo (utestående fordringar minus skulder),
+ * Tre KPI: bank-saldo (verklig saldering på likvida konton),
  * moms att betala, resultat hittills i år.
  */
 export function VardagPageStatus() {
   const { activeFiscalYear } = useFiscalYearContext()
   const { data: summary, isLoading } = useDashboardSummary(activeFiscalYear?.id)
 
-  // "Pengar i kassan" är en grov approximation: kundfordringar minus
-  // leverantörsskulder. För riktigt bank-saldo behövs bank-konto-koppling
-  // (Sprint 27+ när bank-integration är tätare). Placeholder tills dess.
-  const liquidEstimateOre =
-    summary != null
-      ? summary.unpaidReceivablesOre - summary.unpaidPayablesOre
-      : null
-
+  const bankBalanceOre = summary?.bankBalanceOre ?? null
   const isPositive = (v: number | null) => v != null && v >= 0
 
   return (
@@ -39,16 +33,16 @@ export function VardagPageStatus() {
         aria-label="Status-översikt"
       >
         <StatusCard
-          title="Likvidt netto"
+          title="Bank-saldo"
           value={
             isLoading
               ? '–'
-              : liquidEstimateOre != null
-                ? formatKr(liquidEstimateOre)
+              : bankBalanceOre != null
+                ? formatKr(bankBalanceOre)
                 : '–'
           }
-          hint="Fordringar minus skulder"
-          variant={isPositive(liquidEstimateOre) ? 'default' : 'muted'}
+          hint="Kassa, plusgiro, företagskonto"
+          variant={isPositive(bankBalanceOre) ? 'default' : 'muted'}
           mono
         />
         <StatusCard

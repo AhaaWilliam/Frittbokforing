@@ -117,6 +117,7 @@ const DashboardSummarySchema = z.object({
   vatNetOre: z.number(),
   unpaidReceivablesOre: z.number(),
   unpaidPayablesOre: z.number(),
+  bankBalanceOre: z.number(),
 })
 
 const BulkPaymentResultSchema = z.object({

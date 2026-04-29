@@ -27,3 +27,4 @@ notion-snapshots/
 reports/
 .stryker-tmp/
 fritt-full-source-*.txt
+.claude/worktrees/

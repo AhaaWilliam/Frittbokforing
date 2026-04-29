@@ -586,6 +586,7 @@ export interface DashboardSummary {
   vatNetOre: number
   unpaidReceivablesOre: number
   unpaidPayablesOre: number
+  bankBalanceOre: number
 }
 
 // === Tax Forecast ===
