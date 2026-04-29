@@ -3,10 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { UserVault, type UserKeys } from '../../src/main/auth/user-vault'
-import {
-  generateMasterKey,
-  sealMasterKey,
-} from '../../src/main/auth/crypto'
+import { generateMasterKey, sealMasterKey } from '../../src/main/auth/crypto'
 
 const FAST_KDF = {
   memorySize: 1024,

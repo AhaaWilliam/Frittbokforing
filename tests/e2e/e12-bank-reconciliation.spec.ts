@@ -16,10 +16,7 @@ import path from 'node:path'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
 import { seedCustomer, seedAndFinalizeInvoice } from './helpers/seed'
 
-const FIXTURE_PATH = path.join(
-  __dirname,
-  'fixtures/bank/sample.camt.053.xml',
-)
+const FIXTURE_PATH = path.join(__dirname, 'fixtures/bank/sample.camt.053.xml')
 
 // Amounts (öre) on the 5 fixture TXs in fixture order (REF-E12-1..5).
 // Matches the netto-prices we seed below (× 1.25 with MP1 25% VAT).
@@ -150,9 +147,7 @@ test('@flow e12: bank reconciliation — auto-match + manual + fee + unmatch+rem
         (
           window as unknown as {
             api: {
-              suggestBankMatches: (d: {
-                statement_id: number
-              }) => Promise<{
+              suggestBankMatches: (d: { statement_id: number }) => Promise<{
                 success: boolean
                 data?: {
                   suggestions: Array<{
@@ -323,13 +318,12 @@ test('@flow e12: bank reconciliation — auto-match + manual + fee + unmatch+rem
       .filter((t) => invoiceMatchTxIds.includes(t.id))
       .reduce((acc, t) => acc + t.amount_ore, 0)
 
-    const allPayments = (await ctx.window.evaluate(
-      async () =>
-        (
-          window as unknown as {
-            __testApi: { getInvoicePayments: () => Promise<unknown> }
-          }
-        ).__testApi.getInvoicePayments(),
+    const allPayments = (await ctx.window.evaluate(async () =>
+      (
+        window as unknown as {
+          __testApi: { getInvoicePayments: () => Promise<unknown> }
+        }
+      ).__testApi.getInvoicePayments(),
     )) as Array<{ id: number; amount_ore: number }>
 
     const matchedPaymentIds = new Set(

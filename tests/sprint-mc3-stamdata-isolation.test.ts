@@ -202,9 +202,10 @@ describe('Sprint MC3 — defense-in-depth-triggers', () => {
       .get(cpA.data.id) as { id: number }
 
     expect(() => {
-      db.prepare(
-        'UPDATE invoices SET counterparty_id = ? WHERE id = ?',
-      ).run(cpB.data.id, invoice.id)
+      db.prepare('UPDATE invoices SET counterparty_id = ? WHERE id = ?').run(
+        cpB.data.id,
+        invoice.id,
+      )
     }).toThrow(/Motpart tillhör annat bolag/)
   })
 

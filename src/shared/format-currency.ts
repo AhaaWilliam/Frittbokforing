@@ -25,7 +25,10 @@ export function oreToKr(ore: number): number {
   return ore / 100
 }
 
-export function formatOreToKr(ore: number, opts: FormatOreOptions = {}): string {
+export function formatOreToKr(
+  ore: number,
+  opts: FormatOreOptions = {},
+): string {
   const {
     absolute = false,
     suffix = false,

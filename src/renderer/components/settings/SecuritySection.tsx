@@ -151,8 +151,8 @@ function RotateRecoveryBlock() {
     >
       <h3 className="mb-3 text-sm font-semibold">Ny återställningsfras</h3>
       <p className="mb-3 text-xs text-muted-foreground">
-        Genererar en ny 24-ords-fras och ogiltigförklarar den gamla.
-        Spara den nya frasen säkert — den visas bara en gång.
+        Genererar en ny 24-ords-fras och ogiltigförklarar den gamla. Spara den
+        nya frasen säkert — den visas bara en gång.
       </p>
       {!phrase && !confirmOpen && (
         <button
@@ -206,8 +206,8 @@ function RotateRecoveryBlock() {
               className="mt-0.5"
             />
             <span>
-              Jag har sparat den nya återställningsfrasen och förstår att
-              den inte visas igen.
+              Jag har sparat den nya återställningsfrasen och förstår att den
+              inte visas igen.
             </span>
           </label>
           <button

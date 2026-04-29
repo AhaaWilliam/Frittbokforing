@@ -34,12 +34,12 @@ function seed() {
       fiscal_year_end: '2026-12-31',
     }),
   )
-  const company = db
-    .prepare('SELECT id FROM companies LIMIT 1')
-    .get() as { id: number }
-  const fy = db
-    .prepare('SELECT id FROM fiscal_years LIMIT 1')
-    .get() as { id: number }
+  const company = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
+    id: number
+  }
+  const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+    id: number
+  }
   return { db, companyId: company.id, prevFyId: fy.id }
 }
 

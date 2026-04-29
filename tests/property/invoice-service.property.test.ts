@@ -114,44 +114,45 @@ describe('processLines — M131 heltalsaritmetik', () => {
 
   it('totalAmount = Σ lineTotals (ackumuleringsordning)', () => {
     fc.assert(
-      fc.property(fc.array(lineGen, { minLength: 1, maxLength: 20 }), (lines) => {
-        const { totalAmount } = calcTotals(lines)
-        const expected = lines.reduce(
-          (s, l) => s + calcLineTotal(l.qty, l.unitPriceOre),
-          0,
-        )
-        return totalAmount === expected
-      }),
+      fc.property(
+        fc.array(lineGen, { minLength: 1, maxLength: 20 }),
+        (lines) => {
+          const { totalAmount } = calcTotals(lines)
+          const expected = lines.reduce(
+            (s, l) => s + calcLineTotal(l.qty, l.unitPriceOre),
+            0,
+          )
+          return totalAmount === expected
+        },
+      ),
       { numRuns: 500 },
     )
   })
 
   it('vatAmount = Σ per-rad vat (ackumuleringsordning)', () => {
     fc.assert(
-      fc.property(fc.array(lineGen, { minLength: 1, maxLength: 20 }), (lines) => {
-        const { vatAmount } = calcTotals(lines)
-        const expected = lines.reduce((s, l) => {
-          const lineTotal = calcLineTotal(l.qty, l.unitPriceOre)
-          return s + calcLineVat(lineTotal, l.vatRatePercent)
-        }, 0)
-        return vatAmount === expected
-      }),
+      fc.property(
+        fc.array(lineGen, { minLength: 1, maxLength: 20 }),
+        (lines) => {
+          const { vatAmount } = calcTotals(lines)
+          const expected = lines.reduce((s, l) => {
+            const lineTotal = calcLineTotal(l.qty, l.unitPriceOre)
+            return s + calcLineVat(lineTotal, l.vatRatePercent)
+          }, 0)
+          return vatAmount === expected
+        },
+      ),
       { numRuns: 500 },
     )
   })
 
   it('monotonicitet: högre pris → högre eller lika lineTotal (qty konstant)', () => {
     fc.assert(
-      fc.property(
-        qtyGen,
-        priceOreGen,
-        priceOreGen,
-        (qty, p1, p2) => {
-          const lo = Math.min(p1, p2)
-          const hi = Math.max(p1, p2)
-          return calcLineTotal(qty, lo) <= calcLineTotal(qty, hi)
-        },
-      ),
+      fc.property(qtyGen, priceOreGen, priceOreGen, (qty, p1, p2) => {
+        const lo = Math.min(p1, p2)
+        const hi = Math.max(p1, p2)
+        return calcLineTotal(qty, lo) <= calcLineTotal(qty, hi)
+      }),
       { numRuns: 500 },
     )
   })
@@ -212,7 +213,9 @@ describe('buildJournalLines — M137 sign-flip-doktrin', () => {
       fc.property(amountOreGen, (amount) => {
         const inv = buildLine(amount, false)
         const cred = buildLine(amount, true)
-        return inv.debit_ore === cred.credit_ore && inv.credit_ore === cred.debit_ore
+        return (
+          inv.debit_ore === cred.credit_ore && inv.credit_ore === cred.debit_ore
+        )
       }),
       { numRuns: 500 },
     )
@@ -227,12 +230,16 @@ describe('buildJournalLines — M137 sign-flip-doktrin', () => {
         fc.boolean(),
         (amounts, isCreditNote) => {
           // En sida (1510) + en intäktsrad per belopp → summa D = summa K
-          const receivable = buildLine(amounts.reduce((s, a) => s + a, 0), isCreditNote)
+          const receivable = buildLine(
+            amounts.reduce((s, a) => s + a, 0),
+            isCreditNote,
+          )
           const revenues = amounts.map((a) => buildLine(a, !isCreditNote))
           const totalDebit =
             receivable.debit_ore + revenues.reduce((s, r) => s + r.debit_ore, 0)
           const totalCredit =
-            receivable.credit_ore + revenues.reduce((s, r) => s + r.credit_ore, 0)
+            receivable.credit_ore +
+            revenues.reduce((s, r) => s + r.credit_ore, 0)
           return totalDebit === totalCredit
         },
       ),

@@ -92,9 +92,9 @@ export function createBatchBankFeeJournalEntry(
     description,
   )
 
-  db.prepare(
-    "UPDATE journal_entries SET status = 'booked' WHERE id = ?",
-  ).run(journalEntryId)
+  db.prepare("UPDATE journal_entries SET status = 'booked' WHERE id = ?").run(
+    journalEntryId,
+  )
 
   db.prepare(
     'UPDATE payment_batches SET bank_fee_journal_entry_id = ? WHERE id = ?',

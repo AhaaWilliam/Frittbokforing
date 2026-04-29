@@ -15,10 +15,7 @@ import { importSie5 } from '../src/main/services/sie5/sie5-import-service'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
-import {
-  saveDraft,
-  finalizeDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
 import { exportSie5 } from '../src/main/services/sie5/sie5-export-service'
 
 const NS = 'xmlns="http://www.sie.se/sie5"'
@@ -28,7 +25,15 @@ function buildMinimalSie5(opts: {
   orgNumber?: string
   start?: string
   end?: string
-  accounts?: Array<{ id: string; name: string; type?: string; ib?: string; ub?: string; ibMonth?: string; ubMonth?: string }>
+  accounts?: Array<{
+    id: string
+    name: string
+    type?: string
+    ib?: string
+    ub?: string
+    ibMonth?: string
+    ubMonth?: string
+  }>
   entries?: Array<{
     series: string
     number: number
@@ -159,8 +164,16 @@ describe('SIE5 parser — accounts', () => {
     })
     const r = parseSie5(xml)
     expect(r.accounts).toHaveLength(2)
-    expect(r.accounts[0]).toMatchObject({ number: '1930', name: 'Bankkonto', type: 'T' })
-    expect(r.accounts[1]).toMatchObject({ number: '3001', name: 'Försäljning', type: 'I' })
+    expect(r.accounts[0]).toMatchObject({
+      number: '1930',
+      name: 'Bankkonto',
+      type: 'T',
+    })
+    expect(r.accounts[1]).toMatchObject({
+      number: '3001',
+      name: 'Försäljning',
+      type: 'I',
+    })
   })
 
   it('P6: extracts OpeningBalance and ClosingBalance', () => {
@@ -436,8 +449,12 @@ describe('SIE5 validator', () => {
 
 describe('SIE5 import service — new strategy', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
-  afterEach(() => { db.close() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
+  afterEach(() => {
+    db.close()
+  })
 
   it('I1: new-strategi skapar bolag + FY + konton + verifikat i I-serien', () => {
     const xml = buildMinimalSie5({
@@ -469,9 +486,7 @@ describe('SIE5 import service — new strategy', () => {
 
     // Verifikat i I-serien
     const rows = db
-      .prepare(
-        `SELECT verification_series, status FROM journal_entries`,
-      )
+      .prepare(`SELECT verification_series, status FROM journal_entries`)
       .all() as Array<{ verification_series: string; status: string }>
     expect(rows.length).toBeGreaterThan(0)
     expect(rows.every((r) => r.verification_series === 'I')).toBe(true)
@@ -522,7 +537,11 @@ describe('SIE5 import service — new strategy', () => {
         `SELECT account_number, debit_ore, credit_ore
          FROM journal_entry_lines ORDER BY line_number`,
       )
-      .all() as Array<{ account_number: string; debit_ore: number; credit_ore: number }>
+      .all() as Array<{
+      account_number: string
+      debit_ore: number
+      credit_ore: number
+    }>
     const bankLine = lines.find((l) => l.account_number === '1930')!
     const salesLine = lines.find((l) => l.account_number === '3001')!
     expect(bankLine.debit_ore).toBe(10000)
@@ -534,8 +553,12 @@ describe('SIE5 import service — new strategy', () => {
 
 describe('SIE5 import service — merge strategy', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
-  afterEach(() => { db.close() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
+  afterEach(() => {
+    db.close()
+  })
 
   it('I4: merge matchar befintligt bolag på orgNr', () => {
     createCompany(db, {
@@ -598,8 +621,12 @@ describe('SIE5 import service — merge strategy', () => {
 
 describe('SIE5 import — conflict detection', () => {
   let db: Database.Database
-  beforeEach(() => { db = createTestDb() })
-  afterEach(() => { db.close() })
+  beforeEach(() => {
+    db = createTestDb()
+  })
+  afterEach(() => {
+    db.close()
+  })
 
   it('I7: detectSie5AccountConflicts flaggar namnkonflikt', () => {
     // 1930 finns i BAS som "Företagskonto/checkkonto" e.d.

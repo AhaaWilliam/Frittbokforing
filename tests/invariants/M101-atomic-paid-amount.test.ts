@@ -145,9 +145,9 @@ describe('M101 — atomär paid_amount_ore (invoices)', () => {
       }),
     )
     let status = (
-      db
-        .prepare('SELECT status FROM invoices WHERE id = ?')
-        .get(inv.id) as { status: string }
+      db.prepare('SELECT status FROM invoices WHERE id = ?').get(inv.id) as {
+        status: string
+      }
     ).status
     expect(status).toBe('partial')
 

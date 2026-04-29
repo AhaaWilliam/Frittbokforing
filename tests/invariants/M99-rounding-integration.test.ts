@@ -87,9 +87,7 @@ describe('M99 — öresutjämning vid payInvoice', () => {
       }),
     )
     const row = db
-      .prepare(
-        `SELECT status, paid_amount_ore FROM invoices WHERE id = ?`,
-      )
+      .prepare(`SELECT status, paid_amount_ore FROM invoices WHERE id = ?`)
       .get(invoiceId) as { status: string; paid_amount_ore: number }
     expect(row.status).toBe('paid')
     // paid_amount_ore = full fordran (100_000) eftersom rounding-path
@@ -110,9 +108,7 @@ describe('M99 — öresutjämning vid payInvoice', () => {
       debit_ore: number
       credit_ore: number
     }>
-    const roundingLine = journalLines.find(
-      (l) => l.account_number === '3740',
-    )
+    const roundingLine = journalLines.find((l) => l.account_number === '3740')
     expect(roundingLine).toBeDefined()
     expect(roundingLine!.debit_ore).toBe(49) // användaren betalade 49 öre mindre
   })
@@ -158,9 +154,7 @@ describe('M99 — öresutjämning vid payInvoice', () => {
       }),
     )
     const row = db
-      .prepare(
-        `SELECT status FROM invoices WHERE id = ?`,
-      )
+      .prepare(`SELECT status FROM invoices WHERE id = ?`)
       .get(invoiceId) as { status: string }
     expect(row.status).toBe('partial')
   })

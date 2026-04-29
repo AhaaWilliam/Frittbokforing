@@ -26,7 +26,9 @@ interface State {
   recentFailureTimestamps: number[] // for sliding-window count
 }
 
-const BACKOFF_SCHEDULE_MS = [0, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 60_000] as const
+const BACKOFF_SCHEDULE_MS = [
+  0, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 60_000,
+] as const
 const BURST_THRESHOLD = 10
 const BURST_WINDOW_MS = 10 * 60 * 1000 // 10 min
 const BURST_COOLDOWN_MS = 60_000

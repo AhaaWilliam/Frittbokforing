@@ -74,7 +74,9 @@ test('@critical e11: legacy v44 DB → new user → import → data intact', asy
     const PW = 'e2e-e11-password-12345'
     await window.getByTestId('lockscreen-name').fill('E11 Test User')
     await window.getByTestId('lockscreen-new-password').pressSequentially(PW)
-    await window.getByTestId('lockscreen-confirm-password').pressSequentially(PW)
+    await window
+      .getByTestId('lockscreen-confirm-password')
+      .pressSequentially(PW)
     await window.getByTestId('lockscreen-create-submit').click()
 
     // ── Step 2: Recovery-key display → confirm ─────────────────────────
@@ -85,18 +87,18 @@ test('@critical e11: legacy v44 DB → new user → import → data intact', asy
     await window.getByTestId('lockscreen-recovery-continue').click()
 
     // ── Step 3: LegacyPrompt appears ───────────────────────────────────
-    await expect(
-      window.getByTestId('lockscreen-legacy-import'),
-    ).toBeVisible({ timeout: 10_000 })
+    await expect(window.getByTestId('lockscreen-legacy-import')).toBeVisible({
+      timeout: 10_000,
+    })
 
     // ── Step 4: Click "Importera" → LegacyWorking → LegacyDone ────────
     // LegacyWorking is transient (typically <1s for 5-entry DB) and may
     // flash by before we can assert it — assert the LegacyDone state
     // instead, which is stable.
     await window.getByTestId('lockscreen-legacy-import').click()
-    await expect(
-      window.getByTestId('lockscreen-legacy-continue'),
-    ).toBeVisible({ timeout: 30_000 })
+    await expect(window.getByTestId('lockscreen-legacy-continue')).toBeVisible({
+      timeout: 30_000,
+    })
 
     // ── Step 5: Continue → AppShell ───────────────────────────────────
     await window.getByTestId('lockscreen-legacy-continue').click()

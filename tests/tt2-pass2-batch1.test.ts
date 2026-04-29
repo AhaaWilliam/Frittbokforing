@@ -67,11 +67,7 @@ function* walkTs(dir: string): Generator<string> {
     const full = path.join(dir, entry)
     const st = statSync(full)
     if (st.isDirectory()) yield* walkTs(full)
-    else if (
-      entry.endsWith('.ts') ||
-      entry.endsWith('.tsx')
-    )
-      yield full
+    else if (entry.endsWith('.ts') || entry.endsWith('.tsx')) yield full
   }
 }
 
@@ -405,10 +401,7 @@ describe('M123 — invoice_lines.account_number NULL by design', () => {
     }>
     const col = cols.find((c) => c.name === 'account_number')
     expect(col, 'invoice_lines.account_number saknas').toBeDefined()
-    expect(
-      col!.notnull,
-      'M123: account_number får inte vara NOT NULL',
-    ).toBe(0)
+    expect(col!.notnull, 'M123: account_number får inte vara NOT NULL').toBe(0)
   })
 
   it('finalize-trigger blockerar freeform-rader utan konto', () => {
@@ -510,14 +503,8 @@ describe('M128 — IPC-handlers: ingen kollaps till TRANSACTION_ERROR', () => {
 
 describe('M129 — InvoiceTotals + ExpenseTotals är separerade komponenter', () => {
   it('båda totals-komponenter finns som egna filer', () => {
-    const inv = path.join(
-      SRC,
-      'renderer/components/invoices/InvoiceTotals.tsx',
-    )
-    const exp = path.join(
-      SRC,
-      'renderer/components/expenses/ExpenseTotals.tsx',
-    )
+    const inv = path.join(SRC, 'renderer/components/invoices/InvoiceTotals.tsx')
+    const exp = path.join(SRC, 'renderer/components/expenses/ExpenseTotals.tsx')
     expect(statSync(inv).isFile()).toBe(true)
     expect(statSync(exp).isFile()).toBe(true)
   })
@@ -563,10 +550,7 @@ describe('M132 — MAX_QTY-gränser delas via src/shared/constants.ts', () => {
   })
 
   it('både ipc-schemas och form-schemas importerar från shared/constants', () => {
-    const ipc = readFileSync(
-      path.join(SRC, 'shared/ipc-schemas.ts'),
-      'utf8',
-    )
+    const ipc = readFileSync(path.join(SRC, 'shared/ipc-schemas.ts'), 'utf8')
     const invForm = readFileSync(
       path.join(SRC, 'renderer/lib/form-schemas/invoice.ts'),
       'utf8',

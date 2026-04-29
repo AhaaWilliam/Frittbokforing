@@ -103,9 +103,9 @@ describe('openEncryptedDb — migrations and functions applied', () => {
   it('has lower_unicode custom function registered', async () => {
     const { openEncryptedDb } = await import('../../src/main/db')
     const db = openEncryptedDb(dbPath, Buffer.alloc(32, 0x42))
-    const r = db
-      .prepare("SELECT lower_unicode('ÅÄÖ') AS v")
-      .get() as { v: string }
+    const r = db.prepare("SELECT lower_unicode('ÅÄÖ') AS v").get() as {
+      v: string
+    }
     expect(r.v).toBe('åäö')
   })
 })
@@ -113,8 +113,6 @@ describe('openEncryptedDb — migrations and functions applied', () => {
 describe('openEncryptedDb — rejects wrong key length', () => {
   it('throws on a 16-byte key', async () => {
     const { openEncryptedDb } = await import('../../src/main/db')
-    expect(() => openEncryptedDb(dbPath, Buffer.alloc(16))).toThrow(
-      /32 bytes/,
-    )
+    expect(() => openEncryptedDb(dbPath, Buffer.alloc(16))).toThrow(/32 bytes/)
   })
 })

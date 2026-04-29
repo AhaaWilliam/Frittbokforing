@@ -4,7 +4,11 @@
 // av oss. Om lösenordet glöms kan recovery-key användas för att låsa upp
 // DB-master-nyckeln K (via `recoveryBlob` i keys.json — se ADR 004 §2).
 
-import { generateMnemonic, mnemonicToEntropy, validateMnemonic } from '@scure/bip39'
+import {
+  generateMnemonic,
+  mnemonicToEntropy,
+  validateMnemonic,
+} from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
 
 const ENTROPY_BITS = 256

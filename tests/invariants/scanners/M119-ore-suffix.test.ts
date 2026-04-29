@@ -123,7 +123,9 @@ describe('M119 — _ore-suffix scanner', () => {
       for (const col of cols) {
         if (!/_ore(_|$)/.test(col.name)) continue
         if (col.type !== 'INTEGER') {
-          violations.push(`${table}.${col.name} — förväntad INTEGER, är ${col.type}`)
+          violations.push(
+            `${table}.${col.name} — förväntad INTEGER, är ${col.type}`,
+          )
         }
       }
     }

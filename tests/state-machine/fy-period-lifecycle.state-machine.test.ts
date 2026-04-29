@@ -93,9 +93,7 @@ function assertInvariants(model: ModelState, world: World): void {
   // Model vs real
   for (let i = 1; i <= 12; i++) {
     const row = world.db
-      .prepare(
-        'SELECT is_closed FROM accounting_periods WHERE id = ?',
-      )
+      .prepare('SELECT is_closed FROM accounting_periods WHERE id = ?')
       .get(world.periodIds[i]) as { is_closed: number } | undefined
     if (!row) continue
     const realClosed = row.is_closed === 1

@@ -86,13 +86,9 @@ describe('rate-limiter — state-machine (fc.commands)', () => {
     const userGen = fc.constantFrom('alice', 'bob', 'charlie')
     const tickGen = fc.integer({ min: 1, max: 120_000 }) // upp till 2 min
     const allCommands = [
-      fc
-        .tuple(userGen, tickGen)
-        .map(([u, t]) => new RecordFailureCmd(u, t)),
+      fc.tuple(userGen, tickGen).map(([u, t]) => new RecordFailureCmd(u, t)),
       userGen.map((u) => new RecordSuccessCmd(u)),
-      fc
-        .tuple(userGen, tickGen)
-        .map(([u, t]) => new CheckAllowedCmd(u, t)),
+      fc.tuple(userGen, tickGen).map(([u, t]) => new CheckAllowedCmd(u, t)),
     ]
 
     fc.assert(

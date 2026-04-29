@@ -133,9 +133,7 @@ async function launchApp(
 // ── Test ───────────────────────────────────────────────────────────────────
 
 test('backup → restore round-trip preserves company + invoice data', async () => {
-  const tmpDir = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'fritt-backup-restore-'),
-  )
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fritt-backup-restore-'))
   const userDataDir = path.join(tmpDir, 'userData')
   const downloadDir = path.join(tmpDir, 'downloads')
   fs.mkdirSync(userDataDir, { recursive: true })
@@ -199,13 +197,7 @@ test('backup → restore round-trip preserves company + invoice data', async () 
 
   // ── Phase 2: Simulate restore (file-copy approach) ───────────────────────
   // Vault DB layout (UserVault.dbPath): <userDataDir>/auth/users/<userId>/app.db
-  const vaultDbPath = path.join(
-    userDataDir,
-    'auth',
-    'users',
-    userId!,
-    'app.db',
-  )
+  const vaultDbPath = path.join(userDataDir, 'auth', 'users', userId!, 'app.db')
   // Copy backup to vault path (no better-sqlite3 — M148 compliant)
   fs.copyFileSync(backupFilePath!, vaultDbPath)
   // Delete stale WAL/SHM — same cleanup as production restoreBackup

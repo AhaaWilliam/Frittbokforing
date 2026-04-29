@@ -39,7 +39,6 @@ function quoteField(text: string): string {
   return `"${escapeText(text)}"`
 }
 
-
 export function exportSie4(
   db: Database.Database,
   options: Sie4ExportOptions,

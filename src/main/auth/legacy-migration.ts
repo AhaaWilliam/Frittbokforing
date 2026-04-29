@@ -138,8 +138,7 @@ export function migrateLegacyToEncrypted(
       const virtualTablePrefixes = objects
         .filter(
           (o) =>
-            o.type === 'table' &&
-            /^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(o.sql),
+            o.type === 'table' && /^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(o.sql),
         )
         .map((o) => o.name)
       const isFts5Shadow = (name: string): boolean => {
@@ -229,10 +228,7 @@ export function migrateLegacyToEncrypted(
  * copy+delete if rename fails (cross-filesystem — e.g. backup dir is on
  * a different mount).
  */
-export function archiveLegacyDb(
-  legacyPath: string,
-  archivePath: string,
-): void {
+export function archiveLegacyDb(legacyPath: string, archivePath: string): void {
   fs.mkdirSync(path.dirname(archivePath), { recursive: true })
   try {
     fs.renameSync(legacyPath, archivePath)

@@ -344,9 +344,9 @@ describe('getTaxForecast', () => {
   // Sprint M / M161: fiscalYearMonths reflekterar faktisk FY-längd,
   // inte hårdkodad 12. Skapa en FY med 9 perioder och verifiera.
   it('M161: fiscalYearMonths = antal perioder i FY (kortat FY)', () => {
-    const companyRow = db
-      .prepare('SELECT id FROM companies LIMIT 1')
-      .get() as { id: number }
+    const companyRow = db.prepare('SELECT id FROM companies LIMIT 1').get() as {
+      id: number
+    }
     // Skapa en FY med 9 perioder (kortat första FY: april-dec 2029)
     const fyShortId = db
       .prepare(

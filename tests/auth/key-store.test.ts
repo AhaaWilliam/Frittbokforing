@@ -78,9 +78,7 @@ describe('key-store — unlock', () => {
   })
 
   it('rejects keys of wrong size', () => {
-    expect(() => store.unlock('u1', Buffer.alloc(16))).toThrow(
-      /32 bytes/,
-    )
+    expect(() => store.unlock('u1', Buffer.alloc(16))).toThrow(/32 bytes/)
   })
 })
 

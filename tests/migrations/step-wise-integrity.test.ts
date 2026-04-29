@@ -19,10 +19,7 @@ import { FK_OFF_MIGRATION_INDEXES } from '../helpers/create-test-db'
  * `full-chain-regression.test.ts` som testar slut-state.
  */
 
-function applyMigration(
-  db: Database.Database,
-  index: number,
-): void {
+function applyMigration(db: Database.Database, index: number): void {
   const migration = migrations[index]
   const needsFkOff = FK_OFF_MIGRATION_INDEXES.has(index)
   if (needsFkOff) db.pragma('foreign_keys = OFF')
@@ -47,9 +44,11 @@ describe('Migration step-wise integrity (scanner)', () => {
       applyMigration(db, i)
 
       // Verify user_version
-      const uv = (db.pragma('user_version') as Array<{
-        user_version: number
-      }>)[0].user_version
+      const uv = (
+        db.pragma('user_version') as Array<{
+          user_version: number
+        }>
+      )[0].user_version
       if (uv !== i + 1) {
         failures.push({
           step: i + 1,
@@ -87,9 +86,11 @@ describe('Migration step-wise integrity (scanner)', () => {
     registerCustomFunctions(db)
     for (let i = 0; i < migrations.length; i++) applyMigration(db, i)
 
-    const uv = (db.pragma('user_version') as Array<{
-      user_version: number
-    }>)[0].user_version
+    const uv = (
+      db.pragma('user_version') as Array<{
+        user_version: number
+      }>
+    )[0].user_version
     expect(uv).toBe(migrations.length)
     db.close()
   })

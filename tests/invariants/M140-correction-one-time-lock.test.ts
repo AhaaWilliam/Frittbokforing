@@ -119,9 +119,7 @@ describe('M140 — korrigering en-gångs-lås', () => {
       }),
     )
     const corr = db
-      .prepare(
-        `SELECT corrects_entry_id FROM journal_entries WHERE id = ?`,
-      )
+      .prepare(`SELECT corrects_entry_id FROM journal_entries WHERE id = ?`)
       .get(r.correction_entry_id) as { corrects_entry_id: number }
     expect(corr.corrects_entry_id).toBe(originalJeId)
   })

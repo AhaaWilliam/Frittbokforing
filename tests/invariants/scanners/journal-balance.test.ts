@@ -51,9 +51,11 @@ function insertDraftEntry(
       journal_date, description, status, source_type)
      VALUES (?, ?, 'C', ?, '2026-02-01', 'Test', 'draft', 'manual')`,
   ).run(fyId, companyId, Math.floor(Math.random() * 10_000) + 1000)
-  const id = (db.prepare('SELECT last_insert_rowid() AS id').get() as {
-    id: number
-  }).id
+  const id = (
+    db.prepare('SELECT last_insert_rowid() AS id').get() as {
+      id: number
+    }
+  ).id
   const insertLine = db.prepare(
     `INSERT INTO journal_entry_lines (journal_entry_id, account_number, debit_ore, credit_ore, line_number)
      VALUES (?, ?, ?, ?, ?)`,

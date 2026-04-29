@@ -88,7 +88,12 @@ export function createProduct(
   } catch (err) {
     if (err && typeof err === 'object' && 'code' in err) {
       const e = err as { code: string; error: string; field?: string }
-      return { success: false, code: e.code as ErrorCode, error: e.error, ...(e.field ? { field: e.field } : {}) }
+      return {
+        success: false,
+        code: e.code as ErrorCode,
+        error: e.error,
+        ...(e.field ? { field: e.field } : {}),
+      }
     }
     throw err
   }
@@ -162,12 +167,10 @@ export function updateProduct(
   }
 
   try {
-    const built = buildUpdate(
-      db,
-      'products',
-      data as Record<string, unknown>,
-      { allowedColumns: ALLOWED_PRODUCT_COLUMNS, touchUpdatedAt: true },
-    )
+    const built = buildUpdate(db, 'products', data as Record<string, unknown>, {
+      allowedColumns: ALLOWED_PRODUCT_COLUMNS,
+      touchUpdatedAt: true,
+    })
     if (built) built.run('id = ? AND company_id = ?', [id, companyId])
 
     const updated = db

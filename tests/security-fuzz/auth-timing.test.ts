@@ -151,7 +151,10 @@ describe('Auth timing-attack (TT-7)', () => {
     const maxDev = Math.max(...means.map((m) => Math.abs(m - mean))) / mean
     // 35% tolerans täcker OS-scheduling-jitter vid parallell CI-last.
     // Argon2id är algoritm-constant-time; varians här är GC/JIT, inte side-channel.
-    expect(maxDev, `prefix-match timing-varians=${(maxDev * 100).toFixed(1)}%`).toBeLessThan(0.35)
+    expect(
+      maxDev,
+      `prefix-match timing-varians=${(maxDev * 100).toFixed(1)}%`,
+    ).toBeLessThan(0.35)
   })
 
   it('I3: lösenordslängd påverkar inte login-tid signifikant', async () => {

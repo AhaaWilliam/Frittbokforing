@@ -17,10 +17,7 @@ export interface StructuredValidationError {
   field?: string
 }
 
-export function validateWithZod<T>(
-  schema: z.ZodType<T>,
-  input: unknown,
-): T {
+export function validateWithZod<T>(schema: z.ZodType<T>, input: unknown): T {
   const parsed = schema.safeParse(input)
   if (!parsed.success) {
     const firstIssue = parsed.error.issues[0]

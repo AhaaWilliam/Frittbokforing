@@ -89,9 +89,7 @@ describe('IPC fuzz — Zod-scheman hanterar alla input utan att kasta', () => {
       const r = SaveDraftInputSchema.safeParse(p)
       expect(r.success).toBe(false)
       // Ingen sidoeffekt — en neutral object som inte prototypeades
-      expect(
-        ({} as Record<string, unknown>).polluted,
-      ).toBeUndefined()
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined()
     }
   })
 

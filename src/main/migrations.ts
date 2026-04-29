@@ -3937,9 +3937,7 @@ function migration045Verify(db: import('better-sqlite3').Database): void {
  * som refererar expenses överlever automatiskt (inte attached till
  * droppade tabellen — M141-check).
  */
-function migration047Programmatic(
-  db: import('better-sqlite3').Database,
-): void {
+function migration047Programmatic(db: import('better-sqlite3').Database): void {
   // M141 cross-table-trigger-inventering: trg_no_correct_with_payments på
   // journal_entries refererar expenses i body. SQLite validerar triggers vid
   // ALTER TABLE RENAME, så triggern måste droppas innan recreate.
@@ -4064,9 +4062,7 @@ function migration047Programmatic(
  *
  * Del B: sepa_dd_mandates + sepa_dd_collections.
  */
-function migration049Programmatic(
-  db: import('better-sqlite3').Database,
-): void {
+function migration049Programmatic(db: import('better-sqlite3').Database): void {
   // === Del A: payment_batches table-recreate ===
 
   // M121 pre-flight: inventera triggers attached till tabellen.
@@ -4198,12 +4194,12 @@ function migration049Programmatic(
   }
 }
 
-function migration052Programmatic(
-  db: import('better-sqlite3').Database,
-): void {
+function migration052Programmatic(db: import('better-sqlite3').Database): void {
   // Pre-flight: verifiera att inga befintliga rader har unit_price_ore < 0
   const badRows = db
-    .prepare('SELECT COUNT(*) as cnt FROM expense_lines WHERE unit_price_ore < 0')
+    .prepare(
+      'SELECT COUNT(*) as cnt FROM expense_lines WHERE unit_price_ore < 0',
+    )
     .get() as { cnt: number }
   if (badRows.cnt > 0) {
     throw new Error(
@@ -4251,9 +4247,7 @@ function migration052Programmatic(
   }
 }
 
-function migration055Programmatic(
-  db: import('better-sqlite3').Database,
-): void {
+function migration055Programmatic(db: import('better-sqlite3').Database): void {
   // Pre-flight: verifiera inga dubbletter
   const dupes = db
     .prepare(
@@ -4295,9 +4289,7 @@ function migration055Programmatic(
   }
 }
 
-function migration053Programmatic(
-  db: import('better-sqlite3').Database,
-): void {
+function migration053Programmatic(db: import('better-sqlite3').Database): void {
   // Pre-flight: inga befintliga dubletter får finnas
   const dupes = db
     .prepare(
@@ -4332,6 +4324,8 @@ function migration053Programmatic(
     )
     .get()
   if (!idx) {
-    throw new Error('Migration 053 failed: idx_accrual_entries_unique skapades inte')
+    throw new Error(
+      'Migration 053 failed: idx_accrual_entries_unique skapades inte',
+    )
   }
 }

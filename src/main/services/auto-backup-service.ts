@@ -90,10 +90,7 @@ export function rotateBackups(folder: string, retain = BACKUP_RETAIN): number {
       fs.unlinkSync(f.path)
       deleted++
     } catch (err) {
-      log.warn(
-        `[auto-backup] Kunde inte radera gammal backup ${f.path}:`,
-        err,
-      )
+      log.warn(`[auto-backup] Kunde inte radera gammal backup ${f.path}:`, err)
     }
   }
   return deleted
@@ -143,10 +140,7 @@ export async function performAutoBackupIfDue(
   try {
     fs.mkdirSync(folder, { recursive: true })
   } catch (err) {
-    log.error(
-      `[auto-backup] Kunde inte skapa backup-mapp ${folder}:`,
-      err,
-    )
+    log.error(`[auto-backup] Kunde inte skapa backup-mapp ${folder}:`, err)
     return false
   }
 

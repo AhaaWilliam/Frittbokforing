@@ -78,8 +78,8 @@ function BackupSection() {
             Automatisk säkerhetskopia (var 7:e dag)
           </div>
           <div className="text-xs text-muted-foreground">
-            Sparas tyst till ~/Documents/Fritt Bokföring/backups när du
-            öppnar appen. Senaste 30 backupper behålls.
+            Sparas tyst till ~/Documents/Fritt Bokföring/backups när du öppnar
+            appen. Senaste 30 backupper behålls.
           </div>
         </div>
       </label>

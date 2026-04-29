@@ -53,7 +53,6 @@ const STATUS_FILTERS: {
   { key: 'overdue', label: 'F\u00f6rfallen', countKey: 'overdue' },
 ]
 
-
 export function InvoiceList({ onNavigate }: InvoiceListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { setBulkActionsActive } = useSkipLinks()
@@ -324,30 +323,33 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
       onNavigateRef.current({ edit: result.id })
       toast.success('Kreditfaktura-utkast skapat')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditfaktura')
-    }
-  }, [])
-
-  const handleGeneratePdf = useCallback(async (
-    e: React.MouseEvent,
-    invoiceId: number,
-    invoiceNumber: string,
-  ) => {
-    e.stopPropagation()
-    try {
-      const pdfData = await generatePdfMutationRef.current.mutateAsync({ invoiceId })
-      const fileName = `Faktura-${invoiceNumber}.pdf`
-      await window.api.saveInvoicePdf({
-        data: pdfData.data,
-        defaultFileName: fileName,
-      })
-    } catch (error) {
-      console.error('PDF generation failed:', error)
       toast.error(
-        error instanceof Error ? error.message : 'Kunde inte generera PDF',
+        err instanceof Error ? err.message : 'Kunde inte skapa kreditfaktura',
       )
     }
   }, [])
+
+  const handleGeneratePdf = useCallback(
+    async (e: React.MouseEvent, invoiceId: number, invoiceNumber: string) => {
+      e.stopPropagation()
+      try {
+        const pdfData = await generatePdfMutationRef.current.mutateAsync({
+          invoiceId,
+        })
+        const fileName = `Faktura-${invoiceNumber}.pdf`
+        await window.api.saveInvoicePdf({
+          data: pdfData.data,
+          defaultFileName: fileName,
+        })
+      } catch (error) {
+        console.error('PDF generation failed:', error)
+        toast.error(
+          error instanceof Error ? error.message : 'Kunde inte generera PDF',
+        )
+      }
+    },
+    [],
+  )
 
   const itemsRef = useRef(items)
   itemsRef.current = items

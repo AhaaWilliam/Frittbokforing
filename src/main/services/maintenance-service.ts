@@ -37,18 +37,33 @@ export function vacuumDatabase(db: Database.Database): IpcResult<VacuumResult> {
         `(frigjorde ${beforeBytes - afterBytes} bytes)`,
     )
 
-    return { success: true, data: { before_bytes: beforeBytes, after_bytes: afterBytes } }
+    return {
+      success: true,
+      data: { before_bytes: beforeBytes, after_bytes: afterBytes },
+    }
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
       const e = err as { code: string; error: string }
       log.error('[maintenance] vacuumDatabase strukturerat fel:', e.error)
-      return { success: false, code: e.code as import('../../shared/types').ErrorCode, error: e.error }
+      return {
+        success: false,
+        code: e.code as import('../../shared/types').ErrorCode,
+        error: e.error,
+      }
     }
     if (err instanceof Error) {
       log.error('[maintenance] vacuumDatabase fel:', err)
-      return { success: false, code: 'UNEXPECTED_ERROR', error: 'VACUUM misslyckades' }
+      return {
+        success: false,
+        code: 'UNEXPECTED_ERROR',
+        error: 'VACUUM misslyckades',
+      }
     }
     log.error('[maintenance] vacuumDatabase okänt fel:', err)
-    return { success: false, code: 'UNEXPECTED_ERROR', error: 'VACUUM misslyckades' }
+    return {
+      success: false,
+      code: 'UNEXPECTED_ERROR',
+      error: 'VACUUM misslyckades',
+    }
   }
 }

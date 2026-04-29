@@ -175,10 +175,9 @@ export function PageVat() {
           skattskyldighet stöds inte i denna version. Underlagen för 12% och 6%
           moms är approximationer (±1 öres avrundning). Rapporten visar moms
           aggregerad per kvartal som översikt. Din faktiska redovisningsperiod
-          hos Skatteverket kan vara månadsvis eller årsvis. Använd
-          "Kopiera deklaration" för att klistra in helårssumman i SKV
-          e-tjänsten — verifiera alltid att box-nummer matchar aktuellt
-          formulär.
+          hos Skatteverket kan vara månadsvis eller årsvis. Använd "Kopiera
+          deklaration" för att klistra in helårssumman i SKV e-tjänsten —
+          verifiera alltid att box-nummer matchar aktuellt formulär.
         </div>
 
         {error && (

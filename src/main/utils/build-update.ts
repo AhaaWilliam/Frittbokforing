@@ -47,9 +47,10 @@ export function buildUpdate(
   return {
     fieldCount,
     run: (whereClause, whereParams) => {
-      db.prepare(
-        `UPDATE "${table}" SET ${setClause} WHERE ${whereClause}`,
-      ).run(...params, ...whereParams)
+      db.prepare(`UPDATE "${table}" SET ${setClause} WHERE ${whereClause}`).run(
+        ...params,
+        ...whereParams,
+      )
     },
   }
 }

@@ -81,9 +81,7 @@ function toIpcError(err: unknown): IpcResult<never> {
       success: false,
       code: err.code,
       error: err.message,
-      ...(err.retryAfterMs != null
-        ? { field: String(err.retryAfterMs) }
-        : {}),
+      ...(err.retryAfterMs != null ? { field: String(err.retryAfterMs) } : {}),
     }
   }
   if (err instanceof Error) {
@@ -214,14 +212,11 @@ export function registerAuthIpcHandlers(
 
   ipcMain.handle(
     'auth:create-user',
-    wrap(
-      CreateUserInput,
-      async (input): Promise<CreateUserResponse> => {
-        const result = await service.createUser(input.displayName, input.password)
-        await runUnlockHook(result.user.id)
-        return result
-      },
-    ),
+    wrap(CreateUserInput, async (input): Promise<CreateUserResponse> => {
+      const result = await service.createUser(input.displayName, input.password)
+      await runUnlockHook(result.user.id)
+      return result
+    }),
   )
 
   ipcMain.handle(
@@ -235,17 +230,14 @@ export function registerAuthIpcHandlers(
 
   ipcMain.handle(
     'auth:login-recovery',
-    wrap(
-      RecoveryLoginInput,
-      async (input): Promise<LoginResponse> => {
-        const user = await service.loginWithRecoveryKey(
-          input.userId,
-          input.recoveryPhrase,
-        )
-        await runUnlockHook(user.id)
-        return { user }
-      },
-    ),
+    wrap(RecoveryLoginInput, async (input): Promise<LoginResponse> => {
+      const user = await service.loginWithRecoveryKey(
+        input.userId,
+        input.recoveryPhrase,
+      )
+      await runUnlockHook(user.id)
+      return { user }
+    }),
   )
 
   ipcMain.handle(
@@ -357,7 +349,10 @@ export function registerAuthIpcHandlers(
     wrap(null, async () => {
       const ctx = requireAuthContext()
       if (!hasLegacyDb(ctx.legacyPath)) {
-        throw new AuthError('USER_NOT_FOUND', 'Ingen legacy-databas att importera')
+        throw new AuthError(
+          'USER_NOT_FOUND',
+          'Ingen legacy-databas att importera',
+        )
       }
       const encryptedPath = ctx.vault.dbPath(ctx.userId)
       const archivePath = defaultArchivePath(

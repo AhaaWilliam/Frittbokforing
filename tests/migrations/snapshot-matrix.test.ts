@@ -198,8 +198,14 @@ describe('Migration snapshot-matrix — multi-version', () => {
 
     // Bevarad data
     const c = db
-      .prepare('SELECT name, org_number, fiscal_rule FROM companies WHERE id = ?')
-      .get(companyId) as { name: string; org_number: string; fiscal_rule: string }
+      .prepare(
+        'SELECT name, org_number, fiscal_rule FROM companies WHERE id = ?',
+      )
+      .get(companyId) as {
+      name: string
+      org_number: string
+      fiscal_rule: string
+    }
     expect(c.name).toBe('Snapshot AB')
     expect(c.org_number).toBe('556036-0793')
     expect(c.fiscal_rule).toBe('K2')
@@ -212,7 +218,9 @@ describe('Migration snapshot-matrix — multi-version', () => {
 
     const periods = (
       db
-        .prepare('SELECT COUNT(*) c FROM accounting_periods WHERE fiscal_year_id = ?')
+        .prepare(
+          'SELECT COUNT(*) c FROM accounting_periods WHERE fiscal_year_id = ?',
+        )
         .get(fyId) as { c: number }
     ).c
     expect(periods).toBe(12)
@@ -454,7 +462,11 @@ describe('Migration snapshot-matrix — multi-version', () => {
            net_amount_ore, vat_amount_ore, total_amount_ore, status, ${paidCol}${fyClause}
          ) VALUES (?, 'customer_invoice', 'F-V21', '2026-04-01', '2026-05-01', ?, ?, ?, 'draft', 0${fyVal})`,
       )
-      .run(...(hasFy ? [cpId, 80000, 20000, 100000, fyId] : [cpId, 80000, 20000, 100000]))
+      .run(
+        ...(hasFy
+          ? [cpId, 80000, 20000, 100000, fyId]
+          : [cpId, 80000, 20000, 100000]),
+      )
     const invId = Number(invRes.lastInsertRowid)
 
     // Boka fakturan: skapa en draft JE först, balanserad, sätt journal_entry_id, sedan UPDATE booked

@@ -16,20 +16,17 @@ export interface AuthTestDeps {
 }
 
 export function registerAuthTestHandlers(deps: AuthTestDeps): void {
-  ipcMain.handle(
-    '__test:createAndLoginUser',
-    async (_event, raw: unknown) => {
-      const input = raw as { displayName?: string; password?: string }
-      const displayName = input?.displayName ?? 'E2E Test User'
-      const password = input?.password ?? 'e2e-test-password-12345'
-      const { user, recoveryKey } = await deps.service.createUser(
-        displayName,
-        password,
-      )
-      await deps.onUnlock(user.id)
-      return { user, recoveryKey }
-    },
-  )
+  ipcMain.handle('__test:createAndLoginUser', async (_event, raw: unknown) => {
+    const input = raw as { displayName?: string; password?: string }
+    const displayName = input?.displayName ?? 'E2E Test User'
+    const password = input?.password ?? 'e2e-test-password-12345'
+    const { user, recoveryKey } = await deps.service.createUser(
+      displayName,
+      password,
+    )
+    await deps.onUnlock(user.id)
+    return { user, recoveryKey }
+  })
 
   ipcMain.handle('__test:lockNow', () => {
     deps.keyStore.lock()

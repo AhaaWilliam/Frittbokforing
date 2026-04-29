@@ -39,9 +39,9 @@ describe('listImportedEntries', () => {
       fiscal_year_end: '2025-12-31',
     })
     if (!cp.success) throw new Error('Company failed')
-    const fy = db
-      .prepare('SELECT id FROM fiscal_years LIMIT 1')
-      .get() as { id: number }
+    const fy = db.prepare('SELECT id FROM fiscal_years LIMIT 1').get() as {
+      id: number
+    }
     return { db, companyId: cp.data.id, fyId: fy.id }
   }
 

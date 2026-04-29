@@ -77,8 +77,12 @@ function seed(db: Database.Database): Seeded {
   })
   if (!supp.success) throw new Error(supp.error)
 
-  const vatOut = db.prepare("SELECT id FROM vat_codes WHERE code='MP1'").get() as { id: number }
-  const vatIn = db.prepare("SELECT id FROM vat_codes WHERE code='IP1'").get() as { id: number }
+  const vatOut = db
+    .prepare("SELECT id FROM vat_codes WHERE code='MP1'")
+    .get() as { id: number }
+  const vatIn = db
+    .prepare("SELECT id FROM vat_codes WHERE code='IP1'")
+    .get() as { id: number }
 
   const invDraft = saveInvoiceDraft(db, {
     counterparty_id: cust.data.id,
@@ -141,7 +145,10 @@ function seed(db: Database.Database): Seeded {
   }
 }
 
-function buildCamt053(invoiceTotalOre: number, expenseTotalOre: number): string {
+function buildCamt053(
+  invoiceTotalOre: number,
+  expenseTotalOre: number,
+): string {
   const invKr = (invoiceTotalOre / 100).toFixed(2)
   const expKr = (expenseTotalOre / 100).toFixed(2)
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -236,7 +243,9 @@ describe('Bank state machine — import → match → unmatch → re-match', () 
     // Determinism: identical structure between calls (M153)
     expect(JSON.stringify(sugRes1.data)).toBe(JSON.stringify(sugRes2.data))
 
-    const suggestionByTx = new Map(sugRes1.data.map((s) => [s.bank_transaction_id, s]))
+    const suggestionByTx = new Map(
+      sugRes1.data.map((s) => [s.bank_transaction_id, s]),
+    )
     const inSug = suggestionByTx.get(txIn.id)
     const outSug = suggestionByTx.get(txOut.id)
     expect(inSug).toBeDefined()
@@ -362,7 +371,9 @@ describe('Bank state machine — import → match → unmatch → re-match', () 
     if (!rematch.success) return
     // New payment + new JE (different IDs from the first match)
     expect(rematch.data.payment_id).not.toBe(matchIn.data.payment_id)
-    expect(rematch.data.journal_entry_id).not.toBe(matchIn.data.journal_entry_id)
+    expect(rematch.data.journal_entry_id).not.toBe(
+      matchIn.data.journal_entry_id,
+    )
 
     const invReMatched = db
       .prepare('SELECT paid_amount_ore, status FROM invoices WHERE id=?')
@@ -375,7 +386,9 @@ describe('Bank state machine — import → match → unmatch → re-match', () 
     // during unmatch's correction flow created a corrected_by chain on it,
     // but the payment row was deleted; the new match created a fresh JE).
     // Therefore unmatching the new match must succeed.
-    const unmatch2 = unmatchBankTransaction(db, { bank_transaction_id: txIn.id })
+    const unmatch2 = unmatchBankTransaction(db, {
+      bank_transaction_id: txIn.id,
+    })
     expect(unmatch2.success).toBe(true)
     if (!unmatch2.success) return
     expect(unmatch2.data.correction_journal_entry_id).toBeGreaterThan(0)

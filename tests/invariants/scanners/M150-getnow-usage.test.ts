@@ -47,14 +47,22 @@ describe('M150 — getNow() i services (ingen ny Date() utan argument)', () => {
         if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue
         FORBIDDEN.lastIndex = 0
         if (FORBIDDEN.test(line)) {
-          violations.push({ file: rel, line: i + 1, text: trimmed.slice(0, 120) })
+          violations.push({
+            file: rel,
+            line: i + 1,
+            text: trimmed.slice(0, 120),
+          })
         }
       }
     }
 
     if (violations.length > 0) {
-      const msg = violations.map((v) => `  ${v.file}:${v.line}  ${v.text}`).join('\n')
-      throw new Error(`M150 violations (use getNow() from src/main/utils/now.ts):\n${msg}`)
+      const msg = violations
+        .map((v) => `  ${v.file}:${v.line}  ${v.text}`)
+        .join('\n')
+      throw new Error(
+        `M150 violations (use getNow() from src/main/utils/now.ts):\n${msg}`,
+      )
     }
     expect(violations).toEqual([])
   })

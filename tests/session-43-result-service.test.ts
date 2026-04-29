@@ -594,10 +594,12 @@ describe('calculateResultBreakdown', () => {
     const summary = calculateResultSummary(db, fyId)
 
     expect(breakdown.operatingResultOre).toBe(summary.operatingResultOre)
-    expect(breakdown.resultAfterFinancialOre).toBe(summary.resultAfterFinancialOre)
+    expect(breakdown.resultAfterFinancialOre).toBe(
+      summary.resultAfterFinancialOre,
+    )
     expect(breakdown.netResultOre).toBe(summary.netResultOre)
     // Breakdown-specific fields
     expect(breakdown.revenueOre).toBe(20_000_000) // positive revenue
-    expect(breakdown.expensesOre).toBe(8_000_000)  // positive expenses
+    expect(breakdown.expensesOre).toBe(8_000_000) // positive expenses
   })
 })

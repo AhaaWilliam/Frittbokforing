@@ -36,10 +36,7 @@ let db: Db | null = null
  * with a wrong key — the error surfaces on first read. Callers should verify
  * by reading a trivial row.
  */
-function applyCipherKey(
-  database: Db,
-  keyHex: string | null | undefined,
-): void {
+function applyCipherKey(database: Db, keyHex: string | null | undefined): void {
   if (!keyHex) return
   database.pragma(`cipher='sqlcipher'`)
   database.pragma(`key="x'${keyHex}'"`)

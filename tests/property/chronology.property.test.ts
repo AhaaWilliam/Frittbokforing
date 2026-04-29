@@ -14,13 +14,11 @@ import { checkChronology } from '../../src/main/services/chronology-guard'
  */
 
 // Generator: ISO-datumsträng i domänen
-const isoDate = fc
-  .integer({ min: 0, max: 730 })
-  .map((offset) => {
-    const d = new Date('2024-01-01T00:00:00Z')
-    d.setUTCDate(d.getUTCDate() + offset)
-    return d.toISOString().substring(0, 10)
-  })
+const isoDate = fc.integer({ min: 0, max: 730 }).map((offset) => {
+  const d = new Date('2024-01-01T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + offset)
+  return d.toISOString().substring(0, 10)
+})
 
 const seriesGen = fc.constantFrom('A', 'B', 'C', 'E', 'I', 'O')
 
@@ -65,19 +63,22 @@ describe('checkChronology — M142 properties', () => {
 
   it('non-decreasing sekvens: guarden släpper igenom', () => {
     fc.assert(
-      fc.property(fc.array(isoDate, { minLength: 2, maxLength: 20 }), (dates) => {
-        const sorted = [...dates].sort()
-        db.exec('DELETE FROM journal_entries')
-        db.transaction(() => {
-          for (let i = 0; i < sorted.length; i++) {
-            const date = sorted[i]
-            checkChronology(db, 1, 'A', date) // ska inte kasta
-            db.prepare(
-              'INSERT INTO journal_entries (fiscal_year_id, verification_series, verification_number, journal_date) VALUES (?, ?, ?, ?)',
-            ).run(1, 'A', i + 1, date)
-          }
-        })()
-      }),
+      fc.property(
+        fc.array(isoDate, { minLength: 2, maxLength: 20 }),
+        (dates) => {
+          const sorted = [...dates].sort()
+          db.exec('DELETE FROM journal_entries')
+          db.transaction(() => {
+            for (let i = 0; i < sorted.length; i++) {
+              const date = sorted[i]
+              checkChronology(db, 1, 'A', date) // ska inte kasta
+              db.prepare(
+                'INSERT INTO journal_entries (fiscal_year_id, verification_series, verification_number, journal_date) VALUES (?, ?, ?, ?)',
+              ).run(1, 'A', i + 1, date)
+            }
+          })()
+        },
+      ),
       { numRuns: 100 },
     )
   })
@@ -85,9 +86,7 @@ describe('checkChronology — M142 properties', () => {
   it('decreasing par: guarden avvisar det senare datumet', () => {
     fc.assert(
       fc.property(
-        fc
-          .tuple(isoDate, isoDate)
-          .filter(([a, b]) => a > b), // a är senare än b
+        fc.tuple(isoDate, isoDate).filter(([a, b]) => a > b), // a är senare än b
         ([laterDate, earlierDate]) => {
           db.exec('DELETE FROM journal_entries')
           db.transaction(() => {

@@ -111,7 +111,9 @@ describe('auth-service — login with password', () => {
       code: 'WRONG_PASSWORD',
     })
     // next attempt immediately — should be rate-limited (1s cooldown)
-    await expect(svc.login(user.id, 'password-alice-12345')).rejects.toMatchObject({
+    await expect(
+      svc.login(user.id, 'password-alice-12345'),
+    ).rejects.toMatchObject({
       code: 'RATE_LIMITED',
     })
   })
@@ -194,12 +196,18 @@ describe('auth-service — login with recovery key', () => {
 describe('auth-service — changePassword', () => {
   it('changes password; new works, old does not', async () => {
     const { user } = await svc.createUser('Alice', 'old-password-12345')
-    await svc.changePassword(user.id, 'old-password-12345', 'new-password-67890')
+    await svc.changePassword(
+      user.id,
+      'old-password-12345',
+      'new-password-67890',
+    )
     keyStore.lock()
     await svc.login(user.id, 'new-password-67890')
     expect(keyStore.isLocked()).toBe(false)
     keyStore.lock()
-    await expect(svc.login(user.id, 'old-password-12345')).rejects.toMatchObject({
+    await expect(
+      svc.login(user.id, 'old-password-12345'),
+    ).rejects.toMatchObject({
       code: 'WRONG_PASSWORD',
     })
   })
@@ -209,7 +217,11 @@ describe('auth-service — changePassword', () => {
       'Alice',
       'old-password-12345',
     )
-    await svc.changePassword(user.id, 'old-password-12345', 'new-password-67890')
+    await svc.changePassword(
+      user.id,
+      'old-password-12345',
+      'new-password-67890',
+    )
     keyStore.lock()
     await svc.loginWithRecoveryKey(user.id, recoveryKey)
     expect(keyStore.isLocked()).toBe(false)

@@ -46,13 +46,12 @@ async function createAndLogin(
 }
 
 async function logout(window: Page): Promise<void> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          auth: { logout: () => Promise<{ success: boolean; error?: string }> }
-        }
-      ).auth.logout(),
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        auth: { logout: () => Promise<{ success: boolean; error?: string }> }
+      }
+    ).auth.logout(),
   )) as { success: boolean; error?: string }
   if (!res.success) throw new Error(`logout failed: ${res.error}`)
 }
@@ -129,10 +128,7 @@ async function callRename(
   )) as AuthResult
 }
 
-async function callDelete(
-  window: Page,
-  userId: string,
-): Promise<AuthResult> {
+async function callDelete(window: Page, userId: string): Promise<AuthResult> {
   return (await window.evaluate(
     async (input) =>
       (
@@ -146,16 +142,13 @@ async function callDelete(
 
 async function listUsers(
   window: Page,
-): Promise<
-  { id: string; displayName: string; createdAt: string }[]
-> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          auth: { listUsers: () => Promise<unknown> }
-        }
-      ).auth.listUsers(),
+): Promise<{ id: string; displayName: string; createdAt: string }[]> {
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        auth: { listUsers: () => Promise<unknown> }
+      }
+    ).auth.listUsers(),
   )) as AuthResult
   if (!res.success) throw new Error(`listUsers failed: ${res.error}`)
   return (res.data ?? []) as {
@@ -168,11 +161,10 @@ async function listUsers(
 async function authStatus(
   window: Page,
 ): Promise<{ locked: boolean; userId: string | null }> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as { auth: { status: () => Promise<unknown> } }
-      ).auth.status(),
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as { auth: { status: () => Promise<unknown> } }
+    ).auth.status(),
   )) as {
     success: boolean
     data: { locked: boolean; userId: string | null; timeoutMs: number }
@@ -184,11 +176,7 @@ test('@critical e15: WRONG_PASSWORD + WRONG_RECOVERY_KEY returnerar IpcResult.er
   const ctx = await launchAppWithFreshDb()
   try {
     const PWD = 'e15-correct-passwd-1234'
-    const { user, recoveryKey } = await createAndLogin(
-      ctx.window,
-      'Alice',
-      PWD,
-    )
+    const { user, recoveryKey } = await createAndLogin(ctx.window, 'Alice', PWD)
     await logout(ctx.window)
 
     // Fel lösen → success: false, WRONG_PASSWORD

@@ -19,13 +19,11 @@ import type { EntityMatchCandidate } from '../../src/main/services/bank/bank-mat
 
 // ─── Generatorer ─────────────────────────────────────────────────────────────
 
-const dateGen = fc
-  .integer({ min: 1, max: 365 })
-  .map((d) => {
-    const dt = new Date(2026, 0, 1)
-    dt.setDate(dt.getDate() + d - 1)
-    return dt.toISOString().substring(0, 10)
-  })
+const dateGen = fc.integer({ min: 1, max: 365 }).map((d) => {
+  const dt = new Date(2026, 0, 1)
+  dt.setDate(dt.getDate() + d - 1)
+  return dt.toISOString().substring(0, 10)
+})
 
 const oreGen = fc.integer({ min: 1, max: 1_000_000_000 })
 
@@ -363,7 +361,10 @@ describe('classifyCandidates — K5-klassificering', () => {
     expect(single[0]).toMatchObject({ confidence: 'HIGH' })
 
     // Tie: två med score 130 → båda MEDIUM
-    const tie = classifyCandidates([makeCandidate(1, 130), makeCandidate(2, 130)])
+    const tie = classifyCandidates([
+      makeCandidate(1, 130),
+      makeCandidate(2, 130),
+    ])
     for (const c of tie) {
       expect(c).toMatchObject({ confidence: 'MEDIUM' })
     }
@@ -372,10 +373,13 @@ describe('classifyCandidates — K5-klassificering', () => {
   it('score < 80 → filtreras bort', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.integer({ min: 0, max: 79 }).map((s) => makeCandidate(s, s)), {
-          minLength: 1,
-          maxLength: 10,
-        }),
+        fc.array(
+          fc.integer({ min: 0, max: 79 }).map((s) => makeCandidate(s, s)),
+          {
+            minLength: 1,
+            maxLength: 10,
+          },
+        ),
         (candidates) => {
           const result = classifyCandidates(candidates)
           return result.length === 0
@@ -387,13 +391,10 @@ describe('classifyCandidates — K5-klassificering', () => {
 
   it('80 ≤ score < 130 → MEDIUM', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 80, max: 129 }),
-        (score) => {
-          const result = classifyCandidates([makeCandidate(1, score)])
-          return result.length === 1 && result[0].confidence === 'MEDIUM'
-        },
-      ),
+      fc.property(fc.integer({ min: 80, max: 129 }), (score) => {
+        const result = classifyCandidates([makeCandidate(1, score)])
+        return result.length === 1 && result[0].confidence === 'MEDIUM'
+      }),
       { numRuns: 200 },
     )
   })
@@ -401,10 +402,13 @@ describe('classifyCandidates — K5-klassificering', () => {
   it('sorteras på score DESC (högst score hamnar först)', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.integer({ min: 80, max: 200 }).map((s) => makeCandidate(s, s)), {
-          minLength: 2,
-          maxLength: 10,
-        }),
+        fc.array(
+          fc.integer({ min: 80, max: 200 }).map((s) => makeCandidate(s, s)),
+          {
+            minLength: 2,
+            maxLength: 10,
+          },
+        ),
         (candidates) => {
           const result = classifyCandidates(candidates)
           for (let i = 1; i < result.length; i++) {
@@ -428,7 +432,9 @@ describe('normalizeIban — M153 ren funktion', () => {
   it('tar bort blanksteg och konverterar till versaler', () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 4, maxLength: 34 }).map((s) => s.replace(/[^\w]/g, 'X')),
+        fc
+          .string({ minLength: 4, maxLength: 34 })
+          .map((s) => s.replace(/[^\w]/g, 'X')),
         (iban) => {
           const result = normalizeIban(iban)
           return !result.includes(' ') && result === result.toUpperCase()

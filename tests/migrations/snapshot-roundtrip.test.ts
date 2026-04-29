@@ -127,9 +127,8 @@ function assertIntegrity(db: Database.Database): void {
   expect(fk).toEqual([])
 
   // user_version = slut-migration
-  const uv = (
-    db.pragma('user_version') as Array<{ user_version: number }>
-  )[0].user_version
+  const uv = (db.pragma('user_version') as Array<{ user_version: number }>)[0]
+    .user_version
   expect(uv).toBe(migrations.length)
 
   // Alla booked entries balanserar
@@ -216,8 +215,9 @@ describe('Migration snapshot-roundtrip', () => {
       )
       .all()
     const beforeCounts = {
-      inv: (db.prepare('SELECT COUNT(*) c FROM invoices').get() as { c: number })
-        .c,
+      inv: (
+        db.prepare('SELECT COUNT(*) c FROM invoices').get() as { c: number }
+      ).c,
       je: (
         db.prepare('SELECT COUNT(*) c FROM journal_entries').get() as {
           c: number
@@ -234,8 +234,9 @@ describe('Migration snapshot-roundtrip', () => {
       )
       .all()
     const afterCounts = {
-      inv: (db.prepare('SELECT COUNT(*) c FROM invoices').get() as { c: number })
-        .c,
+      inv: (
+        db.prepare('SELECT COUNT(*) c FROM invoices').get() as { c: number }
+      ).c,
       je: (
         db.prepare('SELECT COUNT(*) c FROM journal_entries').get() as {
           c: number

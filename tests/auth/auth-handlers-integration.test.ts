@@ -77,9 +77,8 @@ beforeEach(async () => {
     kdfParams: FAST_KDF,
   })
 
-  const { registerAuthIpcHandlers } = await import(
-    '../../src/main/auth/auth-handlers'
-  )
+  const { registerAuthIpcHandlers } =
+    await import('../../src/main/auth/auth-handlers')
   registerAuthIpcHandlers(service, keyStore, {
     onUnlock: (userId) => onUnlockSpy(userId),
     onLock: () => onLockSpy(),
@@ -102,10 +101,10 @@ describe('auth-handlers — onUnlock hook', () => {
   })
 
   it('fires on password login', async () => {
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
     onUnlockSpy.mockClear()
 
@@ -140,10 +139,10 @@ describe('auth-handlers — onUnlock hook', () => {
   })
 
   it('does NOT fire on failed login', async () => {
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
     await invoke('auth:logout')
     onUnlockSpy.mockClear()
@@ -159,10 +158,10 @@ describe('auth-handlers — onUnlock hook', () => {
 
 describe('auth-handlers — onLock hook', () => {
   it('fires on explicit logout', async () => {
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
     onLockSpy.mockClear()
 
@@ -197,10 +196,10 @@ describe('auth-handlers — onUnlock rollback on failure', () => {
     onUnlockSpy.mockImplementation(() => {
       throw new Error('db open failed')
     })
-    const res = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const res = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     expect(res.success).toBe(false)
     // The user was persisted (createUser already completed) — verify:
     const list = await invoke<{ displayName: string }[]>('auth:list-users')

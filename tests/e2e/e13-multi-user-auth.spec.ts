@@ -51,13 +51,12 @@ async function createAndLogin(
 }
 
 async function logout(window: Page): Promise<void> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          auth: { logout: () => Promise<{ success: boolean; error?: string }> }
-        }
-      ).auth.logout(),
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        auth: { logout: () => Promise<{ success: boolean; error?: string }> }
+      }
+    ).auth.logout(),
   )) as { success: boolean; error?: string }
   if (!res.success) throw new Error(`logout failed: ${res.error}`)
 }
@@ -109,13 +108,12 @@ async function loginRecovery(
 async function authStatus(
   window: Page,
 ): Promise<{ locked: boolean; userId: string | null; timeoutMs: number }> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          auth: { status: () => Promise<unknown> }
-        }
-      ).auth.status(),
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        auth: { status: () => Promise<unknown> }
+      }
+    ).auth.status(),
   )) as {
     success: boolean
     data: { locked: boolean; userId: string | null; timeoutMs: number }
@@ -126,13 +124,12 @@ async function authStatus(
 async function getInvoicesForActiveFy(window: Page): Promise<unknown[]> {
   // Use __testApi.getInvoices() with no fyId to get every row in the
   // currently-open per-user DB.
-  return (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          __testApi: { getInvoices: () => Promise<unknown[]> }
-        }
-      ).__testApi.getInvoices(),
+  return (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        __testApi: { getInvoices: () => Promise<unknown[]> }
+      }
+    ).__testApi.getInvoices(),
   )) as unknown[]
 }
 
@@ -205,13 +202,12 @@ test('@critical e13: 3 users, password+recovery login, DB isolation, auto-lock',
     // Rather than sleeping 60s in CI, exercise lockNow which the auto-lock
     // path also invokes when the inactivity timer fires. The post-condition
     // is identical: keyStore.lock() → onLock → DB closed → status.locked=true.
-    await ctx.window.evaluate(
-      async () =>
-        (
-          window as unknown as {
-            __authTestApi: { lockNow: () => Promise<unknown> }
-          }
-        ).__authTestApi.lockNow(),
+    await ctx.window.evaluate(async () =>
+      (
+        window as unknown as {
+          __authTestApi: { lockNow: () => Promise<unknown> }
+        }
+      ).__authTestApi.lockNow(),
     )
     const stPost = await authStatus(ctx.window)
     expect(stPost.locked).toBe(true)

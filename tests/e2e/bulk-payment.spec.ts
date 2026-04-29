@@ -233,7 +233,9 @@ test.describe('Bulk-betalning E2E', () => {
 
       // Wait for invoices — may show invoices from active FY only
       // Select all selectable
-      await expect(ctx.window.locator('table tbody')).toBeVisible({ timeout: 5_000 })
+      await expect(ctx.window.locator('table tbody')).toBeVisible({
+        timeout: 5_000,
+      })
       const checkboxes = ctx.window.locator(
         'table tbody td:first-child input[type="checkbox"]',
       )

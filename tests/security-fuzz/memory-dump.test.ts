@@ -145,7 +145,9 @@ describe('Memory-dump defensiv test (TT-7)', () => {
     const rand = Math.random().toString(36).slice(2)
     const ts = String(Date.now())
     // Buffer roundtrip tvingar flattening till en SeqString
-    const liveMarker = Buffer.from('LIVEMARKER-' + rand + '-' + ts).toString('utf8')
+    const liveMarker = Buffer.from('LIVEMARKER-' + rand + '-' + ts).toString(
+      'utf8',
+    )
     const holders: { v: string }[] = []
     for (let i = 0; i < 10; i++) {
       holders.push({ v: liveMarker })
@@ -263,10 +265,7 @@ describe('Memory-dump defensiv test (TT-7)', () => {
       `master-key hex count=${hexCount} — möjlig leak om >>baseline`,
     ).toBeLessThan(20)
     // Binär-form bör vara starkt knuten till test-frame-variabeln (1-2)
-    expect(
-      binCount,
-      `master-key binary count=${binCount}`,
-    ).toBeLessThan(20)
+    expect(binCount, `master-key binary count=${binCount}`).toBeLessThan(20)
   })
 
   it('recovery-key ord finns inte tillsammans i heap efter loginWithRecoveryKey + logout (best-effort)', async () => {

@@ -1108,7 +1108,11 @@ export function useAccrualSchedules(fiscalYearId: number | undefined) {
 export function useCreateAccrual() {
   return useIpcMutation<CreateAccrualScheduleInput, { id: number }>(
     (data) => window.api.createAccrualSchedule(data),
-    { invalidate: (_data, input) => [queryKeys.accrualSchedules(input.fiscal_year_id)] },
+    {
+      invalidate: (_data, input) => [
+        queryKeys.accrualSchedules(input.fiscal_year_id),
+      ],
+    },
   )
 }
 

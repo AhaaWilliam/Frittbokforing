@@ -27,7 +27,11 @@ import os from 'node:os'
 import path from 'node:path'
 import type { Page } from '@playwright/test'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
-import { seedCustomer, seedSupplier, seedAndFinalizeInvoice } from './helpers/seed'
+import {
+  seedCustomer,
+  seedSupplier,
+  seedAndFinalizeInvoice,
+} from './helpers/seed'
 
 async function createAndLoginUser(
   window: Page,
@@ -49,28 +53,26 @@ async function createAndLoginUser(
 }
 
 async function logout(window: Page): Promise<void> {
-  await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          auth: { logout: () => Promise<unknown> }
-        }
-      ).auth.logout(),
+  await window.evaluate(async () =>
+    (
+      window as unknown as {
+        auth: { logout: () => Promise<unknown> }
+      }
+    ).auth.logout(),
   )
 }
 
 async function getIncomingVatCode(
   window: Page,
 ): Promise<{ id: number; code: string }> {
-  const res = (await window.evaluate(
-    async () =>
-      (
-        window as unknown as {
-          api: {
-            listVatCodes: (d: { direction: string }) => Promise<unknown>
-          }
+  const res = (await window.evaluate(async () =>
+    (
+      window as unknown as {
+        api: {
+          listVatCodes: (d: { direction: string }) => Promise<unknown>
         }
-      ).api.listVatCodes({ direction: 'incoming' }),
+      }
+    ).api.listVatCodes({ direction: 'incoming' }),
   )) as {
     success: boolean
     data: Array<{ id: number; code: string }>
@@ -338,13 +340,12 @@ test('@flow e14: month with 20 invoices + 15 expenses → bulk-pay → credit no
     expect(importRes.success, importRes.error).toBe(true)
 
     // ── Step 7: Verify roundtrip integrity in B's vault ──────────────
-    const bFys = (await ctx.window.evaluate(
-      async () =>
-        (
-          window as unknown as {
-            api: { listFiscalYears: () => Promise<unknown> }
-          }
-        ).api.listFiscalYears(),
+    const bFys = (await ctx.window.evaluate(async () =>
+      (
+        window as unknown as {
+          api: { listFiscalYears: () => Promise<unknown> }
+        }
+      ).api.listFiscalYears(),
     )) as { success: boolean; data: Array<{ id: number }> }
     expect(bFys.data.length).toBe(1)
     const bFyId = bFys.data[0].id

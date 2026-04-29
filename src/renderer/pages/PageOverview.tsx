@@ -108,8 +108,8 @@ function WelcomeCtas({ navigate }: { navigate: (path: string) => void }) {
     >
       <h2 className="text-lg font-semibold">Välkommen till Fritt Bokföring</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Börja med ett av följande för att komma igång. Siffrorna nedan uppdateras
-        automatiskt när du bokför.
+        Börja med ett av följande för att komma igång. Siffrorna nedan
+        uppdateras automatiskt när du bokför.
       </p>
       <div className="mt-4 grid grid-cols-2 gap-3">
         {ctas.map(({ icon: Icon, label, description, path }) => (

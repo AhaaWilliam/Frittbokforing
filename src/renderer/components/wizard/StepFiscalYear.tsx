@@ -114,7 +114,8 @@ export function StepFiscalYear({
   // Kortat första FY stöds bara med kalenderår (inte brutet) i denna
   // version — annars kan antalet perioder överskrida 12 (DB-begränsning).
   // Visas när reg-datum inte är 1 januari (då kortat = standard).
-  const regIsJan1 = registration_date === `${registration_date.slice(0, 4)}-01-01`
+  const regIsJan1 =
+    registration_date === `${registration_date.slice(0, 4)}-01-01`
   const showShortOption =
     !!registration_date && !use_broken_fiscal_year && !regIsJan1
 
@@ -129,9 +130,10 @@ export function StepFiscalYear({
 
       {monthsSinceReg < 12 && !use_short_first_fy && (
         <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-          För nystartade bolag är det vanligt att välja <em>kortat första
-          räkenskapsår</em> som startar vid registreringsdatumet (BFL 3 kap
-          3§). Bocka i alternativet nedan om du vill.
+          För nystartade bolag är det vanligt att välja{' '}
+          <em>kortat första räkenskapsår</em> som startar vid
+          registreringsdatumet (BFL 3 kap 3§). Bocka i alternativet nedan om du
+          vill.
         </div>
       )}
 
@@ -178,9 +180,9 @@ export function StepFiscalYear({
                 Förlängt första räkenskapsår (BFL 3:3)
               </div>
               <div className="text-xs text-muted-foreground">
-                Första räkenskapsåret börjar vid registreringsdatumet och
-                slutar 31 dec året efter (max 13 månader). Vanligt vid
-                registrering sent på året.
+                Första räkenskapsåret börjar vid registreringsdatumet och slutar
+                31 dec året efter (max 13 månader). Vanligt vid registrering
+                sent på året.
               </div>
             </div>
           </label>

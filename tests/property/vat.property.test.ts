@@ -22,8 +22,7 @@ const qtyGen = decimal2(100)
 const priceKrGen = decimal2(10000)
 
 // Svenska momssatser: 0, 6, 12, 25 %
-const vatRateGen = fc
-  .constantFrom(0, 0.06, 0.12, 0.25)
+const vatRateGen = fc.constantFrom(0, 0.06, 0.12, 0.25)
 
 interface Line {
   quantity: number

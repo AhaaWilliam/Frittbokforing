@@ -35,9 +35,7 @@ describe('M144 — IPC response-schemas täcker alla affärsdata-kanaler', () =>
     const inputChannels = Object.keys(channelMap)
     const responseChannels = Object.keys(channelResponseMap)
 
-    const orphan = responseChannels.filter(
-      (ch) => !inputChannels.includes(ch),
-    )
+    const orphan = responseChannels.filter((ch) => !inputChannels.includes(ch))
     expect(orphan).toEqual([])
   })
 

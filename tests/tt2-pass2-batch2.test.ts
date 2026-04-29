@@ -43,7 +43,9 @@ describe('M134 — BR netResult via result-service', () => {
     const src = readFileSync(file, 'utf8')
     expect(src).toMatch(/calculateResultSummary\s*\(/)
     // Förbjuden ad-hoc-pattern: filter-reduce på account class 3-8
-    expect(src).not.toMatch(/!startsWith\(['"]1['"]\).*!startsWith\(['"]2['"]\)/)
+    expect(src).not.toMatch(
+      /!startsWith\(['"]1['"]\).*!startsWith\(['"]2['"]\)/,
+    )
     expect(src).not.toMatch(/account_number\s*>=\s*['"]3000['"]/)
   })
 
@@ -268,7 +270,9 @@ describe('M154 — unmatch skapar korrigeringsverifikat', () => {
     )
     expect(src).toMatch(/createCorrectionEntry/)
     // Reconciliation-status sätts till 'unmatched' efter korrigering
-    expect(src).toMatch(/reconciliation_status[^a-z]*=[^a-z]*['"]unmatched['"]/i)
+    expect(src).toMatch(
+      /reconciliation_status[^a-z]*=[^a-z]*['"]unmatched['"]/i,
+    )
   })
 
   it('batch-payments blockeras med specifik ErrorCode', () => {
@@ -355,9 +359,10 @@ describe('M158 — stamdata company_id scoping', () => {
   it('counterparties/products/price_lists har NOT NULL company_id FK', () => {
     const db = createTestDb()
     for (const tbl of ['counterparties', 'products', 'price_lists']) {
-      const cols = db
-        .prepare(`PRAGMA table_info(${tbl})`)
-        .all() as Array<{ name: string; notnull: number }>
+      const cols = db.prepare(`PRAGMA table_info(${tbl})`).all() as Array<{
+        name: string
+        notnull: number
+      }>
       const company = cols.find((c) => c.name === 'company_id')
       expect(company, `${tbl}.company_id ska finnas`).toBeDefined()
       expect(company?.notnull, `${tbl}.company_id ska vara NOT NULL`).toBe(1)
@@ -373,9 +378,9 @@ describe('M158 — stamdata company_id scoping', () => {
     let foundCompound = false
     for (const idx of indexes) {
       if (!idx.unique) continue
-      const cols = db
-        .prepare(`PRAGMA index_info(${idx.name})`)
-        .all() as Array<{ name: string }>
+      const cols = db.prepare(`PRAGMA index_info(${idx.name})`).all() as Array<{
+        name: string
+      }>
       const names = cols.map((c) => c.name)
       if (names.includes('company_id') && names.includes('org_number')) {
         foundCompound = true

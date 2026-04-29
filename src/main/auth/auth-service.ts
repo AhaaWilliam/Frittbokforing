@@ -176,10 +176,7 @@ export function createAuthService(deps: AuthServiceDeps) {
 
     const normalized = normalizeAndValidate(recoveryPhrase)
     if (!normalized) {
-      throw new AuthError(
-        'WRONG_RECOVERY_KEY',
-        'Ogiltig återställningsfras',
-      )
+      throw new AuthError('WRONG_RECOVERY_KEY', 'Ogiltig återställningsfras')
     }
 
     // No rate-limit check on recovery — it's high-entropy (256 bits) and

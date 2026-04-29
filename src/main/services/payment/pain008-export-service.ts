@@ -220,7 +220,12 @@ export function generatePain008(
       .ele('Id')
       .txt(company.bankgiro ?? `SE-BG-UNKNOWN-${company.org_number}`)
 
-    pmtInf.ele('CdtrAgt').ele('FinInstnId').ele('Othr').ele('Id').txt('NOTPROVIDED')
+    pmtInf
+      .ele('CdtrAgt')
+      .ele('FinInstnId')
+      .ele('Othr')
+      .ele('Id')
+      .txt('NOTPROVIDED')
 
     // CreditorSchemeId — svenska företag saknar ofta officiellt SEPA CID.
     // Använd org_number som placeholder (SE + org_number).
@@ -236,9 +241,7 @@ export function generatePain008(
       const pmtId = txInf.ele('PmtId')
       pmtId.ele('EndToEndId').txt(`COLL-${r.collection_id}`)
 
-      txInf
-        .ele('InstdAmt', { Ccy: 'SEK' })
-        .txt(oreToDecimal(r.amount_ore))
+      txInf.ele('InstdAmt', { Ccy: 'SEK' }).txt(oreToDecimal(r.amount_ore))
 
       // Mandate-info
       const drctDbtTx = txInf.ele('DrctDbtTx')

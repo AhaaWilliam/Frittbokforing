@@ -74,9 +74,10 @@ describe('migrateLegacyToEncrypted', () => {
     const target = new EncryptedDatabase(encryptedPath)
     target.pragma(`cipher='sqlcipher'`)
     target.pragma(`key="x'${MASTER_KEY.toString('hex')}'"`)
-    const rows = target
-      .prepare('SELECT id, val FROM t ORDER BY id')
-      .all() as { id: number; val: string }[]
+    const rows = target.prepare('SELECT id, val FROM t ORDER BY id').all() as {
+      id: number
+      val: string
+    }[]
     target.close()
     expect(rows).toEqual([
       { id: 1, val: 'alpha' },
@@ -244,9 +245,9 @@ describe('migrateLegacyToEncrypted — orphan trigger cleanup', () => {
     target.pragma(`cipher='sqlcipher'`)
     target.pragma(`key="x'${MASTER_KEY.toString('hex')}'"`)
     const rowCount = (
-      target
-        .prepare('SELECT COUNT(*) AS c FROM expense_lines')
-        .get() as { c: number }
+      target.prepare('SELECT COUNT(*) AS c FROM expense_lines').get() as {
+        c: number
+      }
     ).c
     const triggerRows = target
       .prepare(

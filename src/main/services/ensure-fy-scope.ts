@@ -12,9 +12,7 @@
 import type Database from 'better-sqlite3'
 
 export interface FyScopeError {
-  code:
-    | 'NOT_FOUND'
-    | 'VALIDATION_ERROR'
+  code: 'NOT_FOUND' | 'VALIDATION_ERROR'
   error: string
   field?: string
 }
@@ -39,8 +37,7 @@ export function ensureFyScope(
   if (row.company_id !== expectedCompanyId) {
     const err: FyScopeError = {
       code: 'VALIDATION_ERROR',
-      error:
-        'Räkenskapsåret tillhör ett annat bolag än det förväntade.',
+      error: 'Räkenskapsåret tillhör ett annat bolag än det förväntade.',
       field: 'fiscal_year_id',
     }
     throw err

@@ -138,9 +138,7 @@ describe('crypto — envelope sealing and opening', () => {
     const pw = Buffer.from('pw')
     const env = await sealMasterKey(K, pw, FAST_KDF)
     const badSalt = crypto.randomBytes(16).toString('base64')
-    await expect(
-      openEnvelope({ ...env, salt: badSalt }, pw),
-    ).rejects.toThrow()
+    await expect(openEnvelope({ ...env, salt: badSalt }, pw)).rejects.toThrow()
   })
 
   it('rejects malformed ciphertext (too short)', async () => {
@@ -158,7 +156,9 @@ describe('crypto — envelope sealing and opening', () => {
   it('supports two envelopes sealing the same K (password + recovery-key pattern)', async () => {
     const K = generateMasterKey()
     const pw = Buffer.from('my-password')
-    const rk = Buffer.from('abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add')
+    const rk = Buffer.from(
+      'abandon ability able about above absent absorb abstract absurd abuse access accident account accuse achieve acid acoustic acquire across act action actor actress actual adapt add',
+    )
     const pwEnv = await sealMasterKey(K, pw, FAST_KDF)
     const rkEnv = await sealMasterKey(K, rk, FAST_KDF)
     // Both unlock the same K.

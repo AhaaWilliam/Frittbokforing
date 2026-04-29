@@ -135,7 +135,9 @@ test('Full bokföringscykel: onboarding → faktura → betalning → manuell en
     // Add second line
     await window.getByText('+ Lägg till rad').click()
     // Wait for second account input to appear before filling it
-    await expect(window.locator('input[placeholder="1910"]').nth(1)).toBeVisible()
+    await expect(
+      window.locator('input[placeholder="1910"]').nth(1),
+    ).toBeVisible()
 
     // Line 2: account 1930, credit 500
     const accountInputs2 = window.locator('input[placeholder="1910"]')

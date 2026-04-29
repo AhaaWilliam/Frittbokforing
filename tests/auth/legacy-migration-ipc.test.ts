@@ -86,9 +86,8 @@ beforeEach(async () => {
     kdfParams: FAST_KDF,
   })
 
-  const { registerAuthIpcHandlers } = await import(
-    '../../src/main/auth/auth-handlers'
-  )
+  const { registerAuthIpcHandlers } =
+    await import('../../src/main/auth/auth-handlers')
   registerAuthIpcHandlers(service, keyStore, {
     onUnlock: (userId) => {
       const encryptedPath = vault.dbPath(userId)
@@ -134,12 +133,11 @@ describe('auth:legacy-import', () => {
   it('imports legacy data into the user encrypted DB and archives original', async () => {
     seedLegacy(legacyPath)
 
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
-    if (!created.success)
-      throw new Error(`setup: ${JSON.stringify(created)}`)
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
+    if (!created.success) throw new Error(`setup: ${JSON.stringify(created)}`)
     const userId = created.data.user.id
 
     const res = await invoke<{ ok: true; archivedTo: string }>(
@@ -157,9 +155,9 @@ describe('auth:legacy-import', () => {
     const db = new Database(vault.dbPath(userId), { readonly: true })
     db.pragma(`cipher='sqlcipher'`)
     db.pragma(`key="x'${K.toString('hex')}'"`)
-    const row = db
-      .prepare('SELECT v FROM stuff WHERE id = 1')
-      .get() as { v: string }
+    const row = db.prepare('SELECT v FROM stuff WHERE id = 1').get() as {
+      v: string
+    }
     db.close()
     expect(row.v).toBe('legacy-data-xyz')
   })
@@ -173,10 +171,10 @@ describe('auth:legacy-import', () => {
   })
 
   it('fails when no legacy file exists', async () => {
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
 
     const res = await invoke('auth:legacy-import')
@@ -188,10 +186,10 @@ describe('auth:legacy-skip', () => {
   it('archives legacy without importing', async () => {
     seedLegacy(legacyPath)
 
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
     const userId = created.data.user.id
 
@@ -207,17 +205,19 @@ describe('auth:legacy-skip', () => {
     db.pragma(`cipher='sqlcipher'`)
     db.pragma(`key="x'${K.toString('hex')}'"`)
     const tables = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='stuff'`)
+      .prepare(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name='stuff'`,
+      )
       .all()
     db.close()
     expect(tables).toHaveLength(0)
   })
 
   it('no-op when no legacy file', async () => {
-    const created = await invoke<{ user: { id: string } }>(
-      'auth:create-user',
-      { displayName: 'Alice', password: 'password-12345678' },
-    )
+    const created = await invoke<{ user: { id: string } }>('auth:create-user', {
+      displayName: 'Alice',
+      password: 'password-12345678',
+    })
     if (!created.success) throw new Error('setup')
 
     const res = await invoke<{ ok: true; archivedTo: string | null }>(

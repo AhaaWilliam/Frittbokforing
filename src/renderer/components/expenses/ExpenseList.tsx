@@ -58,7 +58,6 @@ const STATUS_FILTERS: {
   { key: 'overdue', label: 'Förfallen', countKey: 'overdue' },
 ]
 
-
 export function ExpenseList({ onNavigate }: ExpenseListProps) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { setBulkActionsActive } = useSkipLinks()
@@ -229,7 +228,9 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
       onNavigateRef.current({ edit: result.id })
       toast.success('Kreditnota-utkast skapat')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Kunde inte skapa kreditnota')
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte skapa kreditnota',
+      )
     }
   }, [])
 

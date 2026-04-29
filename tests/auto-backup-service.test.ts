@@ -87,7 +87,8 @@ describe('rotateBackups', () => {
   })
 
   afterEach(() => {
-    if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true })
+    if (fs.existsSync(tempDir))
+      fs.rmSync(tempDir, { recursive: true, force: true })
   })
 
   it('returnerar 0 om mappen inte finns', () => {
@@ -159,7 +160,8 @@ describe('performAutoBackupIfDue — integration', () => {
 
   afterEach(() => {
     db.close()
-    if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true })
+    if (fs.existsSync(tempDir))
+      fs.rmSync(tempDir, { recursive: true, force: true })
   })
 
   it('skapar backup när ingen tidigare finns (reason=never)', async () => {
@@ -221,9 +223,9 @@ describe('performAutoBackupIfDue — integration', () => {
     const files = fs.readdirSync(folder).filter((f) => f.endsWith('.db'))
     const backupPath = path.join(folder, files[0])
     const restored = new Database(backupPath, { readonly: true })
-    const row = restored.prepare('SELECT label FROM marker WHERE id = 1').get() as
-      | { label: string }
-      | undefined
+    const row = restored
+      .prepare('SELECT label FROM marker WHERE id = 1')
+      .get() as { label: string } | undefined
     expect(row?.label).toBe('hej')
     restored.close()
   })

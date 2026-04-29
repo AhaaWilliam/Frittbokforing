@@ -33,7 +33,10 @@ export function loadVatCodeMap(
     vat_account: string | null
   }[]
   return new Map(
-    rows.map((r) => [r.id, { rate: r.rate_percent, vatAccount: r.vat_account }]),
+    rows.map((r) => [
+      r.id,
+      { rate: r.rate_percent, vatAccount: r.vat_account },
+    ]),
   )
 }
 

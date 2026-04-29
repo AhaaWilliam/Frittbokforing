@@ -18,11 +18,7 @@ import log from 'electron-log'
 
 export type SepaSequenceType = 'OOFF' | 'FRST' | 'RCUR' | 'FNAL'
 export type SepaMandateStatus = 'active' | 'revoked'
-export type SepaCollectionStatus =
-  | 'pending'
-  | 'exported'
-  | 'settled'
-  | 'failed'
+export type SepaCollectionStatus = 'pending' | 'exported' | 'settled' | 'failed'
 
 export interface SepaMandate {
   id: number
@@ -87,10 +83,7 @@ function fail(code: ErrorCode, error: string, field?: string): never {
   throw e
 }
 
-function catchStructured<T>(
-  fn: () => T,
-  fallback: string,
-): IpcResult<T> {
+function catchStructured<T>(fn: () => T, fallback: string): IpcResult<T> {
   try {
     return { success: true, data: fn() }
   } catch (err: unknown) {
@@ -271,11 +264,7 @@ export function createCollection(
           fail('NOT_FOUND', 'Mandat hittades inte', 'mandate_id')
         }
         if (mandate.status !== 'active') {
-          fail(
-            'VALIDATION_ERROR',
-            'Mandatet är inte aktivt',
-            'mandate_id',
-          )
+          fail('VALIDATION_ERROR', 'Mandatet är inte aktivt', 'mandate_id')
         }
 
         // Validate fiscal year exists
@@ -429,11 +418,7 @@ export function createDirectDebitBatch(
           )
           .get(input.account_number) as { account_number: string } | undefined
         if (!acct) {
-          fail(
-            'ACCOUNT_NOT_FOUND',
-            'Kontot hittades inte',
-            'account_number',
-          )
+          fail('ACCOUNT_NOT_FOUND', 'Kontot hittades inte', 'account_number')
         }
 
         // Validate all collections exist + are pending + belong to fy

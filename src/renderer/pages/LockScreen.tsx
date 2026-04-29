@@ -79,9 +79,7 @@ export function LockScreen({ onUnlocked }: Props) {
           <LoginForm
             user={mode.user}
             onCancel={() => setMode({ kind: 'list' })}
-            onForgot={() =>
-              setMode({ kind: 'recovery', user: mode.user })
-            }
+            onForgot={() => setMode({ kind: 'recovery', user: mode.user })}
             onSuccess={onUnlocked}
             onError={setError}
           />
@@ -559,7 +557,9 @@ function RecoveryKeyDisplay({
   const [confirmed, setConfirmed] = useState(false)
   return (
     <div>
-      <h2 className="mb-2 text-lg font-semibold">Spara din återställningsfras</h2>
+      <h2 className="mb-2 text-lg font-semibold">
+        Spara din återställningsfras
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">
         Detta är enda sättet att återställa åtkomst om du glömmer lösenordet.
         Skriv ner de 24 orden och spara dem säkert — de visas inte igen.
@@ -579,8 +579,8 @@ function RecoveryKeyDisplay({
           className="mt-0.5"
         />
         <span>
-          Jag har sparat återställningsfrasen på ett säkert ställe och
-          förstår att den inte kan visas igen.
+          Jag har sparat återställningsfrasen på ett säkert ställe och förstår
+          att den inte kan visas igen.
         </span>
       </label>
       <button

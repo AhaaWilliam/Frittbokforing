@@ -72,9 +72,8 @@ function useListCollections(fiscalYearId: number) {
 }
 
 function useListBatches(fiscalYearId: number) {
-  return useIpcQuery<BatchRow[]>(
-    ['sepa-dd', 'batches', fiscalYearId],
-    () => window.api.sepaDdListBatches({ fiscal_year_id: fiscalYearId }),
+  return useIpcQuery<BatchRow[]>(['sepa-dd', 'batches', fiscalYearId], () =>
+    window.api.sepaDdListBatches({ fiscal_year_id: fiscalYearId }),
   )
 }
 
@@ -158,7 +157,10 @@ export function PageSepaDd() {
           aria-label="SEPA Direct Debit-sektioner"
           className="flex gap-1"
         >
-          <TabButton active={tab === 'mandates'} onClick={() => setTab('mandates')}>
+          <TabButton
+            active={tab === 'mandates'}
+            onClick={() => setTab('mandates')}
+          >
             Mandat
           </TabButton>
           <TabButton
@@ -167,7 +169,10 @@ export function PageSepaDd() {
           >
             Uppsamlingar
           </TabButton>
-          <TabButton active={tab === 'batches'} onClick={() => setTab('batches')}>
+          <TabButton
+            active={tab === 'batches'}
+            onClick={() => setTab('batches')}
+          >
             Batcher
           </TabButton>
         </nav>
@@ -325,7 +330,9 @@ function MandateRow({
 }) {
   return (
     <tr className="border-b last:border-b-0">
-      <td className="px-4 py-2 font-mono text-xs">{mandate.mandate_reference}</td>
+      <td className="px-4 py-2 font-mono text-xs">
+        {mandate.mandate_reference}
+      </td>
       <td className="px-4 py-2">{SEQUENCE_LABELS[mandate.sequence_type]}</td>
       <td className="px-4 py-2 font-mono text-xs">{mandate.iban}</td>
       <td className="px-4 py-2">{mandate.signature_date}</td>

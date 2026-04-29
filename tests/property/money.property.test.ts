@@ -12,9 +12,7 @@ import { multiplyKrToOre, multiplyDecimalByOre } from '../../src/shared/money'
 
 // Generator: tal med exakt ≤2 decimaler (ingen IEEE 754-drift)
 const decimal2 = (max: number) =>
-  fc
-    .integer({ min: 0, max: max * 100 })
-    .map((n) => Math.round(n) / 100)
+  fc.integer({ min: 0, max: max * 100 }).map((n) => Math.round(n) / 100)
 
 const qtyGen = decimal2(9999) // [0, 9999.99]
 const priceKrGen = decimal2(999999) // [0, 999999.99]
@@ -45,7 +43,11 @@ describe('multiplyKrToOre — M131 properties', () => {
     fc.assert(
       fc.property(
         fc
-          .tuple(decimal2(100).filter((q) => q > 0), priceKrGen, priceKrGen)
+          .tuple(
+            decimal2(100).filter((q) => q > 0),
+            priceKrGen,
+            priceKrGen,
+          )
           .map(([q, a, b]) => [q, Math.min(a, b), Math.max(a, b)] as const),
         ([q, p1, p2]) => multiplyKrToOre(q, p1) <= multiplyKrToOre(q, p2),
       ),
@@ -57,7 +59,11 @@ describe('multiplyKrToOre — M131 properties', () => {
     fc.assert(
       fc.property(
         fc
-          .tuple(qtyGen, qtyGen, decimal2(100).filter((p) => p > 0))
+          .tuple(
+            qtyGen,
+            qtyGen,
+            decimal2(100).filter((p) => p > 0),
+          )
           .map(([a, b, p]) => [Math.min(a, b), Math.max(a, b), p] as const),
         ([q1, q2, p]) => multiplyKrToOre(q1, p) <= multiplyKrToOre(q2, p),
       ),

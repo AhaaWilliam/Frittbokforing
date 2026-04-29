@@ -39,10 +39,16 @@ export interface ParsedBankNotification {
 
 export function parseCamt054(xmlRaw: string): ParsedBankNotification {
   if (xmlRaw.length > 5_000_000) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'Filen är för stor (max 5 MB).')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'Filen är för stor (max 5 MB).',
+    )
   }
   if (xmlRaw.includes('<!DOCTYPE') || xmlRaw.includes('<!ENTITY')) {
-    throw new Camt053ParseError('VALIDATION_ERROR', 'DTD/ENTITY-deklarationer är inte tillåtna.')
+    throw new Camt053ParseError(
+      'VALIDATION_ERROR',
+      'DTD/ENTITY-deklarationer är inte tillåtna.',
+    )
   }
   const xml = xmlRaw.replace(/^\uFEFF/, '').trim()
   if (!xml) {

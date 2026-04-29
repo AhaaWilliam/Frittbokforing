@@ -132,7 +132,9 @@ export function parseSie5(input: Buffer | string): SieParseResult {
   try {
     doc = parser.parseFromString(xml, 'text/xml') as unknown as Document
   } catch (err) {
-    errors.push(`XML-parsningsfel: ${err instanceof Error ? err.message : String(err)}`)
+    errors.push(
+      `XML-parsningsfel: ${err instanceof Error ? err.message : String(err)}`,
+    )
   }
 
   const header = buildEmptyHeader()
@@ -161,9 +163,7 @@ export function parseSie5(input: Buffer | string): SieParseResult {
 
   // Defensiv: acceptera både <Sie> och andra root-namn.
   if (root.localName !== 'Sie' && stripNs(root.nodeName) !== 'Sie') {
-    warnings.push(
-      `Förväntade root-elementet <Sie>, hittade <${root.nodeName}>`,
-    )
+    warnings.push(`Förväntade root-elementet <Sie>, hittade <${root.nodeName}>`)
   }
 
   // ═══ FileInfo ═══

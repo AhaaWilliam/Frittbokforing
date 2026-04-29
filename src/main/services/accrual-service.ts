@@ -173,7 +173,9 @@ export function getAccrualSchedules(
       (sum, e) => sum + e.amount_ore,
       0,
     )
-    const entryByPeriod = new Map(scheduleEntries.map((e) => [e.period_number, e]))
+    const entryByPeriod = new Map(
+      scheduleEntries.map((e) => [e.period_number, e]),
+    )
 
     const periodStatuses: AccrualPeriodStatus[] = []
     for (let p = s.start_period; p < s.start_period + s.period_count; p++) {

@@ -131,8 +131,8 @@ export function FirstRunImport({ onBack }: Props) {
         {phase === 'select' && (
           <>
             <div className="mx-auto mt-6 max-w-2xl rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-              Importen skapar ett nytt bolag baserat på SIE-filens innehåll.
-              Du kan fortsätta i guidad uppstart om du inte har en fil.
+              Importen skapar ett nytt bolag baserat på SIE-filens innehåll. Du
+              kan fortsätta i guidad uppstart om du inte har en fil.
             </div>
             <ImportSelectPhase
               format={format}

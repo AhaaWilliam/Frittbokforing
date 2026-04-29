@@ -213,7 +213,9 @@ export function CreateAccrualDialog({
               }
               required
               aria-invalid={!!fieldErrors.amount_kr}
-              aria-describedby={fieldErrors.amount_kr ? errorIdFor('accrual-amount') : undefined}
+              aria-describedby={
+                fieldErrors.amount_kr ? errorIdFor('accrual-amount') : undefined
+              }
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
             {fieldErrors.amount_kr && (
@@ -243,7 +245,10 @@ export function CreateAccrualDialog({
                   setForm((f) => ({
                     ...f,
                     start_period: sp,
-                    period_count: Math.min(f.period_count, periodCount - sp + 1),
+                    period_count: Math.min(
+                      f.period_count,
+                      periodCount - sp + 1,
+                    ),
                   }))
                 }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"

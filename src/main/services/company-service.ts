@@ -53,11 +53,7 @@ export function generatePeriods(
 
   while (cursor.getTime() <= endDate.getTime() && periodNumber <= 14) {
     // Sista dagen i aktuell månad
-    const lastOfMonth = new Date(
-      cursor.getFullYear(),
-      cursor.getMonth() + 1,
-      0,
-    )
+    const lastOfMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)
     // Period slutar vid sista-dagen-i-månaden eller fiscalYearEnd,
     // beroende av vilket som kommer först.
     const periodEnd =

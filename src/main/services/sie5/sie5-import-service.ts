@@ -21,7 +21,11 @@ import {
   type ImportResult,
 } from '../sie4/sie4-import-service'
 
-export type { ImportOptions, ImportResult, ConflictResolution } from '../sie4/sie4-import-service'
+export type {
+  ImportOptions,
+  ImportResult,
+  ConflictResolution,
+} from '../sie4/sie4-import-service'
 export type { ImportStrategy } from '../sie4/sie4-import-service'
 
 export function importSie5(

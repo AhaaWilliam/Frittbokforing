@@ -874,8 +874,7 @@ describe('AgingInputSchema', () => {
 
 describe('CashFlowInputSchema', () => {
   it('accepts valid', () => valid(CashFlowInputSchema, { fiscal_year_id: 1 }))
-  it('rejects missing fiscal_year_id', () =>
-    invalid(CashFlowInputSchema, {}))
+  it('rejects missing fiscal_year_id', () => invalid(CashFlowInputSchema, {}))
 })
 
 describe('AccountStatementInputSchema', () => {
@@ -892,10 +891,8 @@ describe('AccountStatementInputSchema', () => {
 })
 
 describe('CompanySwitchInputSchema', () => {
-  it('accepts valid', () =>
-    valid(CompanySwitchInputSchema, { company_id: 1 }))
-  it('rejects zero', () =>
-    invalid(CompanySwitchInputSchema, { company_id: 0 }))
+  it('accepts valid', () => valid(CompanySwitchInputSchema, { company_id: 1 }))
+  it('rejects zero', () => invalid(CompanySwitchInputSchema, { company_id: 0 }))
 })
 
 describe('Journal Entry Correction schemas', () => {

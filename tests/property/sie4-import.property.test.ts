@@ -44,14 +44,11 @@ function buildSie4(lines: string[]): Buffer {
 describe('SIE4 parser — robusthet mot godtycklig input (M145)', () => {
   it('parser kastar aldrig unhandled för godtycklig Unicode ≤ 50KB', () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 0, maxLength: 50_000 }),
-        (content) => {
-          // Vitest default timeout (5s) fungerar som hang-guard.
-          const buf = toCp437Buffer(content)
-          expect(() => parseSie4(buf)).not.toThrow()
-        },
-      ),
+      fc.property(fc.string({ minLength: 0, maxLength: 50_000 }), (content) => {
+        // Vitest default timeout (5s) fungerar som hang-guard.
+        const buf = toCp437Buffer(content)
+        expect(() => parseSie4(buf)).not.toThrow()
+      }),
       { numRuns: 200 },
     )
   })
@@ -113,9 +110,7 @@ const validAmountStringGen = fc
     negative: fc.boolean(),
     krPart: fc.integer({ min: 0, max: 999_999_999 }).map((n) => n.toString()),
     decPart: fc.option(
-      fc
-        .integer({ min: 0, max: 99 })
-        .map((n) => n.toString().padStart(2, '0')),
+      fc.integer({ min: 0, max: 99 }).map((n) => n.toString().padStart(2, '0')),
       { nil: null },
     ),
   })
@@ -218,11 +213,7 @@ describe('calculateKsumma — determinism (M145)', () => {
     fc.assert(
       fc.property(fc.string({ maxLength: 10_000 }), (content) => {
         const v = calculateKsumma(content)
-        return (
-          Number.isInteger(v) &&
-          v >= -(2 ** 31) &&
-          v <= 2 ** 31 - 1
-        )
+        return Number.isInteger(v) && v >= -(2 ** 31) && v <= 2 ** 31 - 1
       }),
       { numRuns: 200 },
     )
@@ -273,14 +264,12 @@ describe('validator — catches NaN amounts (M145, tidigare bypass)', () => {
   it('property: obalanserat verifikat → E1 eller E6', () => {
     fc.assert(
       fc.property(
-        fc
-          .integer({ min: 100, max: 1_000_000 })
-          .chain((a) =>
-            fc
-              .integer({ min: 100, max: 1_000_000 })
-              .filter((b) => Math.abs(a - b) > 1)
-              .map((b) => [a, b] as const),
-          ),
+        fc.integer({ min: 100, max: 1_000_000 }).chain((a) =>
+          fc
+            .integer({ min: 100, max: 1_000_000 })
+            .filter((b) => Math.abs(a - b) > 1)
+            .map((b) => [a, b] as const),
+        ),
         ([debitKr, creditKr]) => {
           const parsed = parseSie4(
             buildSie4([
@@ -338,7 +327,9 @@ describe('validator — catches NaN amounts (M145, tidigare bypass)', () => {
     fc.assert(
       fc.property(
         fc.constantFrom('1910', '3010', '2640'),
-        fc.string({ minLength: 1, maxLength: 20 }).filter((s) => !s.includes('"')),
+        fc
+          .string({ minLength: 1, maxLength: 20 })
+          .filter((s) => !s.includes('"')),
         (acctNr, name) => {
           const parsed = parseSie4(
             buildSie4([
@@ -367,36 +358,33 @@ describe('roundtrip öre → SIE4-string → parse → öre (M145)', () => {
     // SIE4-strängar via oreToSie4Amount, parsa hela filen, och jämför att
     // transactions[0].amountOre === original.
     fc.assert(
-      fc.property(
-        fc.integer({ min: 1, max: 99_999_999 }),
-        (ore) => {
-          const debitStr = oreToSie4Amount(ore)
-          const creditStr = oreToSie4Amount(-ore)
-          const parsed = parseSie4(
-            buildSie4([
-              '#FLAGGA 0',
-              '#SIETYP 4',
-              '#ORGNR 556036-0793',
-              '#RAR 0 20250101 20251231',
-              '#KONTO 1910 "Kassa"',
-              '#KONTO 3010 "Försäljning"',
-              '#VER A 1 20250115 "Test"',
-              '{',
-              `#TRANS 1910 {} ${debitStr}`,
-              `#TRANS 3010 {} ${creditStr}`,
-              '}',
-            ]),
-          )
-          expect(parsed.entries).toHaveLength(1)
-          expect(parsed.entries[0].transactions).toHaveLength(2)
-          expect(parsed.entries[0].transactions[0].amountOre).toBe(ore)
-          expect(parsed.entries[0].transactions[1].amountOre).toBe(-ore)
-          const v = validateSieParseResult(parsed)
-          // Balanserat → ingen E1/E6.
-          expect(v.errors.find((e) => e.code === 'E1')).toBeUndefined()
-          expect(v.errors.find((e) => e.code === 'E6')).toBeUndefined()
-        },
-      ),
+      fc.property(fc.integer({ min: 1, max: 99_999_999 }), (ore) => {
+        const debitStr = oreToSie4Amount(ore)
+        const creditStr = oreToSie4Amount(-ore)
+        const parsed = parseSie4(
+          buildSie4([
+            '#FLAGGA 0',
+            '#SIETYP 4',
+            '#ORGNR 556036-0793',
+            '#RAR 0 20250101 20251231',
+            '#KONTO 1910 "Kassa"',
+            '#KONTO 3010 "Försäljning"',
+            '#VER A 1 20250115 "Test"',
+            '{',
+            `#TRANS 1910 {} ${debitStr}`,
+            `#TRANS 3010 {} ${creditStr}`,
+            '}',
+          ]),
+        )
+        expect(parsed.entries).toHaveLength(1)
+        expect(parsed.entries[0].transactions).toHaveLength(2)
+        expect(parsed.entries[0].transactions[0].amountOre).toBe(ore)
+        expect(parsed.entries[0].transactions[1].amountOre).toBe(-ore)
+        const v = validateSieParseResult(parsed)
+        // Balanserat → ingen E1/E6.
+        expect(v.errors.find((e) => e.code === 'E1')).toBeUndefined()
+        expect(v.errors.find((e) => e.code === 'E6')).toBeUndefined()
+      }),
       { numRuns: 200 },
     )
   })

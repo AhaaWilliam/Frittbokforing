@@ -77,15 +77,15 @@ describe('SepaDdListMandatesSchema', () => {
 
 describe('SepaDdRevokeMandateSchema', () => {
   it('accepts valid mandate_id', () => {
-    expect(
-      SepaDdRevokeMandateSchema.safeParse({ mandate_id: 1 }).success,
-    ).toBe(true)
+    expect(SepaDdRevokeMandateSchema.safeParse({ mandate_id: 1 }).success).toBe(
+      true,
+    )
   })
 
   it('rejects 0', () => {
-    expect(
-      SepaDdRevokeMandateSchema.safeParse({ mandate_id: 0 }).success,
-    ).toBe(false)
+    expect(SepaDdRevokeMandateSchema.safeParse({ mandate_id: 0 }).success).toBe(
+      false,
+    )
   })
 })
 

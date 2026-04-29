@@ -131,11 +131,17 @@ export function PaymentDialog({
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
                 aria-invalid={!!errors.amount}
-                aria-describedby={errors.amount ? errorIdFor('payment-amount') : undefined}
+                aria-describedby={
+                  errors.amount ? errorIdFor('payment-amount') : undefined
+                }
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {errors.amount && (
-                <p role="alert" id={errorIdFor('payment-amount')} className="mt-1 text-xs text-red-600">
+                <p
+                  role="alert"
+                  id={errorIdFor('payment-amount')}
+                  className="mt-1 text-xs text-red-600"
+                >
                   {errors.amount}
                 </p>
               )}
@@ -154,11 +160,17 @@ export function PaymentDialog({
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
                 aria-invalid={!!errors.date}
-                aria-describedby={errors.date ? errorIdFor('payment-date') : undefined}
+                aria-describedby={
+                  errors.date ? errorIdFor('payment-date') : undefined
+                }
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {errors.date && (
-                <p role="alert" id={errorIdFor('payment-date')} className="mt-1 text-xs text-red-600">
+                <p
+                  role="alert"
+                  id={errorIdFor('payment-date')}
+                  className="mt-1 text-xs text-red-600"
+                >
                   {errors.date}
                 </p>
               )}

@@ -366,7 +366,7 @@ describe('GAP M10-5: Alla tre momssatser bidrar separat till vatOutTotalOre', ()
     createBookedEntry(db, { companyId, fiscalYearId }, [
       { account_number: '2610', debit: 0, credit: 25_000 }, // 25% moms
       { account_number: '2620', debit: 0, credit: 12_000 }, // 12% moms
-      { account_number: '2630', debit: 0, credit: 6_000 },  // 6% moms
+      { account_number: '2630', debit: 0, credit: 6_000 }, // 6% moms
       { account_number: '1510', debit: 43_000, credit: 0 },
     ])
 
@@ -385,7 +385,7 @@ describe('GAP M10-5: Alla tre momssatser bidrar separat till vatOutTotalOre', ()
     // Seed outgoing VAT (25%) + incoming VAT (2640)
     createBookedEntry(db, { companyId, fiscalYearId }, [
       { account_number: '2610', debit: 0, credit: 25_000 }, // utgående moms
-      { account_number: '2640', debit: 8_000, credit: 0 },  // ingående moms (DR)
+      { account_number: '2640', debit: 8_000, credit: 0 }, // ingående moms (DR)
       { account_number: '1510', debit: 17_000, credit: 0 },
     ])
 
@@ -403,9 +403,9 @@ describe('GAP M10-5: Alla tre momssatser bidrar separat till vatOutTotalOre', ()
   it('vatNetOre negativ när ingående > utgående', () => {
     // Balanced entry: debit=20k, credit=5k+15k=20k
     createBookedEntry(db, { companyId, fiscalYearId }, [
-      { account_number: '2610', debit: 0, credit: 5_000 },   // utgående: 5k
-      { account_number: '2640', debit: 20_000, credit: 0 },  // ingående: 20k
-      { account_number: '1930', debit: 0, credit: 15_000 },  // clearing (balanserar)
+      { account_number: '2610', debit: 0, credit: 5_000 }, // utgående: 5k
+      { account_number: '2640', debit: 20_000, credit: 0 }, // ingående: 20k
+      { account_number: '1930', debit: 0, credit: 15_000 }, // clearing (balanserar)
     ])
 
     const report = getVatReport(db, fiscalYearId)

@@ -20,10 +20,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { createTestDb } from './helpers/create-test-db'
 import { previewJournalLines } from '../src/main/services/preview-service'
-import {
-  saveDraft,
-  finalizeDraft,
-} from '../src/main/services/invoice-service'
+import { saveDraft, finalizeDraft } from '../src/main/services/invoice-service'
 import { createCompany } from '../src/main/services/company-service'
 import { createCounterparty } from '../src/main/services/counterparty-service'
 import { createProduct } from '../src/main/services/product-service'
@@ -92,9 +89,9 @@ function setupCompany(db: Database.Database): {
   })
   if (!customer.success)
     throw new Error('Customer-creation failed: ' + customer.error)
-  const mp1 = db.prepare(`SELECT id FROM vat_codes WHERE code = 'MP1'`).get() as
-    | { id: number }
-    | undefined
+  const mp1 = db
+    .prepare(`SELECT id FROM vat_codes WHERE code = 'MP1'`)
+    .get() as { id: number } | undefined
   if (!mp1) throw new Error('MP1 vat code missing')
   return {
     fiscalYearId: fy.id,
