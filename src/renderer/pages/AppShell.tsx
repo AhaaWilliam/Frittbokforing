@@ -12,9 +12,18 @@ import { CommandPalette } from '../components/command-palette/CommandPalette'
 import {
   buildBokforareCommands,
   buildSystemCommands,
+  buildRecentItemsCommands,
+  type RecentItem,
 } from '../components/command-palette/commands'
 import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts'
 import { useUiMode } from '../lib/use-ui-mode'
+import {
+  useDraftInvoices,
+  useExpenseDrafts,
+  useReTransferOpeningBalance,
+} from '../lib/hooks'
+import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import { toast } from 'sonner'
 import { PageOverview } from './PageOverview'
 import { PageIncome } from './PageIncome'
 import { PageExpenses } from './PageExpenses'
@@ -97,15 +106,70 @@ function AppShellInner({ company }: AppShellInnerProps) {
   const { page } = useRoute()
   const navigate = useNavigate()
   const { setMode } = useUiMode()
+  const { activeFiscalYear } = useFiscalYearContext()
   const [paletteOpen, setPaletteOpen] = useState(false)
 
-  // Sprint 15 — ⌘K command palette + Sprint 17 system-commands
+  // Sprint 27 — recent-items command-builder
+  const { data: invoiceDrafts } = useDraftInvoices(activeFiscalYear?.id)
+  const { data: expenseDrafts } = useExpenseDrafts(activeFiscalYear?.id)
+  const reTransferIB = useReTransferOpeningBalance()
+
+  const recentItems = useMemo<RecentItem[]>(() => {
+    const items: RecentItem[] = []
+    // Top 5 utkast-fakturor
+    for (const inv of (invoiceDrafts ?? []).slice(0, 5)) {
+      items.push({
+        id: `inv-draft-${inv.id}`,
+        label: `Faktura-utkast — ${inv.counterparty_name || 'okänd kund'}`,
+        keywords: ['utkast', 'faktura', inv.counterparty_name],
+        path: `/income/edit/${inv.id}`,
+      })
+    }
+    // Top 5 utkast-kostnader
+    for (const exp of (expenseDrafts ?? []).slice(0, 5)) {
+      items.push({
+        id: `exp-draft-${exp.id}`,
+        label: `Kostnads-utkast — ${exp.counterparty_name || 'okänd leverantör'}`,
+        keywords: ['utkast', 'kostnad', exp.counterparty_name],
+        path: `/expenses/edit/${exp.id}`,
+      })
+    }
+    return items
+  }, [invoiceDrafts, expenseDrafts])
+
+  // Sprint 15 — ⌘K command palette + Sprint 17/27 system + view commands
   const commands = useMemo(
     () => [
       ...buildBokforareCommands(navigate),
-      ...buildSystemCommands({ switchToVardag: () => setMode('vardag') }),
+      ...buildRecentItemsCommands(navigate, recentItems),
+      ...buildSystemCommands({
+        switchToVardag: () => setMode('vardag'),
+        createBackup: async () => {
+          try {
+            const result = await window.api.backupCreate()
+            if (result.filePath) {
+              toast.success(`Säkerhetskopia sparad: ${result.filePath}`)
+            }
+          } catch (err) {
+            toast.error(
+              err instanceof Error
+                ? err.message
+                : 'Säkerhetskopiering misslyckades',
+            )
+          }
+        },
+        reTransferOpeningBalance: () => {
+          if (!activeFiscalYear) {
+            toast.error('Inget aktivt räkenskapsår')
+            return
+          }
+          reTransferIB.mutate(undefined, {
+            onSuccess: () => toast.success('Ingående balans återöverförd'),
+          })
+        },
+      }),
     ],
-    [navigate, setMode],
+    [navigate, recentItems, setMode, activeFiscalYear, reTransferIB],
   )
   useKeyboardShortcuts({
     'mod+k': () => setPaletteOpen((open) => !open),

@@ -9,6 +9,8 @@ import {
   filterCommands,
   filterByMode,
   buildBokforareCommands,
+  buildSystemCommands,
+  buildRecentItemsCommands,
 } from '../../../../src/renderer/components/command-palette/commands'
 
 const AXE_OPTIONS: axe.RunOptions = {
@@ -122,6 +124,85 @@ describe('buildBokforareCommands', () => {
     const cmds = buildBokforareCommands(vi.fn())
     const ids = cmds.map((c) => c.id)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+})
+
+describe('buildSystemCommands', () => {
+  it('always includes switch-to-vardag', () => {
+    const switchToVardag = vi.fn()
+    const cmds = buildSystemCommands({ switchToVardag })
+    const cmd = cmds.find((c) => c.id === 'system.switch-to-vardag')
+    expect(cmd).toBeDefined()
+    expect(cmd!.modes).toContain('bokforare')
+    cmd!.run()
+    expect(switchToVardag).toHaveBeenCalled()
+  })
+
+  it('omits backup-create när callback inte tillhandahålls', () => {
+    const cmds = buildSystemCommands({ switchToVardag: vi.fn() })
+    expect(cmds.find((c) => c.id === 'system.backup-create')).toBeUndefined()
+  })
+
+  it('inkluderar backup-create när callback finns', () => {
+    const createBackup = vi.fn()
+    const cmds = buildSystemCommands({
+      switchToVardag: vi.fn(),
+      createBackup,
+    })
+    const cmd = cmds.find((c) => c.id === 'system.backup-create')
+    expect(cmd).toBeDefined()
+    cmd!.run()
+    expect(createBackup).toHaveBeenCalled()
+  })
+
+  it('inkluderar re-transfer-ib när callback finns', () => {
+    const reTransfer = vi.fn()
+    const cmds = buildSystemCommands({
+      switchToVardag: vi.fn(),
+      reTransferOpeningBalance: reTransfer,
+    })
+    const cmd = cmds.find((c) => c.id === 'system.re-transfer-ib')
+    expect(cmd).toBeDefined()
+    cmd!.run()
+    expect(reTransfer).toHaveBeenCalled()
+  })
+})
+
+describe('buildRecentItemsCommands', () => {
+  it('returns one command per item', () => {
+    const navigate = vi.fn()
+    const cmds = buildRecentItemsCommands(navigate, [
+      { id: 'a', label: 'Item A', path: '/a' },
+      { id: 'b', label: 'Item B', path: '/b' },
+    ])
+    expect(cmds).toHaveLength(2)
+  })
+
+  it('all returned commands sit in view-section', () => {
+    const cmds = buildRecentItemsCommands(vi.fn(), [
+      { id: 'x', label: 'X', path: '/x' },
+    ])
+    expect(cmds[0].section).toBe('view')
+  })
+
+  it('run() navigerar till item.path', () => {
+    const navigate = vi.fn()
+    const cmds = buildRecentItemsCommands(navigate, [
+      { id: 'a', label: 'A', path: '/income/edit/42' },
+    ])
+    cmds[0].run()
+    expect(navigate).toHaveBeenCalledWith('/income/edit/42')
+  })
+
+  it('preserverar keywords på item-nivå', () => {
+    const cmds = buildRecentItemsCommands(vi.fn(), [
+      { id: 'a', label: 'A', keywords: ['acme', 'kund'], path: '/x' },
+    ])
+    expect(cmds[0].keywords).toEqual(['acme', 'kund'])
+  })
+
+  it('returnerar tom lista vid tom input', () => {
+    expect(buildRecentItemsCommands(vi.fn(), [])).toEqual([])
   })
 })
 

@@ -272,11 +272,15 @@ export function buildBokforareCommands(
  * System-kommandon — t.ex. mode-byte. Tar separata callbacks som inte
  * är navigation. Splittas från `buildBokforareCommands` för att hålla
  * registry-byggnad rent navigation-fokuserad.
+ *
+ * Sprint 27: utökat med backup-create + re-transfer-IB + scroll-to-top.
  */
 export function buildSystemCommands(callbacks: {
   switchToVardag: () => void
+  createBackup?: () => void
+  reTransferOpeningBalance?: () => void
 }): Command[] {
-  return [
+  const list: Command[] = [
     {
       id: 'system.switch-to-vardag',
       label: 'Byt till Vardag-läge',
@@ -286,4 +290,59 @@ export function buildSystemCommands(callbacks: {
       modes: ['bokforare'],
     },
   ]
+  if (callbacks.createBackup) {
+    list.push({
+      id: 'system.backup-create',
+      label: 'Skapa säkerhetskopia',
+      section: 'system',
+      keywords: ['backup', 'säkerhet', 'kopia', 'export'],
+      run: callbacks.createBackup,
+    })
+  }
+  if (callbacks.reTransferOpeningBalance) {
+    list.push({
+      id: 'system.re-transfer-ib',
+      label: 'Återöverför ingående balans',
+      section: 'system',
+      keywords: ['IB', 'opening', 'balans', 'år'],
+      run: callbacks.reTransferOpeningBalance,
+    })
+  }
+  return list
+}
+
+/**
+ * Sprint 27 — Recent-items command-builder.
+ *
+ * Tar en lista av nyligen ändrade fakturor/kostnader och bygger en
+ * navigation-callback per item. Visas under section='view'.
+ *
+ * Konsumeras av AppShell som hämtar items via befintliga
+ * useDraftInvoices/useExpenseDrafts/useListInvoices-hooks.
+ *
+ * Top-N filter sker hos anroparen (palette behöver inte vara medveten
+ * om "senaste" — bara om listans ordning).
+ */
+export interface RecentItem {
+  /** Stabil identifierare för React-key + command-id. */
+  id: string
+  /** Visat namn — t.ex. "Faktura A12 — Acme AB". */
+  label: string
+  /** Söktermer för fuzzy-matchning. */
+  keywords?: ReadonlyArray<string>
+  /** Path att navigera till (faktura: `/income/view/123`, etc.). */
+  path: string
+}
+
+export function buildRecentItemsCommands(
+  navigate: (path: string) => void,
+  items: ReadonlyArray<RecentItem>,
+): Command[] {
+  return items.map((item) => ({
+    id: `view.recent.${item.id}`,
+    label: item.label,
+    section: 'view' as const,
+    keywords: item.keywords,
+    run: () => navigate(item.path),
+  }))
 }
