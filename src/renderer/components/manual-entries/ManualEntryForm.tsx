@@ -10,6 +10,7 @@ import {
 import { formatKr, toKr, todayLocal } from '../../lib/format'
 import type { ManualEntryWithLines, Account } from '../../../shared/types'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from '../ui/FieldError'
 import { useEntityForm } from '../../lib/use-entity-form'
 import { useJournalPreview } from '../../lib/use-journal-preview'
 import { ConsequencePane } from '../consequence/ConsequencePane'
@@ -300,13 +301,9 @@ export function ManualEntryForm({
               className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             {form.errors.entryDate && (
-              <p
-                role="alert"
-                id={errorIdFor('manual-entry-date')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('manual-entry-date')}>
                 {form.errors.entryDate}
-              </p>
+              </FieldError>
             )}
           </div>
           <div>
@@ -439,13 +436,9 @@ export function ManualEntryForm({
           + L&auml;gg till rad
         </button>
         {form.errors.lines && (
-          <p
-            role="alert"
-            id={errorIdFor('manual-entry-lines')}
-            className="mt-1 text-xs text-red-600"
-          >
+          <FieldError id={errorIdFor('manual-entry-lines')}>
             {form.errors.lines}
-          </p>
+          </FieldError>
         )}
 
         {/* Totals */}

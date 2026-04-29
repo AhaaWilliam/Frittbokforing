@@ -13,6 +13,7 @@ import type {
   FixedAssetWithAccumulation,
 } from '../../../shared/types'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from '../ui/FieldError'
 
 interface Props {
   open: boolean
@@ -259,13 +260,9 @@ export function FixedAssetFormDialog({
                 }
               />
               {fieldErrors.months && (
-                <p
-                  role="alert"
-                  id={errorIdFor('fa-months')}
-                  className="mt-1 text-xs text-red-600"
-                >
+                <FieldError id={errorIdFor('fa-months')}>
                   {fieldErrors.months}
-                </p>
+                </FieldError>
               )}
             </div>
           </div>
@@ -294,13 +291,9 @@ export function FixedAssetFormDialog({
                 }
               />
               {fieldErrors.cost && (
-                <p
-                  role="alert"
-                  id={errorIdFor('fa-cost')}
-                  className="mt-1 text-xs text-red-600"
-                >
+                <FieldError id={errorIdFor('fa-cost')}>
                   {fieldErrors.cost}
-                </p>
+                </FieldError>
               )}
             </div>
             <div>
@@ -324,13 +317,9 @@ export function FixedAssetFormDialog({
                 }
               />
               {fieldErrors.residual && (
-                <p
-                  role="alert"
-                  id={errorIdFor('fa-residual')}
-                  className="mt-1 text-xs text-red-600"
-                >
+                <FieldError id={errorIdFor('fa-residual')}>
                   {fieldErrors.residual}
-                </p>
+                </FieldError>
               )}
             </div>
           </div>

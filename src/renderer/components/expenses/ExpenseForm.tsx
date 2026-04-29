@@ -10,6 +10,7 @@ import { useJournalPreview } from '../../lib/use-journal-preview'
 import { ConsequencePane } from '../consequence/ConsequencePane'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from '../ui/FieldError'
 import { SupplierPicker } from './SupplierPicker'
 import {
   useCompany,
@@ -345,13 +346,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
               }
             />
             {form.errors._supplier && (
-              <p
-                role="alert"
-                id={errorIdFor('expense-supplier')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('expense-supplier')}>
                 {form.errors._supplier}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -397,14 +394,12 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
                 className={inputClass}
               />
               {form.errors.expenseDate && (
-                <p
+                <FieldError
                   id="expense-date-error"
-                  role="alert"
                   data-testid="expense-date-error"
-                  className="mt-1 text-xs text-red-600"
                 >
                   {form.errors.expenseDate}
-                </p>
+                </FieldError>
               )}
             </div>
             <div>
@@ -474,13 +469,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
               className={inputClass}
             />
             {form.errors.description && (
-              <p
-                role="alert"
-                id={errorIdFor('expense-description')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('expense-description')}>
                 {form.errors.description}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -522,13 +513,9 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
               L&auml;gg till rad
             </button>
             {form.errors.lines && (
-              <p
-                role="alert"
-                id={errorIdFor('expense-lines')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('expense-lines')}>
                 {form.errors.lines}
-              </p>
+              </FieldError>
             )}
           </div>
 

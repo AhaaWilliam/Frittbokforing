@@ -22,6 +22,7 @@ import {
   type InvoiceLineForm,
 } from '../../lib/form-schemas/invoice'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from '../ui/FieldError'
 import { Callout } from '../ui/Callout'
 import { useJournalPreview } from '../../lib/use-journal-preview'
 import { ConsequencePane } from '../consequence/ConsequencePane'
@@ -307,13 +308,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
               }
             />
             {form.errors._customer && (
-              <p
-                role="alert"
-                id={errorIdFor('invoice-customer')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('invoice-customer')}>
                 {form.errors._customer}
-              </p>
+              </FieldError>
             )}
           </div>
 
@@ -359,14 +356,12 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {form.errors.invoiceDate && (
-                <p
+                <FieldError
                   id="invoice-date-error"
-                  role="alert"
                   data-testid="invoice-date-error"
-                  className="mt-1 text-xs text-red-600"
                 >
                   {form.errors.invoiceDate}
-                </p>
+                </FieldError>
               )}
             </div>
             <div>
@@ -473,13 +468,9 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
               L&auml;gg till rad
             </button>
             {form.errors.lines && (
-              <p
-                role="alert"
-                id={errorIdFor('invoice-lines')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('invoice-lines')}>
                 {form.errors.lines}
-              </p>
+              </FieldError>
             )}
           </div>
 

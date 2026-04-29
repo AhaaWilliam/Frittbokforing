@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from './FieldError'
 
 interface PaymentDialogProps {
   open: boolean
@@ -137,13 +138,9 @@ export function PaymentDialog({
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {errors.amount && (
-                <p
-                  role="alert"
-                  id={errorIdFor('payment-amount')}
-                  className="mt-1 text-xs text-red-600"
-                >
+                <FieldError id={errorIdFor('payment-amount')}>
                   {errors.amount}
-                </p>
+                </FieldError>
               )}
             </div>
 
@@ -166,13 +163,9 @@ export function PaymentDialog({
                 className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {errors.date && (
-                <p
-                  role="alert"
-                  id={errorIdFor('payment-date')}
-                  className="mt-1 text-xs text-red-600"
-                >
+                <FieldError id={errorIdFor('payment-date')}>
                   {errors.date}
-                </p>
+                </FieldError>
               )}
             </div>
 

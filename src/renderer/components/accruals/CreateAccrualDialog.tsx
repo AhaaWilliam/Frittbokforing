@@ -4,6 +4,7 @@ import { useCreateAccrual, useAccounts } from '../../lib/hooks'
 import type { AccrualType } from '../../../shared/types'
 import { ACCRUAL_TYPES, kronorToOre } from './accrual-constants'
 import { errorIdFor } from '../../lib/a11y'
+import { FieldError } from '../ui/FieldError'
 
 export function CreateAccrualDialog({
   open,
@@ -219,13 +220,9 @@ export function CreateAccrualDialog({
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
             {fieldErrors.amount_kr && (
-              <p
-                role="alert"
-                id={errorIdFor('accrual-amount')}
-                className="mt-1 text-xs text-red-600"
-              >
+              <FieldError id={errorIdFor('accrual-amount')}>
                 {fieldErrors.amount_kr}
-              </p>
+              </FieldError>
             )}
           </div>
 

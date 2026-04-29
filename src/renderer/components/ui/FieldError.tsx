@@ -18,13 +18,21 @@ interface FieldErrorProps {
   id?: string
   children: ReactNode
   className?: string
+  /** För E2E-selectors. Sätts som-är på <p>-elementet. */
+  'data-testid'?: string
 }
 
-export function FieldError({ id, children, className }: FieldErrorProps) {
+export function FieldError({
+  id,
+  children,
+  className,
+  'data-testid': dataTestId,
+}: FieldErrorProps) {
   return (
     <p
       role="alert"
       id={id}
+      data-testid={dataTestId}
       className={`mt-1 text-xs text-danger-500 ${className ?? ''}`.trim()}
     >
       {children}
