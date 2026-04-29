@@ -1,5 +1,52 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 12–34 -- Design-migration + Vardag-läge + paritets-skydd ✅ KLAR
+
+Två sammanhängande arbeten över ~30 commits.
+
+**Sprint 12–28: design-migration (token-arkitektur + dual-mode UI).**
+- ADR 005 (dual-mode UI: Vardag + Bokförare) och ADR 006
+  (debounced IPC-preview, ej shared modul) infördes.
+- Token-baserad styling via `tokens.ts` + `index.css @theme` med
+  `[data-mode]`-scopes.
+- Primitiver införda: `Pill`, `StatusCard`, `CheckLine`, `KbdChip`,
+  `Callout`, `BottomSheet`, `ConsequencePane`, `WorkspaceLayout`.
+- Live verifikat-preview för manual + expense + invoice (debounced IPC,
+  read-only via `PRAGMA query_only`).
+- Command palette ⌘K med 25–37 kommandon (navigation + recents + system).
+- Vardag-läget med 4 routes (`/v/inbox`, `/v/spend`, `/v/income`,
+  `/v/status`), riktig data via `useDashboardSummary`, bottom-nav,
+  mode-switcher persisterad via `ui_mode`-setting.
+
+**Sprint 29–34: paritets-skydd + UX-skarpning (autonom session).**
+- **S29:** push av 55 lokala commits till remote.
+- **S30:** invoice preview/finalize-paritetstest (M135) — 5 nya tester
+  (`tests/sprint-30-invoice-preview-parity.test.ts`) som täcker
+  customer_invoice freeform + product-baserat, multi-rad
+  VAT-aggregering, total-summa-paritet, credit_note sign-flip.
+  Stängde Sprint 21:s öppna tråd.
+- **S31:** riktigt bank-saldo i Vardag (BAS 1910/1920/1930). Ny
+  `src/shared/bank-accounts.ts` (single source — samma mönster som
+  `vat-accounts.ts`). Nytt fält `bankBalanceOre` på `DashboardSummary`.
+  `dashboard-service` summerar `SUM(debit - credit)` på journal_entry_lines
+  för bank-/kassa-konton i bokade verifikat (inkl IB:n eftersom
+  `source_type='opening_balance'` är `status='booked'`).
+  `VardagPageStatus` visar nu verklig balans istället för
+  `unpaidReceivables - unpaidPayables`-approximationen.
+- **S32:** `FieldError`-primitive — kompakt fält-felmeddelande som
+  återanvänder Callout danger-token. FormField/FormSelect/FormTextarea
+  migrerade. M133-kontraktet bibehållet (role="alert" + aria-describedby).
+- **S33:** `VardagPageOverview` borttagen (dead code sedan S22 ersatte
+  den med `VardagPageInbox`). 4 placeholder-tester städade.
+- **S34:** `bankBalanceOre`-tester — 7 nya tester
+  (`tests/sprint-34-bank-balance.test.ts`) som skyddar SUM-konventionen,
+  endast-booked-filtrering, multikontoaggregering, negativ balans.
+
+**Testbaslinje:** 3787 vitest gröna (+12 från Sprint 30 + 34).
+**Hoppat enligt avtal:** font-bundling (manuell OFL-nedladdning),
+quick-spend save (auto-kontoallokering = produktbeslut), visual
+regression (CI-infra utanför scope).
+
 ## Sprint A–K -- Autonom release-readiness ✅ KLAR
 
 Session 2026-04-22 (14 h autonom körning från `120ec3d`). 15 commits
