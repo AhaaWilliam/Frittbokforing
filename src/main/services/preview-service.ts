@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { IpcResult } from '../../shared/types'
 import { PreviewJournalLinesInputSchema } from '../../shared/ipc-schemas'
 import { todayLocalFromNow } from '../utils/now'
+import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
 
 /**
  * Sprint 16 — Live verifikat-preview (ADR 006).
@@ -35,7 +36,7 @@ export interface PreviewJournalLine {
 }
 
 export interface PreviewJournalLinesResult {
-  source: 'manual'
+  source: 'manual' | 'expense'
   lines: PreviewJournalLine[]
   total_debit_ore: number
   total_credit_ore: number
@@ -77,14 +78,11 @@ export function previewJournalLines(
   db: Database.Database,
   input: PreviewJournalLinesInput,
 ): IpcResult<PreviewJournalLinesResult> {
-  if (input.source !== 'manual') {
-    return {
-      success: false as const,
-      code: 'VALIDATION_ERROR' as const,
-      error: `Preview för source=${input.source} är inte implementerat ännu.`,
-    }
+  if (input.source === 'expense') {
+    return previewExpenseJournal(db, input)
   }
 
+  // source === 'manual'
   const lines = input.lines
   const accountNumbers = Array.from(new Set(lines.map((l) => l.account_number)))
   const names = getAccountNames(db, accountNumbers)
@@ -141,6 +139,124 @@ export function previewJournalLines(
       total_credit_ore,
       balanced,
       entry_date: input.entry_date ?? today,
+      description: input.description ?? null,
+      warnings,
+    },
+  }
+}
+
+/**
+ * Sprint 19b — Expense preview. Speglar `processExpenseLines` +
+ * journal-line-aggregering från expense-service utan DB-skrivningar.
+ *
+ * Resulterande verifikat (D=debet, K=kredit):
+ *   D 6XXX (kostnadskonto, line_total_ore per kostnadskonto-aggregering)
+ *   D 2640 (ingående moms, sum av vat_amount_ore)
+ *   K 2440 (leverantörsskuld, totalInclVat)
+ *
+ * Speglar invarianten i finalizeExpense:362–470 inkl. moms-konsolidering
+ * till 2640 oavsett momssats. Read-only: ingen INSERT/UPDATE/DELETE.
+ */
+function previewExpenseJournal(
+  db: Database.Database,
+  input: Extract<PreviewJournalLinesInput, { source: 'expense' }>,
+): IpcResult<PreviewJournalLinesResult> {
+  const warnings: string[] = []
+
+  // Ladda momskoder en gång
+  const vatMap = loadVatCodeMap(db, 'incoming')
+
+  // Aggregera per konto (samma mönster som finalizeExpense:435–448)
+  const costTotals = new Map<string, number>()
+  let vatTotal = 0
+  let totalInclVat = 0
+
+  for (const [i, line] of input.lines.entries()) {
+    if (!vatMap.has(line.vat_code_id)) {
+      warnings.push(
+        `Rad ${i + 1}: momskod ${line.vat_code_id} finns inte (kontrollera urval).`,
+      )
+    }
+    const lineTotal = line.quantity * line.unit_price_ore
+    const vatAmount = computeLineVat(vatMap, line.vat_code_id, lineTotal)
+    costTotals.set(
+      line.account_number,
+      (costTotals.get(line.account_number) ?? 0) + lineTotal,
+    )
+    vatTotal += vatAmount
+    totalInclVat += lineTotal + vatAmount
+  }
+
+  // Plocka konto-namn för D-rader + 2640 + 2440
+  const accountNumbers = [
+    ...costTotals.keys(),
+    ...(vatTotal > 0 ? ['2640'] : []),
+    '2440',
+  ]
+  const names = getAccountNames(db, Array.from(new Set(accountNumbers)))
+
+  for (const account of costTotals.keys()) {
+    if (!names.has(account)) {
+      warnings.push(
+        `Kontonummer ${account} finns inte i kontoplanen — bokförs ändå men granska.`,
+      )
+    }
+  }
+
+  // Bygg journal-rader: D-konton först (sorterat), sedan K 2440 sist
+  const journalLines: PreviewJournalLine[] = []
+
+  // D-rader för kostnadskonton (deterministisk ordning)
+  const sortedCostAccounts = Array.from(costTotals.keys()).sort()
+  for (const account of sortedCostAccounts) {
+    journalLines.push({
+      account_number: account,
+      account_name: names.get(account) ?? null,
+      debit_ore: costTotals.get(account)!,
+      credit_ore: 0,
+      description: null,
+    })
+  }
+
+  // D 2640 om moms finns
+  if (vatTotal > 0) {
+    journalLines.push({
+      account_number: '2640',
+      account_name: names.get('2640') ?? null,
+      debit_ore: vatTotal,
+      credit_ore: 0,
+      description: 'Ingående moms',
+    })
+  }
+
+  // K 2440
+  journalLines.push({
+    account_number: '2440',
+    account_name: names.get('2440') ?? null,
+    debit_ore: 0,
+    credit_ore: totalInclVat,
+    description: 'Leverantörsskuld',
+  })
+
+  const total_debit_ore = journalLines.reduce((s, l) => s + l.debit_ore, 0)
+  const total_credit_ore = journalLines.reduce((s, l) => s + l.credit_ore, 0)
+  const balanced = total_debit_ore === total_credit_ore && total_debit_ore > 0
+
+  if (!balanced && total_debit_ore !== 0) {
+    warnings.push(
+      `Verifikatet balanserar inte: debet ${total_debit_ore} ≠ kredit ${total_credit_ore} öre.`,
+    )
+  }
+
+  return {
+    success: true as const,
+    data: {
+      source: 'expense',
+      lines: journalLines,
+      total_debit_ore,
+      total_credit_ore,
+      balanced,
+      entry_date: input.expense_date ?? todayLocalFromNow(),
       description: input.description ?? null,
       warnings,
     },

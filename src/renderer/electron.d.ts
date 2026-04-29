@@ -691,21 +691,38 @@ interface ElectronAPI {
   // Settings
   getSetting: (key: string) => Promise<unknown>
   setSetting: (key: string, value: unknown) => Promise<void>
-  // Sprint 16 — Live verifikat-preview (ADR 006)
-  previewJournalLines: (data: {
-    source: 'manual'
-    fiscal_year_id: number
-    entry_date?: string
-    description?: string
-    lines: ReadonlyArray<{
-      account_number: string
-      debit_ore: number
-      credit_ore: number
-      description?: string
-    }>
-  }) => Promise<
+  // Sprint 16 — Live verifikat-preview (ADR 006). Sprint 19b utökar
+  // med expense-source.
+  previewJournalLines: (
+    data:
+      | {
+          source: 'manual'
+          fiscal_year_id: number
+          entry_date?: string
+          description?: string
+          lines: ReadonlyArray<{
+            account_number: string
+            debit_ore: number
+            credit_ore: number
+            description?: string
+          }>
+        }
+      | {
+          source: 'expense'
+          fiscal_year_id: number
+          expense_date?: string
+          description?: string
+          lines: ReadonlyArray<{
+            description?: string
+            account_number: string
+            quantity: number
+            unit_price_ore: number
+            vat_code_id: number
+          }>
+        },
+  ) => Promise<
     IpcResult<{
-      source: 'manual'
+      source: 'manual' | 'expense'
       lines: Array<{
         account_number: string
         account_name: string | null

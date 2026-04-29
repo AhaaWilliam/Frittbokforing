@@ -651,6 +651,19 @@ const ManualEntryLineInputSchema = z
 // debouncar mot detta schema; failures returneras som IpcResult-fel
 // (inte exceptions) så form-state inte avbryts.
 
+// Slim expense-line-shape för preview — speglar ExpenseLineInputSchema men
+// med valfri description (förhandsgranskning kan ske innan användaren
+// skrivit beskrivning).
+const PreviewExpenseLineSchema = z
+  .object({
+    description: z.string().optional().default(''),
+    account_number: z.string().min(4).max(4),
+    quantity: z.number().int().min(1),
+    unit_price_ore: z.number().int().min(0),
+    vat_code_id: z.number().int().positive(),
+  })
+  .strict()
+
 export const PreviewJournalLinesInputSchema = z.discriminatedUnion('source', [
   z
     .object({
@@ -659,6 +672,15 @@ export const PreviewJournalLinesInputSchema = z.discriminatedUnion('source', [
       entry_date: z.string().optional(),
       description: z.string().optional(),
       lines: z.array(ManualEntryLineInputSchema).min(1),
+    })
+    .strict(),
+  z
+    .object({
+      source: z.literal('expense'),
+      fiscal_year_id: z.number().int().positive(),
+      expense_date: z.string().optional(),
+      description: z.string().optional(),
+      lines: z.array(PreviewExpenseLineSchema).min(1),
     })
     .strict(),
 ])
