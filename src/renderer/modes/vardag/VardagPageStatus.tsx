@@ -1,14 +1,30 @@
 import { StatusCard } from '../../components/ui/StatusCard'
 import { Callout } from '../../components/ui/Callout'
+import { useDashboardSummary } from '../../lib/hooks'
+import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { formatKr } from '../../lib/format'
 
 /**
- * Sprint 22 — Vardag status.
+ * Sprint 22 — Vardag status (placeholder).
+ * Sprint 26 — Riktiga data via useDashboardSummary.
  *
- * Tre KPI-kort: likvida medel, moms att betala, hälsa (resultat YTD).
- * MVP: placeholder-värden. Sprint 23+ hookar in
- * useDashboardSummary för riktiga siffror.
+ * Tre KPI: bank-saldo (utestående fordringar minus skulder),
+ * moms att betala, resultat hittills i år.
  */
 export function VardagPageStatus() {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const { data: summary, isLoading } = useDashboardSummary(activeFiscalYear?.id)
+
+  // "Pengar i kassan" är en grov approximation: kundfordringar minus
+  // leverantörsskulder. För riktigt bank-saldo behövs bank-konto-koppling
+  // (Sprint 27+ när bank-integration är tätare). Placeholder tills dess.
+  const liquidEstimateOre =
+    summary != null
+      ? summary.unpaidReceivablesOre - summary.unpaidPayablesOre
+      : null
+
+  const isPositive = (v: number | null) => v != null && v >= 0
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
       <header>
@@ -23,32 +39,52 @@ export function VardagPageStatus() {
         aria-label="Status-översikt"
       >
         <StatusCard
-          title="Pengar i kassan"
-          value="—"
-          hint="Saldo just nu"
-          variant="default"
+          title="Likvidt netto"
+          value={
+            isLoading
+              ? '–'
+              : liquidEstimateOre != null
+                ? formatKr(liquidEstimateOre)
+                : '–'
+          }
+          hint="Fordringar minus skulder"
+          variant={isPositive(liquidEstimateOre) ? 'default' : 'muted'}
           mono
         />
         <StatusCard
-          title="Moms att betala"
-          value="—"
-          hint="Inom 14 dagar"
-          variant="muted"
+          title="Moms (netto)"
+          value={isLoading ? '–' : summary ? formatKr(summary.vatNetOre) : '–'}
+          hint={
+            summary && summary.vatNetOre > 0
+              ? 'Att betala till SKV'
+              : 'Att få tillbaka'
+          }
+          variant={summary && summary.vatNetOre > 0 ? 'default' : 'muted'}
           mono
         />
         <StatusCard
           title="Resultat YTD"
-          value="—"
+          value={
+            isLoading
+              ? '–'
+              : summary
+                ? formatKr(summary.operatingResultOre)
+                : '–'
+          }
           hint="Hittills i år"
-          variant="default"
+          variant={
+            summary && summary.operatingResultOre >= 0 ? 'default' : 'muted'
+          }
           mono
         />
       </section>
 
-      <Callout variant="info" title="Riktiga siffror kommer">
-        Status-vyn kommer hämta data från ditt aktiva räkenskapsår när
-        funktionen är fullt integrerad. Just nu visas placeholder-värden.
-      </Callout>
+      {!activeFiscalYear && (
+        <Callout variant="info" title="Inget aktivt räkenskapsår">
+          För att se siffror behöver du välja eller skapa ett räkenskapsår. Det
+          görs i Bokförar-läget under Inställningar.
+        </Callout>
+      )}
     </div>
   )
 }

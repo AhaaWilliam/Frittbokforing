@@ -1,16 +1,45 @@
 import { Callout } from '../../components/ui/Callout'
 import { CheckLine } from '../../components/ui/CheckLine'
+import { Pill } from '../../components/ui/Pill'
+import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import {
+  useDraftInvoices,
+  useExpenseDrafts,
+  useDashboardSummary,
+} from '../../lib/hooks'
+import { formatKr } from '../../lib/format'
+import { useUiMode } from '../../lib/use-ui-mode'
 
 /**
- * Sprint 22 — Vardag inkorg.
+ * Sprint 22 — Vardag inkorg (placeholder).
+ * Sprint 26 — Riktiga data: utkasts-fakturor, utkast-kostnader,
+ * obetalda fordringar/skulder via dashboard-summary.
  *
- * "Vad behöver jag göra?" — checklista över saker som väntar:
- * obetalda fakturor, kostnader att registrera, momsperioder att stänga.
- *
- * MVP: statiska placeholder-rader. Sprint 23+ hookar in riktiga
- * data via useDashboardSummary + useDraftInvoices etc.
+ * "Vad behöver jag göra idag?"
  */
 export function VardagPageInbox() {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const { setMode } = useUiMode()
+  const { data: invoiceDrafts, isLoading: invoicesLoading } = useDraftInvoices(
+    activeFiscalYear?.id,
+  )
+  const { data: expenseDrafts, isLoading: expensesLoading } = useExpenseDrafts(
+    activeFiscalYear?.id,
+  )
+  const { data: summary } = useDashboardSummary(activeFiscalYear?.id)
+
+  const invoiceDraftCount = invoiceDrafts?.length ?? 0
+  const expenseDraftCount = expenseDrafts?.length ?? 0
+  const hasReceivables = (summary?.unpaidReceivablesOre ?? 0) > 0
+  const hasPayables = (summary?.unpaidPayablesOre ?? 0) > 0
+
+  const isLoading = invoicesLoading || expensesLoading
+  const hasItems =
+    invoiceDraftCount > 0 ||
+    expenseDraftCount > 0 ||
+    hasReceivables ||
+    hasPayables
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
       <header>
@@ -20,22 +49,95 @@ export function VardagPageInbox() {
         <p className="text-sm text-neutral-500">Vad behöver göras idag?</p>
       </header>
 
-      <ul className="flex flex-col gap-3" aria-label="Att göra">
-        <li className="rounded-lg border border-neutral-200 bg-white p-4">
-          <CheckLine
-            state="pending"
-            label="Inga utestående uppgifter"
-            description="När du har obetalda fakturor, kostnader att registrera eller momsperioder som stundar visas de här."
-          />
-        </li>
+      <ul
+        className="flex flex-col gap-3"
+        aria-label="Att göra"
+        data-testid="inbox-items"
+      >
+        {!activeFiscalYear ? (
+          <li className="rounded-lg border border-neutral-200 bg-white p-4">
+            <CheckLine
+              state="info"
+              label="Inget aktivt räkenskapsår"
+              description="Välj eller skapa ett räkenskapsår för att se data."
+            />
+          </li>
+        ) : isLoading ? (
+          <li className="rounded-lg border border-neutral-200 bg-white p-4">
+            <CheckLine
+              state="pending"
+              label="Laddar..."
+              description="Hämtar dina utkast och fordringar."
+            />
+          </li>
+        ) : !hasItems ? (
+          <li className="rounded-lg border border-neutral-200 bg-white p-4">
+            <CheckLine
+              state="check"
+              label="Inget brådskande"
+              description="Du har inga utkast att slutföra eller obetalda fordringar att följa upp."
+            />
+          </li>
+        ) : (
+          <>
+            {invoiceDraftCount > 0 && (
+              <li className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <CheckLine
+                  state="cross"
+                  label={`${invoiceDraftCount} faktura-utkast väntar`}
+                  description="Slutför och skicka för att registrera försäljningen."
+                />
+                <Pill variant="warning">{invoiceDraftCount}</Pill>
+              </li>
+            )}
+            {expenseDraftCount > 0 && (
+              <li className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <CheckLine
+                  state="cross"
+                  label={`${expenseDraftCount} kostnads-utkast väntar`}
+                  description="Bokför kostnaderna när de är klara."
+                />
+                <Pill variant="warning">{expenseDraftCount}</Pill>
+              </li>
+            )}
+            {hasReceivables && summary && (
+              <li className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <CheckLine
+                  state="info"
+                  label="Obetalda kundfordringar"
+                  description={`${formatKr(summary.unpaidReceivablesOre)} att fakturera in.`}
+                />
+                <Pill variant="info">Att få in</Pill>
+              </li>
+            )}
+            {hasPayables && summary && (
+              <li className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <CheckLine
+                  state="info"
+                  label="Obetalda leverantörsskulder"
+                  description={`${formatKr(summary.unpaidPayablesOre)} att betala ut.`}
+                />
+                <Pill variant="info">Att betala</Pill>
+              </li>
+            )}
+          </>
+        )}
       </ul>
 
-      <Callout variant="tip" title="Hur fungerar inkorgen?">
-        Inkorgen samlar saker som behöver din uppmärksamhet — obetalda fakturor
-        som har förfallit, kostnader du fotograferat men inte registrerat,
-        kommande momsperioder. Klicka på en rad för att hoppa direkt till
-        åtgärden.
-      </Callout>
+      {hasItems && (
+        <Callout variant="tip">
+          För att slutföra ett utkast eller registrera betalning, växla till{' '}
+          <button
+            type="button"
+            onClick={() => setMode('bokforare')}
+            className="font-medium text-brand-700 underline-offset-2 hover:underline"
+            data-testid="inbox-fallback-link"
+          >
+            Bokförar-läget
+          </button>{' '}
+          tills full Vardag-redigering är klar.
+        </Callout>
+      )}
     </div>
   )
 }

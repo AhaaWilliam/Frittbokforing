@@ -79,14 +79,23 @@ describe('VardagBottomNav', () => {
   })
 })
 
+// Sprint 26 — Inbox och Status använder nu useDashboardSummary +
+// useDraftInvoices + useExpenseDrafts som behöver FiscalYearProvider +
+// QueryClient. Använd renderWithProviders för dessa.
+import { renderWithProviders } from '../../../helpers/render-with-providers'
+import { setupMockIpc } from '../../../setup/mock-ipc'
+
 describe('Vardag pages', () => {
-  it('VardagPageInbox renders heading and tip', () => {
-    render(<VardagPageInbox />)
-    expect(screen.getByRole('heading', { name: 'Inkorg' })).toBeInTheDocument()
-    expect(screen.getByText(/Hur fungerar inkorgen/)).toBeInTheDocument()
+  beforeEach(() => {
+    setupMockIpc()
   })
 
-  it('VardagPageSpend renders fallback link to Bokförare', async () => {
+  it('VardagPageInbox renders heading', async () => {
+    await renderWithProviders(<VardagPageInbox />)
+    expect(screen.getByRole('heading', { name: 'Inkorg' })).toBeInTheDocument()
+  })
+
+  it('VardagPageSpend renders fallback link to Bokförare', () => {
     render(<VardagPageSpend />)
     expect(
       screen.getByRole('heading', { name: 'Lägg till kostnad' }),
@@ -113,20 +122,33 @@ describe('Vardag pages', () => {
     expect(screen.getByTestId('income-fallback-link')).toBeInTheDocument()
   })
 
-  it('VardagPageStatus renders three KPI-cards', () => {
-    render(<VardagPageStatus />)
-    expect(screen.getByText('Pengar i kassan')).toBeInTheDocument()
-    expect(screen.getByText('Moms att betala')).toBeInTheDocument()
+  it('VardagPageStatus renders three KPI-cards', async () => {
+    await renderWithProviders(<VardagPageStatus />)
+    expect(screen.getByText('Likvidt netto')).toBeInTheDocument()
+    expect(screen.getByText('Moms (netto)')).toBeInTheDocument()
     expect(screen.getByText('Resultat YTD')).toBeInTheDocument()
   })
 
-  it.each([
-    ['Inbox', VardagPageInbox],
-    ['Spend', VardagPageSpend],
-    ['Income', VardagPageIncome],
-    ['Status', VardagPageStatus],
-  ] as const)('axe a11y on %s', async (_label, Page) => {
-    const { container } = render(<Page />)
+  it('axe a11y on Inbox', async () => {
+    const { container } = await renderWithProviders(<VardagPageInbox />)
+    const results = await axe.run(container, AXE_OPTIONS)
+    expect(results.violations).toEqual([])
+  })
+
+  it('axe a11y on Spend', async () => {
+    const { container } = render(<VardagPageSpend />)
+    const results = await axe.run(container, AXE_OPTIONS)
+    expect(results.violations).toEqual([])
+  })
+
+  it('axe a11y on Income', async () => {
+    const { container } = render(<VardagPageIncome />)
+    const results = await axe.run(container, AXE_OPTIONS)
+    expect(results.violations).toEqual([])
+  })
+
+  it('axe a11y on Status', async () => {
+    const { container } = await renderWithProviders(<VardagPageStatus />)
     const results = await axe.run(container, AXE_OPTIONS)
     expect(results.violations).toEqual([])
   })
