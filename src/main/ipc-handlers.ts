@@ -1587,11 +1587,23 @@ export function registerIpcHandlers(): void {
 
   // Sprint 16 — Live verifikat-preview (ADR 006). Read-only kanal som
   // beräknar journal-lines från form-input utan att skriva till DB.
+  //
+  // Sprint 20 — defense-in-depth: aktivera `pragma query_only = ON` för
+  // anropets duration. Pragmat blockerar INSERT/UPDATE/DELETE på connection-
+  // nivå. better-sqlite3 delar connection mellan handlers, så vi måste
+  // återställa till OFF efter — try/finally garanterar det även vid kast.
+  // En framtida bug som av misstag introducerar mutation i preview-pathen
+  // failar då med SQLITE_READONLY istället för att skriva data.
   ipcMain.handle(
     'preview:journal-lines',
-    wrapIpcHandler(PreviewJournalLinesInputSchema, (data) =>
-      previewJournalLines(db, data),
-    ),
+    wrapIpcHandler(PreviewJournalLinesInputSchema, (data) => {
+      db.pragma('query_only = ON')
+      try {
+        return previewJournalLines(db, data)
+      } finally {
+        db.pragma('query_only = OFF')
+      }
+    }),
   )
 
   // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1.
