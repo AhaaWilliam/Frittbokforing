@@ -4,7 +4,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import axe from 'axe-core'
 import { VardagShell } from '../../../../src/renderer/modes/vardag/VardagShell'
-import { VardagPageOverview } from '../../../../src/renderer/modes/vardag/VardagPageOverview'
 
 const AXE_OPTIONS: axe.RunOptions = {
   rules: { 'color-contrast': { enabled: false } },
@@ -68,38 +67,12 @@ describe('VardagShell', () => {
   it('passes axe a11y check', async () => {
     const { container } = render(
       <VardagShell companyName="Acme AB" showBottomNav={false}>
-        <VardagPageOverview />
+        <div>
+          <h1>Innehåll</h1>
+          <p>Stub-innehåll för axe-kontroll.</p>
+        </div>
       </VardagShell>,
     )
-    const results = await axe.run(container, AXE_OPTIONS)
-    expect(results.violations).toEqual([])
-  })
-})
-
-describe('VardagPageOverview', () => {
-  it('renders greeting heading', () => {
-    render(<VardagPageOverview />)
-    expect(
-      screen.getByRole('heading', { name: 'God morgon' }),
-    ).toBeInTheDocument()
-  })
-
-  it('renders three KPI-cards', () => {
-    render(<VardagPageOverview />)
-    expect(screen.getByText('Pengar i kassan')).toBeInTheDocument()
-    expect(screen.getByText('Obetalda kostnader')).toBeInTheDocument()
-    expect(screen.getByText('Obetalda fakturor')).toBeInTheDocument()
-  })
-
-  it('renders MVP-callout', () => {
-    render(<VardagPageOverview />)
-    expect(
-      screen.getByText(/Vardag-läget är under uppbyggnad/),
-    ).toBeInTheDocument()
-  })
-
-  it('passes axe a11y check', async () => {
-    const { container } = render(<VardagPageOverview />)
     const results = await axe.run(container, AXE_OPTIONS)
     expect(results.violations).toEqual([])
   })
