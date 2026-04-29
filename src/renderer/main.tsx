@@ -4,6 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import App from './App'
 import './index.css'
+import { DEFAULT_MODE } from './styles/tokens'
+
+// Sprint 12 — sätt `data-mode` på documentElement så att [data-mode="..."]
+// CSS-scopes i index.css aktiveras. Vardag-läge implementeras i Sprint 17;
+// tills dess är default ('bokforare') det enda läget som används. Settings-
+// driven persistens (ADR 005) hookas in när mode-switcher byggs.
+document.documentElement.dataset.mode = DEFAULT_MODE
 
 const queryClient = new QueryClient({
   defaultOptions: {

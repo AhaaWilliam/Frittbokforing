@@ -1,24 +1,231 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
-  --color-card: #ffffff;
-  --color-card-foreground: #0a0a0a;
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
-  --color-border: #e4e4e7;
-  --color-primary: #18181b;
-  --color-primary-foreground: #fafafa;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #fafafa;
-  --radius: 0.5rem;
+/* ─────────────────────────────────────────────────────────────────────────
+ * Sprint 12 — Token-grunden.
+ *
+ * Per ADR 005 (dual-mode UI): tokens scopas på `:root` (gemensamma) och
+ * på `[data-mode="vardag"]` / `[data-mode="bokforare"]` (mode-overrides).
+ * Sync med `src/renderer/styles/tokens.ts` — paritet verifieras i Sprint 13.
+ *
+ * Per implementeringsplanens Sprint 12: bara tokens + font-bundling.
+ * Inga komponenter rörda. Visuell vinst sker när komponenter migreras
+ * till tokens i Sprint 13.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Fonts ──────────────────────────────────────────────────────────────────
+ * Variabla typsnitt bundlade lokalt (offline-krav, ADR 001-anda).
+ * Se `src/renderer/fonts/README.md` för installation. Saknas filerna
+ * faller systemet tillbaka på font-stacken i `tokens.ts > fontFamily`.
+ * `font-display: swap` undviker "flash of invisible text".
+ */
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('./fonts/Fraunces-VariableFont.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
 
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('./fonts/InterTight-VariableFont.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('./fonts/JetBrainsMono-VariableFont.woff2') format('woff2-variations');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Tailwind v4 @theme ─────────────────────────────────────────────────────
+ * Genererar utility-klasser. Mappar mot tokens.ts.
+ */
+
+@theme {
+  /* Färg — bas */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+  --color-neutral-950: #09090b;
+
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dbe7ff;
+  --color-brand-500: #3b6cdb;
+  --color-brand-600: #2d54b8;
+  --color-brand-700: #234293;
+  --color-brand-900: #13265a;
+
+  --color-success-100: #dcfce7;
+  --color-success-500: #16a34a;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #d97706;
+  --color-danger-100: #fee2e2;
+  --color-danger-500: #dc2626;
+  --color-info-100: #e0f2fe;
+  --color-info-500: #0284c7;
+
+  /* Bakåtkompatibilitet — befintliga komponenter använder dessa namn.
+   * Sprint 13 migrerar successivt till bas-tokens; tills dess speglar
+   * vi gamla shortcuts till nya värden. */
+  --color-background: #ffffff;
+  --color-foreground: var(--color-neutral-950);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-neutral-950);
+  --color-muted: var(--color-neutral-100);
+  --color-muted-foreground: var(--color-neutral-500);
+  --color-border: var(--color-neutral-200);
+  --color-primary: var(--color-neutral-900);
+  --color-primary-foreground: var(--color-neutral-50);
+  --color-destructive: var(--color-danger-500);
+  --color-destructive-foreground: var(--color-neutral-50);
+
+  /* Typografi */
+  --font-display: 'Fraunces', 'Iowan Old Style', 'Apple Garamond', Georgia,
+    serif;
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+  --radius: 0.5rem; /* legacy alias — befintliga komponenter */
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md:
+    0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --shadow-lg:
+    0 12px 24px -8px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
+  --shadow-sheet: 0 -8px 32px -4px rgb(0 0 0 / 0.12);
+  --shadow-focus: 0 0 0 3px rgb(59 108 219 / 0.35);
+
+  /* Motion */
+  --duration-instant: 0ms;
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decel: cubic-bezier(0, 0, 0, 1);
+  --ease-accel: cubic-bezier(0.3, 0, 1, 1);
+}
+
+/* ── :root — gemensamma CSS-vars utanför @theme ─────────────────────────────
+ * Värden som @theme inte täcker (t.ex. mode-resolved surface/text). Komponenter
+ * läser via var(--surface), inte via en mode-specifik token direkt — det gör
+ * att samma komponent renderar korrekt i båda modes utan className-koppling.
+ */
+
+:root {
+  /* Default = Bokförare-värden. Override via [data-mode="vardag"] nedan. */
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --text-primary: var(--color-neutral-950);
+  --text-secondary: var(--color-neutral-500);
+  --border-default: var(--color-neutral-200);
+  --accent: var(--color-brand-600);
+  --top-bar-surface: var(--color-neutral-900);
+  --top-bar-text: var(--color-neutral-50);
+  --font-size-base: 1rem;
+
+  /* Z-index — används främst inline eftersom Tailwind har egen z-skala */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-navigation: 30;
+  --z-dropdown: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-command-palette: 80;
+}
+
+/* ── Mode-overrides ──────────────────────────────────────────────────────── */
+
+[data-mode='vardag'] {
+  /* Vardag = papper, varm vit, generösare bröd-typografi */
+  --surface: var(--color-neutral-50);
+  --surface-elevated: #ffffff;
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-600);
+  --border-default: var(--color-neutral-200);
+  --accent: var(--color-brand-500);
+  --font-size-base: 1.125rem;
+  /* Top-bar i Vardag-läget är ljus (motsats till Bokförare) */
+  --top-bar-surface: #ffffff;
+  --top-bar-text: var(--color-neutral-900);
+}
+
+[data-mode='bokforare'] {
+  /* Default-värdena från :root är redan Bokförare-kalibrerade.
+   * Selectorn finns för specificity-symmetri — om Vardag override:ar
+   * en token utan att Bokförare har motsvarande "reset", kan kvarvarande
+   * Vardag-värden läcka vid mode-byte mid-session. */
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --text-primary: var(--color-neutral-950);
+  --text-secondary: var(--color-neutral-500);
+  --border-default: var(--color-neutral-200);
+  --accent: var(--color-brand-600);
+  --font-size-base: 1rem;
+  --top-bar-surface: var(--color-neutral-900);
+  --top-bar-text: var(--color-neutral-50);
+}
+
+/* ── Bas-element ────────────────────────────────────────────────────────── */
+
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  font-feature-settings: 'cv11', 'ss01'; /* Inter Tight stylistic alternates */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduced motion (M133-anda — a11y) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
