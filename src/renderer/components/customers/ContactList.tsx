@@ -1,5 +1,10 @@
 import type { Counterparty } from '../../../shared/types'
 import { useCounterparties } from '../../lib/hooks'
+import {
+  EmptyState,
+  CustomerIllustration,
+  SupplierIllustration,
+} from '../ui/EmptyState'
 import { Pill } from '../ui/Pill'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 
@@ -44,9 +49,23 @@ export function ContactList({
 
   if (!counterparties || counterparties.length === 0) {
     return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        {EMPTY_MESSAGES[type]}
-      </div>
+      <EmptyState
+        icon={
+          type === 'customer' ? (
+            <CustomerIllustration />
+          ) : (
+            <SupplierIllustration />
+          )
+        }
+        title={EMPTY_MESSAGES[type]}
+        description={
+          search.length > 0
+            ? `Inget träffar "${search}".`
+            : type === 'customer'
+              ? 'Lägg till din första kund för att kunna fakturera.'
+              : 'Lägg till din första leverantör för att registrera kostnader.'
+        }
+      />
     )
   }
 

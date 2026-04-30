@@ -3,6 +3,7 @@ import { useProducts } from '../../lib/hooks'
 import { formatKr, unitLabel } from '../../lib/format'
 import { Pill } from '../ui/Pill'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { EmptyState, ProductIllustration } from '../ui/EmptyState'
 
 interface ProductListProps {
   selectedId: number | null
@@ -40,9 +41,15 @@ export function ProductList({
 
   if (!products || products.length === 0) {
     return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        Inga artiklar hittade
-      </div>
+      <EmptyState
+        icon={<ProductIllustration />}
+        title="Inga artiklar hittade"
+        description={
+          search.length > 0
+            ? `Inget träffar "${search}".`
+            : 'Lägg till din första artikel för att snabbfakturera produkter och tjänster.'
+        }
+      />
     )
   }
 

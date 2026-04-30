@@ -236,3 +236,84 @@ export function DashboardIllustration() {
     </svg>
   )
 }
+
+export function CustomerIllustration() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle
+        cx="32"
+        cy="22"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M14 54c0-10 8-16 18-16s18 6 18 16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function SupplierIllustration() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="6"
+        y="22"
+        width="36"
+        height="24"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M42 28h10l6 8v10H42"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="18" cy="50" r="4" stroke="currentColor" strokeWidth="2" />
+      <circle cx="48" cy="50" r="4" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
+export function ProductIllustration() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M32 8l20 10v18l-20 10-20-10V18z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 18l20 10 20-10M32 28v18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
