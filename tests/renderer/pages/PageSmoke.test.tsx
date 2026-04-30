@@ -20,6 +20,12 @@ import { PageTax } from '../../../src/renderer/pages/PageTax'
 import { PageOverview } from '../../../src/renderer/pages/PageOverview'
 import { PageManualEntries } from '../../../src/renderer/pages/PageManualEntries'
 import { PageReports } from '../../../src/renderer/pages/PageReports'
+import { PageCustomers } from '../../../src/renderer/pages/PageCustomers'
+import { PageSuppliers } from '../../../src/renderer/pages/PageSuppliers'
+import { PageProducts } from '../../../src/renderer/pages/PageProducts'
+import { PageFixedAssets } from '../../../src/renderer/pages/PageFixedAssets'
+import { PageAccounts } from '../../../src/renderer/pages/PageAccounts'
+import { PageImportedEntries } from '../../../src/renderer/pages/PageImportedEntries'
 
 // ── Shared fixtures ───────────────────────────────────────────────
 
@@ -368,5 +374,158 @@ describe('PageReports smoke', () => {
       initialRoute: '/reports',
     })
     expect(container).toBeDefined()
+  })
+})
+
+// ── PageCustomers ─────────────────────────────────────────────────
+
+describe('PageCustomers smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('counterparty:list', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageCustomers />, {
+      axeCheck: false, // M133 exempt — master-detail empty state
+      initialRoute: '/customers',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/kund/i)
+    })
+  })
+
+  it('shows loading state without crash', async () => {
+    mockIpcPending('counterparty:list')
+    const { container } = await renderWithProviders(<PageCustomers />, {
+      axeCheck: false, // M133 exempt — loading state
+      initialRoute: '/customers',
+    })
+    expect(container).toBeDefined()
+  })
+})
+
+// ── PageSuppliers ─────────────────────────────────────────────────
+
+describe('PageSuppliers smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('counterparty:list', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageSuppliers />, {
+      axeCheck: false, // M133 exempt — master-detail empty state
+      initialRoute: '/suppliers',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/leverantör/i)
+    })
+  })
+})
+
+// ── PageProducts ──────────────────────────────────────────────────
+
+describe('PageProducts smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('product:list', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageProducts />, {
+      axeCheck: false, // M133 exempt — master-detail empty state
+      initialRoute: '/products',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/artikel|produkt/i)
+    })
+  })
+
+  it('shows loading state without crash', async () => {
+    mockIpcPending('product:list')
+    const { container } = await renderWithProviders(<PageProducts />, {
+      axeCheck: false, // M133 exempt — loading state
+      initialRoute: '/products',
+    })
+    expect(container).toBeDefined()
+  })
+})
+
+// ── PageFixedAssets ───────────────────────────────────────────────
+
+describe('PageFixedAssets smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('depreciation:list', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageFixedAssets />, {
+      axeCheck: false, // M133 exempt — heading varies by data state
+      initialRoute: '/fixed-assets',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/anläggning|tillgång/i)
+    })
+  })
+
+  it('shows loading state without crash', async () => {
+    mockIpcPending('depreciation:list')
+    const { container } = await renderWithProviders(<PageFixedAssets />, {
+      axeCheck: false, // M133 exempt — loading state
+      initialRoute: '/fixed-assets',
+    })
+    expect(container).toBeDefined()
+  })
+})
+
+// ── PageAccounts ──────────────────────────────────────────────────
+
+describe('PageAccounts smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('account:list-all', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageAccounts />, {
+      axeCheck: false, // M133 exempt — toolbar buttons vary
+      initialRoute: '/accounts',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/konto/i)
+    })
+  })
+
+  it('shows loading state without crash', async () => {
+    mockIpcPending('account:list-all')
+    const { container } = await renderWithProviders(<PageAccounts />, {
+      axeCheck: false, // M133 exempt — loading state
+      initialRoute: '/accounts',
+    })
+    expect(container).toBeDefined()
+  })
+})
+
+// ── PageImportedEntries ───────────────────────────────────────────
+
+describe('PageImportedEntries smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('journal-entry:list-imported', {
+      success: true,
+      data: [],
+    })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageImportedEntries />, {
+      axeCheck: false, // M133 exempt — heading varies by data state
+      initialRoute: '/imported-entries',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/import/i)
+    })
   })
 })
