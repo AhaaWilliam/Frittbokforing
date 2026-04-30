@@ -23,15 +23,16 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S58) | **87.97%** | **+2.14** | money.ts add to scope (100%) + S56-test wired in |
 | 2026-04-30 (S59) | 87.97% | ±0 | break-threshold 85→87 (ratchet — låser S58-vinst) |
 | 2026-04-30 (S60) | **88.35%** | **+0.38** | chronology-guard StringLiteral kill (field='date'-assert) → 100% |
+| 2026-04-30 (S61) | **89.85%** | **+1.50** | correction-service guard #2/#4/#6/L202 reason-text-assertions (4 killed) |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
 | Fil | Score | Killed | Survived | NoCov | Δ från S56 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **88.35%** | 235 | 19 | 12 | +2.52 pp |
-| chronology-guard.ts | **100.00%** | 16 | 0 | 0 | **+6.25 pp** |
+| **Totalt** | **89.85%** | 239 | 15 | 12 | +4.02 pp |
+| chronology-guard.ts | 100.00% | 16 | 0 | 0 | ±0 |
 | vat-report-service.ts | 83.87% | 52 | 6 | 4 | ±0 |
-| correction-service.ts | 84.96% | 113 | 12 | 8 | ±0 |
+| correction-service.ts | **87.97%** | 117 | 8 | 8 | **+3.01 pp** |
 | result-service.ts | 97.67% | 42 | 1 | 0 | ±0 |
 | money.ts | 100.00% | 12 | 0 | 0 | ±0 |
 

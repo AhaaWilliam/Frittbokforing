@@ -29,6 +29,7 @@ export default defineConfig({
       'tests/sprint-52-vat-report-mutation-gaps.test.ts',
       'tests/sprint-53-correction-mutation-gaps.test.ts',
       'tests/sprint-56-result-service-require-group.test.ts',
+      'tests/sprint-61-correction-mutation-extra.test.ts',
       'tests/shared/money.test.ts',
       'tests/shared/parse-decimal.test.ts',
     ],
