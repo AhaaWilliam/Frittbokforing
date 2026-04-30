@@ -3,6 +3,7 @@ import { useDraftInvoices } from '../../lib/hooks'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
 import { Pill } from '../ui/Pill'
+import { EmptyState, InvoiceIllustration } from '../ui/EmptyState'
 
 interface DraftListProps {
   onSelect: (id: number) => void
@@ -22,9 +23,11 @@ export function DraftList({ onSelect }: DraftListProps) {
 
   if (!drafts || drafts.length === 0) {
     return (
-      <div className="px-8 py-16 text-center text-sm text-muted-foreground">
-        Inga utkast &auml;nnu. Klicka + Ny faktura f&ouml;r att b&ouml;rja.
-      </div>
+      <EmptyState
+        icon={<InvoiceIllustration />}
+        title="Inga utkast ännu"
+        description="Klicka + Ny faktura för att börja registrera en kundfaktura."
+      />
     )
   }
 

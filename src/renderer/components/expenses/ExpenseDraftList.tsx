@@ -3,6 +3,7 @@ import { useExpenseDrafts } from '../../lib/hooks'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
 import { Pill } from '../ui/Pill'
+import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
 
 interface ExpenseDraftListProps {
   onSelect: (id: number) => void
@@ -22,10 +23,11 @@ export function ExpenseDraftList({ onSelect }: ExpenseDraftListProps) {
 
   if (!drafts || drafts.length === 0) {
     return (
-      <div className="px-8 py-16 text-center text-sm text-muted-foreground">
-        Inga utkast. Klicka &lsquo;Ny kostnad&rsquo; f&ouml;r att registrera en
-        leverant&ouml;rsfaktura.
-      </div>
+      <EmptyState
+        icon={<ExpenseIllustration />}
+        title="Inga utkast"
+        description="Klicka 'Ny kostnad' för att registrera en leverantörsfaktura."
+      />
     )
   }
 
