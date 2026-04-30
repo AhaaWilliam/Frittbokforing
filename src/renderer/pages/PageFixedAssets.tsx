@@ -19,6 +19,7 @@ import {
 } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { Pill, type PillVariant } from '../components/ui/Pill'
 import { FixedAssetFormDialog } from '../components/fixed-assets/FixedAssetFormDialog'
 import { FixedAssetDetailPanel } from '../components/fixed-assets/FixedAssetDetailPanel'
 import { DisposeDialog } from '../components/fixed-assets/DisposeDialog'
@@ -28,6 +29,12 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Aktiv',
   disposed: 'Avyttrad',
   fully_depreciated: 'Fullt avskriven',
+}
+
+const STATUS_PILL: Record<string, PillVariant> = {
+  active: 'info',
+  disposed: 'neutral',
+  fully_depreciated: 'success',
 }
 
 function fmtKr(ore: number): string {
@@ -226,17 +233,9 @@ export function PageFixedAssets() {
                         {a.schedules_executed}/{a.schedules_generated}
                       </td>
                       <td className="py-2 pr-4">
-                        <span
-                          className={
-                            a.status === 'disposed'
-                              ? 'inline-flex rounded-full bg-muted px-2 py-0.5 text-xs'
-                              : a.status === 'fully_depreciated'
-                                ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800'
-                                : 'inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800'
-                          }
-                        >
+                        <Pill variant={STATUS_PILL[a.status] ?? 'neutral'}>
                           {STATUS_LABELS[a.status] ?? a.status}
-                        </span>
+                        </Pill>
                       </td>
                       <td className="py-2 pr-4 text-right">
                         {a.status === 'active' &&
