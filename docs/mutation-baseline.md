@@ -27,22 +27,23 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S62) | 89.85% | ±0 | break-threshold 87→89 (ratchet — låser S61-vinst) |
 | 2026-04-30 (S63) | **93.23%** | **+3.38** | vat-report yearTotal-aggregering + L80 throw-test (5 killed) |
 | 2026-04-30 (S64) | 93.23% | ±0 | break-threshold 89→92 (ratchet — låser S63-vinst) |
+| 2026-04-30 (S65) | **95.11%** | **+1.88** | correction L307+L312-314 plain-Error spy-test (5 killed) + ratchet 92→94 |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
 | Fil | Score | Killed | Survived | NoCov | Δ från S56 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **93.23%** | 248 | 10 | 8 | +7.40 pp |
+| **Totalt** | **95.11%** | 253 | 9 | 4 | +9.28 pp |
 | chronology-guard.ts | 100.00% | 16 | 0 | 0 | ±0 |
-| vat-report-service.ts | **98.39%** | 61 | 1 | 0 | **+14.52 pp** |
-| correction-service.ts | 87.97% | 117 | 8 | 8 | ±0 |
+| vat-report-service.ts | 98.39% | 61 | 1 | 0 | ±0 |
+| correction-service.ts | **91.73%** | 122 | 7 | 4 | **+3.76 pp** |
 | result-service.ts | 97.67% | 42 | 1 | 0 | ±0 |
 | money.ts | 100.00% | 12 | 0 | 0 | ±0 |
 
-**Break-threshold:** 92% (höjd från 89% i S64 efter att S63 lyfte
-totalscoren till 93.23%). Nästa höjningsmål: 95% när correction-service
-L307 LogicalOperator-mutanter på error-handler stängs (4 surviving;
-kräver test som triggar plain-Error-throw inne i transaktionen).
+**Break-threshold:** 94% (höjd från 92% i S65 efter att samma sprint
+lyfte totalscoren till 95.11%). 95%-tröskeln nådd. Nästa höjningsmål:
+97% kräver att kvarvarande nocov + L227-defensiva-rader (kan inte
+triggas pga schema-trigger ≥2 rader) hanteras separat.
 
 NoCov-rader är funktioner som test-suite inte täcker direkt (kallas
 via dashboard/report-service-vägar).

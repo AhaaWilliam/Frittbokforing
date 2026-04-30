@@ -15,7 +15,7 @@
  * Strategi: skapa testfixtures direkt via INSERT där behövligt, och
  * assertera EXAKT reason/error-text + code.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Database from 'better-sqlite3'
 import { migrations } from '../src/main/migrations'
 import { createCompany } from '../src/main/services/company-service'
@@ -235,5 +235,42 @@ describe('Sprint 61 — createCorrectionEntry ENTRY_NOT_FOUND inom transaktion (
     if (result.success) return
     expect(result.code).toBe('ENTRY_NOT_FOUND')
     expect(result.error).toBe('Verifikatet hittades inte.')
+  })
+})
+
+describe('Sprint 65 — createCorrectionEntry plain-Error fallback (L307 + L312-L314)', () => {
+  it('plain Error från transaktion → UNEXPECTED_ERROR med message', () => {
+    const original = bookManual()
+
+    // Spy på db.prepare så att FÖRSTA anropet inom transaktionen kastar
+    // en plain Error (utan 'code'-property). Detta exercerar den
+    // andra grenen i catch-blocket (L312-314 fallback).
+    const realPrepare = db.prepare.bind(db)
+    let callCount = 0
+    const spy = vi.spyOn(db, 'prepare').mockImplementation(((sql: string) => {
+      callCount++
+      // Första prepare-anropet inne i transaktionen är SELECT-en på
+      // journal_entries (L191). Kasta plain Error där.
+      if (
+        callCount === 1 &&
+        sql.includes('SELECT id, company_id, fiscal_year_id')
+      ) {
+        throw new Error('forced plain error for L307 mutation kill')
+      }
+      return realPrepare(sql)
+    }) as typeof db.prepare)
+
+    try {
+      const result = createCorrectionEntry(db, {
+        journal_entry_id: original.journalEntryId,
+        fiscal_year_id: fiscalYearId,
+      })
+      expect(result.success).toBe(false)
+      if (result.success) return
+      expect(result.code).toBe('UNEXPECTED_ERROR')
+      expect(result.error).toBe('forced plain error for L307 mutation kill')
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
