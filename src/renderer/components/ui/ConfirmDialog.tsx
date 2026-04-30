@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
+import { Button, type ButtonVariant } from './Button'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -22,12 +23,12 @@ export const ConfirmDialog = memo(function ConfirmDialog({
   variant = 'default',
   onConfirm,
 }: ConfirmDialogProps) {
-  const confirmClasses =
+  const buttonVariant: ButtonVariant =
     variant === 'danger'
-      ? 'bg-danger-500 text-white hover:bg-danger-600'
+      ? 'destructive'
       : variant === 'warning'
-        ? 'bg-warning-500 text-white hover:bg-warning-600'
-        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+        ? 'warning'
+        : 'primary'
 
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -42,21 +43,12 @@ export const ConfirmDialog = memo(function ConfirmDialog({
           </AlertDialog.Description>
           <div className="flex justify-end gap-3">
             <AlertDialog.Cancel asChild>
-              <button
-                type="button"
-                className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
-              >
-                {cancelLabel}
-              </button>
+              <Button variant="secondary">{cancelLabel}</Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
-              <button
-                type="button"
-                onClick={onConfirm}
-                className={`rounded-md px-4 py-2 text-sm font-medium ${confirmClasses}`}
-              >
+              <Button variant={buttonVariant} onClick={onConfirm}>
                 {confirmLabel}
-              </button>
+              </Button>
             </AlertDialog.Action>
           </div>
         </AlertDialog.Content>

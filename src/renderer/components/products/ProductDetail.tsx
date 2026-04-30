@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useProduct, useDeactivateProduct } from '../../lib/hooks'
 import { formatKr, unitLabel } from '../../lib/format'
+import { Button } from '../ui/Button'
 import { CustomerPriceTable } from './CustomerPriceTable'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 
@@ -88,35 +89,26 @@ export function ProductDetail({ id, onEdit }: ProductDetailProps) {
 
       <div className="mt-8 border-t pt-6">
         {!showConfirm ? (
-          <button
-            type="button"
-            onClick={() => setShowConfirm(true)}
-            className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
-          >
+          <Button variant="destructive" onClick={() => setShowConfirm(true)}>
             Inaktivera
-          </button>
+          </Button>
         ) : (
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               Vill du verkligen inaktivera denna artikel?
             </span>
-            <button
-              type="button"
+            <Button
+              variant="destructive"
               onClick={() => {
                 deactivate.mutate({ id: data.id })
                 setShowConfirm(false)
               }}
-              className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
             >
               Ja, inaktivera
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-            >
+            </Button>
+            <Button variant="secondary" onClick={() => setShowConfirm(false)}>
               Avbryt
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCounterparty, useDeactivateCounterparty } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { Button } from '../ui/Button'
 
 interface CustomerDetailProps {
   id: number
@@ -88,35 +89,26 @@ export function CustomerDetail({ id, onEdit }: CustomerDetailProps) {
 
       <div className="mt-8 border-t pt-6">
         {!showConfirm ? (
-          <button
-            type="button"
-            onClick={() => setShowConfirm(true)}
-            className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
-          >
+          <Button variant="destructive" onClick={() => setShowConfirm(true)}>
             Inaktivera
-          </button>
+          </Button>
         ) : (
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
               Vill du verkligen inaktivera denna kund?
             </span>
-            <button
-              type="button"
+            <Button
+              variant="destructive"
               onClick={() => {
                 deactivate.mutate({ id: counterparty.id })
                 setShowConfirm(false)
               }}
-              className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
             >
               Ja, inaktivera
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-            >
+            </Button>
+            <Button variant="secondary" onClick={() => setShowConfirm(false)}>
               Avbryt
-            </button>
+            </Button>
           </div>
         )}
       </div>
