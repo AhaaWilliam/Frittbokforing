@@ -244,9 +244,18 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
       await expect(window.getByText('Acme AB').first()).toBeVisible({
         timeout: 10_000,
       })
-      // Vänta in sidebar-räknarna (H+G-15) — async list-IPC kan ta extra tid
+      // Vänta in alla sidebar-räknare (H+G-15) — async list-IPC kan ta extra tid
       await expect(window.getByTestId('nav-income-count')).toHaveText('3', {
         timeout: 5_000,
+      })
+      await expect(window.getByTestId('nav-expenses-count')).toHaveText('0', {
+        timeout: 2_000,
+      })
+      await expect(window.getByTestId('nav-customers-count')).toHaveText('1', {
+        timeout: 2_000,
+      })
+      await expect(window.getByTestId('nav-suppliers-count')).toHaveText('0', {
+        timeout: 2_000,
       })
       await window.waitForTimeout(500)
 
