@@ -49,6 +49,7 @@
     "check:dynamic-update": "node scripts/check-dynamic-update.mjs",
     "check:ipc-handlers": "node scripts/check-ipc-handler-patterns.mjs",
     "test:mutation": "stryker run",
+    "test:mutation:renderer": "stryker run stryker.renderer.conf.json",
     "test:property": "vitest run tests/property/",
     "test:invariants": "vitest run tests/invariants/",
     "test:state-machine": "vitest run tests/state-machine/",

@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "coverageAnalysis": "perTest",
+  "vitest": {
+    "configFile": "vitest.config.stryker.renderer.ts"
+  },
+  "mutate": [
+    "src/renderer/lib/use-combobox-keyboard.ts",
+    "src/renderer/lib/use-roving-tabindex.ts",
+    "src/renderer/lib/use-entity-form.ts"
+  ],
+  "ignorePatterns": [
+    "release",
+    "dist",
+    "dist-main",
+    "dist-preload",
+    "dist-renderer",
+    "coverage",
+    "reports",
+    ".stryker-tmp",
+    "node_modules/.cache",
+    "playwright-report",
+    "test-results",
+    "e2e-user-data"
+  ],
+  "checkers": [],
+  "timeoutMS": 30000,
+  "concurrency": 4,
+  "thresholds": { "high": 90, "low": 70, "break": 60 },
+  "reporters": ["clear-text", "html", "json"],
+  "htmlReporter": { "fileName": "reports/mutation-renderer/index.html" },
+  "jsonReporter": { "fileName": "reports/mutation-renderer/mutation-report.json" },
+  "logLevel": "info"
+}
