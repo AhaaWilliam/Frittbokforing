@@ -57,8 +57,16 @@ for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
 
 // ─── Huvudflöde ─────────────────────────────────────────────────────
 
-// 1. Electron-ABI för playwright
-const rebuildElectronCode = run('npx', ['electron-rebuild', '-f', '-w', 'better-sqlite3'])
+// 1. Electron-ABI för playwright — BÅDA native-modulerna.
+//    src/main/db.ts använder better-sqlite3-multiple-ciphers; den måste
+//    också vara i Electron-ABI annars failar app-startens DB-anslutning
+//    tyst (vit skärm i renderer, UNEXPECTED_ERROR i createCompany etc.).
+const rebuildElectronCode = run('npx', [
+  'electron-rebuild',
+  '-f',
+  '-w',
+  'better-sqlite3,better-sqlite3-multiple-ciphers',
+])
 if (rebuildElectronCode !== 0) {
   console.error('electron-rebuild failed, aborting before playwright')
   process.exit(rebuildElectronCode)
@@ -67,22 +75,27 @@ if (rebuildElectronCode !== 0) {
 // 2. Playwright (om vi inte redan blev avbrutna)
 const pwCode = interrupted ? 130 : run('npx', ['playwright', 'test', ...passthrough])
 
-// 3. Alltid tillbaka till Node-ABI
-const rebuildNodeCode = run('npm', ['rebuild', 'better-sqlite3'])
+// 3. Alltid tillbaka till Node-ABI för båda modulerna
+const rebuildNodeCode = run('npm', [
+  'rebuild',
+  'better-sqlite3',
+  'better-sqlite3-multiple-ciphers',
+])
 
-// 4. Smoketest: bekräfta att better-sqlite3 laddas i Node-ABI. Exit=0 från
+// 4. Smoketest: bekräfta att BÅDA modulerna laddas i Node-ABI. Exit=0 från
 //    npm rebuild garanterar inte en funktionell binär.
 const smoketestCode = run('node', [
   '-e',
-  "require('better-sqlite3')(':memory:').prepare('SELECT 1').get()",
+  "require('better-sqlite3')(':memory:').prepare('SELECT 1').get();" +
+    "require('better-sqlite3-multiple-ciphers')(':memory:').prepare('SELECT 1').get()",
 ])
 
 if (smoketestCode !== 0) {
   console.error(
-    '\n❌ Smoketest failade: better-sqlite3 kan inte laddas i Node-ABI' +
-      '\n   trots att rebuild rapporterade framgång.' +
-      '\n   Kör manuellt: npm rebuild better-sqlite3' +
-      '\n   Om det inte hjälper: inspektera node_modules/better-sqlite3/build/',
+    '\n❌ Smoketest failade: better-sqlite3 eller multiple-ciphers kan inte' +
+      '\n   laddas i Node-ABI trots att rebuild rapporterade framgång.' +
+      '\n   Kör manuellt: npm rebuild better-sqlite3 better-sqlite3-multiple-ciphers' +
+      '\n   Om det inte hjälper: inspektera node_modules/.../build/',
   )
 }
 
@@ -90,7 +103,9 @@ if (smoketestCode !== 0) {
 if (interrupted) process.exit(130)
 if (pwCode !== 0) process.exit(pwCode)
 if (rebuildNodeCode !== 0) {
-  console.error(`npm rebuild better-sqlite3 failed (exit ${rebuildNodeCode})`)
+  console.error(
+    `npm rebuild better-sqlite3 + multiple-ciphers failed (exit ${rebuildNodeCode})`,
+  )
   process.exit(rebuildNodeCode)
 }
 if (smoketestCode !== 0) process.exit(42)

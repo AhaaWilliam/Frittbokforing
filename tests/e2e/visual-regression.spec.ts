@@ -22,8 +22,29 @@
  * **Scenario-val:** stabila empty-states och seeded AppShell-vyer som inte
  * varierar med datum eller verifikationsräknare.
  */
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
+
+/** Skapa + auto-login en testanvändare via __authTestApi (bypass av LockScreen). */
+async function createAndLoginTestUser(window: Page): Promise<void> {
+  await window.evaluate(async () => {
+    await (
+      window as unknown as {
+        __authTestApi: {
+          createAndLoginUser: (d: {
+            displayName: string
+            password: string
+          }) => Promise<unknown>
+        }
+      }
+    ).__authTestApi.createAndLoginUser({
+      displayName: 'E2E Visual',
+      password: 'visual-test-password-1234',
+    })
+  })
+  // Reload så app:en plockar upp den nu inloggade sessionen
+  await window.reload()
+}
 
 // Konsekvent viewport för all visuell test
 const VIEWPORT = { width: 1280, height: 800 }
@@ -40,17 +61,34 @@ test.beforeEach(async ({ page: _page }, testInfo) => {
 })
 
 test.describe('Visual regression — Fritt Bokföring UI', () => {
-  test('onboarding-wizard initial-vy', async () => {
+  test('lock-screen create-user (initial fresh-db state)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
       await window.setViewportSize(VIEWPORT)
+      // Lock-screen är vad användaren ser vid första-start innan auth
+      await expect(window.getByText('Skapa en ny användare')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.waitForTimeout(500)
+      await expect(window).toHaveScreenshot('lock-screen-create-user.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('onboarding-wizard efter auth', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
       await expect(window.getByTestId('wizard')).toBeVisible({
         timeout: 15_000,
       })
-      // Allow fonts to settle + skip animation
       await window.waitForTimeout(500)
       await expect(window).toHaveScreenshot('onboarding-wizard.png', {
-        maxDiffPixels: 50, // tolerera marginell antialias-drift
+        maxDiffPixels: 50,
       })
     } finally {
       await cleanup()
@@ -61,6 +99,7 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
       await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
       await seedCompanyViaIPC(window)
 
       // Freeze klocka via test-API innan reload så dashboard-data är deterministisk
@@ -100,6 +139,7 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
       await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
       await seedCompanyViaIPC(window)
       await window.evaluate(async (iso) => {
         await (
