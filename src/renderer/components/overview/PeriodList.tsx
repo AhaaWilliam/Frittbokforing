@@ -57,9 +57,9 @@ export function PeriodList() {
               <span>{monthName}</span>
               <div className="flex items-center gap-2">
                 {period.is_closed === 1 ? (
-                  <Pill variant="success">Klar</Pill>
+                  <Pill variant="success" withDot>Klar</Pill>
                 ) : (
-                  <Pill variant="neutral">Öppen</Pill>
+                  <Pill variant="neutral" withDot>Öppen</Pill>
                 )}
                 {canClose && (
                   <button

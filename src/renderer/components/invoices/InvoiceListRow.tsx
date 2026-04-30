@@ -95,7 +95,7 @@ export const InvoiceListRow = memo(function InvoiceListRow({
         {formatKr(item.total_amount_ore)}
       </td>
       <td className="px-4 py-3">
-        <Pill variant={pill.variant}>{pill.label}</Pill>
+        <Pill variant={pill.variant} withDot>{pill.label}</Pill>
       </td>
       <td
         className={`px-4 py-3 font-mono ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}

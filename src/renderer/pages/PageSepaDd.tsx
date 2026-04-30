@@ -341,7 +341,7 @@ function MandateRow({
       <td className="px-4 py-2">{mandate.signature_date}</td>
       <td className="px-4 py-2">
         {mandate.status === 'active' ? (
-          <Pill variant="success">Aktivt</Pill>
+          <Pill variant="success" withDot>Aktivt</Pill>
         ) : (
           <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             Återkallat
@@ -803,7 +803,7 @@ function BatchRowComponent({ batch }: { batch: BatchRow }) {
       <td className="px-4 py-2">
         {isExported ? (
           <span title={batch.exported_at ?? undefined}>
-            <Pill variant="success">Exporterad</Pill>
+            <Pill variant="success" withDot>Exporterad</Pill>
           </span>
         ) : (
           <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
