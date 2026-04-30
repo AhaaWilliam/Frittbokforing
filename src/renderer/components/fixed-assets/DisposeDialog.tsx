@@ -48,10 +48,11 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="dispose-dialog-title"
       data-testid="dispose-dialog"
     >
       <div className="w-full max-w-md rounded-lg bg-background p-4 shadow-xl">
-        <h2 className="mb-3 text-lg font-semibold">Avyttra {assetName}</h2>
+        <h2 id="dispose-dialog-title" className="mb-3 text-lg font-semibold">Avyttra {assetName}</h2>
 
         <label className="mb-3 block text-sm">
           <span className="mb-1 block text-xs uppercase text-muted-foreground">
