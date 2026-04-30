@@ -26,7 +26,7 @@ describe('VardagShell', () => {
 
   it('renders company name in header', () => {
     render(
-      <VardagShell companyName="Acme AB" showBottomNav={false}>
+      <VardagShell companyName="Acme AB">
         <p>Content</p>
       </VardagShell>,
     )
@@ -35,7 +35,7 @@ describe('VardagShell', () => {
 
   it('renders children in main', () => {
     render(
-      <VardagShell companyName="X" showBottomNav={false}>
+      <VardagShell companyName="X">
         <p>Test child</p>
       </VardagShell>,
     )
@@ -45,7 +45,7 @@ describe('VardagShell', () => {
 
   it('switch-button calls setMode("bokforare") and persists', async () => {
     render(
-      <VardagShell companyName="X" showBottomNav={false}>
+      <VardagShell companyName="X">
         <p>x</p>
       </VardagShell>,
     )
@@ -56,7 +56,7 @@ describe('VardagShell', () => {
 
   it('uses semantic landmarks (banner + main)', () => {
     render(
-      <VardagShell companyName="X" showBottomNav={false}>
+      <VardagShell companyName="X">
         <p>x</p>
       </VardagShell>,
     )
@@ -66,7 +66,7 @@ describe('VardagShell', () => {
 
   it('passes axe a11y check', async () => {
     const { container } = render(
-      <VardagShell companyName="Acme AB" showBottomNav={false}>
+      <VardagShell companyName="Acme AB">
         <div>
           <h1>Innehåll</h1>
           <p>Stub-innehåll för axe-kontroll.</p>
