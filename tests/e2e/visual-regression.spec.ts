@@ -24,40 +24,7 @@
  */
 import { test, expect, type Page } from '@playwright/test'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
-import { seedAndFinalizeInvoice } from './helpers/seed'
-
-/** Inline seedCustomer som inkluderar company_id (M158 — counterparties
- *  är scoped per bolag sedan Sprint MC3). Den globala helpern uppdateras
- *  separat. */
-async function seedCustomerForCompany(
-  window: Page,
-  companyId: number,
-  name = 'Acme AB',
-): Promise<number> {
-  const result = await window.evaluate(
-    async ({ n, cid }) => {
-      return await (
-        window as unknown as {
-          api: { createCounterparty: (d: unknown) => Promise<unknown> }
-        }
-      ).api.createCounterparty({
-        company_id: cid,
-        name: n,
-        type: 'customer',
-        org_number: null,
-        default_payment_terms: 30,
-      })
-    },
-    { n: name, cid: companyId },
-  )
-  const r = result as {
-    success: boolean
-    data: { id: number }
-    error?: string
-  }
-  if (!r.success) throw new Error(`seedCustomerForCompany failed: ${r.error}`)
-  return r.data.id
-}
+import { seedAndFinalizeInvoice, seedCustomer } from './helpers/seed'
 
 /** Skapa + auto-login en testanvändare via __authTestApi (bypass av LockScreen). */
 async function createAndLoginTestUser(window: Page): Promise<void> {
@@ -217,11 +184,7 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
       }, FROZEN_TIME)
 
       // Seed 1 customer + 3 finaliserade fakturor med varierande datum
-      const counterpartyId = await seedCustomerForCompany(
-        window,
-        companyId,
-        'Acme AB',
-      )
+      const counterpartyId = await seedCustomer(window, companyId, 'Acme AB')
       for (let i = 0; i < 3; i++) {
         const day = String(10 + i * 5).padStart(2, '0')
         await seedAndFinalizeInvoice(window, {

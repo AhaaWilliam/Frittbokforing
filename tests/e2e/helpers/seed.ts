@@ -6,45 +6,107 @@
  */
 import type { Page } from '@playwright/test'
 
-/** Seed a customer counterparty via IPC. Returns counterparty id. */
-export async function seedCustomer(
+/**
+ * Resolve a company_id automatiskt via listCompanies (första bolaget).
+ *
+ * Sprint H+G-18: M158 kräver company_id för counterparties. Helper
+ * tillåter befintliga callers att fortsätta utan explicit companyId
+ * — fallback hämtar första bolaget. Nya callers bör skicka companyId
+ * explicit för deterministiskt beteende vid multi-bolag.
+ */
+async function resolveCompanyId(
   window: Page,
-  name?: string,
+  explicit?: number,
 ): Promise<number> {
-  const result = await window.evaluate(async (n) => {
+  if (explicit != null) return explicit
+  const result = await window.evaluate(async () => {
     return await (
       window as unknown as {
-        api: { createCounterparty: (d: unknown) => Promise<unknown> }
+        api: { listCompanies: () => Promise<unknown> }
       }
-    ).api.createCounterparty({
-      name: n,
-      type: 'customer',
-      org_number: null,
-      default_payment_terms: 30,
-    })
-  }, name ?? 'E2E Testkund AB')
+    ).api.listCompanies()
+  })
+  const r = result as {
+    success: boolean
+    data: Array<{ id: number }>
+    error?: string
+  }
+  if (!r.success) throw new Error(`listCompanies failed: ${r.error}`)
+  if (!r.data?.[0]) throw new Error('resolveCompanyId: inga bolag finns')
+  return r.data[0].id
+}
+
+/**
+ * Seed a customer counterparty via IPC. Returns counterparty id.
+ *
+ * Sprint H+G-18 (M158): `companyId` är obligatorisk på IPC-nivå men
+ * helpern auto-resolverar mot första bolaget om värdet inte skickas
+ * — bevarar bakåtkompatibilitet för befintliga e2e-tester. Nya
+ * callsites bör skicka companyId explicit (multi-bolags-säkerhet).
+ */
+export async function seedCustomer(
+  window: Page,
+  companyIdOrName?: number | string,
+  name?: string,
+): Promise<number> {
+  // Två-argument-bakåtkompat: seedCustomer(window, "Namn")
+  const explicit =
+    typeof companyIdOrName === 'number' ? companyIdOrName : undefined
+  const resolvedName =
+    typeof companyIdOrName === 'string' ? companyIdOrName : name
+  const companyId = await resolveCompanyId(window, explicit)
+  const result = await window.evaluate(
+    async ({ n, cid }) => {
+      return await (
+        window as unknown as {
+          api: { createCounterparty: (d: unknown) => Promise<unknown> }
+        }
+      ).api.createCounterparty({
+        company_id: cid,
+        name: n,
+        type: 'customer',
+        org_number: null,
+        default_payment_terms: 30,
+      })
+    },
+    { n: resolvedName ?? 'E2E Testkund AB', cid: companyId },
+  )
   const r = result as { success: boolean; data: { id: number }; error?: string }
   if (!r.success) throw new Error(`seedCustomer failed: ${r.error}`)
   return r.data.id
 }
 
-/** Seed a supplier counterparty via IPC. Returns counterparty id. */
+/**
+ * Seed a supplier counterparty via IPC. Returns counterparty id.
+ *
+ * Sprint H+G-18 (M158): se seedCustomer för companyId-semantik.
+ */
 export async function seedSupplier(
   window: Page,
+  companyIdOrName?: number | string,
   name?: string,
 ): Promise<number> {
-  const result = await window.evaluate(async (n) => {
-    return await (
-      window as unknown as {
-        api: { createCounterparty: (d: unknown) => Promise<unknown> }
-      }
-    ).api.createCounterparty({
-      name: n,
-      type: 'supplier',
-      org_number: null,
-      default_payment_terms: 30,
-    })
-  }, name ?? 'E2E Testleverantör AB')
+  const explicit =
+    typeof companyIdOrName === 'number' ? companyIdOrName : undefined
+  const resolvedName =
+    typeof companyIdOrName === 'string' ? companyIdOrName : name
+  const companyId = await resolveCompanyId(window, explicit)
+  const result = await window.evaluate(
+    async ({ n, cid }) => {
+      return await (
+        window as unknown as {
+          api: { createCounterparty: (d: unknown) => Promise<unknown> }
+        }
+      ).api.createCounterparty({
+        company_id: cid,
+        name: n,
+        type: 'supplier',
+        org_number: null,
+        default_payment_terms: 30,
+      })
+    },
+    { n: resolvedName ?? 'E2E Testleverantör AB', cid: companyId },
+  )
   const r = result as { success: boolean; data: { id: number }; error?: string }
   if (!r.success) throw new Error(`seedSupplier failed: ${r.error}`)
   return r.data.id
