@@ -131,4 +131,82 @@ describe('Sidebar', () => {
     const { axeResults } = await renderWithProviders(<Sidebar company={company} />)
     expect(axeResults?.violations).toEqual([])
   })
+
+  it('renders nav-counts when list-IPCs returnerar data (H+G-15)', async () => {
+    mockIpcResponse('invoice:list', {
+      success: true,
+      data: { items: [], counts: { total: 7, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 7 },
+    })
+    mockIpcResponse('expense:list', {
+      success: true,
+      data: { expenses: [], counts: { total: 3, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 3 },
+    })
+    const cp = (id: number, name: string) => ({
+      id,
+      company_id: 1,
+      name,
+      type: 'customer' as const,
+      org_number: null,
+      vat_number: null,
+      vat_label: null,
+      address_line1: null,
+      address_line2: null,
+      postal_code: null,
+      city: null,
+      country: null,
+      email: null,
+      phone: null,
+      bankgiro: null,
+      iban: null,
+      bic: null,
+      bank_country_code: null,
+      website: null,
+      default_payment_terms: 30,
+      notes: null,
+      active: 1 as const,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    })
+    mockIpcResponse('counterparty:list', {
+      success: true,
+      data: [cp(1, 'A AB'), cp(2, 'B AB')],
+    })
+
+    const company = makeCompany()
+    await renderWithProviders(<Sidebar company={company} />, {
+      axeCheck: false, // M133 exempt — dedicated axe test above
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nav-income-count')).toHaveTextContent('7')
+    })
+    expect(screen.getByTestId('nav-expenses-count')).toHaveTextContent('3')
+    // Counterparties används både för customers och suppliers (samma mock)
+    expect(screen.getByTestId('nav-customers-count')).toHaveTextContent('2')
+    expect(screen.getByTestId('nav-suppliers-count')).toHaveTextContent('2')
+  })
+
+  it('count=0 visas i faint-färg (H+G-15)', async () => {
+    mockIpcResponse('invoice:list', {
+      success: true,
+      data: { items: [], counts: { total: 0, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 0 },
+    })
+    mockIpcResponse('expense:list', {
+      success: true,
+      data: { expenses: [], counts: { total: 0, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 0 },
+    })
+    mockIpcResponse('counterparty:list', { success: true, data: [] })
+
+    const company = makeCompany()
+    await renderWithProviders(<Sidebar company={company} />, {
+      axeCheck: false, // M133 exempt — dedicated axe test above
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nav-income-count')).toHaveTextContent('0')
+    })
+    expect(screen.getByTestId('nav-income-count').className).toContain(
+      'text-[var(--text-faint)]',
+    )
+  })
 })
