@@ -6,6 +6,8 @@ import {
   useDraftInvoices,
   useExpenseDrafts,
   useDashboardSummary,
+  useInvoiceList,
+  useExpenses,
 } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { useUiMode } from '../../lib/use-ui-mode'
@@ -27,18 +29,30 @@ export function VardagPageInbox() {
     activeFiscalYear?.id,
   )
   const { data: summary } = useDashboardSummary(activeFiscalYear?.id)
+  // Sprint 77 — överblick-counts från list-respons (counts.overdue).
+  // limit:1 håller payload minimal — vi tittar bara på counts.
+  const { data: invList } = useInvoiceList(activeFiscalYear?.id, {
+    limit: 1,
+  }) as { data: { counts: { overdue: number } } | undefined }
+  const { data: expList } = useExpenses(activeFiscalYear?.id, {
+    limit: 1,
+  }) as { data: { counts: { overdue: number } } | undefined }
 
   const invoiceDraftCount = invoiceDrafts?.length ?? 0
   const expenseDraftCount = expenseDrafts?.length ?? 0
   const hasReceivables = (summary?.unpaidReceivablesOre ?? 0) > 0
   const hasPayables = (summary?.unpaidPayablesOre ?? 0) > 0
+  const overdueInvoices = invList?.counts.overdue ?? 0
+  const overdueExpenses = expList?.counts.overdue ?? 0
 
   const isLoading = invoicesLoading || expensesLoading
   const hasItems =
     invoiceDraftCount > 0 ||
     expenseDraftCount > 0 ||
     hasReceivables ||
-    hasPayables
+    hasPayables ||
+    overdueInvoices > 0 ||
+    overdueExpenses > 0
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
@@ -80,6 +94,33 @@ export function VardagPageInbox() {
           </li>
         ) : (
           <>
+            {/* Sprint 77 — överst: förfallna behöver action snabbast */}
+            {overdueInvoices > 0 && (
+              <li
+                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4"
+                data-testid="inbox-overdue-invoices"
+              >
+                <CheckLine
+                  state="cross"
+                  label={`${overdueInvoices} ${overdueInvoices === 1 ? 'faktura är' : 'fakturor är'} förfallna`}
+                  description="Följ upp betalning från kunden."
+                />
+                <Pill variant="danger">{overdueInvoices}</Pill>
+              </li>
+            )}
+            {overdueExpenses > 0 && (
+              <li
+                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4"
+                data-testid="inbox-overdue-expenses"
+              >
+                <CheckLine
+                  state="cross"
+                  label={`${overdueExpenses} ${overdueExpenses === 1 ? 'leverantörsfaktura är' : 'leverantörsfakturor är'} förfallna`}
+                  description="Betala för att undvika räntor och avgifter."
+                />
+                <Pill variant="danger">{overdueExpenses}</Pill>
+              </li>
+            )}
             {invoiceDraftCount > 0 && (
               <li className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
                 <CheckLine
