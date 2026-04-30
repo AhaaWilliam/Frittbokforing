@@ -67,9 +67,7 @@ describe('Sprint 47 — VAT_ACCOUNTS invariant', () => {
 
   it('VAT_IN_ACCOUNT (2640) är klassat som asset', () => {
     const row = db
-      .prepare(
-        `SELECT account_type FROM accounts WHERE account_number = ?`,
-      )
+      .prepare(`SELECT account_type FROM accounts WHERE account_number = ?`)
       .get(VAT_IN_ACCOUNT) as { account_type: string } | undefined
     expect(row?.account_type).toBe('asset')
   })

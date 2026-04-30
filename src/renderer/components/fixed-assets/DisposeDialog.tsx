@@ -22,7 +22,8 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
   const [disposedDate, setDisposedDate] = useState(today)
   const [generateEntry, setGenerateEntry] = useState(true)
   const [salePriceKr, setSalePriceKr] = useState('')
-  const [proceedsAccount, setProceedsAccount] = useState<string>(BANK_FORETAGSKONTO)
+  const [proceedsAccount, setProceedsAccount] =
+    useState<string>(BANK_FORETAGSKONTO)
 
   const { data: accounts } = useAllAccounts(true)
   // Balansräkning: 1xxx–2xxx

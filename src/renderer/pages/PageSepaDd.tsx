@@ -232,9 +232,9 @@ function MandatesSection() {
   return (
     <div className="space-y-4">
       <div className="rounded-md border bg-card p-4">
-        <label className="mb-2 block text-xs font-medium text-muted-foreground">
+        <div className="mb-2 block text-xs font-medium text-muted-foreground">
           Välj kund
-        </label>
+        </div>
         <CustomerPicker
           value={selected}
           onChange={(customer) =>

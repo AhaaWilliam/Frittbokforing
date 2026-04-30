@@ -65,7 +65,10 @@ function BackupSection() {
           ? `Senaste backup: ${formatBackupDate(lastBackup)}`
           : 'Ingen säkerhetskopia har skapats ännu.'}
       </p>
-      <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50">
+      <label
+        className="mb-4 flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
+        aria-label="Automatisk säkerhetskopia"
+      >
         <input
           type="checkbox"
           checked={autoBackupEnabled}

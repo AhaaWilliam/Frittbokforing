@@ -486,7 +486,8 @@ function MatchDialog({
   const expensesQuery = useExpenses(fyId, { status: 'unpaid' })
   const matchMutation = useMatchBankTransaction()
   const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null)
-  const [paymentAccount, setPaymentAccount] = useState<string>(BANK_FORETAGSKONTO)
+  const [paymentAccount, setPaymentAccount] =
+    useState<string>(BANK_FORETAGSKONTO)
 
   const candidates: Candidate[] =
     direction === 'invoice'

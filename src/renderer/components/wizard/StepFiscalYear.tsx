@@ -142,6 +142,7 @@ export function StepFiscalYear({
           <label
             className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
             data-testid="wizard-short-fy-toggle-label"
+            aria-label="Kortat första räkenskapsår (BFL 3:3)"
           >
             <input
               type="checkbox"
@@ -164,6 +165,7 @@ export function StepFiscalYear({
           <label
             className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 hover:bg-muted/50"
             data-testid="wizard-extended-fy-toggle-label"
+            aria-label="Förlängt första räkenskapsår (BFL 3:3)"
           >
             <input
               type="checkbox"
