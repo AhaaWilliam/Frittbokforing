@@ -28,6 +28,8 @@
     "test:e2e": "node scripts/run-e2e.mjs",
     "test:e2e:critical": "node scripts/run-e2e.mjs --grep @critical",
     "test:e2e:headed": "node scripts/run-e2e.mjs --headed",
+    "test:visual": "node scripts/run-e2e.mjs visual-regression.spec.ts",
+    "test:visual:update": "node scripts/run-e2e.mjs visual-regression.spec.ts --update-snapshots",
     "test:e2e:ci": "xvfb-run --auto-servernum --server-args='-screen 0 1280x960x24' npx playwright test --config=e2e/playwright.config.ts",
     "test:all": "vitest run && node scripts/run-e2e.mjs",
     "typecheck": "tsc --noEmit",
