@@ -198,6 +198,10 @@ describe('Sprint 61 — guard #4 (HAS_DEPENDENT_PAYMENTS) reason (L98)', () => {
 
 describe('Sprint 61 — guard #6 (PERIOD_CLOSED) reason (L137)', () => {
   it('createCorrectionEntry när dagens period är stängd → exakt reason', () => {
+    // Frys klocka till 2026-04-15 så "dagens period" = april (P4) som
+    // sedan stängs i loopen nedan. Testet var tidigare time-dependent och
+    // failade i maj 2026 när dagens period (P5) inte var i de stängda.
+    process.env.FRITT_NOW = '2026-04-15T12:00:00Z'
     const original = bookManual()
 
     // Stäng jan-april sekventiellt (M93 kräver kronologisk stängning).
@@ -222,6 +226,7 @@ describe('Sprint 61 — guard #6 (PERIOD_CLOSED) reason (L137)', () => {
     if (result.success) return
     expect(result.code).toBe('PERIOD_CLOSED')
     expect(result.error).toBe('Perioden för dagens datum är stängd.')
+    delete process.env.FRITT_NOW
   })
 })
 
