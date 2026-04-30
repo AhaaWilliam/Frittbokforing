@@ -169,6 +169,39 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     }
   })
 
+  test('AppShell tom Expenses (kostnad-list utan data)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/expenses'
+      })
+      await expect(window.getByTestId('page-expenses')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-expenses-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
   test('Income med 3 finaliserade fakturor (table med Pill-status)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
@@ -219,6 +252,39 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
 
       await expect(window).toHaveScreenshot('income-with-3-invoices.png', {
         maxDiffPixels: 100, // tabell-render har lite mer drift
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Bankavstämning empty (page-bank-statements)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/bank-statements'
+      })
+      await expect(window.getByTestId('page-bank-statements')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-bank-empty.png', {
+        maxDiffPixels: 50,
       })
     } finally {
       await cleanup()
