@@ -36,6 +36,7 @@ import { ExpenseLineRow } from './ExpenseLineRow'
 import { ExpenseTotals } from './ExpenseTotals'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { Callout } from '../ui/Callout'
+import { Button } from '../ui/Button'
 
 // === Helpers ===
 
@@ -562,14 +563,15 @@ export function ExpenseForm({ expenseId, onSave, onCancel }: ExpenseFormProps) {
               Avbryt
             </button>
             {isEditing && (
-              <button
-                type="button"
+              <Button
+                variant="destructive-outline"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="ml-auto rounded-md border border-danger-100 px-4 py-2 text-sm font-medium text-danger-500 hover:bg-danger-100/50 disabled:opacity-50"
+                isLoading={isDeleting}
+                className="ml-auto"
               >
                 {isDeleting ? 'Tar bort...' : 'Ta bort'}
-              </button>
+              </Button>
             )}
           </div>
         </div>

@@ -30,6 +30,7 @@ import { CustomerPicker } from './CustomerPicker'
 import { InvoiceLineRow } from './InvoiceLineRow'
 import { InvoiceTotals } from './InvoiceTotals'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { Button } from '../ui/Button'
 
 // === Helpers ===
 
@@ -495,14 +496,15 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
               Avbryt
             </button>
             {draft && draft.status === 'draft' && (
-              <button
-                type="button"
+              <Button
+                variant="destructive-outline"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="ml-auto rounded-md border border-danger-100 px-4 py-2 text-sm font-medium text-danger-500 hover:bg-danger-100/50 disabled:opacity-50"
+                isLoading={isDeleting}
+                className="ml-auto"
               >
                 {isDeleting ? 'Tar bort...' : 'Ta bort'}
-              </button>
+              </Button>
             )}
           </div>
         </div>

@@ -71,11 +71,19 @@ describe('Button', () => {
     expect(screen.getByRole('button').getAttribute('type')).toBe('submit')
   })
 
+  it('destructive-outline variant använder border + text-danger', () => {
+    render(<Button variant="destructive-outline">Ta bort</Button>)
+    const btn = screen.getByRole('button', { name: 'Ta bort' })
+    expect(btn.className).toContain('border-danger-100')
+    expect(btn.className).toContain('text-danger-500')
+  })
+
   it('passerar axe a11y i alla varianter', async () => {
     const variants = [
       'primary',
       'secondary',
       'destructive',
+      'destructive-outline',
       'warning',
       'ghost',
     ] as const

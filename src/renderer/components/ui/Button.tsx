@@ -29,6 +29,7 @@ export type ButtonVariant =
   | 'primary'
   | 'secondary'
   | 'destructive'
+  | 'destructive-outline'
   | 'warning'
   | 'ghost'
 
@@ -52,6 +53,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     'border border-input bg-background text-foreground hover:bg-muted focus-visible:ring-primary',
   destructive:
     'bg-danger-500 text-white hover:bg-danger-600 focus-visible:ring-danger-500',
+  'destructive-outline':
+    'border border-danger-100 bg-transparent text-danger-500 hover:bg-danger-100/50 focus-visible:ring-danger-500',
   warning:
     'bg-warning-500 text-white hover:bg-warning-600 focus-visible:ring-warning-500',
   ghost:
