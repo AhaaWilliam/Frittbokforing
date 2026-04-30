@@ -450,4 +450,108 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
       await cleanup()
     }
   })
+
+  // Sprint H+G-26: baselines för Periodiseringar, Anläggningstillgångar,
+  // Inställningar — sista AppShell-pages utan visual coverage.
+  test('Periodiseringar empty (page-accruals)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/accruals'
+      })
+      await expect(window.getByTestId('page-accruals')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-accruals-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Anläggningstillgångar empty (page-fixed-assets)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/fixed-assets'
+      })
+      await expect(window.getByTestId('page-fixed-assets')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot(
+        'app-shell-fixed-assets-empty.png',
+        {
+          maxDiffPixels: 50,
+        },
+      )
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Inställningar (page-settings)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/settings'
+      })
+      await expect(window.getByTestId('page-settings')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-settings.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
 })
