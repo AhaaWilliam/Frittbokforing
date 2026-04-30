@@ -114,8 +114,9 @@ describe('Vardag pages', () => {
     expect(setSetting).toHaveBeenCalledWith('ui_mode', 'bokforare')
   })
 
-  it('VardagPageIncome renders heading and fallback link', () => {
-    render(<VardagPageIncome />)
+  it('VardagPageIncome renders heading and fallback link', async () => {
+    // Sprint 70 — kräver providers (useFiscalYearContext + invoice:list IPC).
+    await renderWithProviders(<VardagPageIncome />)
     expect(
       screen.getByRole('heading', { name: 'Skicka faktura' }),
     ).toBeInTheDocument()
@@ -142,7 +143,7 @@ describe('Vardag pages', () => {
   })
 
   it('axe a11y on Income', async () => {
-    const { container } = render(<VardagPageIncome />)
+    const { container } = await renderWithProviders(<VardagPageIncome />)
     const results = await axe.run(container, AXE_OPTIONS)
     expect(results.violations).toEqual([])
   })
