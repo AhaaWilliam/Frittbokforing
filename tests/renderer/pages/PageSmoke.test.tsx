@@ -26,6 +26,10 @@ import { PageProducts } from '../../../src/renderer/pages/PageProducts'
 import { PageFixedAssets } from '../../../src/renderer/pages/PageFixedAssets'
 import { PageAccounts } from '../../../src/renderer/pages/PageAccounts'
 import { PageImportedEntries } from '../../../src/renderer/pages/PageImportedEntries'
+import { PageExport } from '../../../src/renderer/pages/PageExport'
+import { PageImport } from '../../../src/renderer/pages/PageImport'
+import { PageSepaDd } from '../../../src/renderer/pages/PageSepaDd'
+import { PageAccountStatement } from '../../../src/renderer/pages/PageAccountStatement'
 
 // ── Shared fixtures ───────────────────────────────────────────────
 
@@ -526,6 +530,83 @@ describe('PageImportedEntries smoke', () => {
     })
     await waitFor(() => {
       expect(container.textContent).toMatch(/import/i)
+    })
+  })
+})
+
+// ── PageExport ────────────────────────────────────────────────────
+
+describe('PageExport smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageExport />, {
+      axeCheck: false, // M133 exempt — multi-format buttons
+      initialRoute: '/export',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/export/i)
+    })
+  })
+})
+
+// ── PageImport ────────────────────────────────────────────────────
+
+describe('PageImport smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+  })
+
+  it('renders without crash (default sie4-select-fas)', async () => {
+    const { container } = await renderWithProviders(<PageImport />, {
+      axeCheck: false, // M133 exempt — wizard phase markup varies
+      initialRoute: '/import',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/import/i)
+    })
+  })
+})
+
+// ── PageSepaDd ────────────────────────────────────────────────────
+
+describe('PageSepaDd smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('sepa-dd:list-mandates', { success: true, data: [] })
+    mockIpcResponse('sepa-dd:list-collections', { success: true, data: [] })
+    mockIpcResponse('sepa-dd:list-batches', { success: true, data: [] })
+    mockIpcResponse('counterparty:list', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageSepaDd />, {
+      axeCheck: false, // M133 exempt — tabs structure varies
+      initialRoute: '/sepa-dd',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/autogiro|sepa|mandat/i)
+    })
+  })
+})
+
+// ── PageAccountStatement ──────────────────────────────────────────
+
+describe('PageAccountStatement smoke', () => {
+  beforeEach(() => {
+    setupCommonMocks()
+    mockIpcResponse('account:list-all', { success: true, data: [] })
+  })
+
+  it('renders without crash', async () => {
+    const { container } = await renderWithProviders(<PageAccountStatement />, {
+      axeCheck: false, // M133 exempt — varies based on selected account
+      initialRoute: '/account-statement',
+    })
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/kontoutdrag|konto/i)
     })
   })
 })
