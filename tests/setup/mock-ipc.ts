@@ -160,6 +160,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   // Journal Entry Corrections
   correctJournalEntry: 'journal-entry:correct',
   canCorrectJournalEntry: 'journal-entry:can-correct',
+  listImportedEntries: 'journal-entry:list-imported',
   // Dashboard & Reports
   getDashboardSummary: 'dashboard:summary',
   getVatReport: 'vat:report',

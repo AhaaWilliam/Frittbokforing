@@ -186,6 +186,78 @@ describe('Sidebar', () => {
     expect(screen.getByTestId('nav-suppliers-count')).toHaveTextContent('2')
   })
 
+  it('renders manual-drafts/accruals/fixed-assets/imported counts (H+G-27)', async () => {
+    // Stora invoice/expense/counterparty-mocks får default = []
+    mockIpcResponse('invoice:list', {
+      success: true,
+      data: { items: [], counts: { total: 0, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 0 },
+    })
+    mockIpcResponse('expense:list', {
+      success: true,
+      data: { expenses: [], counts: { total: 0, draft: 0, unpaid: 0, partial: 0, paid: 0, overdue: 0 }, total_items: 0 },
+    })
+    mockIpcResponse('counterparty:list', { success: true, data: [] })
+    // 2 utkast
+    mockIpcResponse('manual-entry:list-drafts', {
+      success: true,
+      data: [
+        { id: 1, fiscal_year_id: 1, description: 'd1', date: '2026-01-01', total_amount_ore: 0, status: 'draft', created_at: '', updated_at: '' },
+        { id: 2, fiscal_year_id: 1, description: 'd2', date: '2026-01-02', total_amount_ore: 0, status: 'draft', created_at: '', updated_at: '' },
+      ],
+    })
+    // 2 schedules: en aktiv med remaining, en deaktiverad → 1
+    mockIpcResponse('accrual:list', {
+      success: true,
+      data: [
+        {
+          id: 1, fiscal_year_id: 1, description: 'a1', accrual_type: 'cost',
+          balance_account: '1700', result_account: '5000',
+          total_amount_ore: 12000, period_count: 12, start_period: 1,
+          is_active: 1, created_at: '',
+          periodStatuses: [], executedCount: 0, remainingOre: 12000,
+        },
+        {
+          id: 2, fiscal_year_id: 1, description: 'a2', accrual_type: 'cost',
+          balance_account: '1700', result_account: '5000',
+          total_amount_ore: 6000, period_count: 6, start_period: 1,
+          is_active: 0, created_at: '',
+          periodStatuses: [], executedCount: 0, remainingOre: 6000,
+        },
+      ],
+    })
+    // 3 fixed assets
+    mockIpcResponse('depreciation:list', {
+      success: true,
+      data: [
+        { id: 1, fiscal_year_id: 1, name: 'fa1', acquisition_date: '2026-01-01', acquisition_cost_ore: 100000, residual_value_ore: 0, useful_life_months: 60, depreciation_method: 'linear', declining_rate: null, account_acquisition: '1230', account_accumulated: '1239', account_depreciation_expense: '7832', status: 'active', disposed_at: null, created_at: '', accumulated_depreciation_ore: 0, book_value_ore: 100000 },
+        { id: 2, fiscal_year_id: 1, name: 'fa2', acquisition_date: '2026-01-01', acquisition_cost_ore: 200000, residual_value_ore: 0, useful_life_months: 60, depreciation_method: 'linear', declining_rate: null, account_acquisition: '1230', account_accumulated: '1239', account_depreciation_expense: '7832', status: 'active', disposed_at: null, created_at: '', accumulated_depreciation_ore: 0, book_value_ore: 200000 },
+        { id: 3, fiscal_year_id: 1, name: 'fa3', acquisition_date: '2026-01-01', acquisition_cost_ore: 300000, residual_value_ore: 0, useful_life_months: 60, depreciation_method: 'linear', declining_rate: null, account_acquisition: '1230', account_accumulated: '1239', account_depreciation_expense: '7832', status: 'active', disposed_at: null, created_at: '', accumulated_depreciation_ore: 0, book_value_ore: 300000 },
+      ],
+    })
+    // 5 importerade verifikat
+    mockIpcResponse('journal-entry:list-imported', {
+      success: true,
+      data: Array.from({ length: 5 }, (_, i) => ({
+        journal_entry_id: i + 1, verification_number: i + 1,
+        verification_series: 'I', journal_date: '2026-01-01',
+        description: `i${i}`, source_reference: 'file.sie',
+        total_amount_ore: 0,
+      })),
+    })
+
+    const company = makeCompany()
+    await renderWithProviders(<Sidebar company={company} />, {
+      axeCheck: false, // M133 exempt — dedicated axe test above
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nav-manual-entries-count')).toHaveTextContent('2')
+      expect(screen.getByTestId('nav-accruals-count')).toHaveTextContent('1')
+      expect(screen.getByTestId('nav-fixed-assets-count')).toHaveTextContent('3')
+      expect(screen.getByTestId('nav-imported-entries-count')).toHaveTextContent('5')
+    })
+  })
+
   it('count=0 visas i faint-färg (H+G-15)', async () => {
     mockIpcResponse('invoice:list', {
       success: true,
