@@ -42,15 +42,26 @@ export const colorBase = {
   brand700: '#234293',
   brand900: '#13265a',
 
-  // Status
-  success500: '#16a34a',
+  // Status — fullständig palett (Sprint 69 utvidgning).
+  // Paritet med `--color-{semantik}-{ton}` i index.css @theme.
   success100: '#dcfce7',
-  warning500: '#d97706',
+  success500: '#16a34a',
+  success600: '#15803d',
+  success700: '#166534',
   warning100: '#fef3c7',
-  danger500: '#dc2626',
+  warning500: '#d97706',
+  warning600: '#b45309',
+  warning700: '#92400e',
   danger100: '#fee2e2',
-  info500: '#0284c7',
+  danger500: '#dc2626',
+  danger600: '#b91c1c',
+  danger700: '#991b1b',
   info100: '#e0f2fe',
+  info500: '#0284c7',
+  info600: '#0369a1',
+  info700: '#075985',
+  // Semantisk status-alias — domänkoncept ("förfallen") snarare än färgnamn.
+  statusOverdue: '#b91c1c', // = danger600
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────

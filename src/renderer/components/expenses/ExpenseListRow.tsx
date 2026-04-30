@@ -95,7 +95,7 @@ export const ExpenseListRow = memo(function ExpenseListRow({
         <Pill variant={pill.variant}>{pill.label}</Pill>
       </td>
       <td
-        className={`px-4 py-3 ${item.status === 'overdue' ? 'text-red-600' : ''}`}
+        className={`px-4 py-3 ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}
       >
         {item.due_date || '\u2014'}
       </td>

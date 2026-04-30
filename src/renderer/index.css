@@ -70,12 +70,24 @@
 
   --color-success-100: #dcfce7;
   --color-success-500: #16a34a;
+  --color-success-600: #15803d;
+  --color-success-700: #166534;
   --color-warning-100: #fef3c7;
   --color-warning-500: #d97706;
+  --color-warning-600: #b45309;
+  --color-warning-700: #92400e;
   --color-danger-100: #fee2e2;
   --color-danger-500: #dc2626;
+  --color-danger-600: #b91c1c;
+  --color-danger-700: #991b1b;
   --color-info-100: #e0f2fe;
   --color-info-500: #0284c7;
+  --color-info-600: #0369a1;
+  --color-info-700: #075985;
+  /* Sprint 69 — semantisk status-alias, mappar till danger-paletten.
+   * Använd `text-status-overdue` etc. istället för `text-red-600` när
+   * intention är att markera "förfallen" som domän-koncept. */
+  --color-status-overdue: var(--color-danger-600);
 
   /* Bakåtkompatibilitet — befintliga komponenter använder dessa namn.
    * Sprint 13 migrerar successivt till bas-tokens; tills dess speglar
