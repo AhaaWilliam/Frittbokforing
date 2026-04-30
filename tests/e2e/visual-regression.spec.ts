@@ -24,6 +24,40 @@
  */
 import { test, expect, type Page } from '@playwright/test'
 import { launchAppWithFreshDb, seedCompanyViaIPC } from './helpers/launch-app'
+import { seedAndFinalizeInvoice } from './helpers/seed'
+
+/** Inline seedCustomer som inkluderar company_id (M158 — counterparties
+ *  är scoped per bolag sedan Sprint MC3). Den globala helpern uppdateras
+ *  separat. */
+async function seedCustomerForCompany(
+  window: Page,
+  companyId: number,
+  name = 'Acme AB',
+): Promise<number> {
+  const result = await window.evaluate(
+    async ({ n, cid }) => {
+      return await (
+        window as unknown as {
+          api: { createCounterparty: (d: unknown) => Promise<unknown> }
+        }
+      ).api.createCounterparty({
+        company_id: cid,
+        name: n,
+        type: 'customer',
+        org_number: null,
+        default_payment_terms: 30,
+      })
+    },
+    { n: name, cid: companyId },
+  )
+  const r = result as {
+    success: boolean
+    data: { id: number }
+    error?: string
+  }
+  if (!r.success) throw new Error(`seedCustomerForCompany failed: ${r.error}`)
+  return r.data.id
+}
 
 /** Skapa + auto-login en testanvändare via __authTestApi (bypass av LockScreen). */
 async function createAndLoginTestUser(window: Page): Promise<void> {
@@ -162,6 +196,62 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
 
       await expect(window).toHaveScreenshot('app-shell-income-empty.png', {
         maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Income med 3 finaliserade fakturor (table med Pill-status)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      const { companyId, fiscalYearId } = await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+
+      // Seed 1 customer + 3 finaliserade fakturor med varierande datum
+      const counterpartyId = await seedCustomerForCompany(
+        window,
+        companyId,
+        'Acme AB',
+      )
+      for (let i = 0; i < 3; i++) {
+        const day = String(10 + i * 5).padStart(2, '0')
+        await seedAndFinalizeInvoice(window, {
+          counterpartyId,
+          fiscalYearId,
+          invoiceDate: `2026-03-${day}`,
+          dueDate: `2026-04-${day}`,
+          unitPriceOre: 50_000 + i * 10_000,
+          quantity: 1,
+        })
+      }
+
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/income'
+      })
+      await expect(window.getByTestId('page-income')).toBeVisible({
+        timeout: 10_000,
+      })
+      // Vänta tills tabellen renderats med rader (TableSkeleton borta)
+      await expect(window.getByText('Acme AB').first()).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('income-with-3-invoices.png', {
+        maxDiffPixels: 100, // tabell-render har lite mer drift
       })
     } finally {
       await cleanup()
