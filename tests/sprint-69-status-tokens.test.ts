@@ -51,7 +51,10 @@ describe('Sprint 69 — status-token-paritet', () => {
       resolve(repoRoot, 'src/renderer/index.css'),
       'utf8',
     )
-    expect(css).toMatch(/--color-status-overdue:\s*var\(--color-danger-/)
+    // Sprint H+G-1: overdue mappas till warning (terracotta) istället för
+    // danger (röd) — matchar prototyp-semantiken där "förfallen" är ett
+    // varnings-tillstånd, inte ett fel-tillstånd.
+    expect(css).toMatch(/--color-status-overdue:\s*var\(--color-warning-/)
   })
 
   it('tokens.ts har statusOverdue', () => {

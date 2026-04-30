@@ -1,29 +1,40 @@
 @import 'tailwindcss';
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Sprint 12 — Token-grunden.
+ * Sprint H+G-1 — Token-palette swap till H+G-prototyp.
  *
- * Per ADR 005 (dual-mode UI): tokens scopas på `:root` (gemensamma) och
- * på `[data-mode="vardag"]` / `[data-mode="bokforare"]` (mode-overrides).
- * Sync med `src/renderer/styles/tokens.ts` — paritet verifieras i Sprint 13.
+ * Per `docs/redesign-h-plus-g-plan.md`. Detta är Fas 1 / Sprint 1.
  *
- * Per implementeringsplanens Sprint 12: bara tokens + font-bundling.
- * Inga komponenter rörda. Visuell vinst sker när komponenter migreras
- * till tokens i Sprint 13.
+ * Token-arkitektur oförändrad (S12-baseline). Bara värdena ändras:
+ *  - Bg från pure white → papperston #f1f0ee
+ *  - Brand från tech-blå #3b6cdb → dusty teal #7a9498
+ *  - Ny sekundär: sage green (mint) #94a58c
+ *  - Warning från amber → dusty terracotta #b08568
+ *  - Danger från sharp red → dämpad #9a4d4d
+ *  - Neutral palette varmare: #1a1a18, #56544f, #d6d4cf etc.
+ *  - Nya tokens: card-2, border-strong, faint, dark, dark-soft, mint
+ *
+ * Komponentkod oförändrad — alla `bg-brand-500` etc. får nya värden
+ * automatiskt via Tailwind v4 @theme.
+ *
+ * Sync: `src/renderer/styles/tokens.ts` parity (S H+G-1 commit).
  * ───────────────────────────────────────────────────────────────────────── */
 
-/* ── Fonts ──────────────────────────────────────────────────────────────────
- * Variabla typsnitt bundlade lokalt (offline-krav, ADR 001-anda).
- * Se `src/renderer/fonts/README.md` för installation. Saknas filerna
- * faller systemet tillbaka på font-stacken i `tokens.ts > fontFamily`.
- * `font-display: swap` undviker "flash of invisible text".
- */
+/* ── Fonts ──────────────────────────────────────────────────────────────── */
 
 @font-face {
   font-family: 'Fraunces';
   src: url('./fonts/Fraunces-VariableFont.woff2') format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('./fonts/Fraunces-VariableFont.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -43,87 +54,107 @@
   font-display: swap;
 }
 
-/* ── Tailwind v4 @theme ─────────────────────────────────────────────────────
- * Genererar utility-klasser. Mappar mot tokens.ts.
- */
+/* ── Tailwind v4 @theme ─────────────────────────────────────────────────── */
 
 @theme {
-  /* Färg — bas */
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f4f4f5;
-  --color-neutral-200: #e4e4e7;
-  --color-neutral-300: #d4d4d8;
-  --color-neutral-400: #a1a1aa;
-  --color-neutral-500: #71717a;
-  --color-neutral-600: #52525b;
-  --color-neutral-700: #3f3f46;
-  --color-neutral-800: #27272a;
-  --color-neutral-900: #18181b;
-  --color-neutral-950: #09090b;
+  /* ─── Färg ─── */
 
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #dbe7ff;
-  --color-brand-500: #3b6cdb;
-  --color-brand-600: #2d54b8;
-  --color-brand-700: #234293;
-  --color-brand-900: #13265a;
+  /* Neutral — varmare papper-toner (vs. zinc neutral) */
+  --color-neutral-50: #fbfaf8;   /* card */
+  --color-neutral-100: #f1f0ee;  /* bg, papper */
+  --color-neutral-200: #e7e6e2;  /* card-2, sekundär yta */
+  --color-neutral-300: #d6d4cf;  /* border */
+  --color-neutral-400: #a8a6a0;  /* border-strong */
+  --color-neutral-500: #8d8b85;  /* faint, tertiärtext */
+  --color-neutral-600: #56544f;  /* muted, sekundärtext */
+  --color-neutral-700: #3a3935;  /* (justering, sällan använd) */
+  --color-neutral-800: #2b2a27;  /* dark-soft */
+  --color-neutral-900: #1d1c1a;  /* dark */
+  --color-neutral-950: #1a1a18;  /* text — varm primärsvart */
 
-  --color-success-100: #dcfce7;
-  --color-success-500: #16a34a;
-  --color-success-600: #15803d;
-  --color-success-700: #166534;
-  --color-warning-100: #fef3c7;
-  --color-warning-500: #d97706;
-  --color-warning-600: #b45309;
-  --color-warning-700: #92400e;
-  --color-danger-100: #fee2e2;
-  --color-danger-500: #dc2626;
-  --color-danger-600: #b91c1c;
-  --color-danger-700: #991b1b;
-  --color-info-100: #e0f2fe;
-  --color-info-500: #0284c7;
-  --color-info-600: #0369a1;
-  --color-info-700: #075985;
-  /* Sprint 69 — semantisk status-alias, mappar till danger-paletten.
-   * Använd `text-status-overdue` etc. istället för `text-red-600` när
-   * intention är att markera "förfallen" som domän-koncept. */
-  --color-status-overdue: var(--color-danger-600);
+  /* Brand — dusty teal (var tech-blå) */
+  --color-brand-50: #f1f4f4;
+  --color-brand-100: #dde3e3;    /* plommon-soft (selected, hover) */
+  --color-brand-500: #7a9498;    /* plommon (main) */
+  --color-brand-600: #5e7a7e;
+  --color-brand-700: #4a6266;
+  --color-brand-900: #2a3b3e;
 
-  /* Sprint 83 — selekterad list-rad. Mappar till info-100 idag men
-   * är en separat semantisk token så att framtida theming kan välja
-   * en annan färg utan att påverka info-banners. Använd `bg-selected`
-   * istället för `bg-blue-50` på list-rader. */
-  --color-selected: var(--color-info-100);
+  /* Mint — sage green (ny sekundär accent) */
+  --color-mint-50: #f3f5f0;
+  --color-mint-100: #e1e4dc;     /* mint-soft */
+  --color-mint-500: #94a58c;     /* mint */
+  --color-mint-600: #768867;
+  --color-mint-700: #5e6e54;
 
-  /* Bakåtkompatibilitet — befintliga komponenter använder dessa namn.
-   * Sprint 13 migrerar successivt till bas-tokens; tills dess speglar
-   * vi gamla shortcuts till nya värden. */
-  --color-background: #ffffff;
-  --color-foreground: var(--color-neutral-950);
-  --color-card: #ffffff;
-  --color-card-foreground: var(--color-neutral-950);
-  --color-muted: var(--color-neutral-100);
-  --color-muted-foreground: var(--color-neutral-500);
-  --color-border: var(--color-neutral-200);
-  --color-primary: var(--color-neutral-900);
-  --color-primary-foreground: var(--color-neutral-50);
+  /* Status — alignade med prototyp-tons */
+  --color-success-100: #e1e4dc;  /* alias mint-100 (success = positivt = mint) */
+  --color-success-500: #94a58c;
+  --color-success-600: #768867;
+  --color-success-700: #5e6e54;
+
+  --color-warning-100: #ead9c8;  /* dusty terracotta-soft */
+  --color-warning-500: #b08568;
+  --color-warning-600: #93704f;
+  --color-warning-700: #75593e;
+
+  --color-danger-100: #f4dada;
+  --color-danger-500: #9a4d4d;   /* dämpad röd (var #dc2626) */
+  --color-danger-600: #7c3d3d;
+  --color-danger-700: #5c2d2d;
+
+  --color-info-100: #dde3e3;     /* alias brand-100 (info = neutral upplysning) */
+  --color-info-500: #7a9498;
+  --color-info-600: #5e7a7e;
+  --color-info-700: #4a6266;
+
+  /* Semantisk alias — domänkoncept */
+  --color-status-overdue: var(--color-warning-600);  /* förfallen = warning, inte danger */
+  --color-selected: var(--color-brand-100);           /* plommon-soft */
+
+  /* Mörka ytor — för bokförare-topbar och liknande */
+  --color-dark: #1d1c1a;
+  --color-dark-soft: #2b2a27;
+
+  /* Bakåtkompatibilitet — gamla shortcuts mappas till nya värden */
+  --color-background: #f1f0ee;            /* papperston (var #ffffff) */
+  --color-foreground: #1a1a18;            /* varm svart */
+  --color-card: #fbfaf8;                  /* varmare än bg (var #ffffff) */
+  --color-card-foreground: #1a1a18;
+  --color-card-2: #e7e6e2;                /* sekundär yta (NY) */
+  --color-muted: var(--color-neutral-200);
+  --color-muted-foreground: var(--color-neutral-600);
+  --color-border: var(--color-neutral-300);
+  --color-border-strong: var(--color-neutral-400);  /* NY */
+  --color-faint: var(--color-neutral-500);          /* NY — tertiärtext, kbd-färg */
+  --color-input: var(--color-neutral-300);
+  --color-primary: #1a1a18;
+  --color-primary-foreground: #fbfaf8;
+  --color-secondary: var(--color-neutral-200);
+  --color-secondary-foreground: #1a1a18;
+  --color-accent: var(--color-brand-500);
+  --color-accent-foreground: #fbfaf8;
   --color-destructive: var(--color-danger-500);
-  --color-destructive-foreground: var(--color-neutral-50);
+  --color-destructive-foreground: #fbfaf8;
+  --color-ring: var(--color-brand-500);
 
-  /* Typografi */
+  /* ─── Typografi ─── */
+
   --font-display: 'Fraunces', 'Iowan Old Style', 'Apple Garamond', Georgia,
     serif;
   --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, sans-serif;
+  --font-serif: 'Fraunces', 'Iowan Old Style', 'Apple Garamond', Georgia,
+    serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
 
   --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
+  --text-sm: 0.8125rem;       /* 13px — bröd-default (prototyp-norm) */
+  --text-base: 0.875rem;      /* 14px — Vardag bröd, generösare */
+  --text-lg: 1.0625rem;
   --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
+  --text-2xl: 1.375rem;       /* 22px — sheet-titel italic Fraunces */
   --text-3xl: 1.875rem;
   --text-4xl: 2.25rem;
   --text-5xl: 3rem;
@@ -133,54 +164,53 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  /* ─── Radius ─── (mer fyrkantig, prototyp-aligned) */
+  --radius-sm: 0.1875rem;     /* 3px */
+  --radius-md: 0.25rem;       /* 4px */
+  --radius-lg: 0.375rem;      /* 6px */
+  --radius-xl: 0.5rem;        /* 8px */
+  --radius-2xl: 0.625rem;     /* 10px (sheets) */
   --radius-full: 9999px;
-  --radius: 0.5rem; /* legacy alias — befintliga komponenter */
+  --radius: 0.25rem;          /* legacy alias */
 
-  /* Shadow */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  /* ─── Shadow ─── */
+  --shadow-sm: 0 1px 2px 0 rgb(30 30 28 / 0.04);
   --shadow-md:
-    0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    0 4px 8px -2px rgb(30 30 28 / 0.06), 0 2px 4px -2px rgb(30 30 28 / 0.04);
   --shadow-lg:
-    0 12px 24px -8px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
-  --shadow-sheet: 0 -8px 32px -4px rgb(0 0 0 / 0.12);
-  --shadow-focus: 0 0 0 3px rgb(59 108 219 / 0.35);
+    0 12px 28px -6px rgb(30 30 28 / 0.10), 0 4px 8px -4px rgb(30 30 28 / 0.06);
+  --shadow-sheet: 0 -8px 32px -4px rgb(30 30 28 / 0.18);
+  --shadow-focus: 0 0 0 3px rgb(122 148 152 / 0.35);
 
-  /* Motion */
+  /* ─── Motion ─── */
   --duration-instant: 0ms;
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 320ms;
 
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-decel: cubic-bezier(0, 0, 0, 1);
   --ease-accel: cubic-bezier(0.3, 0, 1, 1);
 }
 
-/* ── :root — gemensamma CSS-vars utanför @theme ─────────────────────────────
- * Värden som @theme inte täcker (t.ex. mode-resolved surface/text). Komponenter
- * läser via var(--surface), inte via en mode-specifik token direkt — det gör
- * att samma komponent renderar korrekt i båda modes utan className-koppling.
- */
+/* ── :root — surface/text-tokens utanför @theme ─────────────────────────── */
 
 :root {
-  /* Default = Bokförare-värden. Override via [data-mode="vardag"] nedan. */
-  --surface: #ffffff;
-  --surface-elevated: #ffffff;
-  --text-primary: var(--color-neutral-950);
-  --text-secondary: var(--color-neutral-500);
-  --border-default: var(--color-neutral-200);
-  --accent: var(--color-brand-600);
-  --top-bar-surface: var(--color-neutral-900);
-  --top-bar-text: var(--color-neutral-50);
-  --font-size-base: 1rem;
+  --surface: #f1f0ee;                     /* papperston */
+  --surface-elevated: #fbfaf8;            /* card */
+  --surface-secondary: #e7e6e2;           /* card-2 */
+  --text-primary: #1a1a18;
+  --text-secondary: #56544f;
+  --text-faint: #8d8b85;
+  --border-default: #d6d4cf;
+  --border-strong: #a8a6a0;
+  --accent: #7a9498;
+  --accent-soft: #dde3e3;
+  --top-bar-surface: #1d1c1a;             /* bokförare = mörk topbar */
+  --top-bar-text: #ebeae6;
+  --top-bar-border: #2b2a27;
+  --font-size-base: 0.8125rem;            /* 13px (prototyp-norm) */
 
-  /* Z-index — används främst inline eftersom Tailwind har egen z-skala */
   --z-base: 0;
   --z-raised: 10;
   --z-sticky: 20;
@@ -192,36 +222,35 @@
   --z-command-palette: 80;
 }
 
-/* ── Mode-overrides ──────────────────────────────────────────────────────── */
+/* ── Mode-overrides ─────────────────────────────────────────────────────── */
 
 [data-mode='vardag'] {
-  /* Vardag = papper, varm vit, generösare bröd-typografi */
-  --surface: var(--color-neutral-50);
-  --surface-elevated: #ffffff;
-  --text-primary: var(--color-neutral-900);
-  --text-secondary: var(--color-neutral-600);
-  --border-default: var(--color-neutral-200);
-  --accent: var(--color-brand-500);
-  --font-size-base: 1.125rem;
-  /* Top-bar i Vardag-läget är ljus (motsats till Bokförare) */
-  --top-bar-surface: #ffffff;
-  --top-bar-text: var(--color-neutral-900);
+  /* Vardag = papper, ljus topbar, generösare bröd-typografi */
+  --surface: #f1f0ee;
+  --surface-elevated: #fbfaf8;
+  --text-primary: #1a1a18;
+  --text-secondary: #56544f;
+  --border-default: #d6d4cf;
+  --accent: #7a9498;
+  --accent-soft: #dde3e3;
+  --font-size-base: 0.875rem;             /* 14px för Vardag (mer luftigt) */
+  --top-bar-surface: #fbfaf8;             /* ljus topbar i Vardag */
+  --top-bar-text: #1a1a18;
+  --top-bar-border: #d6d4cf;
 }
 
 [data-mode='bokforare'] {
-  /* Default-värdena från :root är redan Bokförare-kalibrerade.
-   * Selectorn finns för specificity-symmetri — om Vardag override:ar
-   * en token utan att Bokförare har motsvarande "reset", kan kvarvarande
-   * Vardag-värden läcka vid mode-byte mid-session. */
-  --surface: #ffffff;
-  --surface-elevated: #ffffff;
-  --text-primary: var(--color-neutral-950);
-  --text-secondary: var(--color-neutral-500);
-  --border-default: var(--color-neutral-200);
-  --accent: var(--color-brand-600);
-  --font-size-base: 1rem;
-  --top-bar-surface: var(--color-neutral-900);
-  --top-bar-text: var(--color-neutral-50);
+  --surface: #f1f0ee;                     /* båda modes papper */
+  --surface-elevated: #fbfaf8;
+  --text-primary: #1a1a18;
+  --text-secondary: #56544f;
+  --border-default: #d6d4cf;
+  --accent: #7a9498;
+  --accent-soft: #dde3e3;
+  --font-size-base: 0.8125rem;            /* 13px tightare i bokförare */
+  --top-bar-surface: #1d1c1a;             /* mörk topbar */
+  --top-bar-text: #ebeae6;
+  --top-bar-border: #2b2a27;
 }
 
 /* ── Bas-element ────────────────────────────────────────────────────────── */
@@ -231,12 +260,73 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--font-size-base);
-  font-feature-settings: 'cv11', 'ss01'; /* Inter Tight stylistic alternates */
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Reduced motion (M133-anda — a11y) */
+/* ── Typografi-utilities — Sprint H+G-1 ─────────────────────────────────── */
+
+.font-serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+/* Section label — UPPERCASE, tracking-wide, faint, semibold.
+ * Använd som `<span class="section-label">PERIOD</span>` eller via
+ * `<SectionLabel>`-primitive (Sprint H+G-2). */
+.section-label {
+  font-size: 0.625rem;       /* 10px */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+/* kbd-chip — för tangenttips i UI */
+.kbd-chip {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;       /* 10px */
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+  line-height: 1.4;
+  vertical-align: middle;
+}
+.kbd-chip-dark {
+  background: var(--color-dark);
+  border-color: var(--color-dark-soft);
+  color: #9c9a93;
+}
+
+/* ── Animationer (för framtida sprintar) ─────────────────────────────────── */
+
+@keyframes fritt-flash {
+  0% { background: var(--accent-soft); }
+  100% { background: transparent; }
+}
+@keyframes fritt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes fritt-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fritt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fritt-flash { animation: fritt-flash 1.4s ease-out; }
+.fritt-pulse { animation: fritt-pulse 1.6s ease-in-out infinite; }
+.fritt-sheet-up { animation: fritt-sheet-up 0.35s var(--ease-standard); }
+.fritt-fade-in { animation: fritt-fade-in 0.25s ease-out; }
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -20,48 +20,57 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const colorBase = {
-  // Neutral scale (zinc-baserad, ger god läsbarhet på papper-vita ytor)
-  neutral50: '#fafafa',
-  neutral100: '#f4f4f5',
-  neutral200: '#e4e4e7',
-  neutral300: '#d4d4d8',
-  neutral400: '#a1a1aa',
-  neutral500: '#71717a',
-  neutral600: '#52525b',
-  neutral700: '#3f3f46',
-  neutral800: '#27272a',
-  neutral900: '#18181b',
-  neutral950: '#09090b',
+  // Neutral scale — varmare papper-toner (Sprint H+G-1, var zinc-baserad)
+  neutral50: '#fbfaf8',   // card
+  neutral100: '#f1f0ee',  // bg, papperston
+  neutral200: '#e7e6e2',  // card-2, sekundär yta
+  neutral300: '#d6d4cf',  // border
+  neutral400: '#a8a6a0',  // border-strong
+  neutral500: '#8d8b85',  // faint, tertiärtext
+  neutral600: '#56544f',  // muted, sekundärtext
+  neutral700: '#3a3935',
+  neutral800: '#2b2a27',  // dark-soft
+  neutral900: '#1d1c1a',  // dark
+  neutral950: '#1a1a18',  // text — varm primärsvart
 
-  // Brand — varm bokföringsblå med en gnutta värme (testar olika varianter
-  // i Sprint 13 mot prototypen; detta är försiktig start-palett)
-  brand50: '#eef4ff',
-  brand100: '#dbe7ff',
-  brand500: '#3b6cdb',
-  brand600: '#2d54b8',
-  brand700: '#234293',
-  brand900: '#13265a',
+  // Brand — dusty teal (Sprint H+G-1, var tech-blå)
+  brand50: '#f1f4f4',
+  brand100: '#dde3e3',    // plommon-soft (selected, hover)
+  brand500: '#7a9498',    // plommon (main)
+  brand600: '#5e7a7e',
+  brand700: '#4a6266',
+  brand900: '#2a3b3e',
 
-  // Status — fullständig palett (Sprint 69 utvidgning).
-  // Paritet med `--color-{semantik}-{ton}` i index.css @theme.
-  success100: '#dcfce7',
-  success500: '#16a34a',
-  success600: '#15803d',
-  success700: '#166534',
-  warning100: '#fef3c7',
-  warning500: '#d97706',
-  warning600: '#b45309',
-  warning700: '#92400e',
-  danger100: '#fee2e2',
-  danger500: '#dc2626',
-  danger600: '#b91c1c',
-  danger700: '#991b1b',
-  info100: '#e0f2fe',
-  info500: '#0284c7',
-  info600: '#0369a1',
-  info700: '#075985',
+  // Mint — sage green (NY sekundär accent)
+  mint50: '#f3f5f0',
+  mint100: '#e1e4dc',     // mint-soft
+  mint500: '#94a58c',     // mint (main)
+  mint600: '#768867',
+  mint700: '#5e6e54',
+
+  // Mörk yta — för bokförare-topbar
+  dark: '#1d1c1a',
+  darkSoft: '#2b2a27',
+
+  // Status — alignade med prototyp
+  success100: '#e1e4dc',  // alias mint-100 (success = positivt = mint)
+  success500: '#94a58c',
+  success600: '#768867',
+  success700: '#5e6e54',
+  warning100: '#ead9c8',  // dusty terracotta-soft
+  warning500: '#b08568',
+  warning600: '#93704f',
+  warning700: '#75593e',
+  danger100: '#f4dada',
+  danger500: '#9a4d4d',   // dämpad röd (var #dc2626)
+  danger600: '#7c3d3d',
+  danger700: '#5c2d2d',
+  info100: '#dde3e3',     // alias brand-100 (info = neutral upplysning)
+  info500: '#7a9498',
+  info600: '#5e7a7e',
+  info700: '#4a6266',
   // Semantisk status-alias — domänkoncept ("förfallen") snarare än färgnamn.
-  statusOverdue: '#b91c1c', // = danger600
+  statusOverdue: '#93704f', // = warning600 (förfallen = warning, inte danger)
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,12 +88,12 @@ export const fontFamily = {
 
 export const fontSize = {
   xs: '0.75rem', // 12px — fine print, kbd-chip-label
-  sm: '0.875rem', // 14px — sekundär text, label
-  base: '1rem', // 16px — bröd-default
-  lg: '1.125rem', // 18px — primär CTA, lead
+  sm: '0.8125rem', // 13px — bröd-default (prototyp-norm)
+  base: '0.875rem', // 14px — Vardag bröd, generösare
+  lg: '1.0625rem', // 17px — primär CTA, lead
   xl: '1.25rem', // 20px — sub-rubrik
-  '2xl': '1.5rem', // 24px — sid-rubrik (Vardag)
-  '3xl': '1.875rem', // 30px — sid-rubrik (Bokförare)
+  '2xl': '1.375rem', // 22px — sheet-titel italic Fraunces
+  '3xl': '1.875rem', // 30px — Vardag hero "God morgon"
   '4xl': '2.25rem', // 36px — KPI-värde
   '5xl': '3rem', // 48px — hero / dashboard top-metric
 } as const
@@ -131,11 +140,11 @@ export const spacing = {
 
 export const radius = {
   none: '0',
-  sm: '0.25rem', // 4px — kbd-chip, små badges
-  md: '0.5rem', // 8px — knappar, inputs (default)
-  lg: '0.75rem', // 12px — kort
-  xl: '1rem', // 16px — stora paneler, sheets
-  '2xl': '1.5rem', // 24px — hero-paneler
+  sm: '0.1875rem', // 3px — kbd-chip, mono-badges
+  md: '0.25rem', // 4px — knappar, inputs (default, prototyp-norm)
+  lg: '0.375rem', // 6px — kort
+  xl: '0.5rem', // 8px — stora paneler
+  '2xl': '0.625rem', // 10px — sheets
   full: '9999px', // pills, status-rundningar
 } as const
 
@@ -145,13 +154,13 @@ export const radius = {
 
 export const shadow = {
   none: 'none',
-  sm: '0 1px 2px 0 rgb(0 0 0 / 0.04)',
-  md: '0 4px 8px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
-  lg: '0 12px 24px -8px rgb(0 0 0 / 0.10), 0 4px 8px -4px rgb(0 0 0 / 0.06)',
-  // Sheet — för bottom-sheets (Vardag) och dialogs
-  sheet: '0 -8px 32px -4px rgb(0 0 0 / 0.12)',
-  // Focus ring (a11y)
-  focus: '0 0 0 3px rgb(59 108 219 / 0.35)',
+  sm: '0 1px 2px 0 rgb(30 30 28 / 0.04)',
+  md: '0 4px 8px -2px rgb(30 30 28 / 0.06), 0 2px 4px -2px rgb(30 30 28 / 0.04)',
+  lg: '0 12px 28px -6px rgb(30 30 28 / 0.10), 0 4px 8px -4px rgb(30 30 28 / 0.06)',
+  // Sheet — för bottom-sheets och dialogs
+  sheet: '0 -8px 32px -4px rgb(30 30 28 / 0.18)',
+  // Focus ring (a11y) — dusty teal-tonad
+  focus: '0 0 0 3px rgb(122 148 152 / 0.35)',
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -166,8 +175,8 @@ export const duration = {
 } as const
 
 export const easing = {
-  // Standard Material-style — bra default för UI
-  standard: 'cubic-bezier(0.2, 0, 0, 1)',
+  // Standard — prototyp-aligned (mjukare än Material)
+  standard: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
   // Decelerate — för "kommer in" (sheets, popovers)
   decel: 'cubic-bezier(0, 0, 0, 1)',
   // Accelerate — för "går ut" (close, dismiss)
@@ -204,29 +213,29 @@ export type UiMode = 'vardag' | 'bokforare'
  */
 export const modeTokens = {
   vardag: {
-    // Vardag = papper, varm vit, generös spacing
-    surface: colorBase.neutral50,
-    surfaceElevated: '#ffffff',
-    textPrimary: colorBase.neutral900,
-    textSecondary: colorBase.neutral600,
-    border: colorBase.neutral200,
-    accent: colorBase.brand500,
-    // Större bas-typografi — Vardag är touch-vänligare
-    fontSizeBase: fontSize.lg, // 18px
+    // Vardag = papper, ljus topbar, generös typografi
+    surface: '#f1f0ee',                      // papperston
+    surfaceElevated: '#fbfaf8',              // card
+    textPrimary: '#1a1a18',
+    textSecondary: '#56544f',
+    border: '#d6d4cf',
+    accent: colorBase.brand500,              // dusty teal
+    fontSizeBase: fontSize.base,             // 14px (luftigare)
+    topBarSurface: '#fbfaf8',                // ljus topbar i Vardag
+    topBarText: '#1a1a18',
   },
   bokforare: {
-    // Bokförare = täta tabeller, mörk top-bar, tät spacing
-    surface: '#ffffff',
-    surfaceElevated: '#ffffff',
-    textPrimary: colorBase.neutral950,
-    textSecondary: colorBase.neutral500,
-    border: colorBase.neutral200,
-    accent: colorBase.brand600,
-    // Standard bröd — bokförare jobbar med tät information
-    fontSizeBase: fontSize.base, // 16px
-    // Top-bar är mörk i Bokförare-läget (ADR 005 — "mörk yta i ljust tema")
-    topBarSurface: colorBase.neutral900,
-    topBarText: colorBase.neutral50,
+    // Bokförare = papper, mörk topbar, tät spacing
+    surface: '#f1f0ee',                      // papperston (samma som Vardag)
+    surfaceElevated: '#fbfaf8',              // card
+    textPrimary: '#1a1a18',
+    textSecondary: '#56544f',
+    border: '#d6d4cf',
+    accent: colorBase.brand500,              // dusty teal
+    fontSizeBase: fontSize.sm,               // 13px (tightare)
+    // Top-bar är mörk i Bokförare-läget (matchar prototyp H+G)
+    topBarSurface: colorBase.dark,           // #1d1c1a
+    topBarText: '#ebeae6',
   },
 } as const
 
