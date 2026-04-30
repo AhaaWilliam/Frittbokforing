@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CustomerPrice } from '../../../shared/types'
 import { formatKr, unitLabel, toOre } from '../../lib/format'
 import { parseDecimal } from '../../../shared/money'
+import { Callout } from '../ui/Callout'
 import {
   useSetCustomerPrice,
   useRemoveCustomerPrice,
@@ -137,9 +138,9 @@ export function CustomerPriceTable({
       ) : (
         <div className="mt-3 space-y-3 rounded-md border p-4">
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <Callout variant="danger" data-testid="customer-price-error">
               {error}
-            </div>
+            </Callout>
           )}
 
           <div>

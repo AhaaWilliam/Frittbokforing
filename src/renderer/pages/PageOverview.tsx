@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { FileText, Users, Package, Upload, ShieldAlert } from 'lucide-react'
+import { FileText, Users, Package, Upload } from 'lucide-react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { MetricCard } from '../components/overview/MetricCard'
 import { PeriodList } from '../components/overview/PeriodList'
 import { ReTransferButton } from '../components/overview/ReTransferButton'
+import { Callout } from '../components/ui/Callout'
 import { useDashboardSummary } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useNavigate } from '../lib/router'
@@ -30,30 +31,30 @@ function BackupReminder({
   if (!needsAttention) return null
 
   return (
-    <div
-      className="mb-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-      data-testid="backup-reminder"
-      role="alert"
-    >
-      <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-      <div className="flex-1">
-        <p className="font-medium">
-          {age === null
+    <div className="mb-4">
+      <Callout
+        variant="warning"
+        title={
+          age === null
             ? 'Ingen säkerhetskopia har skapats ännu'
-            : `Senaste säkerhetskopia är ${age} dagar gammal`}
-        </p>
-        <p className="mt-0.5 text-xs text-amber-800">
-          Bokföringslagen 7 kap kräver arkivering i 7 år. Skapa en
-          säkerhetskopia regelbundet — datafilen är helt lokal.
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={() => navigate('/settings')}
-        className="flex-shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+            : `Senaste säkerhetskopia är ${age} dagar gammal`
+        }
+        data-testid="backup-reminder"
       >
-        Öppna inställningar
-      </button>
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-xs">
+            Bokföringslagen 7 kap kräver arkivering i 7 år. Skapa en
+            säkerhetskopia regelbundet — datafilen är helt lokal.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="flex-shrink-0 rounded-md border border-warning-500/30 bg-white px-3 py-1.5 text-xs font-medium text-neutral-900 hover:bg-warning-100/40"
+          >
+            Öppna inställningar
+          </button>
+        </div>
+      </Callout>
     </div>
   )
 }
@@ -154,8 +155,10 @@ export function PageOverview() {
       <PageHeader title="Översikt" />
       <div className="px-8 py-6">
         {error && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-            Kunde inte ladda dashboard-data.
+          <div className="mb-4">
+            <Callout variant="danger" data-testid="overview-error">
+              Kunde inte ladda dashboard-data.
+            </Callout>
           </div>
         )}
 

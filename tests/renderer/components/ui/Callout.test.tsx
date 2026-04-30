@@ -81,6 +81,16 @@ describe('Callout', () => {
     expect(root.className).toContain('custom-x')
   })
 
+  // Sprint 67 — data-testid pass-through för migration av legacy raw banners.
+  it('passes data-testid through to root', () => {
+    render(
+      <Callout data-testid="my-callout" variant="danger">
+        x
+      </Callout>,
+    )
+    expect(screen.getByTestId('my-callout')).toBeInTheDocument()
+  })
+
   it('passes axe a11y check (all variants)', async () => {
     const { container } = render(
       <div>

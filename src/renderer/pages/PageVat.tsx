@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/layout/PageHeader'
+import { Callout } from '../components/ui/Callout'
 import { useVatReport } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { formatKr } from '../lib/format'
@@ -181,9 +182,9 @@ export function PageVat() {
         </div>
 
         {error && (
-          <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <Callout variant="danger" data-testid="vat-error">
             Kunde inte generera momsrapport.
-          </div>
+          </Callout>
         )}
 
         {isLoading && (

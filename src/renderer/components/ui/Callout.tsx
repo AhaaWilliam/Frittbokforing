@@ -23,6 +23,8 @@ interface CalloutProps {
   /** Egen ikon — annars används default per variant. */
   icon?: ReactNode
   className?: string
+  /** Pass-through för test-id (Sprint 67 — möjliggör migration av legacy banners). */
+  'data-testid'?: string
 }
 
 const VARIANT_CLASSES: Record<
@@ -105,6 +107,7 @@ export function Callout({
   children,
   icon,
   className,
+  'data-testid': dataTestid,
 }: CalloutProps) {
   const cls = VARIANT_CLASSES[variant]
   const role = VARIANT_ROLE[variant]
@@ -125,6 +128,7 @@ export function Callout({
       aria-label={typeof title === 'string' ? undefined : srLabel}
       className={rootClasses}
       data-variant={variant}
+      data-testid={dataTestid}
     >
       {/* Vertikal accent-stapel — left border via absolute element istf border-left
           så att hörn-radie följer panel-rundningen utan visuell bryta. */}

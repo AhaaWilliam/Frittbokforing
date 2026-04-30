@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useNetResult, useCreateNewFiscalYear } from '../../lib/hooks'
 import { addOneDay, addMonthsMinusOneDay } from '../../../shared/date-utils'
+import { Callout } from '../ui/Callout'
 
 function formatKronor(ore: number): string {
   const kr = ore / 100
@@ -106,11 +107,10 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
         </h2>
 
         {error && (
-          <div
-            role="alert"
-            className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-          >
-            {error}
+          <div className="mb-4">
+            <Callout variant="danger" data-testid="create-fy-error">
+              {error}
+            </Callout>
           </div>
         )}
 
