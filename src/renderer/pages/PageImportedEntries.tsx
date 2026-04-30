@@ -1,7 +1,7 @@
 import { PageHeader } from '../components/layout/PageHeader'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useImportedEntries } from '../lib/hooks'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { formatKr } from '../lib/format'
 
 export function PageImportedEntries() {
@@ -14,7 +14,11 @@ export function PageImportedEntries() {
       <PageHeader title="Importerade verifikat" />
       <div className="flex-1 overflow-auto px-8 py-6">
         {isLoading ? (
-          <LoadingSpinner />
+          <TableSkeleton
+            columns={5}
+            rows={5}
+            ariaLabel="Laddar importerade verifikat"
+          />
         ) : !entries || entries.length === 0 ? (
           <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
             Inga importerade verifikat för valt räkenskapsår.

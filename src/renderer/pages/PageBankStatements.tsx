@@ -15,6 +15,7 @@ import {
 import { useRoute, useNavigate, Link } from '../lib/router'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { Pill } from '../components/ui/Pill'
 import { SuggestedMatchesPanel } from '../components/bank/SuggestedMatchesPanel'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -139,7 +140,11 @@ function BankStatementList({
 
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <LoadingSpinner />
+          <TableSkeleton
+            columns={7}
+            rows={5}
+            ariaLabel="Laddar kontoutdrag"
+          />
         ) : !statements || statements.length === 0 ? (
           <div className="text-sm text-muted-foreground">
             Inga kontoutdrag importerade ännu.

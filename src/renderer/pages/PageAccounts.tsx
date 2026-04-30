@@ -11,6 +11,7 @@ import {
 } from '../lib/hooks'
 import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { TableSkeleton } from '../components/ui/TableSkeleton'
 import { EmptyState, AccountIllustration } from '../components/ui/EmptyState'
 import type { Account } from '../../shared/types'
 
@@ -288,7 +289,7 @@ export function PageAccounts() {
 
         {/* Table */}
         {isLoading ? (
-          <LoadingSpinner />
+          <TableSkeleton columns={7} rows={6} ariaLabel="Laddar konton" />
         ) : filtered.length === 0 && !search.trim() ? (
           <EmptyState
             icon={<AccountIllustration />}
