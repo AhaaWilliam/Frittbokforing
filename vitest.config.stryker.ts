@@ -38,6 +38,9 @@ export default defineConfig({
       'tests/session-R-iban-nordic.test.ts',
       'tests/session-53-depreciation.test.ts',
       'tests/session-C-depreciation-update.test.ts',
+      // Sprint 89 — renderer/lib pure-function scope
+      'tests/renderer/lib/format.test.ts',
+      'tests/renderer/lib/manual-entry-calcs.test.ts',
     ],
     setupFiles: ['tests/setup/dom-matchers.ts'],
     pool: 'forks',

@@ -15,7 +15,9 @@
     "src/main/services/bank/bank-fee-classifier.ts",
     "src/main/services/bank/iban-bank-registry.ts",
     "src/shared/money.ts",
-    "src/shared/parse-decimal.ts"
+    "src/shared/parse-decimal.ts",
+    "src/renderer/lib/format.ts",
+    "src/renderer/lib/manual-entry-calcs.ts"
   ],
   "ignorePatterns": [
     "release",
