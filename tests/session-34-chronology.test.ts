@@ -392,4 +392,44 @@ describe('checkChronology — guard', () => {
 
     memDb.close()
   })
+
+  // Sprint 60 — kill StringLiteral mutant on `field: 'date'`. Tidigare
+  // tester assertade på error-meddelande men aldrig på `err.field`.
+  it('strukturerat fel innehåller code/error/field=date vid violation', () => {
+    const memDb = new Database(':memory:')
+    memDb.exec(`CREATE TABLE journal_entries (
+      id INTEGER PRIMARY KEY,
+      fiscal_year_id INTEGER,
+      verification_series TEXT,
+      verification_number INTEGER,
+      journal_date TEXT
+    )`)
+    memDb
+      .prepare(
+        `INSERT INTO journal_entries (fiscal_year_id, verification_series, verification_number, journal_date)
+         VALUES (1, 'A', 1, '2026-06-15')`,
+      )
+      .run()
+
+    let captured: unknown = null
+    const tx = memDb.transaction(() => {
+      try {
+        checkChronology(memDb, 1, 'A', '2026-03-15')
+      } catch (err) {
+        captured = err
+        throw err
+      }
+    })
+
+    expect(() => tx()).toThrow()
+    expect(captured).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      field: 'date',
+    })
+    expect((captured as { error: string }).error).toContain('2026-03-15')
+    expect((captured as { error: string }).error).toContain('2026-06-15')
+    expect((captured as { error: string }).error).toContain('A-serien')
+
+    memDb.close()
+  })
 })

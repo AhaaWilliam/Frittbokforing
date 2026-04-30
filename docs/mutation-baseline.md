@@ -22,17 +22,18 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S57) | 85.83% | ±0 | break-threshold 90→85 (CI ratchet floor) |
 | 2026-04-30 (S58) | **87.97%** | **+2.14** | money.ts add to scope (100%) + S56-test wired in |
 | 2026-04-30 (S59) | 87.97% | ±0 | break-threshold 85→87 (ratchet — låser S58-vinst) |
+| 2026-04-30 (S60) | **88.35%** | **+0.38** | chronology-guard StringLiteral kill (field='date'-assert) → 100% |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
 | Fil | Score | Killed | Survived | NoCov | Δ från S56 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **87.97%** | 234 | 20 | 12 | +2.14 pp |
-| chronology-guard.ts | 93.75% | 15 | 1 | 0 | ±0 |
+| **Totalt** | **88.35%** | 235 | 19 | 12 | +2.52 pp |
+| chronology-guard.ts | **100.00%** | 16 | 0 | 0 | **+6.25 pp** |
 | vat-report-service.ts | 83.87% | 52 | 6 | 4 | ±0 |
 | correction-service.ts | 84.96% | 113 | 12 | 8 | ±0 |
-| result-service.ts | **97.67%** | 42 | 1 | 0 | **+9.30 pp** |
-| money.ts | **100.00%** | 12 | 0 | 0 | new |
+| result-service.ts | 97.67% | 42 | 1 | 0 | ±0 |
+| money.ts | 100.00% | 12 | 0 | 0 | ±0 |
 
 **Break-threshold:** 87% (höjd från 85% i S59 efter att S58 lyfte
 totalscoren till 87.97%). Ratchet-strategi: sätt gaten precis under
