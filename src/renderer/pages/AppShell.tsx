@@ -8,6 +8,7 @@ import { routes } from '../lib/routes'
 import { Sidebar } from '../components/layout/Sidebar'
 import { AppTopBar } from '../components/layout/AppTopBar'
 import { ZoneCons } from '../components/layout/ZoneCons'
+import { StatusNu } from '../components/zone-cons/StatusNu'
 import { SkipLinks } from '../components/layout/SkipLinks'
 import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
 import { CommandPalette } from '../components/command-palette/CommandPalette'
@@ -200,7 +201,9 @@ function AppShellInner({ company }: AppShellInnerProps) {
             <PageContent page={page} />
           </div>
         </main>
-        <ZoneCons />
+        <ZoneCons>
+          <StatusNu />
+        </ZoneCons>
       </div>
       <CommandPalette
         open={paletteOpen}
