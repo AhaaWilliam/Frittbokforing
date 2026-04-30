@@ -6,10 +6,36 @@ import {
 } from './report/k2-mapping'
 import type { AccountRange } from './report/k2-mapping'
 import { getAccountBalances, buildGroups } from './report/balance-queries'
+import type { ReportGroupResult } from '../../shared/types'
 
 // ═══ Validate config at module load — fail fast if broken ═══
 
 validateResultConfigInvariants(INCOME_STATEMENT_CONFIG)
+
+// ═══ Internal helpers ═══
+
+// Strict group lookup — INCOME_STATEMENT_CONFIG invariant guarantees presence.
+// Throwing instead of optional-chaining gives mutation testing a real signal:
+// a missing group is a corrupted invariant, not a silent zero.
+export function _requireGroupForTesting(
+  groups: ReportGroupResult[],
+  id: string,
+): ReportGroupResult {
+  return requireGroup(groups, id)
+}
+
+function requireGroup(
+  groups: ReportGroupResult[],
+  id: string,
+): ReportGroupResult {
+  const group = groups.find((g) => g.id === id)
+  if (!group) {
+    throw new Error(
+      `Result-service invariant broken: group '${id}' missing from INCOME_STATEMENT_CONFIG`,
+    )
+  }
+  return group
+}
 
 // ═══ Types ═══
 
@@ -38,18 +64,20 @@ export function calculateResultSummary(
   const balances = getAccountBalances(db, fiscalYearId, dateRange)
   const groups = buildGroups(INCOME_STATEMENT_CONFIG, balances)
 
-  const operatingIncome =
-    groups.find((g) => g.id === 'operating_income')?.subtotalNet ?? 0
-  const operatingExpenses =
-    groups.find((g) => g.id === 'operating_expenses')?.subtotalNet ?? 0
+  const operatingIncome = requireGroup(groups, 'operating_income').subtotalNet
+  const operatingExpenses = requireGroup(
+    groups,
+    'operating_expenses',
+  ).subtotalNet
   const operatingResultOre = operatingIncome + operatingExpenses
 
-  const financialNet =
-    groups.find((g) => g.id === 'financial_items')?.subtotalNet ?? 0
+  const financialNet = requireGroup(groups, 'financial_items').subtotalNet
   const resultAfterFinancialOre = operatingResultOre + financialNet
 
-  const appropriationsNet =
-    groups.find((g) => g.id === 'appropriations_and_tax')?.subtotalNet ?? 0
+  const appropriationsNet = requireGroup(
+    groups,
+    'appropriations_and_tax',
+  ).subtotalNet
   const netResultOre = resultAfterFinancialOre + appropriationsNet
 
   return { operatingResultOre, resultAfterFinancialOre, netResultOre }
@@ -63,27 +91,26 @@ export function calculateResultBreakdown(
   const balances = getAccountBalances(db, fiscalYearId, dateRange)
   const groups = buildGroups(INCOME_STATEMENT_CONFIG, balances)
 
-  const operatingIncomeGroup = groups.find((g) => g.id === 'operating_income')
-  const operatingExpensesGroup = groups.find(
-    (g) => g.id === 'operating_expenses',
-  )
+  const operatingIncomeGroup = requireGroup(groups, 'operating_income')
+  const operatingExpensesGroup = requireGroup(groups, 'operating_expenses')
 
-  const operatingIncome = operatingIncomeGroup?.subtotalNet ?? 0
-  const operatingExpenses = operatingExpensesGroup?.subtotalNet ?? 0
+  const operatingIncome = operatingIncomeGroup.subtotalNet
+  const operatingExpenses = operatingExpensesGroup.subtotalNet
   const operatingResultOre = operatingIncome + operatingExpenses
 
-  const financialNet =
-    groups.find((g) => g.id === 'financial_items')?.subtotalNet ?? 0
+  const financialNet = requireGroup(groups, 'financial_items').subtotalNet
   const resultAfterFinancialOre = operatingResultOre + financialNet
 
-  const appropriationsNet =
-    groups.find((g) => g.id === 'appropriations_and_tax')?.subtotalNet ?? 0
+  const appropriationsNet = requireGroup(
+    groups,
+    'appropriations_and_tax',
+  ).subtotalNet
   const netResultOre = resultAfterFinancialOre + appropriationsNet
 
   // subtotalDisplay: for +1 signMultiplier groups, equals subtotalNet
   // For operating_expenses (signMultiplier -1), subtotalDisplay is positive for costs
-  const revenueOre = operatingIncomeGroup?.subtotalDisplay ?? 0
-  const expensesOre = operatingExpensesGroup?.subtotalDisplay ?? 0
+  const revenueOre = operatingIncomeGroup.subtotalDisplay
+  const expensesOre = operatingExpensesGroup.subtotalDisplay
 
   return {
     operatingResultOre,

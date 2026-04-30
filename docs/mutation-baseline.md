@@ -18,19 +18,23 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-21 | 71.30% | baseline | initial mutation-konfig |
 | 2026-04-30 (S51) | 77.97% | +6.67 | sprint 30/34/40/43/44/47 lyfte oavsiktligt |
 | 2026-04-30 (S55) | **85.08%** | **+7.11** | S52 (vat-report) + S53 (correction) — riktade |
+| 2026-04-30 (S56) | **85.83%** | **+0.75** | result-service refaktor (optional-chaining → requireGroup) |
 
-## Baseline 2026-04-30 (efter Sprint 52 + 53)
+## Baseline 2026-04-30 (efter Sprint 56)
 
-| Fil | Score | Killed | Survived | NoCov | Δ från S51 |
+| Fil | Score | Killed | Survived | NoCov | Δ från S55 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **85.08%** | 251 | 32 | 12 | +7.11 pp |
+| **Totalt** | **85.83%** | 218 | 21 | 15 | +0.75 pp |
 | chronology-guard.ts | 93.75% | 15 | 1 | 0 | ±0 |
-| vat-report-service.ts | **83.87%** | 52 | 6 | 4 | **+19.35 pp** |
-| correction-service.ts | **84.96%** | 113 | 12 | 8 | **+6.76 pp** |
-| result-service.ts | 84.52% | 71 | 13 | 0 | ±0 (defensive) |
+| vat-report-service.ts | 83.87% | 52 | 6 | 4 | ±0 |
+| correction-service.ts | 84.96% | 113 | 12 | 8 | ±0 |
+| result-service.ts | **88.37%** | 38 | 2 | 3 | **+3.85 pp** |
 
-**Break-threshold:** 90%. Nuvarande är 85.08% — under gaten men riktningen
-är tydlig.
+**Break-threshold:** 90%. Nuvarande är 85.83% — fortsatt under gaten.
+Result-service närmar sig 90%; kvarstående 2 surviving är edge-cases
+i `subtotalDisplay`-paths som testfixturerna inte distansierar från
+`subtotalNet`. NoCov-rader är funktioner som test-suite inte täcker
+direkt (kallas via dashboard/report-service-vägar).
 
 ## Sprintar som stängde gap
 
@@ -47,14 +51,16 @@ ErrorCode-mappningar (ENTRY_ALREADY_CORRECTED, ENTRY_IS_CORRECTION,
 NOT_FOUND, YEAR_IS_CLOSED), och structured-error-propagering
 (LogicalOperator-kill).
 
-**S54 — result-service skipped.** 13 surviving är optional-chaining
-på `groups.find(...)?.subtotalNet`. INCOME_STATEMENT_CONFIG är
-statisk konstant med 4 grupper + invariant-kontroll vid load
-(`validateResultConfigInvariants`). `find()` returnerar **alltid**
-en grupp, så `?.` är defensiv kod som inte kan triggas utan att
-först bryta en module-load-invariant. Att döda dessa mutationer
-kräver mockad buildGroups eller refaktor till asserts-istället-för-
-optional-chaining (möjligt, ej gjort).
+**S56 — result-service refaktor (+3.85 pp).** Mutation roadmap Steg 4
+levererad. `groups.find(...)?.subtotalNet ?? 0`-mönstret ersatt med
+`requireGroup(groups, id).subtotalNet` (kastar Error vid saknad grupp).
+INCOME_STATEMENT_CONFIG-invarianten är fortsatt source of truth — men
+nu uttryckt som assertion istället för silent-fallback. 11 mutanter
+elimineras (alla optional-chaining + nullish-coalescing-mutationer).
+5 nya unit-tester på `_requireGroupForTesting`-export i
+`tests/sprint-56-result-service-require-group.test.ts`. Kvarstående 2
+surviving: `subtotalDisplay`-paths där testfixturer inte separerar
+display- från net-värdet. Stänger Steg 4 i mutation-roadmap.
 
 ## Top survival-mönster (var testerna är svaga)
 
@@ -110,9 +116,9 @@ optional-chaining (möjligt, ej gjort).
 60-70%) eftersom dessa har komplex sign-flip-logik (M137) och
 heltalsaritmetik (M131) som är klassisk mutation-mat.
 
-**Steg 4 (backlog):** Refaktor `result-service` så att optional-chaining
-ersätts av asserts (eftersom invarianten är statisk). Vinst: +6 pp och
-13 surviving mutanter elimineras.
+**Steg 4 ✅ result-service refaktor (S56).** Mål: +6 pp. Utfall: +3.85 pp
+på filen, +0.75 pp totalt (11 av 13 mutanter elimineras). De 2
+kvarstående är `subtotalDisplay`-paths som behöver dedikerade fixtures.
 
 **Steg 5 (backlog):** Sätt upp CI-gate på `≥85%` (trend-bevarande) i
 GitHub Actions. Höj tröskel gradvis till 90% när nya tester landar.
