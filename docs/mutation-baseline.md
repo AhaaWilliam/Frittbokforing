@@ -24,6 +24,7 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S59) | 87.97% | ±0 | break-threshold 85→87 (ratchet — låser S58-vinst) |
 | 2026-04-30 (S60) | **88.35%** | **+0.38** | chronology-guard StringLiteral kill (field='date'-assert) → 100% |
 | 2026-04-30 (S61) | **89.85%** | **+1.50** | correction-service guard #2/#4/#6/L202 reason-text-assertions (4 killed) |
+| 2026-04-30 (S62) | 89.85% | ±0 | break-threshold 87→89 (ratchet — låser S61-vinst) |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
@@ -36,10 +37,10 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | result-service.ts | 97.67% | 42 | 1 | 0 | ±0 |
 | money.ts | 100.00% | 12 | 0 | 0 | ±0 |
 
-**Break-threshold:** 87% (höjd från 85% i S59 efter att S58 lyfte
-totalscoren till 87.97%). Ratchet-strategi: sätt gaten precis under
+**Break-threshold:** 89% (höjd från 87% i S62 efter att S61 lyfte
+totalscoren till 89.85%). Ratchet-strategi: sätt gaten precis under
 nuvarande floor så att vinster låses in. Nästa höjningsmål: 90% när
-correction + vat-report stängs (~7-8 mutanter saknas).
+vat-report stängs (~6 mutanter saknas).
 
 NoCov-rader är funktioner som test-suite inte täcker direkt (kallas
 via dashboard/report-service-vägar).
