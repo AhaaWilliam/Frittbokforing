@@ -21,6 +21,7 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S56) | **85.83%** | **+0.75** | result-service refaktor (optional-chaining → requireGroup) |
 | 2026-04-30 (S57) | 85.83% | ±0 | break-threshold 90→85 (CI ratchet floor) |
 | 2026-04-30 (S58) | **87.97%** | **+2.14** | money.ts add to scope (100%) + S56-test wired in |
+| 2026-04-30 (S59) | 87.97% | ±0 | break-threshold 85→87 (ratchet — låser S58-vinst) |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
@@ -33,10 +34,10 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | result-service.ts | **97.67%** | 42 | 1 | 0 | **+9.30 pp** |
 | money.ts | **100.00%** | 12 | 0 | 0 | new |
 
-**Break-threshold:** 85% (sänkt från 90% i S57 — ratchet-strategi:
-sätt gaten till faktisk floor så att CI fångar regression istället för
-att vara permanent röd; höj sedan gradvis när nya tester landar).
-Nästa höjningsmål: 90% när Steg 3 + edge-cases stängs.
+**Break-threshold:** 87% (höjd från 85% i S59 efter att S58 lyfte
+totalscoren till 87.97%). Ratchet-strategi: sätt gaten precis under
+nuvarande floor så att vinster låses in. Nästa höjningsmål: 90% när
+correction + vat-report stängs (~7-8 mutanter saknas).
 
 NoCov-rader är funktioner som test-suite inte täcker direkt (kallas
 via dashboard/report-service-vägar).
