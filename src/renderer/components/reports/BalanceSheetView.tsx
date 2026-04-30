@@ -5,6 +5,7 @@ import type {
   ReportGroupResult,
 } from '../../../shared/types'
 import { formatReportAmount } from '../../lib/format'
+import { Callout } from '../ui/Callout'
 
 interface Props {
   data: BalanceSheetResult
@@ -159,8 +160,10 @@ export function BalanceSheetView({ data, printMode }: Props) {
       </div>
 
       {balanceDifference !== 0 && (
-        <div className="mt-2 rounded bg-red-50 p-2 text-sm text-red-700">
-          {'\u26A0'} Differens: {formatReportAmount(balanceDifference)} kr
+        <div className="mt-2">
+          <Callout variant="danger" data-testid="balance-difference">
+            Differens: {formatReportAmount(balanceDifference)} kr
+          </Callout>
         </div>
       )}
     </div>

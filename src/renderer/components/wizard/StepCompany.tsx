@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react'
 import { todayLocal } from '../../lib/format'
 import { parseDecimal } from '../../../shared/money'
 import { luhnCheck } from '../../../shared/ipc-schemas'
+import { FieldError } from '../ui/FieldError'
 
 interface StepCompanyProps {
   name: string
@@ -64,7 +65,7 @@ export function StepCompany({
           placeholder="AB Företaget"
         />
         {name.length > 0 && name.length < 2 && (
-          <p className="mt-1 text-xs text-red-500">Minst 2 tecken</p>
+          <FieldError className="mt-1">Minst 2 tecken</FieldError>
         )}
       </div>
 
@@ -84,13 +85,13 @@ export function StepCompany({
           placeholder="NNNNNN-NNNN"
         />
         {org_number.length > 0 && !orgFormatValid ? (
-          <p className="mt-1 text-xs text-red-500" role="alert">
+          <FieldError className="mt-1">
             Måste ha 10 siffror och börja med 5–9 (aktiebolag)
-          </p>
+          </FieldError>
         ) : org_number.length > 0 && !orgLuhnValid ? (
-          <p className="mt-1 text-xs text-red-500" role="alert">
+          <FieldError className="mt-1">
             Kontrollsiffran stämmer inte — dubbelkolla numret
-          </p>
+          </FieldError>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">
             Hittar du på Bolagsverket eller i registreringsbeviset
@@ -175,9 +176,9 @@ export function StepCompany({
           </span>
         </div>
         {share_capital.length > 0 && !shareCapitalValid ? (
-          <p className="mt-1 text-xs text-red-500" role="alert">
+          <FieldError className="mt-1">
             Minst 25 000 kr krävs för aktiebolag
-          </p>
+          </FieldError>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">
             Beloppet du satte in när bolaget startades. Minst 25 000 kr.
@@ -201,9 +202,9 @@ export function StepCompany({
           max={todayLocal()}
         />
         {registration_date !== '' && registration_date > todayLocal() ? (
-          <p className="mt-1 text-xs text-red-500" role="alert">
+          <FieldError className="mt-1">
             Registreringsdatum kan inte vara i framtiden
-          </p>
+          </FieldError>
         ) : (
           <p className="mt-1 text-xs text-muted-foreground">
             Står i registreringsbeviset

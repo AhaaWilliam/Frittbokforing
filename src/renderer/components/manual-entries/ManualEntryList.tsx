@@ -3,6 +3,7 @@ import { formatKr } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { EmptyState, ManualEntryIllustration } from '../ui/EmptyState'
+import { Pill } from '../ui/Pill'
 
 interface ManualEntryListProps {
   onCreate: () => void
@@ -108,14 +109,10 @@ export function ManualEntryList({
                     <td className="py-2 pr-4">{entry.description || '-'}</td>
                     <td className="py-2 pr-4">
                       {entry.je_status === 'corrected' && (
-                        <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                          Korrigerad
-                        </span>
+                        <Pill variant="danger">Korrigerad</Pill>
                       )}
                       {entry.corrects_entry_id != null && (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                          Korrigering
-                        </span>
+                        <Pill variant="info">Korrigering</Pill>
                       )}
                     </td>
                     <td className="py-2 text-right">

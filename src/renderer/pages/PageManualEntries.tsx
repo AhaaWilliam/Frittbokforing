@@ -6,6 +6,7 @@ import { ManualEntryForm } from '../components/manual-entries/ManualEntryForm'
 import { ManualEntryList } from '../components/manual-entries/ManualEntryList'
 import { EntityListPage } from '../components/layout/EntityListPage'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { Pill } from '../components/ui/Pill'
 import { useSubViewNavigation } from '../lib/use-route-navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../lib/query-keys'
@@ -135,14 +136,10 @@ function ViewEntry({
           {entry.verification_number}
         </h2>
         {entry.je_status === 'corrected' && (
-          <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-            Korrigerad
-          </span>
+          <Pill variant="danger">Korrigerad</Pill>
         )}
         {entry.corrects_entry_id != null && (
-          <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-            Korrigering
-          </span>
+          <Pill variant="info">Korrigering</Pill>
         )}
       </div>
 
