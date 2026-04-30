@@ -49,7 +49,7 @@ describe('VardagShell', () => {
         <p>x</p>
       </VardagShell>,
     )
-    const button = screen.getByTestId('switch-to-bokforare')
+    const button = await screen.findByTestId('switch-to-bokforare')
     await userEvent.click(button)
     expect(setSettingMock).toHaveBeenCalledWith('ui_mode', 'bokforare')
   })

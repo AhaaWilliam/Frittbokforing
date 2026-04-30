@@ -6,6 +6,7 @@ import { SkipLinksProvider } from '../contexts/SkipLinksContext'
 import { HashRouter, useRoute, useNavigate } from '../lib/router'
 import { routes } from '../lib/routes'
 import { Sidebar } from '../components/layout/Sidebar'
+import { AppTopBar } from '../components/layout/AppTopBar'
 import { SkipLinks } from '../components/layout/SkipLinks'
 import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
 import { CommandPalette } from '../components/command-palette/CommandPalette'
@@ -173,6 +174,7 @@ function AppShellInner({ company }: AppShellInnerProps) {
   )
   useKeyboardShortcuts({
     'mod+k': () => setPaletteOpen((open) => !open),
+    'mod+shift+b': () => setMode('vardag'),
   })
 
   useEffect(() => {
@@ -180,18 +182,24 @@ function AppShellInner({ company }: AppShellInnerProps) {
   }, [company.name])
 
   return (
-    <div className="flex h-screen" data-testid="app-ready">
+    <div className="flex h-screen flex-col" data-testid="app-ready">
       <SkipLinks />
-      <Sidebar company={company} />
-      <main id="main-content" className="flex flex-1 flex-col overflow-hidden">
-        <ReadOnlyBanner />
-        <div
+      <AppTopBar companyName={company.name} />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar company={company} />
+        <main
+          id="main-content"
           className="flex flex-1 flex-col overflow-hidden"
-          data-testid={`page-${page}`}
         >
-          <PageContent page={page} />
-        </div>
-      </main>
+          <ReadOnlyBanner />
+          <div
+            className="flex flex-1 flex-col overflow-hidden"
+            data-testid={`page-${page}`}
+          >
+            <PageContent page={page} />
+          </div>
+        </main>
+      </div>
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}

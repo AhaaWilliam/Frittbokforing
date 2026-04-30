@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
+import { FiscalYearProvider } from '../../contexts/FiscalYearContext'
 import { useUiMode } from '../../lib/use-ui-mode'
+import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -32,8 +34,25 @@ function greetingForHour(hour: number): string {
 
 export function VardagApp() {
   const { activeCompany } = useActiveCompany()
+
+  if (!activeCompany) {
+    return null
+  }
+
+  return (
+    <FiscalYearProvider key={activeCompany.id}>
+      <VardagAppInner companyName={activeCompany.name} />
+    </FiscalYearProvider>
+  )
+}
+
+function VardagAppInner({ companyName }: { companyName: string }) {
   const { setMode } = useUiMode()
   const [sheet, setSheet] = useState<VardagSheet>(null)
+
+  useKeyboardShortcuts({
+    'mod+shift+b': () => setMode('bokforare'),
+  })
 
   const dayLabel = useMemo(() => {
     return new Date().toLocaleDateString('sv-SE', {
@@ -54,12 +73,8 @@ export function VardagApp() {
     return () => document.removeEventListener('keydown', onKey)
   }, [sheet])
 
-  if (!activeCompany) {
-    return null
-  }
-
   return (
-    <VardagShell companyName={activeCompany.name}>
+    <VardagShell companyName={companyName}>
       <div
         className="relative flex min-h-full flex-col items-center justify-center px-12 pt-10"
         data-testid="vardag-hero"

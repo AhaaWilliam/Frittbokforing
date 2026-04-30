@@ -84,6 +84,15 @@ export function FiscalYearProvider({
   )
 }
 
+/**
+ * Optional-variant — returnerar `null` om ingen provider finns istället
+ * för att kasta. Används av komponenter som kan rendreras både inom och
+ * utanför provider-trädet (t.ex. AppTopBar i tester).
+ */
+export function useFiscalYearContextOptional(): FiscalYearContextValue | null {
+  return useContext(FiscalYearContext)
+}
+
 export function useFiscalYearContext(): FiscalYearContextValue {
   const ctx = useContext(FiscalYearContext)
   if (!ctx) {
