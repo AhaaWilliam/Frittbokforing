@@ -279,4 +279,60 @@ describe('Sprint 52 — vat-report 12% och 6% taxableBase-aritmetik', () => {
     expect(r.quarters[1].vatOut6Ore).toBe(6)
     expect(r.quarters[1].taxableBase6Ore).toBe(100)
   })
+
+  // Sprint 63 — yearTotal aggregation taxableBase12/6 surviving mutants L195/L196.
+  // S52 testade per-kvartal men aldrig yearTotal-aggregeringen.
+  it('yearTotal.taxableBase12Ore = round(vatOut12 × 25/3) — fångar L195 ArithmeticOp', () => {
+    // Två kvartal med 12 öre VAT → ytVatOut12 = 24, base = round(24*25/3) = 200
+    bookEntry(db, '2026-02-15', [
+      { account_number: '1930', debit_ore: 112, credit_ore: 0 },
+      { account_number: '3003', debit_ore: 0, credit_ore: 100 },
+      { account_number: '2620', debit_ore: 0, credit_ore: 12 },
+    ])
+    bookEntry(db, '2026-08-15', [
+      { account_number: '1930', debit_ore: 112, credit_ore: 0 },
+      { account_number: '3003', debit_ore: 0, credit_ore: 100 },
+      { account_number: '2620', debit_ore: 0, credit_ore: 12 },
+    ])
+
+    const r = getVatReport(db, fiscalYearId)
+    expect(r.yearTotal.vatOut12Ore).toBe(24)
+    expect(r.yearTotal.taxableBase12Ore).toBe(200)
+  })
+
+  it('yearTotal.taxableBase6Ore = round(vatOut6 × 50/3) — fångar L196 ArithmeticOp', () => {
+    // Två kvartal med 6 öre VAT → ytVatOut6 = 12, base = round(12*50/3) = 200
+    bookEntry(db, '2026-02-15', [
+      { account_number: '1930', debit_ore: 106, credit_ore: 0 },
+      { account_number: '3004', debit_ore: 0, credit_ore: 100 },
+      { account_number: '2630', debit_ore: 0, credit_ore: 6 },
+    ])
+    bookEntry(db, '2026-11-15', [
+      { account_number: '1930', debit_ore: 106, credit_ore: 0 },
+      { account_number: '3004', debit_ore: 0, credit_ore: 100 },
+      { account_number: '2630', debit_ore: 0, credit_ore: 6 },
+    ])
+
+    const r = getVatReport(db, fiscalYearId)
+    expect(r.yearTotal.vatOut6Ore).toBe(12)
+    expect(r.yearTotal.taxableBase6Ore).toBe(200)
+  })
+})
+
+describe('Sprint 63 — vat-report kastar för FY utan perioder (L80)', () => {
+  it('FY utan accounting_periods → throw VALIDATION_ERROR', () => {
+    db.prepare('DELETE FROM accounting_periods WHERE fiscal_year_id = ?').run(
+      fiscalYearId,
+    )
+    let captured: unknown = null
+    try {
+      getVatReport(db, fiscalYearId)
+    } catch (err) {
+      captured = err
+    }
+    expect(captured).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      error: 'Räkenskapsåret saknar perioder.',
+    })
+  })
 })

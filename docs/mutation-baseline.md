@@ -25,15 +25,16 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S60) | **88.35%** | **+0.38** | chronology-guard StringLiteral kill (field='date'-assert) → 100% |
 | 2026-04-30 (S61) | **89.85%** | **+1.50** | correction-service guard #2/#4/#6/L202 reason-text-assertions (4 killed) |
 | 2026-04-30 (S62) | 89.85% | ±0 | break-threshold 87→89 (ratchet — låser S61-vinst) |
+| 2026-04-30 (S63) | **93.23%** | **+3.38** | vat-report yearTotal-aggregering + L80 throw-test (5 killed) |
 
 ## Baseline 2026-04-30 (efter Sprint 58)
 
 | Fil | Score | Killed | Survived | NoCov | Δ från S56 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **89.85%** | 239 | 15 | 12 | +4.02 pp |
+| **Totalt** | **93.23%** | 248 | 10 | 8 | +7.40 pp |
 | chronology-guard.ts | 100.00% | 16 | 0 | 0 | ±0 |
-| vat-report-service.ts | 83.87% | 52 | 6 | 4 | ±0 |
-| correction-service.ts | **87.97%** | 117 | 8 | 8 | **+3.01 pp** |
+| vat-report-service.ts | **98.39%** | 61 | 1 | 0 | **+14.52 pp** |
+| correction-service.ts | 87.97% | 117 | 8 | 8 | ±0 |
 | result-service.ts | 97.67% | 42 | 1 | 0 | ±0 |
 | money.ts | 100.00% | 12 | 0 | 0 | ±0 |
 
