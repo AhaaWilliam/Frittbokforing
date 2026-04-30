@@ -11,22 +11,50 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 
 **Kör:** `npm run test:mutation` (~1 min).
 
-## Baseline 2026-04-30
+## Trend
 
-| Fil | Score | Killed | Survived | NoCov |
-|-----|-------|--------|----------|-------|
-| **Totalt** | **77.97%** | 230 | 48 | 17 |
-| chronology-guard.ts | 93.75% | 15 | 1 | 0 |
-| result-service.ts | 84.52% | 71 | 13 | 0 |
-| correction-service.ts | 78.20% | 104 | 16 | 13 |
-| vat-report-service.ts | 64.52% | 40 | 18 | 4 |
+| Datum | Score | Δ | Anledning |
+|-------|-------|---|-----------|
+| 2026-04-21 | 71.30% | baseline | initial mutation-konfig |
+| 2026-04-30 (S51) | 77.97% | +6.67 | sprint 30/34/40/43/44/47 lyfte oavsiktligt |
+| 2026-04-30 (S55) | **85.08%** | **+7.11** | S52 (vat-report) + S53 (correction) — riktade |
 
-**Break-threshold:** 90%. Nuvarande baseline understiger gaten.
+## Baseline 2026-04-30 (efter Sprint 52 + 53)
 
-**Trend:** 71.3% (2026-04-21) → 77.97% (2026-04-30). +6.7 pp efter
-Sprint 30 (invoice paritetstest), S34 (bank-saldo), S43 (FieldError),
-S44/S47 (BANK/VAT-invariants). Tillägg av tester förbättrar score även
-utan att testen tänker på mutation-täckning explicit.
+| Fil | Score | Killed | Survived | NoCov | Δ från S51 |
+|-----|-------|--------|----------|-------|------------|
+| **Totalt** | **85.08%** | 251 | 32 | 12 | +7.11 pp |
+| chronology-guard.ts | 93.75% | 15 | 1 | 0 | ±0 |
+| vat-report-service.ts | **83.87%** | 52 | 6 | 4 | **+19.35 pp** |
+| correction-service.ts | **84.96%** | 113 | 12 | 8 | **+6.76 pp** |
+| result-service.ts | 84.52% | 71 | 13 | 0 | ±0 (defensive) |
+
+**Break-threshold:** 90%. Nuvarande är 85.08% — under gaten men riktningen
+är tydlig.
+
+## Sprintar som stängde gap
+
+**S52 — vat-report (+19.35 pp i en sprint).** 17 nya tester som
+assertar exakt quarterLabel-format (`Kv 1 (jan–mar 2026)`),
+quarter date-bounds, sparse-data hasData-flag, yearTotal aggregering,
+12%/6% taxableBase-aritmetik. Fångar StringLiteral, ArithmeticOp,
+ConditionalExpression och UnaryOp-mutanter på datum-aritmetik och
+substring-bounds.
+
+**S53 — correction-service (+6.76 pp).** 10 nya tester som assertar
+exakt reason-text för alla 4 guards (StringLiteral-kill), exakta
+ErrorCode-mappningar (ENTRY_ALREADY_CORRECTED, ENTRY_IS_CORRECTION,
+NOT_FOUND, YEAR_IS_CLOSED), och structured-error-propagering
+(LogicalOperator-kill).
+
+**S54 — result-service skipped.** 13 surviving är optional-chaining
+på `groups.find(...)?.subtotalNet`. INCOME_STATEMENT_CONFIG är
+statisk konstant med 4 grupper + invariant-kontroll vid load
+(`validateResultConfigInvariants`). `find()` returnerar **alltid**
+en grupp, så `?.` är defensiv kod som inte kan triggas utan att
+först bryta en module-load-invariant. Att döda dessa mutationer
+kräver mockad buildGroups eller refaktor till asserts-istället-för-
+optional-chaining (möjligt, ej gjort).
 
 ## Top survival-mönster (var testerna är svaga)
 
@@ -74,21 +102,20 @@ utan att testen tänker på mutation-täckning explicit.
 
 ## Roadmap
 
-**Steg 1 (genomfört):** Etablera baseline. ✅
-
-**Steg 2 (backlog):**
-1. Stäng top-3 vat-report-gap (datum-aritmetik + substring-bounds) → +5 pp.
-2. Lägg description-asserts i correction-tests → +3 pp.
-3. Testa "missing income_group"-edge case i result-service → +3 pp.
-4. Förvänta total: ≥85% efter en sprint.
+**Steg 1 ✅ etablera baseline (S51).**
+**Steg 2 ✅ stäng top-3 (S52 + S53).** Mål: ≥85%. Utfall: 85.08%.
 
 **Steg 3 (backlog):** Utöka scope till `invoice-service`, `money.ts`,
 `expense-service`, `preview-service`. Förvänta lägre baseline (kanske
 60-70%) eftersom dessa har komplex sign-flip-logik (M137) och
 heltalsaritmetik (M131) som är klassisk mutation-mat.
 
-**Steg 4 (backlog):** Sätt up CI-gate på `≥80%` (trend-bevarande) i
-GitHub Actions. Höj tröskel gradvis när nya tester landar.
+**Steg 4 (backlog):** Refaktor `result-service` så att optional-chaining
+ersätts av asserts (eftersom invarianten är statisk). Vinst: +6 pp och
+13 surviving mutanter elimineras.
+
+**Steg 5 (backlog):** Sätt upp CI-gate på `≥85%` (trend-bevarande) i
+GitHub Actions. Höj tröskel gradvis till 90% när nya tester landar.
 
 ## Referenser
 

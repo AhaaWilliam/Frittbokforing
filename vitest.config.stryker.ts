@@ -26,6 +26,8 @@ export default defineConfig({
       'tests/gap-M09-M10-tax-vat.test.ts',
       'tests/s25-backend-vat.test.ts',
       'tests/session-30-correction-service.test.ts',
+      'tests/sprint-52-vat-report-mutation-gaps.test.ts',
+      'tests/sprint-53-correction-mutation-gaps.test.ts',
     ],
     setupFiles: ['tests/setup/dom-matchers.ts'],
     pool: 'forks',
