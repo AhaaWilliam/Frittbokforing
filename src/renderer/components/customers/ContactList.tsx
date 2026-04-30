@@ -1,5 +1,6 @@
 import type { Counterparty } from '../../../shared/types'
 import { useCounterparties } from '../../lib/hooks'
+import { Pill } from '../ui/Pill'
 
 interface ContactListProps {
   type: 'customer' | 'supplier'
@@ -11,23 +12,11 @@ interface ContactListProps {
 function typeBadge(type: Counterparty['type']) {
   switch (type) {
     case 'customer':
-      return (
-        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">
-          Kund
-        </span>
-      )
+      return <Pill variant="info">Kund</Pill>
     case 'supplier':
-      return (
-        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium text-orange-700">
-          Leverantör
-        </span>
-      )
+      return <Pill variant="warning">Leverantör</Pill>
     case 'both':
-      return (
-        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
-          Båda
-        </span>
-      )
+      return <Pill variant="success">Båda</Pill>
   }
 }
 

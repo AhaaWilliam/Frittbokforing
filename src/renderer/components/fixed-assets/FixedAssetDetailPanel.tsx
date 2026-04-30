@@ -1,5 +1,12 @@
 import { useFixedAsset } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { Pill, type PillVariant } from '../ui/Pill'
+
+const STATUS_PILL: Record<string, PillVariant> = {
+  executed: 'success',
+  skipped: 'neutral',
+  pending: 'info',
+}
 
 function fmtKr(ore: number): string {
   return new Intl.NumberFormat('sv-SE', {
@@ -112,17 +119,9 @@ export function FixedAssetDetailPanel({ assetId }: Props) {
                   {fmtKr(s.amount_ore)}
                 </td>
                 <td className="px-3 py-1">
-                  <span
-                    className={
-                      s.status === 'executed'
-                        ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800'
-                        : s.status === 'skipped'
-                          ? 'inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px]'
-                          : 'inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700'
-                    }
-                  >
+                  <Pill variant={STATUS_PILL[s.status] ?? 'neutral'}>
                     {STATUS_LABELS[s.status] ?? s.status}
-                  </span>
+                  </Pill>
                 </td>
                 <td className="px-3 py-1 text-muted-foreground tabular-nums">
                   {s.journal_entry_id ? `#${s.journal_entry_id}` : '—'}

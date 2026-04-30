@@ -3,6 +3,7 @@ import { useProducts } from '../../lib/hooks'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { formatKr, toKr } from '../../lib/format'
 import { useComboboxKeyboard } from '../../lib/use-combobox-keyboard'
+import { Pill } from '../ui/Pill'
 import type { Product } from '../../../shared/types'
 
 interface ArticlePickerProps {
@@ -21,23 +22,11 @@ interface ArticlePickerProps {
 function typeBadge(articleType: Product['article_type']) {
   switch (articleType) {
     case 'service':
-      return (
-        <span className="inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-700">
-          Tj&auml;nst
-        </span>
-      )
+      return <Pill variant="info">Tjänst</Pill>
     case 'goods':
-      return (
-        <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700">
-          Vara
-        </span>
-      )
+      return <Pill variant="brand">Vara</Pill>
     case 'expense':
-      return (
-        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium text-orange-700">
-          Utl&auml;gg
-        </span>
-      )
+      return <Pill variant="warning">Utlägg</Pill>
   }
 }
 
