@@ -48,7 +48,7 @@ export function SessionTimeoutBadge() {
       role="status"
       aria-live="polite"
       data-testid="session-timeout-badge"
-      className="mx-2 mb-2 flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+      className="mx-2 mb-2 flex items-center gap-2 rounded-md border border-warning-100 bg-warning-100/50 px-3 py-2 text-xs text-warning-700"
     >
       <Clock className="h-3.5 w-3.5" aria-hidden="true" />
       <span>

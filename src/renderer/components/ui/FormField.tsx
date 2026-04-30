@@ -33,7 +33,7 @@ export function FormField<TForm extends object>({
   const error = form.errors[name]
   const fieldId = `${formName}-${stripLeadingUnderscore(name)}`
   const errId = error ? errorIdFor(fieldId) : undefined
-  const inputClass = `block w-full rounded-md border ${error ? 'border-red-500' : 'border-input'} bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`
+  const inputClass = `block w-full rounded-md border ${error ? 'border-danger-500' : 'border-input'} bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary`
 
   return (
     <div>
@@ -42,7 +42,7 @@ export function FormField<TForm extends object>({
         className="block text-sm font-medium text-foreground mb-1"
       >
         {label}
-        {required && <span className="text-red-500"> *</span>}
+        {required && <span className="text-danger-500"> *</span>}
       </label>
       <input
         id={fieldId}

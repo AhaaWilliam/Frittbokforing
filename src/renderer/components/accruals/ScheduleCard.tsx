@@ -1,6 +1,7 @@
 import { formatKr } from '../../lib/format'
 import type { AccrualScheduleWithStatus } from '../../../shared/types'
 import { TYPE_BADGE, TYPE_LABELS } from './accrual-constants'
+import { Pill } from '../ui/Pill'
 
 export function ScheduleCard({
   schedule,
@@ -66,16 +67,13 @@ export function ScheduleCard({
       {/* Period badges */}
       <div className="mb-3 flex flex-wrap gap-1">
         {schedule.periodStatuses.map((p) => (
-          <span
+          <Pill
             key={p.periodNumber}
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-              p.executed
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-500'
-            }`}
+            variant={p.executed ? 'success' : 'neutral'}
+            size="xs"
           >
             P{p.periodNumber}
-          </span>
+          </Pill>
         ))}
       </div>
 

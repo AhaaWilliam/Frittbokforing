@@ -50,7 +50,7 @@ describe('YearPicker', () => {
     expect(select.options[1].textContent).toContain('Skapa nytt')
   })
 
-  it('closed year has amber styling on select', async () => {
+  it('closed year has warning styling on select', async () => {
     await renderWithProviders(<YearPicker />, {
       fiscalYear: { id: 1, label: '2026', is_closed: 1 },
       axeCheck: false, // M133 exempt — dedicated axe test in outer describe
@@ -58,7 +58,7 @@ describe('YearPicker', () => {
 
     await waitFor(() => {
       const select = screen.getByRole('combobox') as HTMLSelectElement
-      expect(select.className).toMatch(/amber/)
+      expect(select.className).toMatch(/warning/)
     })
   })
 
@@ -73,12 +73,12 @@ describe('YearPicker', () => {
     })
   })
 
-  it('open year has no amber styling or lock text', async () => {
+  it('open year has no warning styling or lock text', async () => {
     await renderWithProviders(<YearPicker />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
       const select = screen.getByDisplayValue('2026')
-      expect(select.className).not.toMatch(/amber/)
+      expect(select.className).not.toMatch(/warning/)
     })
     expect(screen.queryByText(/Stängt år/)).toBeNull()
   })

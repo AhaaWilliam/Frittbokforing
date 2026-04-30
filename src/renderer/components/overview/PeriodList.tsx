@@ -7,6 +7,7 @@ import {
 } from '../../lib/hooks'
 import { formatFiscalYearLabel } from '../layout/YearPicker'
 import { Callout } from '../ui/Callout'
+import { Pill } from '../ui/Pill'
 import type { FiscalPeriod } from '../../../shared/types'
 
 function getMonthName(period: FiscalPeriod): string {
@@ -56,13 +57,9 @@ export function PeriodList() {
               <span>{monthName}</span>
               <div className="flex items-center gap-2">
                 {period.is_closed === 1 ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                    Klar
-                  </span>
+                  <Pill variant="success">Klar</Pill>
                 ) : (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    Öppen
-                  </span>
+                  <Pill variant="neutral">Öppen</Pill>
                 )}
                 {canClose && (
                   <button

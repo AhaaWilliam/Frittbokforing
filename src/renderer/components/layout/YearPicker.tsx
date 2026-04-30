@@ -47,7 +47,7 @@ export function YearPicker() {
         }}
         className={`w-full rounded-md border px-2 py-1.5 text-sm outline-none ${
           activeFiscalYear.is_closed === 1
-            ? 'border-amber-300 bg-amber-50 text-amber-800'
+            ? 'border-warning-100 bg-warning-100/40 text-warning-700'
             : 'border-border bg-background'
         }`}
       >
@@ -60,7 +60,7 @@ export function YearPicker() {
         <option value="__create__">+ Skapa nytt räkenskapsår</option>
       </select>
       {activeFiscalYear.is_closed === 1 && (
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-amber-600">
+        <div className="mt-1 flex items-center gap-1 text-[11px] text-warning-600">
           <Lock className="h-3 w-3" />
           Stängt år — skrivskyddat
         </div>

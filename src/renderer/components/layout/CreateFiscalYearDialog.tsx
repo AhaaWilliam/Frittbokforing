@@ -163,7 +163,7 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
             </div>
 
             {showSkipWarning ? (
-              <div className="mb-4 rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+              <div className="mb-4 rounded border border-warning-100 bg-warning-100/40 p-3 text-sm text-warning-700">
                 <p className="mb-2 font-medium">
                   Utan resultatbokning kan ingående balanser bli felaktiga.
                 </p>
@@ -174,7 +174,7 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
                       setShowSkipWarning(false)
                       setStep(2)
                     }}
-                    className="rounded bg-yellow-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-700"
+                    className="rounded bg-warning-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-warning-600"
                   >
                     Fortsätt ändå
                   </button>
@@ -249,9 +249,9 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
         {step === 3 && resultData && (
           <div>
             <div className="mb-4 space-y-2 text-sm">
-              <p className="text-green-700">Räkenskapsår skapat</p>
-              <p className="text-green-700">Ingående balans skapad</p>
-              <p className="text-green-700">Bytt till nytt räkenskapsår</p>
+              <p className="text-success-700">Räkenskapsår skapat</p>
+              <p className="text-success-700">Ingående balans skapad</p>
+              <p className="text-success-700">Bytt till nytt räkenskapsår</p>
             </div>
 
             <div className="mb-4">

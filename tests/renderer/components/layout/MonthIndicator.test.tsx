@@ -41,16 +41,16 @@ describe('MonthIndicator', () => {
     expect(screen.getByTitle(/december/i)).toBeInTheDocument()
   })
 
-  it('closed period has green styling', async () => {
+  it('closed period has success styling', async () => {
     const periods = makeAllPeriods(2) // Jan-Feb closed
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
-    const { container } = await renderWithProviders(<MonthIndicator />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+    await renderWithProviders(<MonthIndicator />, { axeCheck: false }) // M133 exempt — dedicated axe test below
     await waitFor(() => {
       expect(screen.getByTitle(/januari/i)).toBeInTheDocument()
     })
 
     const janEl = screen.getByTitle(/januari/i)
-    expect(janEl.className).toMatch(/green/)
+    expect(janEl.className).toMatch(/success/)
   })
 
   it('legend shows Klar, Aktiv, Öppen', async () => {

@@ -10,10 +10,10 @@ export function ImportDonePhase({
 }) {
   return (
     <div className="mx-auto max-w-2xl py-8">
-      <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+      <div className="rounded-lg border border-success-100 bg-success-100/40 p-6">
         <div className="mb-4 flex items-center gap-2">
-          <CheckCircle2 className="h-6 w-6 text-green-600" />
-          <h2 className="text-lg font-medium text-green-700">Import klar</h2>
+          <CheckCircle2 className="h-6 w-6 text-success-600" />
+          <h2 className="text-lg font-medium text-success-700">Import klar</h2>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -28,11 +28,11 @@ export function ImportDonePhase({
         </dl>
 
         {result.warnings.length > 0 && (
-          <div className="mt-4 rounded-md bg-amber-100 p-3">
-            <p className="mb-1 text-xs font-medium text-amber-700">
+          <div className="mt-4 rounded-md bg-warning-100 p-3">
+            <p className="mb-1 text-xs font-medium text-warning-700">
               {result.warnings.length} varningar:
             </p>
-            <ul className="space-y-0.5 text-xs text-amber-700">
+            <ul className="space-y-0.5 text-xs text-warning-700">
               {result.warnings.slice(0, 5).map((w, i) => (
                 <li key={i}>• {w}</li>
               ))}

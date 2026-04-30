@@ -20,6 +20,7 @@ import {
 } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { Callout } from '../ui/Callout'
+import { Pill } from '../ui/Pill'
 import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 
 type EntityCandidate = {
@@ -230,7 +231,7 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
             <LoadingSpinner />
           ) : query.isError ? (
             <div
-              className="text-sm text-red-600"
+              className="text-sm text-danger-600"
               role="alert"
               data-testid="suggested-matches-error"
             >
@@ -306,15 +307,15 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
                                 {fmtKr(c.total_amount_ore)}
                               </>
                             )}
-                            <span
-                              className={`ml-2 rounded px-1.5 py-0.5 text-[10px] ${
-                                c.confidence === 'HIGH'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}
+                            <Pill
+                              variant={
+                                c.confidence === 'HIGH' ? 'success' : 'warning'
+                              }
+                              size="xs"
+                              className="ml-2"
                             >
                               {c.confidence} {c.score}
-                            </span>
+                            </Pill>
                           </div>
                           <button
                             type="button"

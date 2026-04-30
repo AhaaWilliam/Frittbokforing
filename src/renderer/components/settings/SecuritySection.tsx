@@ -102,7 +102,7 @@ function ChangePasswordBlock() {
       {success && (
         <p
           role="status"
-          className="mt-3 text-xs text-green-600"
+          className="mt-3 text-xs text-success-600"
           data-testid="settings-password-success"
         >
           Lösenordet ändrat.
@@ -167,7 +167,7 @@ function RotateRecoveryBlock() {
       )}
       {!phrase && confirmOpen && (
         <div>
-          <p className="mb-2 text-xs text-amber-700">
+          <p className="mb-2 text-xs text-warning-700">
             Är du säker? Den gamla frasen kan inte användas efter detta.
           </p>
           <div className="flex gap-2">
@@ -183,7 +183,7 @@ function RotateRecoveryBlock() {
               onClick={handleGenerate}
               disabled={busy}
               data-testid="settings-rotate-confirm"
-              className="flex-1 rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="flex-1 rounded-md bg-warning-500 px-3 py-2 text-sm font-medium text-white hover:bg-warning-600 disabled:opacity-50"
             >
               {busy ? 'Genererar…' : 'Ja, generera'}
             </button>
@@ -318,7 +318,7 @@ function AutoLockBlock() {
       {saved && (
         <p
           role="status"
-          className="mt-3 text-xs text-green-600"
+          className="mt-3 text-xs text-success-600"
           data-testid="settings-auto-lock-saved"
         >
           Sparat.

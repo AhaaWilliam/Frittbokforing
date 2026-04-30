@@ -37,9 +37,9 @@ export function MonthIndicator() {
             key={period.id}
             className={`flex aspect-square items-center justify-center rounded text-[10px] font-medium ${
               period.is_closed === 1
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-success-100 text-success-700'
                 : isFirstOpen(period, periods)
-                  ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'
+                  ? 'bg-info-100 text-info-700 ring-1 ring-info-500'
                   : 'bg-muted text-muted-foreground'
             }`}
             title={getMonthName(period)}
@@ -50,11 +50,11 @@ export function MonthIndicator() {
       </div>
       <div className="mt-1.5 flex gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm bg-green-100" />
+          <span className="inline-block h-2 w-2 rounded-sm bg-success-100" />
           Klar
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm bg-blue-100 ring-1 ring-blue-300" />
+          <span className="inline-block h-2 w-2 rounded-sm bg-info-100 ring-1 ring-info-500" />
           Aktiv
         </span>
         <span className="flex items-center gap-1">

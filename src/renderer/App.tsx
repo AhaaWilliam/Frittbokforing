@@ -30,7 +30,7 @@ export default function App() {
     return (
       <div
         role="alert"
-        className="flex h-screen items-center justify-center p-4 text-center text-red-600"
+        className="flex h-screen items-center justify-center p-4 text-center text-danger-600"
       >
         <div>
           <p className="mb-2 font-semibold">Ett fel uppstod</p>
