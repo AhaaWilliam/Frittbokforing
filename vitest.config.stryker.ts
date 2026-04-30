@@ -32,6 +32,12 @@ export default defineConfig({
       'tests/sprint-61-correction-mutation-extra.test.ts',
       'tests/shared/money.test.ts',
       'tests/shared/parse-decimal.test.ts',
+      // Sprint 81 — utvidgad scope: bank-classifier + IBAN-registry + depreciation
+      'tests/session-58-bank-fee-classifier.test.ts',
+      'tests/session-P-iban-bank-registry.test.ts',
+      'tests/session-R-iban-nordic.test.ts',
+      'tests/session-53-depreciation.test.ts',
+      'tests/session-C-depreciation-update.test.ts',
     ],
     setupFiles: ['tests/setup/dom-matchers.ts'],
     pool: 'forks',
