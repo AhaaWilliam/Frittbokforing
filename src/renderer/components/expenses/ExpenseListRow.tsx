@@ -58,7 +58,7 @@ export const ExpenseListRow = memo(function ExpenseListRow({
             type="checkbox"
             checked={isSelected}
             onChange={() => onToggleSelect(item.id)}
-            className="h-4 w-4 rounded border-gray-300"
+            className="h-4 w-4 rounded border-[var(--border-default)]"
           />
         ) : (
           <span className="inline-block h-4 w-4" />

@@ -284,7 +284,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
 
           {/* Credit note indicator */}
           {(form.getField('invoice_type') as string) === 'credit_note' && (
-            <div className="rounded-md border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
+            <div className="rounded-md border border-[var(--color-brand-100)] bg-[var(--color-brand-100)]/40 px-4 py-3 text-sm text-[var(--color-brand-700)]">
               <span className="font-medium">Kreditfaktura (utkast)</span>
               {draft?.notes && (
                 <span className="ml-1">&mdash; {draft.notes}</span>

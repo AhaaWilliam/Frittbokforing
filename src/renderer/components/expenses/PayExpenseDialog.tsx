@@ -64,25 +64,25 @@ export function PayExpenseDialog({
 
         <div className="space-y-2 mb-6 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">Kostnad:</span>
+            <span className="text-[var(--text-secondary)]">Kostnad:</span>
             <span>{expense.description}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Leverantor:</span>
+            <span className="text-[var(--text-secondary)]">Leverantor:</span>
             <span>{expense.counterparty_name ?? '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Totalt:</span>
+            <span className="text-[var(--text-secondary)]">Totalt:</span>
             <span className="font-medium">
               {formatKr(expense.total_amount_ore)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Redan betalt:</span>
+            <span className="text-[var(--text-secondary)]">Redan betalt:</span>
             <span>{formatKr(expense.total_paid)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Kvarstaende:</span>
+            <span className="text-[var(--text-secondary)]">Kvarstaende:</span>
             <span className="font-semibold text-primary">
               {formatKr(expense.remaining)}
             </span>
@@ -193,7 +193,7 @@ export function PayExpenseDialog({
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
+            className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]"
           >
             Avbryt
           </button>

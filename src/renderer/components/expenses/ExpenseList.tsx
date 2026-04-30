@@ -400,7 +400,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
                       selectedIds.size === selectableItems.length
                     }
                     onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-[var(--border-default)]"
                   />
                 </th>
                 <th className="px-4 py-3">Datum</th>

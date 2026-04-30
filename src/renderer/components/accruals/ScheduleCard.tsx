@@ -15,8 +15,8 @@ export function ScheduleCard({
   isExecuting: boolean
 }) {
   const badge = TYPE_BADGE[schedule.accrual_type] ?? {
-    bg: 'bg-gray-100',
-    text: 'text-gray-700',
+    bg: 'bg-neutral-200',
+    text: 'text-neutral-700',
   }
   const progressPct =
     schedule.period_count > 0
