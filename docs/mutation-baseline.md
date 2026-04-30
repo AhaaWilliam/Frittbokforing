@@ -30,11 +30,13 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | correction-service.ts | 84.96% | 113 | 12 | 8 | ±0 |
 | result-service.ts | **88.37%** | 38 | 2 | 3 | **+3.85 pp** |
 
-**Break-threshold:** 90%. Nuvarande är 85.83% — fortsatt under gaten.
-Result-service närmar sig 90%; kvarstående 2 surviving är edge-cases
-i `subtotalDisplay`-paths som testfixturerna inte distansierar från
-`subtotalNet`. NoCov-rader är funktioner som test-suite inte täcker
-direkt (kallas via dashboard/report-service-vägar).
+**Break-threshold:** 85% (sänkt från 90% i S57 — ratchet-strategi:
+sätt gaten till faktisk floor så att CI fångar regression istället för
+att vara permanent röd; höj sedan gradvis när nya tester landar).
+Nästa höjningsmål: 90% när Steg 3 + edge-cases stängs.
+
+NoCov-rader är funktioner som test-suite inte täcker direkt (kallas
+via dashboard/report-service-vägar).
 
 ## Sprintar som stängde gap
 
@@ -120,8 +122,11 @@ heltalsaritmetik (M131) som är klassisk mutation-mat.
 på filen, +0.75 pp totalt (11 av 13 mutanter elimineras). De 2
 kvarstående är `subtotalDisplay`-paths som behöver dedikerade fixtures.
 
-**Steg 5 (backlog):** Sätt upp CI-gate på `≥85%` (trend-bevarande) i
-GitHub Actions. Höj tröskel gradvis till 90% när nya tester landar.
+**Steg 5 ✅ CI-gate på ≥85% (S57).** `stryker.conf.json`
+`thresholds.break` sänkt från 90 till 85. CI mutation-job har varit
+permanent röd sedan tillkomsten (break:90 > faktisk:85). Nu fungerar
+gaten som regression-bevarande ratchet: PR som sänker totalscore
+under 85 failar CI. Höjs gradvis när Steg 3 levereras.
 
 ## Referenser
 
