@@ -93,7 +93,7 @@ describe('VardagPageInbox — Sprint 77 överdue-rader', () => {
     mockIpcResponse('expense:list', expenseListResp(0))
     await renderWithProviders(<VardagPageInbox />)
     const row = await screen.findByTestId('inbox-overdue-invoices')
-    expect(row.textContent).toContain('1 faktura är förfallna')
+    expect(row.textContent).toContain('1 faktura är förfallen')
   })
 
   it('visar överdue-fakturor med plural-form vid > 1', async () => {

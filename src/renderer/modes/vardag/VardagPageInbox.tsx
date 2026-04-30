@@ -102,7 +102,11 @@ export function VardagPageInbox() {
               >
                 <CheckLine
                   state="cross"
-                  label={`${overdueInvoices} ${overdueInvoices === 1 ? 'faktura är' : 'fakturor är'} förfallna`}
+                  label={
+                    overdueInvoices === 1
+                      ? '1 faktura är förfallen'
+                      : `${overdueInvoices} fakturor är förfallna`
+                  }
                   description="Följ upp betalning från kunden."
                 />
                 <Pill variant="danger">{overdueInvoices}</Pill>
@@ -115,7 +119,11 @@ export function VardagPageInbox() {
               >
                 <CheckLine
                   state="cross"
-                  label={`${overdueExpenses} ${overdueExpenses === 1 ? 'leverantörsfaktura är' : 'leverantörsfakturor är'} förfallna`}
+                  label={
+                    overdueExpenses === 1
+                      ? '1 leverantörsfaktura är förfallen'
+                      : `${overdueExpenses} leverantörsfakturor är förfallna`
+                  }
                   description="Betala för att undvika räntor och avgifter."
                 />
                 <Pill variant="danger">{overdueExpenses}</Pill>
