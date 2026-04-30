@@ -33,7 +33,15 @@ import { CompanySwitcher } from './CompanySwitcher'
 import { SessionTimeoutBadge } from './SessionTimeoutBadge'
 import { SectionLabel } from '../ui/SectionLabel'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useInvoiceList, useExpenses, useCounterparties } from '../../lib/hooks'
+import {
+  useInvoiceList,
+  useExpenses,
+  useCounterparties,
+  useManualEntryDrafts,
+  useAccrualSchedules,
+  useFixedAssets,
+  useImportedEntries,
+} from '../../lib/hooks'
 
 interface SidebarProps {
   company: Company
@@ -88,11 +96,25 @@ export function Sidebar({ company }: SidebarProps) {
   const { data: expenseData } = useExpenses(fyId, { limit: 1 })
   const { data: customers } = useCounterparties({ type: 'customer' })
   const { data: suppliers } = useCounterparties({ type: 'supplier' })
+  const { data: manualDrafts } = useManualEntryDrafts(fyId)
+  const { data: accrualSchedules } = useAccrualSchedules(fyId)
+  const { data: fixedAssets } = useFixedAssets(fyId)
+  const { data: importedEntries } = useImportedEntries(fyId)
 
   const invoiceCount = invoiceData?.counts?.total
   const expenseCount = expenseData?.counts?.total
   const customerCount = customers?.length
   const supplierCount = suppliers?.length
+  // Sprint H+G-27: Bokföringsorder visar utkast (det som kräver attention),
+  // inte total — total är ett historiskt mått utan handlingsvärde.
+  const manualDraftCount = manualDrafts?.length
+  // Sprint H+G-27: aktiva schedules med kvarvarande perioder — slutförda och
+  // deaktiverade är inte actionable.
+  const accrualActiveCount = accrualSchedules?.filter(
+    (s) => s.is_active === 1 && s.remainingOre > 0,
+  ).length
+  const fixedAssetCount = fixedAssets?.length
+  const importedEntriesCount = importedEntries?.length
 
   return (
     <aside
@@ -140,18 +162,21 @@ export function Sidebar({ company }: SidebarProps) {
           icon={FileText}
           label="Bokföringsorder"
           testId="nav-manual-entries"
+          count={manualDraftCount}
         />
         <SidebarLink
           to="/accruals"
           icon={CalendarClock}
           label="Periodiseringar"
           testId="nav-accruals"
+          count={accrualActiveCount}
         />
         <SidebarLink
           to="/fixed-assets"
           icon={Building2}
           label="Anläggningstillgångar"
           testId="nav-fixed-assets"
+          count={fixedAssetCount}
         />
         <SidebarLink
           to="/bank-statements"
@@ -208,6 +233,7 @@ export function Sidebar({ company }: SidebarProps) {
           icon={Upload}
           label="Importerade verifikat"
           testId="nav-imported-entries"
+          count={importedEntriesCount}
         />
         <SidebarLink
           to="/aging"
