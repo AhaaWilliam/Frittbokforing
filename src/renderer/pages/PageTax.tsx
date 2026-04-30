@@ -73,7 +73,7 @@ export function PageTax() {
               </div>
 
               {isLoss && (
-                <div className="rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                <div className="rounded border border-warning-100 bg-warning-100/40 p-3 text-sm text-warning-700">
                   Bolaget redovisar underskott för perioden — ingen bolagsskatt
                   beräknas. Underskott kan i vissa fall rullas framåt (kräver
                   skatterådgivning).
@@ -119,7 +119,7 @@ export function PageTax() {
                               : fmt(forecast?.corporateTaxAfterFondOre)}
                           </td>
                         </tr>
-                        <tr className="bg-muted/20 font-semibold text-green-700">
+                        <tr className="bg-muted/20 font-semibold text-success-700">
                           <td className="px-4 py-3">
                             Möjlig skatteminskning via fond
                           </td>
@@ -178,7 +178,7 @@ export function PageTax() {
                             </td>
                             <td
                               className={`px-4 py-3 text-right font-medium tabular-nums ${
-                                isProjectedLoss ? 'text-red-600' : ''
+                                isProjectedLoss ? 'text-danger-600' : ''
                               }`}
                             >
                               {fmt(forecast.projectedFullYearIncomeOre)}
@@ -186,10 +186,10 @@ export function PageTax() {
                           </tr>
 
                           {isProjectedLoss ? (
-                            <tr className="bg-yellow-50">
+                            <tr className="bg-warning-100/40">
                               <td
                                 colSpan={2}
-                                className="px-4 py-3 text-sm text-yellow-800"
+                                className="px-4 py-3 text-sm text-warning-700"
                               >
                                 Prognosen indikerar underskott för helåret —
                                 ingen bolagsskatt beräknas.

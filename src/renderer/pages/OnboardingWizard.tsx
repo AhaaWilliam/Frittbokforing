@@ -129,7 +129,7 @@ export function OnboardingWizard({
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
                   state.step > i + 1
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-success-100 text-success-700'
                     : state.step === i + 1
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'

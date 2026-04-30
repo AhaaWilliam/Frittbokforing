@@ -24,9 +24,9 @@ export const ConfirmDialog = memo(function ConfirmDialog({
 }: ConfirmDialogProps) {
   const confirmClasses =
     variant === 'danger'
-      ? 'bg-red-600 text-white hover:bg-red-700'
+      ? 'bg-danger-500 text-white hover:bg-danger-600'
       : variant === 'warning'
-        ? 'bg-amber-600 text-white hover:bg-amber-700'
+        ? 'bg-warning-500 text-white hover:bg-warning-600'
         : 'bg-primary text-primary-foreground hover:bg-primary/90'
 
   return (

@@ -46,15 +46,15 @@ export function ImportPreviewPhase({
         <div className="mb-3 flex items-center gap-2">
           {valid ? (
             <>
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <span className="font-medium text-green-700">
+              <CheckCircle2 className="h-5 w-5 text-success-600" />
+              <span className="font-medium text-success-700">
                 Filen är giltig
               </span>
             </>
           ) : (
             <>
-              <XCircle className="h-5 w-5 text-red-600" />
-              <span role="alert" className="font-medium text-red-700">
+              <XCircle className="h-5 w-5 text-danger-500" />
+              <span role="alert" className="font-medium text-danger-700">
                 {errors.length} blockerande fel
               </span>
             </>
@@ -238,7 +238,7 @@ export function ImportPreviewPhase({
                   {invalidSkip && (
                     <div
                       role="alert"
-                      className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700"
+                      className="mt-2 rounded bg-danger-100/40 p-2 text-xs text-danger-700"
                       data-testid={`conflict-${c.account_number}-invalid-skip`}
                     >
                       ⚠ Skip av {c.account_number}: {c.referenced_by_entries}{' '}
@@ -274,7 +274,7 @@ export function ImportPreviewPhase({
         )}
       </div>
       {hasInvalidSkip && (
-        <p className="mt-2 text-right text-xs text-red-600">
+        <p className="mt-2 text-right text-xs text-danger-600" role="alert">
           Kan inte importera med oanvänd-konflikt-skip. Ändra val ovan.
         </p>
       )}

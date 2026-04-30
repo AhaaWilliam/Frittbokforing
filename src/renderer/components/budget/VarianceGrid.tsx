@@ -135,7 +135,7 @@ function VarianceCells({
   bold?: boolean
 }) {
   const varianceColor =
-    variance > 0 ? 'text-green-600' : variance < 0 ? 'text-red-600' : ''
+    variance > 0 ? 'text-success-600' : variance < 0 ? 'text-danger-600' : ''
   const weight = bold ? 'font-medium' : ''
 
   return (

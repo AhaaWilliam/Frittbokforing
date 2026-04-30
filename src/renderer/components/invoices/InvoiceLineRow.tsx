@@ -152,7 +152,7 @@ export const InvoiceLineRow = memo(function InvoiceLineRow({
           type="button"
           aria-label="Ta bort rad"
           onClick={() => onRemove(index)}
-          className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+          className="rounded p-1 text-muted-foreground hover:bg-danger-100/50 hover:text-danger-500"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

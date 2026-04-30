@@ -252,7 +252,7 @@ function BankTxMappingsSection() {
                   <button
                     type="button"
                     onClick={() => setDeletingId(m.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-danger-500 hover:underline"
                     data-testid={`mapping-delete-${m.id}`}
                   >
                     Radera

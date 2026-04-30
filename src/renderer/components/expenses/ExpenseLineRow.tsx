@@ -119,7 +119,7 @@ export const ExpenseLineRow = memo(function ExpenseLineRow({
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="text-muted-foreground hover:text-red-600"
+          className="text-muted-foreground hover:text-danger-500"
           title="Ta bort rad"
         >
           &times;

@@ -459,7 +459,7 @@ export function ManualEntryForm({
             <span className="text-muted-foreground">Differens:</span>{' '}
             <span
               className={`font-medium font-mono ${
-                diffLabel.balanced ? 'text-green-600' : 'text-red-600'
+                diffLabel.balanced ? 'text-success-600' : 'text-danger-600'
               }`}
             >
               {diff === 0

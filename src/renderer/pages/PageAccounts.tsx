@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Callout } from '../components/ui/Callout'
+import { Pill } from '../components/ui/Pill'
 import {
   useAllAccounts,
   useCreateAccount,
@@ -333,13 +334,9 @@ export function PageAccounts() {
                     </td>
                     <td className="px-3 py-2">
                       {account.is_active === 1 ? (
-                        <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                          Aktiv
-                        </span>
+                        <Pill variant="success">Aktiv</Pill>
                       ) : (
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
-                          Inaktiv
-                        </span>
+                        <Pill variant="neutral">Inaktiv</Pill>
                       )}
                     </td>
                     <td className="px-3 py-2">

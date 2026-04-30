@@ -29,8 +29,8 @@ function Cell({
 
   let colorClass = ''
   if (colorNet) {
-    if (ore > 0) colorClass = 'text-red-600'
-    else if (ore < 0) colorClass = 'text-green-600'
+    if (ore > 0) colorClass = 'text-danger-600'
+    else if (ore < 0) colorClass = 'text-success-600'
   }
 
   return (
@@ -158,7 +158,7 @@ export function PageVat() {
               data-testid="vat-copy-clipboard"
             >
               {copied ? (
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-success-600" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}

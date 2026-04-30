@@ -77,7 +77,7 @@ export function PageBudget() {
 
       <div className="flex-1 overflow-auto px-6 pb-6">
         {linesError ? (
-          <div className="p-4 text-sm text-red-600">
+          <div className="p-4 text-sm text-danger-600" role="alert">
             Kunde inte ladda budgetrader.
           </div>
         ) : linesLoading ? (

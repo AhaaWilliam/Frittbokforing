@@ -499,7 +499,7 @@ export function InvoiceForm({ draft, onSave, onCancel }: InvoiceFormProps) {
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="ml-auto rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                className="ml-auto rounded-md border border-danger-100 px-4 py-2 text-sm font-medium text-danger-500 hover:bg-danger-100/50 disabled:opacity-50"
               >
                 {isDeleting ? 'Tar bort...' : 'Ta bort'}
               </button>

@@ -91,7 +91,7 @@ export function ProductDetail({ id, onEdit }: ProductDetailProps) {
           <button
             type="button"
             onClick={() => setShowConfirm(true)}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
           >
             Inaktivera
           </button>
@@ -106,7 +106,7 @@ export function ProductDetail({ id, onEdit }: ProductDetailProps) {
                 deactivate.mutate({ id: data.id })
                 setShowConfirm(false)
               }}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              className="rounded-md bg-danger-500 px-4 py-2 text-sm font-medium text-white hover:bg-danger-600"
             >
               Ja, inaktivera
             </button>

@@ -5,6 +5,7 @@ import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Callout } from '../components/ui/Callout'
+import { Pill } from '../components/ui/Pill'
 import { BANK_FORETAGSKONTO } from '../../shared/bank-accounts'
 import { CustomerPicker } from '../components/invoices/CustomerPicker'
 import { useIpcQuery } from '../lib/use-ipc-query'
@@ -340,9 +341,7 @@ function MandateRow({
       <td className="px-4 py-2">{mandate.signature_date}</td>
       <td className="px-4 py-2">
         {mandate.status === 'active' ? (
-          <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300">
-            Aktivt
-          </span>
+          <Pill variant="success">Aktivt</Pill>
         ) : (
           <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             Återkallat
@@ -803,11 +802,8 @@ function BatchRowComponent({ batch }: { batch: BatchRow }) {
       </td>
       <td className="px-4 py-2">
         {isExported ? (
-          <span
-            className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-300"
-            title={batch.exported_at ?? undefined}
-          >
-            Exporterad
+          <span title={batch.exported_at ?? undefined}>
+            <Pill variant="success">Exporterad</Pill>
           </span>
         ) : (
           <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">

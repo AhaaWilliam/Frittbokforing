@@ -112,7 +112,7 @@ export function CustomerPriceTable({
                         counterparty_id: cp.counterparty_id,
                       })
                     }
-                    className="text-red-600 hover:text-red-700"
+                    className="text-danger-500 hover:text-danger-600"
                   >
                     &times;
                   </button>

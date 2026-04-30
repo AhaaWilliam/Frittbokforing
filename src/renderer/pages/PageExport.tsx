@@ -74,7 +74,7 @@ export function PageExport() {
               Exportera SIE5
             </button>
             {feedback.sie5 && (
-              <p className="mt-2 text-sm text-green-600">{feedback.sie5}</p>
+              <p className="mt-2 text-sm text-success-600">{feedback.sie5}</p>
             )}
           </div>
 
@@ -92,7 +92,7 @@ export function PageExport() {
               Exportera SIE4
             </button>
             {feedback.sie4 && (
-              <p className="mt-2 text-sm text-green-600">{feedback.sie4}</p>
+              <p className="mt-2 text-sm text-success-600">{feedback.sie4}</p>
             )}
           </div>
 
@@ -131,7 +131,7 @@ export function PageExport() {
               Exportera Excel
             </button>
             {feedback.excel && (
-              <p className="mt-2 text-sm text-green-600">{feedback.excel}</p>
+              <p className="mt-2 text-sm text-success-600">{feedback.excel}</p>
             )}
           </div>
         </div>

@@ -47,10 +47,10 @@ describe('ConfirmDialog', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
-  it('variant=danger gives confirm button red background', async () => {
+  it('variant=danger gives confirm button danger background', async () => {
     await renderDialog({ variant: 'danger' } as Partial<typeof DEFAULT_PROPS>)
     const confirmBtn = screen.getByRole('button', { name: 'Bekräfta' })
-    expect(confirmBtn.className).toContain('bg-red')
+    expect(confirmBtn.className).toContain('bg-danger')
   })
 
   it('calls onConfirm when confirm button clicked', async () => {

@@ -15,6 +15,7 @@ import {
 import { useRoute, useNavigate, Link } from '../lib/router'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { Pill } from '../components/ui/Pill'
 import { SuggestedMatchesPanel } from '../components/bank/SuggestedMatchesPanel'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { BANK_FORETAGSKONTO } from '../../shared/bank-accounts'
@@ -330,23 +331,17 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                   {tx.remittance_info ?? '—'}
                 </td>
                 <td
-                  className={`px-2 py-2 text-right font-mono ${tx.amount_ore < 0 ? 'text-red-600' : 'text-green-700'}`}
+                  className={`px-2 py-2 text-right font-mono ${tx.amount_ore < 0 ? 'text-danger-600' : 'text-success-700'}`}
                 >
                   {fmtKr(tx.amount_ore)}
                 </td>
                 <td className="px-2 py-2 text-xs">
                   {tx.reconciliation_status === 'matched' ? (
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-green-800">
-                      Matchad
-                    </span>
+                    <Pill variant="success">Matchad</Pill>
                   ) : tx.reconciliation_status === 'excluded' ? (
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-800">
-                      Utesluten
-                    </span>
+                    <Pill variant="neutral">Utesluten</Pill>
                   ) : (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">
-                      Omatchad
-                    </span>
+                    <Pill variant="warning">Omatchad</Pill>
                   )}
                 </td>
                 <td className="px-2 py-2">
@@ -365,7 +360,7 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                       <button
                         type="button"
                         onClick={() => setUnmatchingTxId(tx.id)}
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs text-danger-500 hover:underline"
                         data-testid={`bank-unmatch-${tx.id}`}
                       >
                         Ångra
@@ -382,7 +377,7 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
                             paymentCount: tx.payment_batch_size ?? 0,
                           })
                         }
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs text-danger-500 hover:underline"
                         data-testid={`bank-unmatch-batch-${tx.id}`}
                       >
                         Ångra batch

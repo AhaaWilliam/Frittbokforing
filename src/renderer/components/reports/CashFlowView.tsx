@@ -97,7 +97,7 @@ export function CashFlowView({
         <div
           role="alert"
           data-testid="cash-flow-drift-warning"
-          className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          className="mt-4 rounded border border-warning-100 bg-warning-100/40 px-3 py-2 text-xs text-warning-700"
         >
           <strong>Avstämning:</strong> Ingående + periodens kassaflöde (
           {formatReportAmount(reconciliation)}) stämmer inte exakt med utgående
