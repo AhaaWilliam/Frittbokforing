@@ -3,10 +3,13 @@ import { MetricCard } from '../components/overview/MetricCard'
 import { Callout } from '../components/ui/Callout'
 import { useTaxForecast } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { formatKr } from '../lib/format'
+import { formatFiscalYearLabel } from '../components/layout/YearPicker'
 
 export function PageTax() {
   const { activeFiscalYear } = useFiscalYearContext()
+  const { activeCompany } = useActiveCompany()
   const {
     data: forecast,
     isLoading,
@@ -29,12 +32,35 @@ export function PageTax() {
     forecast.monthsElapsed <= fiscalYearMonths - 2
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
-      <PageHeader title="Skatteprognos" />
+    <div className="flex flex-1 flex-col overflow-auto print:overflow-visible">
+      <div className="print:hidden">
+        <PageHeader title="Skatteprognos" />
+      </div>
 
-      <div className="space-y-6 p-8">
+      {/* Print-only header */}
+      <div
+        className="hidden print:block print:px-[15mm] print:pt-[15mm]"
+        data-testid="tax-print-header"
+      >
+        <h1 className="text-lg font-semibold">Skatteprognos</h1>
+        {activeCompany && (
+          <p className="text-sm">
+            {activeCompany.name}
+            {activeCompany.org_number ? ` · ${activeCompany.org_number}` : ''}
+            {activeFiscalYear
+              ? ` · ${formatFiscalYearLabel(activeFiscalYear)}`
+              : ''}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-6 p-8 print:space-y-3 print:p-[15mm] print:text-[10pt]">
         {/* Disclaimer */}
-        <Callout variant="warning" data-testid="tax-disclaimer">
+        <Callout
+          variant="warning"
+          data-testid="tax-disclaimer"
+          className="print:hidden"
+        >
           Prognosen är en approximation baserad på rörelseresultatet (EBIT,
           konton 3–7). Följande ingår <strong>inte</strong> i beräkningen och
           kan ge avvikelse mot verklig bolagsskatt: finansiella poster (räntor,

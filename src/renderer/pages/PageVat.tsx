@@ -5,7 +5,9 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { Callout } from '../components/ui/Callout'
 import { useVatReport } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
+import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { formatKr } from '../lib/format'
+import { formatFiscalYearLabel } from '../components/layout/YearPicker'
 import type { VatQuarterReport, VatReport } from '../../shared/types'
 
 function Cell({
@@ -126,6 +128,7 @@ function formatReportForClipboard(report: VatReport): string {
 
 export function PageVat() {
   const { activeFiscalYear } = useFiscalYearContext()
+  const { activeCompany } = useActiveCompany()
   const { data: report, isLoading, error } = useVatReport(activeFiscalYear?.id)
   const [copied, setCopied] = useState(false)
 
@@ -146,30 +149,53 @@ export function PageVat() {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto">
-      <PageHeader
-        title="Momsrapport"
-        action={
-          report && !allEmpty ? (
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
-              data-testid="vat-copy-clipboard"
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-success-600" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-              {copied ? 'Kopierat' : 'Kopiera deklaration'}
-            </button>
-          ) : null
-        }
-      />
+    <div className="flex flex-1 flex-col overflow-auto print:overflow-visible">
+      <div className="print:hidden">
+        <PageHeader
+          title="Momsrapport"
+          action={
+            report && !allEmpty ? (
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                data-testid="vat-copy-clipboard"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-success-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                {copied ? 'Kopierat' : 'Kopiera deklaration'}
+              </button>
+            ) : null
+          }
+        />
+      </div>
 
-      <div className="space-y-6 p-8">
-        <Callout variant="info" data-testid="vat-info">
+      {/* Print-only header */}
+      <div
+        className="hidden print:block print:px-[15mm] print:pt-[15mm]"
+        data-testid="vat-print-header"
+      >
+        <h1 className="text-lg font-semibold">Momsrapport</h1>
+        {activeCompany && (
+          <p className="text-sm">
+            {activeCompany.name}
+            {activeCompany.org_number ? ` · ${activeCompany.org_number}` : ''}
+            {activeFiscalYear
+              ? ` · ${formatFiscalYearLabel(activeFiscalYear)}`
+              : ''}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-6 p-8 print:space-y-3 print:p-[15mm] print:text-[10pt]">
+        <Callout
+          variant="info"
+          data-testid="vat-info"
+          className="print:hidden"
+        >
           Visar utgående och ingående moms per kvartal baserat på bokförda
           verifikationer. Avser inrikes transaktioner — export och omvänd
           skattskyldighet stöds inte i denna version. Underlagen för 12% och 6%
