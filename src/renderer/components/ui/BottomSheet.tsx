@@ -56,9 +56,9 @@ export function BottomSheet({
         <Dialog.Content
           className={[
             'fixed inset-x-0 bottom-0 z-[var(--z-modal)]',
-            'mx-auto w-full max-w-2xl',
-            'rounded-t-2xl bg-white shadow-sheet',
-            'lg:bottom-auto lg:left-1/2 lg:top-1/2 lg:w-[min(640px,90vw)] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl',
+            'mx-auto w-full max-w-3xl',
+            'rounded-t-md border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-sheet',
+            'lg:bottom-auto lg:left-1/2 lg:top-1/2 lg:w-[min(720px,92vw)] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-md',
             className ?? '',
           ]
             .filter(Boolean)
@@ -70,21 +70,21 @@ export function BottomSheet({
             className="flex justify-center pb-1 pt-3 lg:hidden"
             aria-hidden="true"
           >
-            <span className="h-1 w-10 rounded-full bg-neutral-300" />
+            <span className="h-1 w-10 rounded-full bg-[var(--border-strong)]" />
           </div>
 
-          <div className="px-6 py-4">
-            <Dialog.Title className="font-display text-xl font-semibold text-neutral-900">
+          <div className="border-b border-[var(--border-default)] px-7 py-5">
+            <Dialog.Title className="font-serif text-2xl font-normal italic text-[var(--text-primary)]">
               {title}
             </Dialog.Title>
             {description && (
-              <Dialog.Description className="mt-1 text-sm text-neutral-500">
+              <Dialog.Description className="mt-1 text-sm text-[var(--text-secondary)]">
                 {description}
               </Dialog.Description>
             )}
           </div>
 
-          <div className="px-6 pb-6" data-testid="bottom-sheet-body">
+          <div className="px-7 py-6" data-testid="bottom-sheet-body">
             {children}
           </div>
         </Dialog.Content>
@@ -110,7 +110,7 @@ export function BottomSheetClose({
         type="button"
         className={
           className ??
-          'rounded-md border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50'
+          'rounded-md border border-[var(--border-default)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]'
         }
       >
         {children}

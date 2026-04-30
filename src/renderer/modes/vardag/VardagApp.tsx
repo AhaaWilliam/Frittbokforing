@@ -5,6 +5,12 @@ import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip } from '../../components/ui/KbdChip'
+import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
+import { Field } from '../../components/ui/Field'
+import {
+  KonteringHeader,
+  KonteringRow,
+} from '../../components/ui/KonteringRow'
 import { VardagShell } from './VardagShell'
 
 /**
@@ -134,12 +140,14 @@ function VardagAppInner({ companyName }: { companyName: string }) {
         </div>
       </div>
 
-      {sheet !== null && (
-        <PlaceholderSheet
-          title={sheet === 'kostnad' ? 'Bokför kostnad' : 'Skapa faktura'}
-          onClose={() => setSheet(null)}
-        />
-      )}
+      <BokforKostnadSheet
+        open={sheet === 'kostnad'}
+        onClose={() => setSheet(null)}
+      />
+      <SkapaFakturaSheet
+        open={sheet === 'faktura'}
+        onClose={() => setSheet(null)}
+      />
     </VardagShell>
   )
 }
@@ -160,40 +168,178 @@ function StatusPill({ tone, label }: { tone: 'mint' | 'warning'; label: string }
 }
 
 /**
- * Placeholder-sheet — fylls med riktigt innehåll i Sprint H+G-8
- * (BokforKostnadSheet + SkapaFakturaSheet).
+ * Sprint H+G-8 — BokforKostnadSheet (visuell prototyp).
+ *
+ * Strukturen matchar H+G-prototypens kostnad-sheet: vänster receipt-visual
+ * (placeholder), höger field-grid + förslag-kontering. Funktionell
+ * integration (OCR, kontering-algo, bokföringsanrop) kvarstår uppskjuten.
  */
-function PlaceholderSheet({
-  title,
+function BokforKostnadSheet({
+  open,
   onClose,
 }: {
-  title: string
+  open: boolean
   onClose: () => void
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/30"
-      onClick={onClose}
-      role="presentation"
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+      title="Bokför kostnad"
+      description="Kvitto eller faktura — fyll i, eller låt Fritt föreslå."
     >
-      <div
-        className="w-full max-w-2xl rounded-t-md border border-[var(--border-default)] bg-[var(--surface-elevated)] p-8"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={title}
-        data-testid="vardag-sheet"
-      >
-        <h2 className="mb-2 font-serif text-xl font-normal">{title}</h2>
-        <p className="mb-6 text-sm text-[var(--text-secondary)]">
-          Sheet-innehåll fylls i Sprint H+G-8.
+      <div className="grid grid-cols-[200px_1fr] gap-6">
+        <ReceiptVisual />
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Datum" hint="ÅÅÅÅ-MM-DD">
+              <input
+                type="text"
+                placeholder="2026-04-30"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+              />
+            </Field>
+            <Field label="Belopp inkl. moms">
+              <input
+                type="text"
+                placeholder="0,00"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-right text-sm font-mono"
+              />
+            </Field>
+            <Field label="Leverantör" span={2}>
+              <input
+                type="text"
+                placeholder="Sök eller skapa ny…"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="Beskrivning" span={2}>
+              <input
+                type="text"
+                placeholder="Vad var det här?"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+              />
+            </Field>
+          </div>
+
+          <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+              Förslag-kontering
+            </p>
+            <KonteringHeader />
+            <KonteringRow account="—" description="Fyll i belopp för förslag" />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <BottomSheetClose>Avbryt</BottomSheetClose>
+            <button
+              type="button"
+              disabled
+              className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white opacity-50"
+            >
+              Bokför
+            </button>
+          </div>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+/**
+ * Sprint H+G-8 — SkapaFakturaSheet (visuell prototyp).
+ *
+ * Stub som matchar prototypens layout: kund-dropdown, radobjekt-tabell,
+ * sammanställning. Funktionell integration uppskjuten.
+ */
+function SkapaFakturaSheet({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+      title="Skapa faktura"
+      description="Ny utgående faktura — välj kund och rader."
+    >
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Kund" span={2}>
+            <input
+              type="text"
+              placeholder="Sök kund eller skapa ny…"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Fakturadatum">
+            <input
+              type="text"
+              placeholder="2026-04-30"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+            />
+          </Field>
+          <Field label="Förfallodatum" hint="14 eller 30 dagar">
+            <input
+              type="text"
+              placeholder="2026-05-30"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+            />
+          </Field>
+        </div>
+
+        <div className="rounded-md border border-[var(--border-default)] p-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+            Rader
+          </p>
+          <div className="grid grid-cols-[1fr_60px_88px_88px] gap-2 border-b border-[var(--border-strong)] pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+            <span>Beskrivning</span>
+            <span className="text-right">Antal</span>
+            <span className="text-right">À-pris</span>
+            <span className="text-right">Total</span>
+          </div>
+          <p className="mt-3 text-xs italic text-[var(--text-faint)]">
+            Inga rader ännu — klicka "+ Ny rad" för att lägga till.
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <BottomSheetClose>Avbryt</BottomSheetClose>
+          <button
+            type="button"
+            disabled
+            className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white opacity-50"
+          >
+            Skicka
+          </button>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+/**
+ * Sprint H+G-8 — ReceiptVisual.
+ *
+ * Visuell representation av ett kvitto/faktura-foto i sheet:n. Idag
+ * placeholder med ramp + ikon; framtida iteration: faktisk OCR-bild
+ * eller pdf-thumbnail från uppladdad fil.
+ */
+function ReceiptVisual() {
+  return (
+    <div className="flex aspect-[3/4] items-center justify-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 text-center">
+      <div className="px-4">
+        <div className="mb-2 text-3xl">🧾</div>
+        <p className="text-xs text-[var(--text-faint)]">
+          Dra in kvitto eller foto
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md border border-[var(--border-default)] px-4 py-2 text-sm hover:bg-[var(--surface-secondary)]"
-        >
-          Stäng
-        </button>
       </div>
     </div>
   )
