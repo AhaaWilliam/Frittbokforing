@@ -101,8 +101,14 @@ export function OnboardingWizard({
       data-testid="wizard"
     >
       <div className="w-full max-w-lg">
-        <h1 className="mb-2 text-center text-2xl font-bold">
-          {onCancel ? 'Lägg till bolag' : 'Fritt Bokföring'}
+        <h1 className="mb-2 text-center font-serif text-2xl font-normal">
+          {onCancel ? (
+            'Lägg till bolag'
+          ) : (
+            <>
+              <span className="font-serif-italic">Fritt</span> Bokföring
+            </>
+          )}
         </h1>
         <p className="mb-6 text-center text-sm text-muted-foreground">
           {onCancel

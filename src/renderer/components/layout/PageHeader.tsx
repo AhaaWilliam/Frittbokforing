@@ -10,7 +10,7 @@ export function PageHeader({ title, action }: PageHeaderProps) {
 
   return (
     <div className="flex items-center justify-between border-b px-8 py-5">
-      <h1 className="text-lg font-medium">{title}</h1>
+      <h1 className="font-serif text-xl font-normal">{title}</h1>
       {!isReadOnly && action}
     </div>
   )

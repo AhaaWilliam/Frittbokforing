@@ -31,6 +31,7 @@ import { MonthIndicator } from './MonthIndicator'
 import { GlobalSearch } from './GlobalSearch'
 import { CompanySwitcher } from './CompanySwitcher'
 import { SessionTimeoutBadge } from './SessionTimeoutBadge'
+import { SectionLabel } from '../ui/SectionLabel'
 
 interface SidebarProps {
   company: Company
@@ -78,9 +79,7 @@ export function Sidebar({ company }: SidebarProps) {
 
       {/* Nav */}
       <nav id="primary-nav" className="flex-1 overflow-y-auto px-2 py-3">
-        <div className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Hantera
-        </div>
+        <SectionLabel className="mb-1 px-3">Hantera</SectionLabel>
         <SidebarLink
           to="/overview"
           icon={LayoutDashboard}
@@ -124,9 +123,7 @@ export function Sidebar({ company }: SidebarProps) {
           testId="nav-bank-statements"
         />
 
-        <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Register
-        </div>
+        <SectionLabel className="mb-1 mt-4 px-3">Register</SectionLabel>
         <SidebarLink
           to="/customers"
           icon={Users}
@@ -146,9 +143,7 @@ export function Sidebar({ company }: SidebarProps) {
           testId="nav-products"
         />
 
-        <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Stamdata
-        </div>
+        <SectionLabel className="mb-1 mt-4 px-3">Stamdata</SectionLabel>
         <SidebarLink
           to="/accounts"
           icon={BookOpen}
@@ -156,9 +151,7 @@ export function Sidebar({ company }: SidebarProps) {
           testId="nav-accounts"
         />
 
-        <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Rapporter
-        </div>
+        <SectionLabel className="mb-1 mt-4 px-3">Rapporter</SectionLabel>
         <SidebarLink
           to="/reports"
           icon={BarChart3}
@@ -197,9 +190,7 @@ export function Sidebar({ company }: SidebarProps) {
           testId="nav-tax"
         />
 
-        <div className="mb-1 mt-4 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Övrigt
-        </div>
+        <SectionLabel className="mb-1 mt-4 px-3">Övrigt</SectionLabel>
         <SidebarLink
           to="/export"
           icon={Download}

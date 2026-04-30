@@ -64,7 +64,7 @@ export const ExpenseListRow = memo(function ExpenseListRow({
           <span className="inline-block h-4 w-4" />
         )}
       </td>
-      <td className="px-4 py-3">{item.expense_date}</td>
+      <td className="px-4 py-3 font-mono">{item.expense_date}</td>
       <td className="px-4 py-3">{item.counterparty_name}</td>
       <td className="max-w-[200px] truncate px-4 py-3">
         {item.description}
@@ -83,23 +83,23 @@ export const ExpenseListRow = memo(function ExpenseListRow({
           </span>
         )}
       </td>
-      <td className="px-4 py-3">{item.supplier_invoice_number || '\u2014'}</td>
-      <td className="px-4 py-3 text-right font-medium">
+      <td className="px-4 py-3 font-mono">{item.supplier_invoice_number || '\u2014'}</td>
+      <td className="px-4 py-3 text-right font-mono font-medium">
         {formatKr(item.total_amount_ore)}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-right font-mono">
         {item.total_paid > 0 ? formatKr(item.total_paid) : ''}
       </td>
-      <td className="px-4 py-3 text-right">{formatKr(item.remaining)}</td>
+      <td className="px-4 py-3 text-right font-mono">{formatKr(item.remaining)}</td>
       <td className="px-4 py-3">
         <Pill variant={pill.variant}>{pill.label}</Pill>
       </td>
       <td
-        className={`px-4 py-3 ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}
+        className={`px-4 py-3 font-mono ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}
       >
         {item.due_date || '\u2014'}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 font-mono">
         {item.verification_number
           ? `${item.verification_series ?? 'B'}${item.verification_number}`
           : '\u2014'}

@@ -107,7 +107,9 @@ function WelcomeCtas({ navigate }: { navigate: (path: string) => void }) {
       className="mb-8 rounded-lg border border-border bg-card p-6"
       data-testid="welcome-empty-state"
     >
-      <h2 className="text-lg font-semibold">Välkommen till Fritt Bokföring</h2>
+      <h2 className="font-serif text-lg font-normal">
+        Välkommen till <span className="font-serif-italic">Fritt</span> Bokföring
+      </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Börja med ett av följande för att komma igång. Siffrorna nedan
         uppdateras automatiskt när du bokför.

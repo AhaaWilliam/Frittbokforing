@@ -54,7 +54,9 @@ export function LockScreen({ onUnlocked }: Props) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
-        <h1 className="mb-4 text-xl font-semibold">Fritt Bokföring</h1>
+        <h1 className="mb-4 font-serif text-xl font-normal">
+          <span className="font-serif-italic">Fritt</span> Bokföring
+        </h1>
 
         {error && (
           <div className="mb-3">

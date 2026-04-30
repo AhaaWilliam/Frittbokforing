@@ -40,7 +40,10 @@ describe('Sprint 66 — font-bundling-paritet', () => {
       'utf8',
     )
     const found = extractFontFilenames(css)
-    expect(found).toEqual([...EXPECTED_FONTS])
+    // Fraunces deklareras två gånger (normal + italic) sedan Sprint H+G-1
+    // för att Tailwind v4 ska kunna välja italic-variant via font-style.
+    const unique = Array.from(new Set(found)).sort()
+    expect(unique).toEqual([...EXPECTED_FONTS].sort())
   })
 
   it('LICENSE-FONTS.txt nämner alla tre font-familjer', () => {
@@ -80,7 +83,8 @@ describe('Sprint 66 — font-bundling-paritet', () => {
       'utf8',
     )
     const fontFaceBlocks = css.match(/@font-face\s*{[^}]+}/g) ?? []
-    expect(fontFaceBlocks).toHaveLength(3)
+    // Fraunces (normal + italic), Inter Tight, JetBrains Mono = 4 blocks.
+    expect(fontFaceBlocks).toHaveLength(4)
     for (const block of fontFaceBlocks) {
       expect(block).toContain('font-display: swap')
     }

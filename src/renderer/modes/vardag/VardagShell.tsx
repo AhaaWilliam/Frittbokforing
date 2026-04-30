@@ -40,8 +40,8 @@ export function VardagShell({
         role="banner"
       >
         <div className="flex items-center gap-3">
-          <span className="font-display text-xl font-semibold">
-            Fritt Bokföring
+          <span className="font-serif text-xl font-normal">
+            <span className="font-serif-italic">Fritt</span> Bokföring
           </span>
           <span className="text-sm opacity-70">— {companyName}</span>
         </div>
