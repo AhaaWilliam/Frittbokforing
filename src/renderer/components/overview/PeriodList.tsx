@@ -6,6 +6,7 @@ import {
   useReopenPeriod,
 } from '../../lib/hooks'
 import { formatFiscalYearLabel } from '../layout/YearPicker'
+import { Callout } from '../ui/Callout'
 import type { FiscalPeriod } from '../../../shared/types'
 
 function getMonthName(period: FiscalPeriod): string {
@@ -86,9 +87,11 @@ export function PeriodList() {
       </div>
 
       {allClosed && !isReadOnly && activeFiscalYear && (
-        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Alla månader för {formatFiscalYearLabel(activeFiscalYear)} är stängda.
-          Du kan nu förbereda bokslut.
+        <div className="mt-4">
+          <Callout variant="info" data-testid="all-closed">
+            Alla månader för {formatFiscalYearLabel(activeFiscalYear)} är
+            stängda. Du kan nu förbereda bokslut.
+          </Callout>
         </div>
       )}
 

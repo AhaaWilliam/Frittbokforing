@@ -254,9 +254,11 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
               <p className="text-green-700">Bytt till nytt räkenskapsår</p>
             </div>
 
-            <div className="mb-4 rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-              Ingående balanser har överförts. Konto 2099 (Årets resultat) har
-              automatiskt omförts till 2091 (Balanserat resultat).
+            <div className="mb-4">
+              <Callout variant="info" data-testid="ib-transferred">
+                Ingående balanser har överförts. Konto 2099 (Årets resultat) har
+                automatiskt omförts till 2091 (Balanserat resultat).
+              </Callout>
             </div>
 
             <button

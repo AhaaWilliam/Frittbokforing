@@ -1,4 +1,5 @@
 import { BFL_ALLOWED_START_MONTHS } from '../../../shared/constants'
+import { Callout } from '../ui/Callout'
 
 interface StepFiscalYearProps {
   registration_date: string
@@ -129,12 +130,12 @@ export function StepFiscalYear({
       </div>
 
       {monthsSinceReg < 12 && !use_short_first_fy && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+        <Callout variant="info">
           För nystartade bolag är det vanligt att välja{' '}
           <em>kortat första räkenskapsår</em> som startar vid
           registreringsdatumet (BFL 3 kap 3§). Bocka i alternativet nedan om du
           vill.
-        </div>
+        </Callout>
       )}
 
       {showShortOption && (

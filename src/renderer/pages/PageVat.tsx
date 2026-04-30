@@ -169,8 +169,7 @@ export function PageVat() {
       />
 
       <div className="space-y-6 p-8">
-        {/* Info banner */}
-        <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+        <Callout variant="info" data-testid="vat-info">
           Visar utgående och ingående moms per kvartal baserat på bokförda
           verifikationer. Avser inrikes transaktioner — export och omvänd
           skattskyldighet stöds inte i denna version. Underlagen för 12% och 6%
@@ -179,7 +178,7 @@ export function PageVat() {
           hos Skatteverket kan vara månadsvis eller årsvis. Använd "Kopiera
           deklaration" för att klistra in helårssumman i SKV e-tjänsten —
           verifiera alltid att box-nummer matchar aktuellt formulär.
-        </div>
+        </Callout>
 
         {error && (
           <Callout variant="danger" data-testid="vat-error">

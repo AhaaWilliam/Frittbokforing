@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { Callout } from '../components/ui/Callout'
 import { ImportSelectPhase } from '../components/import/ImportSelectPhase'
 import { ImportPreviewPhase } from '../components/import/ImportPreviewPhase'
 import { ImportDonePhase } from '../components/import/ImportDonePhase'
@@ -130,9 +131,11 @@ export function FirstRunImport({ onBack }: Props) {
       <div className="flex-1 overflow-auto px-6 pb-6">
         {phase === 'select' && (
           <>
-            <div className="mx-auto mt-6 max-w-2xl rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-              Importen skapar ett nytt bolag baserat på SIE-filens innehåll. Du
-              kan fortsätta i guidad uppstart om du inte har en fil.
+            <div className="mx-auto mt-6 max-w-2xl">
+              <Callout variant="info">
+                Importen skapar ett nytt bolag baserat på SIE-filens innehåll.
+                Du kan fortsätta i guidad uppstart om du inte har en fil.
+              </Callout>
             </div>
             <ImportSelectPhase
               format={format}
