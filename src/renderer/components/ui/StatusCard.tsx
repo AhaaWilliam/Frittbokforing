@@ -52,7 +52,7 @@ export function StatusCard({
 }: StatusCardProps) {
   const valueClasses = [
     'text-3xl leading-snug font-semibold',
-    mono ? 'font-mono' : 'font-display',
+    mono ? 'font-mono' : 'font-serif',
     VARIANT_VALUE_CLASSES[variant],
   ].join(' ')
 

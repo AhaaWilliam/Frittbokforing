@@ -66,13 +66,13 @@ describe('StatusCard', () => {
     render(<StatusCard title="x" value="1234.56" mono />)
     const valueEl = screen.getByText('1234.56')
     expect(valueEl.className).toContain('font-mono')
-    expect(valueEl.className).not.toContain('font-display')
+    expect(valueEl.className).not.toContain('font-serif')
   })
 
-  it('uses display font by default', () => {
+  it('uses serif font by default', () => {
     render(<StatusCard title="x" value="1" />)
     const valueEl = screen.getByText('1')
-    expect(valueEl.className).toContain('font-display')
+    expect(valueEl.className).toContain('font-serif')
   })
 
   it.each(['default', 'accent', 'muted'] as const)(

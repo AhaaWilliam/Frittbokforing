@@ -100,7 +100,7 @@ export function ConsequencePane({
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h3 className="font-display text-lg font-semibold text-neutral-900">
+          <h3 className="font-serif text-lg font-normal text-neutral-900">
             Verifikat-förhandsgranskning
           </h3>
           <p className="text-xs text-neutral-500">
