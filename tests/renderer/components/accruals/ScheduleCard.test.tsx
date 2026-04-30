@@ -12,7 +12,7 @@ function makeSchedule(
     id: 1,
     fiscal_year_id: 1,
     description: 'Försäkring',
-    accrual_type: 'cost',
+    accrual_type: 'prepaid_expense',
     balance_account: '1700',
     result_account: '5000',
     total_amount_ore: 12000,

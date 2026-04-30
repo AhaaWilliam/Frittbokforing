@@ -210,14 +210,14 @@ describe('Sidebar', () => {
       success: true,
       data: [
         {
-          id: 1, fiscal_year_id: 1, description: 'a1', accrual_type: 'cost',
+          id: 1, fiscal_year_id: 1, description: 'a1', accrual_type: 'prepaid_expense',
           balance_account: '1700', result_account: '5000',
           total_amount_ore: 12000, period_count: 12, start_period: 1,
           is_active: 1, created_at: '',
           periodStatuses: [], executedCount: 0, remainingOre: 12000,
         },
         {
-          id: 2, fiscal_year_id: 1, description: 'a2', accrual_type: 'cost',
+          id: 2, fiscal_year_id: 1, description: 'a2', accrual_type: 'prepaid_expense',
           balance_account: '1700', result_account: '5000',
           total_amount_ore: 6000, period_count: 6, start_period: 1,
           is_active: 0, created_at: '',
