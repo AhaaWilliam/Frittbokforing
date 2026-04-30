@@ -119,7 +119,7 @@ export function FixedAssetDetailPanel({ assetId }: Props) {
                   {fmtKr(s.amount_ore)}
                 </td>
                 <td className="px-3 py-1">
-                  <Pill variant={STATUS_PILL[s.status] ?? 'neutral'}>
+                  <Pill variant={STATUS_PILL[s.status] ?? 'neutral'} size="xs">
                     {STATUS_LABELS[s.status] ?? s.status}
                   </Pill>
                 </td>

@@ -18,7 +18,7 @@ export type PillVariant =
   | 'danger'
   | 'info'
 
-export type PillSize = 'sm' | 'md'
+export type PillSize = 'xs' | 'sm' | 'md'
 
 interface PillProps {
   children: ReactNode
@@ -49,6 +49,8 @@ const DOT_CLASSES: Record<PillVariant, string> = {
 }
 
 const SIZE_CLASSES: Record<PillSize, string> = {
+  // Sprint 74 — xs för täta tabeller (depreciation-schedule, dense lists).
+  xs: 'text-[10px] px-1.5 py-0 gap-0.5',
   sm: 'text-xs px-2 py-0.5 gap-1',
   md: 'text-sm px-2.5 py-1 gap-1.5',
 }

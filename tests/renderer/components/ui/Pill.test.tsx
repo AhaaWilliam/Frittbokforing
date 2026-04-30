@@ -79,4 +79,28 @@ describe('Pill', () => {
     const results = await axe.run(container, AXE_OPTIONS)
     expect(results.violations).toEqual([])
   })
+
+  // Sprint 74 — xs-size för täta tabeller (depreciation-schedule, dense lists).
+  it('size="xs" sätter data-size och text-[10px]', () => {
+    const { container } = render(
+      <Pill size="xs" variant="success">
+        OK
+      </Pill>,
+    )
+    const pill = container.firstElementChild as HTMLElement
+    expect(pill).toHaveAttribute('data-size', 'xs')
+    expect(pill.className).toContain('text-[10px]')
+  })
+
+  it('alla size-varianter renderar utan a11y-violations', async () => {
+    const { container } = render(
+      <div>
+        <Pill size="xs">xs</Pill>
+        <Pill size="sm">sm</Pill>
+        <Pill size="md">md</Pill>
+      </div>,
+    )
+    const results = await axe.run(container, AXE_OPTIONS)
+    expect(results.violations).toEqual([])
+  })
 })
