@@ -257,4 +257,44 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
       await cleanup()
     }
   })
+
+  test('Vardag hero (BigButtons + status-pills + kbd-hints)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+
+      // Sätt ui_mode till vardag innan reload så ModeRouter renderar VardagApp
+      await window.evaluate(async () => {
+        await (
+          window as unknown as {
+            api: { setSetting: (k: string, v: string) => Promise<unknown> }
+          }
+        ).api.setSetting('ui_mode', 'vardag')
+      })
+
+      await window.reload()
+      await expect(window.getByTestId('vardag-shell')).toBeVisible({
+        timeout: 15_000,
+      })
+      await expect(window.getByTestId('vardag-hero')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('vardag-hero.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
 })
