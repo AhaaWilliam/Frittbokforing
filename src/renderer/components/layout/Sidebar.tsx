@@ -32,6 +32,8 @@ import { GlobalSearch } from './GlobalSearch'
 import { CompanySwitcher } from './CompanySwitcher'
 import { SessionTimeoutBadge } from './SessionTimeoutBadge'
 import { SectionLabel } from '../ui/SectionLabel'
+import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useInvoiceList, useExpenses, useCounterparties } from '../../lib/hooks'
 
 interface SidebarProps {
   company: Company
@@ -42,11 +44,17 @@ function SidebarLink({
   icon: Icon,
   label,
   testId,
+  count,
 }: {
   to: string
   icon: LucideIcon
   label: string
   testId?: string
+  /**
+   * Sprint H+G-15 — räknare som visas till höger (eg. utkast/total).
+   * Undefined → ingen räknare. 0 → räknare visas (med faint färg).
+   */
+  count?: number
 }) {
   return (
     <Link
@@ -55,13 +63,37 @@ function SidebarLink({
       activeClassName="bg-accent text-accent-foreground font-medium"
       testId={testId}
     >
-      <Icon className="h-4 w-4" />
-      {label}
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="flex-1">{label}</span>
+      {count != null && (
+        <span
+          className={`font-mono text-xs ${
+            count > 0 ? 'text-[var(--text-secondary)]' : 'text-[var(--text-faint)]'
+          }`}
+          data-testid={testId ? `${testId}-count` : undefined}
+        >
+          {count}
+        </span>
+      )}
     </Link>
   )
 }
 
 export function Sidebar({ company }: SidebarProps) {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const fyId = activeFiscalYear?.id
+
+  // Räknare för sidebar-rader. Undefined skickas tills FY-data resolverat.
+  const { data: invoiceData } = useInvoiceList(fyId, { limit: 1 })
+  const { data: expenseData } = useExpenses(fyId, { limit: 1 })
+  const { data: customers } = useCounterparties({ type: 'customer' })
+  const { data: suppliers } = useCounterparties({ type: 'supplier' })
+
+  const invoiceCount = invoiceData?.counts?.total
+  const expenseCount = expenseData?.counts?.total
+  const customerCount = customers?.length
+  const supplierCount = suppliers?.length
+
   return (
     <aside
       className="flex h-full flex-col border-r border-[var(--border-default)] bg-[var(--surface-secondary)]"
@@ -94,12 +126,14 @@ export function Sidebar({ company }: SidebarProps) {
           icon={ArrowDownCircle}
           label="Pengar in"
           testId="nav-income"
+          count={invoiceCount}
         />
         <SidebarLink
           to="/expenses"
           icon={ArrowUpCircle}
           label="Pengar ut"
           testId="nav-expenses"
+          count={expenseCount}
         />
         <SidebarLink
           to="/manual-entries"
@@ -132,12 +166,14 @@ export function Sidebar({ company }: SidebarProps) {
           icon={Users}
           label="Kunder"
           testId="nav-customers"
+          count={customerCount}
         />
         <SidebarLink
           to="/suppliers"
           icon={Truck}
           label="Leverantörer"
           testId="nav-suppliers"
+          count={supplierCount}
         />
         <SidebarLink
           to="/products"
