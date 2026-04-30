@@ -30,7 +30,7 @@
   "checkers": [],
   "timeoutMS": 30000,
   "concurrency": 4,
-  "thresholds": { "high": 95, "low": 85, "break": 89 },
+  "thresholds": { "high": 95, "low": 85, "break": 92 },
   "reporters": ["clear-text", "html", "json"],
   "htmlReporter": { "fileName": "reports/mutation/index.html" },
   "jsonReporter": { "fileName": "reports/mutation/mutation-report.json" },
