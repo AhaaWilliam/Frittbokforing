@@ -297,6 +297,45 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     }
   })
 
+  test('Vardag sheet öppen (SkapaFakturaSheet placeholder)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.evaluate(async () => {
+        await (
+          window as unknown as {
+            api: { setSetting: (k: string, v: string) => Promise<unknown> }
+          }
+        ).api.setSetting('ui_mode', 'vardag')
+      })
+
+      await window.reload()
+      await expect(window.getByTestId('vardag-hero')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.getByTestId('vardag-bigbtn-faktura').click()
+      await expect(window.getByTestId('bottom-sheet')).toBeVisible({
+        timeout: 5_000,
+      })
+      await window.waitForTimeout(300)
+
+      await expect(window).toHaveScreenshot('vardag-sheet-faktura.png', {
+        maxDiffPixels: 80,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
   test('Vardag hero (BigButtons + status-pills + kbd-hints)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
