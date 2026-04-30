@@ -17,6 +17,7 @@ import {
   useCreateCreditNoteDraft,
 } from '../../lib/hooks'
 import { useIpcMutation } from '../../lib/use-ipc-mutation'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 import { usePageParam } from '../../lib/use-page-param'
 import { useFilterParam } from '../../lib/use-filter-param'
 import { useRovingTabindex } from '../../lib/use-roving-tabindex'
@@ -190,7 +191,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
         amount_ore: amount,
         payment_date: date,
         payment_method: 'bankgiro',
-        account_number: '1930',
+        account_number: BANK_FORETAGSKONTO,
         ...(bankFeeOre ? { bank_fee_ore: bankFeeOre } : {}),
       })
       toast.success('Betalning registrerad')

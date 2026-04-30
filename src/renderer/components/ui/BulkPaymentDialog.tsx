@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { formatKr, kronorToOre, todayLocal } from '../../lib/format'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 
 export interface BulkPaymentRow {
   id: number
@@ -34,7 +35,7 @@ export function BulkPaymentDialog({
 }: BulkPaymentDialogProps) {
   const [amounts, setAmounts] = useState<Record<number, string>>({})
   const [paymentDate, setPaymentDate] = useState('')
-  const [accountNumber, setAccountNumber] = useState('1930')
+  const [accountNumber, setAccountNumber] = useState<string>(BANK_FORETAGSKONTO)
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [userNote, setUserNote] = useState('')
 
@@ -46,7 +47,7 @@ export function BulkPaymentDialog({
       }
       setAmounts(initial)
       setPaymentDate(todayLocal())
-      setAccountNumber('1930')
+      setAccountNumber(BANK_FORETAGSKONTO)
       setBankFeeStr('')
       setUserNote('')
     }

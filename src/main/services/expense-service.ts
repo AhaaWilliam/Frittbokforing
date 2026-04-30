@@ -6,6 +6,7 @@ import { checkChronology } from './chronology-guard'
 import { safeRebuildSearchIndex } from './search-service'
 import { createBatchBankFeeJournalEntry } from './payment/batch-bank-fee'
 import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
+import { VAT_IN_ACCOUNT } from '../../shared/vat-accounts'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
 import type {
@@ -440,8 +441,8 @@ export function finalizeExpense(
         if (line.vat_amount_ore > 0) {
           // All incoming VAT goes to 2640
           vatTotals.set(
-            '2640',
-            (vatTotals.get('2640') ?? 0) + line.vat_amount_ore,
+            VAT_IN_ACCOUNT,
+            (vatTotals.get(VAT_IN_ACCOUNT) ?? 0) + line.vat_amount_ore,
           )
         }
       }

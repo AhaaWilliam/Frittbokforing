@@ -5,6 +5,7 @@ import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Callout } from '../components/ui/Callout'
+import { BANK_FORETAGSKONTO } from '../../shared/bank-accounts'
 import { CustomerPicker } from '../components/invoices/CustomerPicker'
 import { useIpcQuery } from '../lib/use-ipc-query'
 import { useIpcMutation } from '../lib/use-ipc-mutation'
@@ -844,7 +845,7 @@ function CreateBatchForm({
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [paymentDate, setPaymentDate] = useState(todayLocal())
-  const [accountNumber, setAccountNumber] = useState('1930')
+  const [accountNumber, setAccountNumber] = useState<string>(BANK_FORETAGSKONTO)
   const [userNote, setUserNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const createMutation = useCreateBatch()

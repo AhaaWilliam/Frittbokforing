@@ -19,6 +19,7 @@ import {
   useCreateBankFeeEntry,
 } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 
 type EntityCandidate = {
   entity_type: 'invoice' | 'expense'
@@ -110,13 +111,13 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
       const r = isFee(candidate)
         ? await feeMutation.mutateAsync({
             bank_transaction_id: txId,
-            payment_account: '1930',
+            payment_account: BANK_FORETAGSKONTO,
           })
         : await matchMutation.mutateAsync({
             bank_transaction_id: txId,
             matched_entity_type: candidate.entity_type,
             matched_entity_id: candidate.entity_id,
-            payment_account: '1930',
+            payment_account: BANK_FORETAGSKONTO,
           })
       const success = (r as { success?: boolean }).success !== false
       if (success) {
@@ -172,7 +173,7 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
           feeSeriesSeen.add(serie)
           r = await feeMutation.mutateAsync({
             bank_transaction_id: txId,
-            payment_account: '1930',
+            payment_account: BANK_FORETAGSKONTO,
             skipChronologyCheck: skip,
           })
         } else {
@@ -180,7 +181,7 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
             bank_transaction_id: txId,
             matched_entity_type: candidate.entity_type,
             matched_entity_id: candidate.entity_id,
-            payment_account: '1930',
+            payment_account: BANK_FORETAGSKONTO,
           })
         }
         const success = (r as { success?: boolean }).success !== false

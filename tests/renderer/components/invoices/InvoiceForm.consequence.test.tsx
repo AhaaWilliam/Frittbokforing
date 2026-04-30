@@ -50,22 +50,14 @@ describe('InvoiceForm — ConsequencePane wire-in (Sprint 45)', () => {
 
   it('renderar ConsequencePane med data-testid="invoice-consequence"', async () => {
     await renderWithProviders(
-      <InvoiceForm
-        fiscalYearId={1}
-        onSave={() => {}}
-        onCancel={() => {}}
-      />,
+      <InvoiceForm onSave={() => {}} onCancel={() => {}} />,
     )
     expect(screen.getByTestId('invoice-consequence')).toBeInTheDocument()
   })
 
   it('startar i idle state när inga rader finns', async () => {
     await renderWithProviders(
-      <InvoiceForm
-        fiscalYearId={1}
-        onSave={() => {}}
-        onCancel={() => {}}
-      />,
+      <InvoiceForm onSave={() => {}} onCancel={() => {}} />,
     )
     expect(screen.getByTestId('consequence-pane-idle')).toBeInTheDocument()
   })

@@ -17,6 +17,7 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { SuggestedMatchesPanel } from '../components/bank/SuggestedMatchesPanel'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { BANK_FORETAGSKONTO } from '../../shared/bank-accounts'
 
 function fmtKr(ore: number): string {
   const sign = ore < 0 ? '-' : ''
@@ -485,7 +486,7 @@ function MatchDialog({
   const expensesQuery = useExpenses(fyId, { status: 'unpaid' })
   const matchMutation = useMatchBankTransaction()
   const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null)
-  const [paymentAccount, setPaymentAccount] = useState('1930')
+  const [paymentAccount, setPaymentAccount] = useState<string>(BANK_FORETAGSKONTO)
 
   const candidates: Candidate[] =
     direction === 'invoice'

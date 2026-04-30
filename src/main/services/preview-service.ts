@@ -4,6 +4,7 @@ import type { IpcResult } from '../../shared/types'
 import { PreviewJournalLinesInputSchema } from '../../shared/ipc-schemas'
 import { todayLocalFromNow } from '../utils/now'
 import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
+import { VAT_IN_ACCOUNT } from '../../shared/vat-accounts'
 
 /**
  * Sprint 16 — Live verifikat-preview (ADR 006).
@@ -193,7 +194,7 @@ function previewExpenseJournal(
   // Plocka konto-namn för D-rader + 2640 + 2440
   const accountNumbers = [
     ...costTotals.keys(),
-    ...(vatTotal > 0 ? ['2640'] : []),
+    ...(vatTotal > 0 ? [VAT_IN_ACCOUNT] : []),
     '2440',
   ]
   const names = getAccountNames(db, Array.from(new Set(accountNumbers)))
@@ -224,8 +225,8 @@ function previewExpenseJournal(
   // D 2640 om moms finns
   if (vatTotal > 0) {
     journalLines.push({
-      account_number: '2640',
-      account_name: names.get('2640') ?? null,
+      account_number: VAT_IN_ACCOUNT,
+      account_name: names.get(VAT_IN_ACCOUNT) ?? null,
       debit_ore: vatTotal,
       credit_ore: 0,
       description: 'Ingående moms',

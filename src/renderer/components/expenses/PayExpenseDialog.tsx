@@ -3,6 +3,7 @@ import type { ExpenseDetail } from '../../../shared/types'
 import { usePayExpense } from '../../lib/hooks'
 import { formatKr, toOre, toKr, todayLocal } from '../../lib/format'
 import { parseDecimal } from '../../../shared/money'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 import { Callout } from '../ui/Callout'
 
 interface PayExpenseDialogProps {
@@ -22,7 +23,7 @@ export function PayExpenseDialog({
   const [amountKr, setAmountKr] = useState(toKr(expense.remaining).toFixed(2))
   const [paymentDate, setPaymentDate] = useState(today)
   const [paymentMethod, setPaymentMethod] = useState<string>('bankgiro')
-  const [accountNumber, setAccountNumber] = useState('1930')
+  const [accountNumber, setAccountNumber] = useState<string>(BANK_FORETAGSKONTO)
   const [bankFeeStr, setBankFeeStr] = useState('')
   const [error, setError] = useState<string | null>(null)
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAllAccounts } from '../../lib/hooks'
 import { todayLocal } from '../../../shared/date-utils'
 import { parseDecimal } from '../../../shared/money'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 
 export interface DisposeDialogResult {
   disposed_date: string
@@ -21,7 +22,7 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
   const [disposedDate, setDisposedDate] = useState(today)
   const [generateEntry, setGenerateEntry] = useState(true)
   const [salePriceKr, setSalePriceKr] = useState('')
-  const [proceedsAccount, setProceedsAccount] = useState('1930')
+  const [proceedsAccount, setProceedsAccount] = useState<string>(BANK_FORETAGSKONTO)
 
   const { data: accounts } = useAllAccounts(true)
   // Balansräkning: 1xxx–2xxx

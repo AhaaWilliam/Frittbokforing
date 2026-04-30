@@ -22,6 +22,7 @@ import { useRovingTabindex } from '../../lib/use-roving-tabindex'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
 import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
 import { PaymentDialog } from '../ui/PaymentDialog'
@@ -179,7 +180,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
         amount_ore: amount,
         payment_date: date,
         payment_method: 'bankgiro',
-        account_number: '1930',
+        account_number: BANK_FORETAGSKONTO,
       })
       toast.success('Betalning registrerad')
       setPayItem(null)
