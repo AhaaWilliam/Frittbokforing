@@ -21,7 +21,7 @@ import { useFilterParam } from '../../lib/use-filter-param'
 import { useRovingTabindex } from '../../lib/use-roving-tabindex'
 import { formatKr } from '../../lib/format'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
-import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { TableSkeleton } from '../ui/TableSkeleton'
 import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
 import { ConfirmFinalizeDialog } from '../ui/ConfirmFinalizeDialog'
@@ -374,7 +374,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
 
       {/* Table */}
       {isLoading ? (
-        <LoadingSpinner />
+        <TableSkeleton columns={11} withSelectColumn rows={6} />
       ) : items.length === 0 ? (
         !debouncedSearch && !statusFilter ? (
           <EmptyState
