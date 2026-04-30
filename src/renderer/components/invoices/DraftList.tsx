@@ -4,6 +4,7 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
 import { Pill } from '../ui/Pill'
 import { EmptyState, InvoiceIllustration } from '../ui/EmptyState'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 interface DraftListProps {
   onSelect: (id: number) => void
@@ -14,11 +15,7 @@ export function DraftList({ onSelect }: DraftListProps) {
   const { data: drafts, isLoading } = useDraftInvoices(activeFiscalYear?.id)
 
   if (isLoading) {
-    return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        Laddar...
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!drafts || drafts.length === 0) {

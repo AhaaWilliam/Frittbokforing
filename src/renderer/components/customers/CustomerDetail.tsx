@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCounterparty, useDeactivateCounterparty } from '../../lib/hooks'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 interface CustomerDetailProps {
   id: number
@@ -40,11 +41,7 @@ export function CustomerDetail({ id, onEdit }: CustomerDetailProps) {
   const [showConfirm, setShowConfirm] = useState(false)
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Laddar...
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!counterparty) {

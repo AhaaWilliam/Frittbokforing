@@ -2,6 +2,7 @@ import type { Product } from '../../../shared/types'
 import { useProducts } from '../../lib/hooks'
 import { formatKr, unitLabel } from '../../lib/format'
 import { Pill } from '../ui/Pill'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 interface ProductListProps {
   selectedId: number | null
@@ -34,11 +35,7 @@ export function ProductList({
   })
 
   if (isLoading) {
-    return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        Laddar...
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!products || products.length === 0) {

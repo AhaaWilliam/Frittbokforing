@@ -1,6 +1,7 @@
 import type { Counterparty } from '../../../shared/types'
 import { useCounterparties } from '../../lib/hooks'
 import { Pill } from '../ui/Pill'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 interface ContactListProps {
   type: 'customer' | 'supplier'
@@ -38,11 +39,7 @@ export function ContactList({
   })
 
   if (isLoading) {
-    return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        Laddar...
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!counterparties || counterparties.length === 0) {

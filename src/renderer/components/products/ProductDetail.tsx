@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useProduct, useDeactivateProduct } from '../../lib/hooks'
 import { formatKr, unitLabel } from '../../lib/format'
 import { CustomerPriceTable } from './CustomerPriceTable'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 interface ProductDetailProps {
   id: number
@@ -42,11 +43,7 @@ export function ProductDetail({ id, onEdit }: ProductDetailProps) {
   const [showConfirm, setShowConfirm] = useState(false)
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Laddar...
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   if (!data) {
