@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/layout/PageHeader'
+import { Callout } from '../components/ui/Callout'
 import {
   useAllAccounts,
   useCreateAccount,
@@ -107,8 +108,10 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
         </h2>
 
         {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+          <div className="mb-4">
+            <Callout variant="danger" data-testid="account-error">
+              {error}
+            </Callout>
           </div>
         )}
 

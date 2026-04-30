@@ -1,5 +1,6 @@
 import { PageHeader } from '../components/layout/PageHeader'
 import { MetricCard } from '../components/overview/MetricCard'
+import { Callout } from '../components/ui/Callout'
 import { useTaxForecast } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { formatKr } from '../lib/format'
@@ -33,19 +34,19 @@ export function PageTax() {
 
       <div className="space-y-6 p-8">
         {/* Disclaimer */}
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <Callout variant="warning" data-testid="tax-disclaimer">
           Prognosen är en approximation baserad på rörelseresultatet (EBIT,
           konton 3–7). Följande ingår <strong>inte</strong> i beräkningen och
           kan ge avvikelse mot verklig bolagsskatt: finansiella poster (räntor,
           klass 8), ej avdragsgilla kostnader (t.ex. förseningsavgifter, ej
           avdragsgill representation) samt övriga skattemässiga justeringar.
           Konsultera en redovisningskonsult för definitiv skatteberäkning.
-        </div>
+        </Callout>
 
         {error && (
-          <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <Callout variant="danger" data-testid="tax-error">
             Kunde inte beräkna skatteprognos.
-          </div>
+          </Callout>
         )}
 
         {!error && (

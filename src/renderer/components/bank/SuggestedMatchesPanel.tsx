@@ -19,6 +19,7 @@ import {
   useCreateBankFeeEntry,
 } from '../../lib/hooks'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { Callout } from '../ui/Callout'
 import { BANK_FORETAGSKONTO } from '../../../shared/bank-accounts'
 
 type EntityCandidate = {
@@ -339,22 +340,20 @@ export function SuggestedMatchesPanel({ statementId }: Props) {
           )}
 
           {results && results.failed.length > 0 && (
-            <div
-              className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-xs"
-              role="alert"
-              data-testid="suggested-matches-failures"
-            >
-              <div className="mb-1 font-medium">
-                {results.ok} av {results.total} accepterade —{' '}
-                {results.failed.length} misslyckades:
-              </div>
-              <ul className="ml-4 list-disc">
-                {results.failed.map((f) => (
-                  <li key={f.txId}>
-                    TX #{f.txId}: {f.reason}
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-3">
+              <Callout
+                variant="warning"
+                title={`${results.ok} av ${results.total} accepterade — ${results.failed.length} misslyckades`}
+                data-testid="suggested-matches-failures"
+              >
+                <ul className="ml-4 list-disc text-xs">
+                  {results.failed.map((f) => (
+                    <li key={f.txId}>
+                      TX #{f.txId}: {f.reason}
+                    </li>
+                  ))}
+                </ul>
+              </Callout>
             </div>
           )}
         </div>

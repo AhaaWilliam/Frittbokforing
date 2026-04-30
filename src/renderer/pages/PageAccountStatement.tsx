@@ -4,6 +4,7 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useAllAccounts, useAccountStatement } from '../lib/hooks'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+import { Callout } from '../components/ui/Callout'
 import { formatReportAmount, todayLocal } from '../lib/format'
 import { getHashParams, setHashParams } from '../lib/router'
 import { subtractMonths } from '../../shared/date-utils'
@@ -221,11 +222,10 @@ export function PageAccountStatement() {
         ) : isLoading ? (
           <LoadingSpinner />
         ) : isError ? (
-          <div
-            role="alert"
-            className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {(error as Error)?.message ?? 'Ett fel uppstod.'}
+          <div className="mt-4">
+            <Callout variant="danger" data-testid="account-statement-error">
+              {(error as Error)?.message ?? 'Ett fel uppstod.'}
+            </Callout>
           </div>
         ) : statement && statement.lines.length === 0 ? (
           <p className="mt-8 text-center text-muted-foreground">

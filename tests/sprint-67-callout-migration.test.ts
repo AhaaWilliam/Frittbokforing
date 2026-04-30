@@ -19,12 +19,25 @@ import { resolve } from 'node:path'
 const repoRoot = resolve(__dirname, '..')
 
 const MIGRATED_FILES = [
+  // Sprint 67
   'src/renderer/pages/PageOverview.tsx',
   'src/renderer/pages/PageVat.tsx',
   'src/renderer/pages/PageSettings.tsx',
   'src/renderer/components/products/CustomerPriceTable.tsx',
   'src/renderer/components/layout/CreateFiscalYearDialog.tsx',
+  // Sprint 68 — pages/components stragglers
+  'src/renderer/components/ui/ConfirmFinalizeDialog.tsx',
+  'src/renderer/components/bank/SuggestedMatchesPanel.tsx',
+  'src/renderer/components/import/ImportPreviewPhase.tsx',
+  'src/renderer/pages/PageAccountStatement.tsx',
+  'src/renderer/components/overview/ReTransferButton.tsx',
+  'src/renderer/pages/PageAccounts.tsx',
+  'src/renderer/pages/PageTax.tsx',
 ] as const
+
+// Excluded — semantically not a card-Callout:
+// - src/renderer/components/layout/ReadOnlyBanner.tsx
+//   (page-wide top-strip with border-b, not in-flow content)
 
 // Banner-mönster: Tailwind-trio som visuellt motsvarar Callout-variant.
 const RAW_BANNER_REGEX =

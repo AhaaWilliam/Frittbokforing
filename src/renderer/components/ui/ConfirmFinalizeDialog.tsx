@@ -1,4 +1,5 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
+import { Callout } from './Callout'
 
 interface ConfirmFinalizeDialogProps {
   open: boolean
@@ -39,8 +40,10 @@ export function ConfirmFinalizeDialog({
           <AlertDialog.Description className="mb-4 text-sm text-muted-foreground whitespace-pre-line">
             {description}
           </AlertDialog.Description>
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 mb-6 text-sm text-amber-800">
-            Denna åtgärd kan inte ångras. Verifikationen bokförs permanent.
+          <div className="mb-6">
+            <Callout variant="warning">
+              Denna åtgärd kan inte ångras. Verifikationen bokförs permanent.
+            </Callout>
           </div>
           <div className="flex justify-end gap-3">
             <AlertDialog.Cancel asChild>
