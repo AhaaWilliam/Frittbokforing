@@ -19,16 +19,19 @@ löst med `pool: 'forks'` + `isolate: false` + curated test-include-lista).
 | 2026-04-30 (S51) | 77.97% | +6.67 | sprint 30/34/40/43/44/47 lyfte oavsiktligt |
 | 2026-04-30 (S55) | **85.08%** | **+7.11** | S52 (vat-report) + S53 (correction) — riktade |
 | 2026-04-30 (S56) | **85.83%** | **+0.75** | result-service refaktor (optional-chaining → requireGroup) |
+| 2026-04-30 (S57) | 85.83% | ±0 | break-threshold 90→85 (CI ratchet floor) |
+| 2026-04-30 (S58) | **87.97%** | **+2.14** | money.ts add to scope (100%) + S56-test wired in |
 
-## Baseline 2026-04-30 (efter Sprint 56)
+## Baseline 2026-04-30 (efter Sprint 58)
 
-| Fil | Score | Killed | Survived | NoCov | Δ från S55 |
+| Fil | Score | Killed | Survived | NoCov | Δ från S56 |
 |-----|-------|--------|----------|-------|------------|
-| **Totalt** | **85.83%** | 218 | 21 | 15 | +0.75 pp |
+| **Totalt** | **87.97%** | 234 | 20 | 12 | +2.14 pp |
 | chronology-guard.ts | 93.75% | 15 | 1 | 0 | ±0 |
 | vat-report-service.ts | 83.87% | 52 | 6 | 4 | ±0 |
 | correction-service.ts | 84.96% | 113 | 12 | 8 | ±0 |
-| result-service.ts | **88.37%** | 38 | 2 | 3 | **+3.85 pp** |
+| result-service.ts | **97.67%** | 42 | 1 | 0 | **+9.30 pp** |
+| money.ts | **100.00%** | 12 | 0 | 0 | new |
 
 **Break-threshold:** 85% (sänkt från 90% i S57 — ratchet-strategi:
 sätt gaten till faktisk floor så att CI fångar regression istället för
@@ -113,10 +116,11 @@ display- från net-värdet. Stänger Steg 4 i mutation-roadmap.
 **Steg 1 ✅ etablera baseline (S51).**
 **Steg 2 ✅ stäng top-3 (S52 + S53).** Mål: ≥85%. Utfall: 85.08%.
 
-**Steg 3 (backlog):** Utöka scope till `invoice-service`, `money.ts`,
-`expense-service`, `preview-service`. Förvänta lägre baseline (kanske
-60-70%) eftersom dessa har komplex sign-flip-logik (M137) och
-heltalsaritmetik (M131) som är klassisk mutation-mat.
+**Steg 3 (delvis ✅).** S58 lade till `money.ts` (100% utan nya tester —
+befintlig täckning var redan tight). Återstår: `invoice-service`,
+`expense-service`, `preview-service`. Dessa registrerar IPC-handlers
+vid module-load → behöver särlösning för `isolate:false`-kravet i
+stryker-config (kanske separat curated-config-fil).
 
 **Steg 4 ✅ result-service refaktor (S56).** Mål: +6 pp. Utfall: +3.85 pp
 på filen, +0.75 pp totalt (11 av 13 mutanter elimineras). De 2

@@ -10,7 +10,8 @@
     "src/main/services/result-service.ts",
     "src/main/services/chronology-guard.ts",
     "src/main/services/vat-report-service.ts",
-    "src/main/services/correction-service.ts"
+    "src/main/services/correction-service.ts",
+    "src/shared/money.ts"
   ],
   "ignorePatterns": [
     "release",
