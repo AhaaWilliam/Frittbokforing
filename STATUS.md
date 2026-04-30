@@ -1,5 +1,60 @@
 # Fritt Bokforing -- Projektstatus
 
+## Sprint 56–79 -- Mutation testing + Design migration komplett ✅ KLAR
+
+Två block i samma session (24 sprintar, ~25 commits).
+
+**Block A — Mutation testing (S56-65):** 71.30% baseline → **95.11%**
+(+23.81 pp). Stryker break-threshold ratchetad i fem steg (90→85→87→89→92→94)
+så CI fångar regression utan att vara permanent röd. 4 av 5 muterade filer
+nu på 100% eller ≥97%; correction-service 91.73% (5 surviving + 4 NoCov
+kvar — kräver mockad db för plain-Error path eller refaktor).
+
+**Block B — Design migration komplett (S66-79):** Slutfört det arbete
+som startade i S12-34 design-migration:
+
+- **S66 — fonts:** LICENSE-FONTS.txt + check-fonts.mjs + prebuild-hook
+  + 6 vakttester. Manuell font-drop kvar att göra.
+- **S67-68 — Callout:** 12 raw error/warn-banners migrerade.
+  Callout primitive utvidgad med data-testid pass-through.
+- **S69 — palette:** success/warning/danger/info × 100/500/**600/700**
+  + semantisk `--color-status-overdue`-token. InvoiceListRow +
+  ExpenseListRow overdue-cell migrerad.
+- **S70 — VardagPageIncome:** Sprint 22:s placeholder ersatt med
+  faktisk lista över senaste fakturor (read-only, ingen save-logik).
+- **S71 — Pill:** 4 inline-badge-filer (ContactList/ProductList/
+  ArticlePicker/FixedAssetDetailPanel) migrerade till Pill-primitive.
+- **S72 — ReadOnlyBanner:** warning-tokens + role="status".
+- **S73 — stragglers:** StepCompany text-red-500 → FieldError (4),
+  ManualEntries inline-badges → Pill (2), BalanceSheetView raw banner
+  → Callout (1).
+- **S74 — Pill xs-size:** ny size-variant för täta tabeller (text-[10px]).
+- **S75 — EmptyState:** DraftList + ExpenseDraftList → EmptyState.
+- **S76 — LoadingSpinner:** 6 ad-hoc "Laddar..."-divs migrerade.
+- **S77 — Vardag inbox:** överdue-fakturor/-kostnader visas överst
+  med danger-Pill (counts från useInvoiceList/useExpenses).
+- **S78 — info-Callout:** 5 blue info-banners (CreateFY/StepFiscalYear/
+  PageVat/FirstRunImport/PeriodList) migrerade.
+- **S79 — sista status-badge:** PageFixedAssets → Pill.
+
+**Konsekvens:**
+- Alla error/warning/info-banners går via `Callout`
+- Alla status-/typ-badges via `Pill`
+- Alla loading-states via `LoadingSpinner`
+- Alla tom-listor via `EmptyState`
+- Alla inline form-fel via `FieldError`
+- Token-baserad färgning över hela paletten (med 600/700-tones)
+
+**Testbaslinje:** ~3900 vitest gröna. **Mutation:** 95.11% (CI break:94).
+**PRAGMA user_version:** 57 (oförändrat).
+
+**Ej levererat (oförändrat backlog):**
+- VardagPageSpend save (produktbeslut: auto-kontoallokering)
+- Font-filer själva (manuell OFL-nedladdning, allt övrigt klart)
+- Visual regression CI (kräver screenshot-baseline-infra)
+- Stryker scope-utvidgning (kräver särskild config för IPC-isolation)
+- Legal-utkast behöver juridisk granskning
+
 ## Sprint 12–34 -- Design-migration + Vardag-läge + paritets-skydd ✅ KLAR
 
 Två sammanhängande arbeten över ~30 commits.
