@@ -7,6 +7,7 @@ import { HashRouter, useRoute, useNavigate } from '../lib/router'
 import { routes } from '../lib/routes'
 import { Sidebar } from '../components/layout/Sidebar'
 import { AppTopBar } from '../components/layout/AppTopBar'
+import { ZoneCons } from '../components/layout/ZoneCons'
 import { SkipLinks } from '../components/layout/SkipLinks'
 import { ReadOnlyBanner } from '../components/layout/ReadOnlyBanner'
 import { CommandPalette } from '../components/command-palette/CommandPalette'
@@ -185,11 +186,11 @@ function AppShellInner({ company }: AppShellInnerProps) {
     <div className="flex h-screen flex-col" data-testid="app-ready">
       <SkipLinks />
       <AppTopBar companyName={company.name} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="grid flex-1 grid-cols-[240px_1fr_360px] overflow-hidden">
         <Sidebar company={company} />
         <main
           id="main-content"
-          className="flex flex-1 flex-col overflow-hidden"
+          className="flex flex-col overflow-hidden bg-[var(--surface-elevated)]"
         >
           <ReadOnlyBanner />
           <div
@@ -199,6 +200,7 @@ function AppShellInner({ company }: AppShellInnerProps) {
             <PageContent page={page} />
           </div>
         </main>
+        <ZoneCons />
       </div>
       <CommandPalette
         open={paletteOpen}

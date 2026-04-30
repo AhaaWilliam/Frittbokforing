@@ -63,7 +63,10 @@ function SidebarLink({
 
 export function Sidebar({ company }: SidebarProps) {
   return (
-    <aside className="flex h-full w-[220px] flex-col border-r bg-muted/30">
+    <aside
+      className="flex h-full flex-col border-r border-[var(--border-default)] bg-[var(--surface-secondary)]"
+      data-testid="zone-vad"
+    >
       {/* Header */}
       <div className="border-b px-4 pb-4 pt-4">
         <CompanySwitcher />
