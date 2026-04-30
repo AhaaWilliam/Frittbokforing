@@ -258,6 +258,78 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     }
   })
 
+  test('Bokföringsorder empty (ZoneNuHead + EmptyState)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/manual-entries'
+      })
+      await expect(window.getByTestId('page-manual-entries')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('manual-entries-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Vardag sheet öppen (BokforKostnadSheet placeholder)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.evaluate(async () => {
+        await (
+          window as unknown as {
+            api: { setSetting: (k: string, v: string) => Promise<unknown> }
+          }
+        ).api.setSetting('ui_mode', 'vardag')
+      })
+
+      await window.reload()
+      await expect(window.getByTestId('vardag-hero')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.getByTestId('vardag-bigbtn-kostnad').click()
+      await expect(window.getByTestId('bottom-sheet')).toBeVisible({
+        timeout: 5_000,
+      })
+      await window.waitForTimeout(300)
+
+      await expect(window).toHaveScreenshot('vardag-sheet-kostnad.png', {
+        maxDiffPixels: 80, // sheet animations stabiliseras inte alltid exakt
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
   test('Vardag hero (BigButtons + status-pills + kbd-hints)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
