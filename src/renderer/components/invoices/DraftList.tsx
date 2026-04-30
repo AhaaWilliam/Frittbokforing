@@ -4,7 +4,7 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
 import { Pill } from '../ui/Pill'
 import { EmptyState, InvoiceIllustration } from '../ui/EmptyState'
-import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { TableSkeleton } from '../ui/TableSkeleton'
 
 interface DraftListProps {
   onSelect: (id: number) => void
@@ -15,7 +15,7 @@ export function DraftList({ onSelect }: DraftListProps) {
   const { data: drafts, isLoading } = useDraftInvoices(activeFiscalYear?.id)
 
   if (isLoading) {
-    return <LoadingSpinner />
+    return <TableSkeleton columns={4} rows={4} ariaLabel="Laddar utkast" />
   }
 
   if (!drafts || drafts.length === 0) {

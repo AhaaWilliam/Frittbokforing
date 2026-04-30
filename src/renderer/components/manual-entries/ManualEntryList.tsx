@@ -2,6 +2,7 @@ import { useManualEntryDrafts, useManualEntries } from '../../lib/hooks'
 import { formatKr } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { TableSkeleton } from '../ui/TableSkeleton'
 import { EmptyState, ManualEntryIllustration } from '../ui/EmptyState'
 import { Pill } from '../ui/Pill'
 
@@ -65,7 +66,11 @@ export function ManualEntryList({
           Bokförda
         </h2>
         {entriesLoading ? (
-          <LoadingSpinner />
+          <TableSkeleton
+            columns={5}
+            rows={5}
+            ariaLabel="Laddar bokförda verifikationer"
+          />
         ) : !entries || entries.length === 0 ? (
           !drafts || drafts.length === 0 ? (
             <EmptyState

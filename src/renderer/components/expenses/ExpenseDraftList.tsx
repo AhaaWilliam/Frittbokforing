@@ -4,7 +4,7 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { formatKr } from '../../lib/format'
 import { Pill } from '../ui/Pill'
 import { EmptyState, ExpenseIllustration } from '../ui/EmptyState'
-import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { TableSkeleton } from '../ui/TableSkeleton'
 
 interface ExpenseDraftListProps {
   onSelect: (id: number) => void
@@ -15,7 +15,7 @@ export function ExpenseDraftList({ onSelect }: ExpenseDraftListProps) {
   const { data: drafts, isLoading } = useExpenseDrafts(activeFiscalYear?.id)
 
   if (isLoading) {
-    return <LoadingSpinner />
+    return <TableSkeleton columns={5} rows={4} ariaLabel="Laddar utkast" />
   }
 
   if (!drafts || drafts.length === 0) {
