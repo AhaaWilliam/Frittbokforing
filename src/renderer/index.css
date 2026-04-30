@@ -89,6 +89,12 @@
    * intention är att markera "förfallen" som domän-koncept. */
   --color-status-overdue: var(--color-danger-600);
 
+  /* Sprint 83 — selekterad list-rad. Mappar till info-100 idag men
+   * är en separat semantisk token så att framtida theming kan välja
+   * en annan färg utan att påverka info-banners. Använd `bg-selected`
+   * istället för `bg-blue-50` på list-rader. */
+  --color-selected: var(--color-info-100);
+
   /* Bakåtkompatibilitet — befintliga komponenter använder dessa namn.
    * Sprint 13 migrerar successivt till bas-tokens; tills dess speglar
    * vi gamla shortcuts till nya värden. */

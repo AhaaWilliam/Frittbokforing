@@ -58,7 +58,7 @@ export function ContactList({
             type="button"
             onClick={() => onSelect(cp.id)}
             className={`flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
-              selectedId === cp.id ? 'bg-blue-50' : ''
+              selectedId === cp.id ? 'bg-selected' : ''
             }`}
           >
             <div className="min-w-0 flex-1">
