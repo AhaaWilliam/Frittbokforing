@@ -500,6 +500,53 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     )
   })
 
+  it('VS-23 drag-drop kvitto-fil sätter receipt-state', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const pickZone = await screen.findByTestId('vardag-kostnad-receipt-pick')
+
+    // Konstruera en File med Electron-style .path-attribut
+    const file = Object.assign(new File(['x'], 'dragged.pdf'), {
+      path: '/tmp/dragged.pdf',
+    })
+
+    fireEvent.drop(pickZone, {
+      dataTransfer: { files: [file] },
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-kostnad-receipt-attached'),
+      ).toHaveTextContent('dragged.pdf')
+    })
+  })
+
+  it('VS-23 drag-drop utan path (browser-mode) ignoreras säkert', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const pickZone = await screen.findByTestId('vardag-kostnad-receipt-pick')
+
+    // Browser File utan .path
+    const file = new File(['x'], 'no-path.pdf')
+
+    fireEvent.drop(pickZone, {
+      dataTransfer: { files: [file] },
+    })
+
+    // No-op: pick-knappen ska kvarstå (inte attached-state)
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.getByTestId('vardag-kostnad-receipt-pick')).toBeInTheDocument()
+    expect(
+      screen.queryByTestId('vardag-kostnad-receipt-attached'),
+    ).toBeNull()
+  })
+
   it('VS-21 visar toast.warning om receipt-attach misslyckas (men bokför ändå)', async () => {
     mockIpcResponse('expense:select-receipt-file', {
       success: true,

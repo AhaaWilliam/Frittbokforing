@@ -150,7 +150,7 @@ describe('VS-9 — Vardag-sheets a11y', () => {
 
     const pick = await screen.findByTestId('vardag-kostnad-receipt-pick')
     expect(pick.tagName).toBe('BUTTON')
-    expect(pick).toHaveTextContent('Klicka för att välja kvitto')
+    expect(pick).toHaveTextContent('Dra in kvitto eller klicka för att välja')
 
     // Fokuserbar
     pick.focus()

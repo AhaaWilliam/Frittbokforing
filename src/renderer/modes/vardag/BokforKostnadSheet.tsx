@@ -281,6 +281,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
           path={receiptPath}
           onPick={handlePickReceipt}
           onClear={() => setReceiptPath(null)}
+          onDropPath={(p) => setReceiptPath(p)}
         />
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
@@ -475,11 +476,22 @@ function ReceiptVisual({
   path,
   onPick,
   onClear,
+  onDropPath,
 }: {
   path: string | null
   onPick: () => void
   onClear: () => void
+  onDropPath: (filePath: string) => void
 }) {
+  const [dragActive, setDragActive] = useState(false)
+
+  function extractPath(file: File): string | null {
+    // Electron renderer: File-objekt får en `path`-attribut. I standard
+    // browser saknas det → null. Vid framtida Electron 32+ kan vi byta
+    // till webUtils.getPathForFile(file) via preload.
+    const f = file as File & { path?: string }
+    return typeof f.path === 'string' && f.path.length > 0 ? f.path : null
+  }
   if (path) {
     const filename = pathBasename(path)
     return (
@@ -510,12 +522,29 @@ function ReceiptVisual({
     <button
       type="button"
       onClick={onPick}
-      className="flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 text-center transition-colors hover:bg-[var(--surface-secondary)]/70"
+      onDragOver={(e) => {
+        e.preventDefault()
+        if (!dragActive) setDragActive(true)
+      }}
+      onDragLeave={() => setDragActive(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragActive(false)
+        const file = e.dataTransfer.files[0]
+        if (!file) return
+        const p = extractPath(file)
+        if (p) onDropPath(p)
+      }}
+      className={`flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-dashed text-center transition-colors ${
+        dragActive
+          ? 'border-[var(--color-brand-500)] bg-[var(--color-brand-500)]/10'
+          : 'border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 hover:bg-[var(--surface-secondary)]/70'
+      }`}
       data-testid="vardag-kostnad-receipt-pick"
     >
       <div className="mb-2 text-3xl">🧾</div>
       <p className="text-xs text-[var(--text-faint)]">
-        Klicka för att välja kvitto
+        Dra in kvitto eller klicka för att välja
       </p>
       <p className="mt-1 text-[10px] text-[var(--text-faint)]">
         PDF, PNG, JPG, HEIC
