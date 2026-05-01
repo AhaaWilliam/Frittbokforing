@@ -153,9 +153,12 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   // VS-19: Inline-validering av kontonummer mot kontoplan.
   // Vänta tills accounts laddats innan vi flaggar fel (annars false-positive
   // initialt).
+  const matchedAccount = allAccounts.find(
+    (a) => a.account_number === accountNumber,
+  )
   const accountError =
     /^\d{4}$/.test(accountNumber) && allAccounts.length > 0
-      ? allAccounts.some((a) => a.account_number === accountNumber)
+      ? matchedAccount
         ? null
         : `Kontot ${accountNumber} finns inte i kontoplanen.`
       : null
@@ -348,6 +351,14 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                   data-testid="vardag-kostnad-account-error"
                 >
                   {accountError}
+                </p>
+              )}
+              {!accountError && matchedAccount && (
+                <p
+                  className="mt-1 text-xs text-[var(--text-secondary)]"
+                  data-testid="vardag-kostnad-account-name"
+                >
+                  {matchedAccount.name}
                 </p>
               )}
             </Field>

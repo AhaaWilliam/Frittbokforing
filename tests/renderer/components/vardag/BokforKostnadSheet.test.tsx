@@ -311,6 +311,36 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
   })
 
+  it('VS-20 visar kontonamn när kontonummer matchar', async () => {
+    mockIpcResponse('account:list-all', {
+      success: true,
+      data: [
+        {
+          id: 1,
+          account_number: '6110',
+          name: 'Kontorsmateriel',
+          account_type: 'expense',
+          is_active: 1,
+          k2_allowed: 1,
+          k3_only: 0,
+          is_system_account: 0,
+        },
+      ],
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    // Default-konto 6110 är förvalt — kontonamn ska visas direkt
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-kostnad-account-name'),
+      ).toHaveTextContent('Kontorsmateriel')
+    })
+  })
+
   it('VS-19 inget fel visas innan accounts laddats (false-positive-skydd)', async () => {
     // account:list-all utan mock → mock-ipc default = success: true, data: null
     await renderWithProviders(
