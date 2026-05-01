@@ -5,10 +5,9 @@ import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip } from '../../components/ui/KbdChip'
-import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
-import { Field } from '../../components/ui/Field'
 import { VardagShell } from './VardagShell'
 import { BokforKostnadSheet } from './BokforKostnadSheet'
+import { SkapaFakturaSheet } from './SkapaFakturaSheet'
 
 /**
  * Sprint H+G-3 — VardagApp som hero-screen (matchar H+G-prototyp).
@@ -170,80 +169,4 @@ function StatusPill({
   )
 }
 
-/**
- * Sprint H+G-8 — SkapaFakturaSheet (visuell prototyp).
- *
- * Stub som matchar prototypens layout: kund-dropdown, radobjekt-tabell,
- * sammanställning. Funktionell integration uppskjuten.
- */
-function SkapaFakturaSheet({
-  open,
-  onClose,
-}: {
-  open: boolean
-  onClose: () => void
-}) {
-  return (
-    <BottomSheet
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) onClose()
-      }}
-      title="Skapa faktura"
-      description="Ny utgående faktura — välj kund och rader."
-    >
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Kund" span={2}>
-            <input
-              type="text"
-              placeholder="Sök kund eller skapa ny…"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
-            />
-          </Field>
-          <Field label="Fakturadatum">
-            <input
-              type="text"
-              placeholder="2026-04-30"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
-            />
-          </Field>
-          <Field label="Förfallodatum" hint="14 eller 30 dagar">
-            <input
-              type="text"
-              placeholder="2026-05-30"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
-            />
-          </Field>
-        </div>
-
-        <div className="rounded-md border border-[var(--border-default)] p-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
-            Rader
-          </p>
-          <div className="grid grid-cols-[1fr_60px_88px_88px] gap-2 border-b border-[var(--border-strong)] pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
-            <span>Beskrivning</span>
-            <span className="text-right">Antal</span>
-            <span className="text-right">À-pris</span>
-            <span className="text-right">Total</span>
-          </div>
-          <p className="mt-3 text-xs italic text-[var(--text-faint)]">
-            Inga rader ännu — klicka "+ Ny rad" för att lägga till.
-          </p>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <BottomSheetClose>Avbryt</BottomSheetClose>
-          <button
-            type="button"
-            disabled
-            className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white opacity-50"
-          >
-            Skicka
-          </button>
-        </div>
-      </div>
-    </BottomSheet>
-  )
-}
 
