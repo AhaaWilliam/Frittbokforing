@@ -213,6 +213,18 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     ).toHaveTextContent('Perioden är stängd.')
   })
 
+  it('VS-18 beskrivnings-fältet är auto-fokuserat när sheet öppnas', async () => {
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const desc = await screen.findByTestId('vardag-faktura-description')
+    await waitFor(() => {
+      expect(document.activeElement).toBe(desc)
+    })
+  })
+
   it('VS-8 multi-line CTA navigerar till /income/create i bokförare-läget', async () => {
     const onClose = vi.fn()
     await renderWithProviders(

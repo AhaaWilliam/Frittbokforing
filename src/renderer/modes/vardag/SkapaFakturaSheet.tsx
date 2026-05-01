@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Field } from '../../components/ui/Field'
@@ -65,6 +65,15 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const [vatCodeId, setVatCodeId] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const descriptionInputRef = useRef<HTMLInputElement | null>(null)
+
+  // VS-18: Auto-focus beskrivnings-fältet när sheet öppnas. Customer
+  // väljs via picker, så beskrivningen är första edit-bara textfältet.
+  useEffect(() => {
+    if (!open) return
+    const t = setTimeout(() => descriptionInputRef.current?.focus(), 0)
+    return () => clearTimeout(t)
+  }, [open])
 
   // Default till MP1 (25%)
   useEffect(() => {
@@ -263,6 +272,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           </p>
           <div className="grid grid-cols-[1fr_60px_88px_88px] gap-2 text-sm">
             <input
+              ref={descriptionInputRef}
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

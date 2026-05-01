@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Field } from '../../components/ui/Field'
@@ -76,6 +76,16 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [receiptPath, setReceiptPath] = useState<string | null>(null)
+  const amountInputRef = useRef<HTMLInputElement | null>(null)
+
+  // VS-18: Auto-focus belopp-fältet när sheet öppnas. Belopp är nästan
+  // alltid det första användaren vill mata in (datum är default = idag).
+  // setTimeout 0 så Radix-portal hinner mounta innan fokus försöks.
+  useEffect(() => {
+    if (!open) return
+    const t = setTimeout(() => amountInputRef.current?.focus(), 0)
+    return () => clearTimeout(t)
+  }, [open])
 
   // Default till IP1 (25%) när vatCodes laddats.
   useEffect(() => {
@@ -273,6 +283,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             </Field>
             <Field label="Belopp inkl. moms">
               <input
+                ref={amountInputRef}
                 type="text"
                 inputMode="decimal"
                 value={amountKr}

@@ -277,6 +277,18 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     })
   })
 
+  it('VS-18 belopp-fältet är auto-fokuserat när sheet öppnas', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const amount = await screen.findByTestId('vardag-kostnad-amount')
+    await waitFor(() => {
+      expect(document.activeElement).toBe(amount)
+    })
+  })
+
   it('VS-16 Cmd+Enter triggar submit när formulär är giltigt', async () => {
     mockIpcResponse('expense:save-draft', {
       success: true,
