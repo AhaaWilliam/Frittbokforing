@@ -312,6 +312,49 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
   })
 
+  it('VS-25 submit-fel rensas när användaren börjar redigera', async () => {
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 99 }),
+    })
+    mockIpcResponse('expense:finalize', {
+      success: false,
+      error: 'Perioden är stängd.',
+      code: 'PERIOD_CLOSED',
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+    fireEvent.click(screen.getByTestId('vardag-kostnad-submit'))
+
+    expect(
+      await screen.findByTestId('vardag-kostnad-error'),
+    ).toBeInTheDocument()
+
+    // När användaren börjar redigera ska felet försvinna
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor & block' },
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('vardag-kostnad-error')).toBeNull()
+    })
+  })
+
   it('VS-22 moms-dropdown visar "Laddar momskoder…" innan vat-codes laddats', async () => {
     // beforeEach mockar vat-code:list med fixture, override till tom array.
     mockIpcResponse('vat-code:list', { success: true, data: [] })

@@ -70,6 +70,12 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const descriptionInputRef = useRef<HTMLInputElement | null>(null)
 
+  // VS-25: Rensa submit-fel när användaren börjar redigera efter fail.
+  useEffect(() => {
+    if (error) setError(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, paymentTerms, customer, description, quantity, priceKr, accountNumber, vatCodeId])
+
   // VS-18: Auto-focus beskrivnings-fältet när sheet öppnas. Customer
   // väljs via picker, så beskrivningen är första edit-bara textfältet.
   useEffect(() => {

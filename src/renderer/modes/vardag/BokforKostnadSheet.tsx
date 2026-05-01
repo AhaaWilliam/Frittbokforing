@@ -81,6 +81,16 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [receiptPath, setReceiptPath] = useState<string | null>(null)
   const amountInputRef = useRef<HTMLInputElement | null>(null)
 
+  // VS-25: Rensa submit-fel automatiskt så fort användaren börjar
+  // redigera ett fält efter ett misslyckat submit (t.ex. ändra datum
+  // efter PERIOD_CLOSED). Felet ska inte hänga kvar och förvirra.
+  // useEffect refererar inte error i deps för att undvika en self-loop;
+  // istället läses error genom closure varje gång input-deps ändras.
+  useEffect(() => {
+    if (error) setError(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, amountKr, supplier, description, accountNumber, vatCodeId])
+
   // VS-18: Auto-focus belopp-fältet när sheet öppnas. Belopp är nästan
   // alltid det första användaren vill mata in (datum är default = idag).
   // setTimeout 0 så Radix-portal hinner mounta innan fokus försöks.
