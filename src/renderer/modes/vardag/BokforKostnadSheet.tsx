@@ -10,7 +10,7 @@ import { SupplierPicker } from '../../components/expenses/SupplierPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useCounterparty, useVatCodes } from '../../lib/hooks'
-import { kronorToOre, todayLocal } from '../../lib/format'
+import { kronorToOre, pathBasename, todayLocal } from '../../lib/format'
 import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
 import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
@@ -374,9 +374,7 @@ function ReceiptVisual({
   onClear: () => void
 }) {
   if (path) {
-    // Cross-platform basename: hanterar både / (POSIX) och \ (Windows).
-    const filename =
-      path.split(/[\\/]/).filter(Boolean).pop() ?? path
+    const filename = pathBasename(path)
     return (
       <div
         className="flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3 text-center"

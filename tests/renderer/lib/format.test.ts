@@ -7,6 +7,7 @@ import {
   kronorToOre,
   unitLabel,
   formatDate,
+  pathBasename,
 } from '../../../src/renderer/lib/format'
 
 describe('toKr', () => {
@@ -147,5 +148,27 @@ describe('formatDate', () => {
 
   it('hanterar redan-formaterad ISO-datum oförändrat (snabb path)', () => {
     expect(formatDate('2025-01-01')).toBe('2025-01-01')
+  })
+})
+
+describe('pathBasename (VS-13)', () => {
+  it('extraherar basename från POSIX-path', () => {
+    expect(pathBasename('/Users/x/y.pdf')).toBe('y.pdf')
+  })
+
+  it('extraherar basename från Windows-path', () => {
+    expect(pathBasename('C:\\Users\\x\\y.pdf')).toBe('y.pdf')
+  })
+
+  it('hanterar mixed-separator-path', () => {
+    expect(pathBasename('/var/www\\file.txt')).toBe('file.txt')
+  })
+
+  it('returnerar input om ingen separator', () => {
+    expect(pathBasename('y.pdf')).toBe('y.pdf')
+  })
+
+  it('hanterar trailing-separator', () => {
+    expect(pathBasename('/var/www/')).toBe('www')
   })
 })

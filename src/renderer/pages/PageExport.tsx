@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useExportWriteFile } from '../lib/hooks'
+import { pathBasename } from '../lib/format'
 
 export function PageExport() {
   const { activeFiscalYear } = useFiscalYearContext()
@@ -27,7 +28,7 @@ export function PageExport() {
       {
         onSuccess: (data) => {
           if (data.filePath) {
-            const name = data.filePath.split('/').pop() ?? ''
+            const name = pathBasename(data.filePath)
             setFeedback((prev) => ({
               ...prev,
               [format]: `\u2713 Exporterad till ${name}`,

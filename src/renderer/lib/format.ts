@@ -44,6 +44,22 @@ export function formatDate(dateStr: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('sv-SE')
 }
 
+/**
+ * Extrahera basename från en absolut sökväg, plattforms-oberoende.
+ * Hanterar både POSIX (`/`) och Windows (`\`) separatorer.
+ *
+ * Använd när renderern visar fil-sökvägar från main-process (där
+ * dialog.showOpenDialog returnerar plattforms-native paths).
+ *
+ * Exempel:
+ *   pathBasename('/Users/x/y.pdf')      → 'y.pdf'
+ *   pathBasename('C:\\Users\\x\\y.pdf') → 'y.pdf'
+ *   pathBasename('y.pdf')               → 'y.pdf'
+ */
+export function pathBasename(p: string): string {
+  return p.split(/[\\/]/).filter(Boolean).pop() ?? p
+}
+
 export function unitLabel(unit: string): string {
   const labels: Record<string, string> = {
     timme: 'timme',
