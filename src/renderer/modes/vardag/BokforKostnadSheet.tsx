@@ -374,7 +374,9 @@ function ReceiptVisual({
   onClear: () => void
 }) {
   if (path) {
-    const filename = path.split('/').pop() ?? path
+    // Cross-platform basename: hanterar både / (POSIX) och \ (Windows).
+    const filename =
+      path.split(/[\\/]/).filter(Boolean).pop() ?? path
     return (
       <div
         className="flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3 text-center"

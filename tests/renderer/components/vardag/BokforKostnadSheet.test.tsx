@@ -277,6 +277,26 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     })
   })
 
+  it('VS-12 cross-platform: backslash-paths visar bara filnamn', async () => {
+    mockIpcResponse('expense:select-receipt-file', {
+      success: true,
+      data: { filePath: 'C:\\Users\\test\\Downloads\\kvitto.pdf' },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
+
+    await waitFor(() => {
+      const el = screen.getByTestId('vardag-kostnad-receipt-attached')
+      expect(el).toHaveTextContent('kvitto.pdf')
+      expect(el.textContent).not.toContain('Users')
+    })
+  })
+
   it('VS-7 receipt-clear återställer pick-knappen', async () => {
     mockIpcResponse('expense:select-receipt-file', {
       success: true,
