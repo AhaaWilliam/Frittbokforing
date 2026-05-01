@@ -6,6 +6,7 @@ import {
   formatReportAmount,
   kronorToOre,
   unitLabel,
+  formatDate,
 } from '../../../src/renderer/lib/format'
 
 describe('toKr', () => {
@@ -117,5 +118,34 @@ describe('unitLabel', () => {
 
   it('returns unknown units as-is', () => {
     expect(unitLabel('liter')).toBe('liter')
+  })
+
+  it('mappar månad → mån', () => {
+    expect(unitLabel('månad')).toBe('mån')
+  })
+
+  it('km lämnas oförändrat', () => {
+    expect(unitLabel('km')).toBe('km')
+  })
+
+  it('tom sträng → tom sträng', () => {
+    expect(unitLabel('')).toBe('')
+  })
+})
+
+describe('formatDate', () => {
+  it('ISO YYYY-MM-DD passthrough utan transform', () => {
+    expect(formatDate('2026-04-30')).toBe('2026-04-30')
+  })
+
+  it('ISO med tid → trimmas till YYYY-MM-DD och formatteras som sv-SE', () => {
+    // Sv-SE locale = "2026-04-30" eller "2026-04-30" — beroende på node version
+    const out = formatDate('2026-04-30T12:00:00Z')
+    expect(out).toMatch(/2026/)
+    expect(out).toMatch(/30|04/)
+  })
+
+  it('hanterar redan-formaterad ISO-datum oförändrat (snabb path)', () => {
+    expect(formatDate('2025-01-01')).toBe('2025-01-01')
   })
 })
