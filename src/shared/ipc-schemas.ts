@@ -211,6 +211,20 @@ export const CounterpartyIdSchema = z
   })
   .strict()
 
+// VS-1: Sätt default-konto på leverantör/kund (4-siffrig BAS).
+// Används av Vardag-sheets för att lära in kontering per motpart.
+export const SetCounterpartyDefaultAccountSchema = z
+  .object({
+    id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
+    field: z.enum(['default_expense_account', 'default_revenue_account']),
+    account_number: z
+      .string()
+      .regex(/^\d{4}$/)
+      .nullable(),
+  })
+  .strict()
+
 // === Company switch (Sprint MC1) ===
 export const CompanySwitchInputSchema = z
   .object({
@@ -551,6 +565,15 @@ export const ListExpenseDraftsSchema = z
 export const FinalizeExpenseSchema = z
   .object({
     id: z.number().int().positive(),
+  })
+  .strict()
+
+// VS-1: Bilaga av kvitto-fil till draft-expense.
+// Filen kopieras till app.getPath('documents')/Fritt Bokföring/receipts/<expense_id>/.
+export const AttachReceiptSchema = z
+  .object({
+    expense_id: z.number().int().positive(),
+    source_file_path: z.string().min(1).max(4096),
   })
   .strict()
 
@@ -1343,6 +1366,7 @@ export const channelMap = {
   'counterparty:create': CreateCounterpartyInputSchema,
   'counterparty:update': UpdateCounterpartyInputSchema,
   'counterparty:deactivate': CounterpartyIdSchema,
+  'counterparty:set-default-account': SetCounterpartyDefaultAccountSchema,
 
   // Products
   'product:list': ProductListInputSchema,
@@ -1395,6 +1419,7 @@ export const channelMap = {
   'expense:get': GetExpenseSchema,
   'expense:list': ListExpensesSchema,
   'expense:create-credit-note-draft': CreateExpenseCreditNoteDraftSchema,
+  'expense:attach-receipt': AttachReceiptSchema,
 
   // Manual Entries
   'manual-entry:save-draft': SaveManualEntryDraftSchema,

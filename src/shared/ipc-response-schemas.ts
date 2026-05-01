@@ -257,6 +257,7 @@ export const channelResponseMap = {
   'counterparty:create': EntityId,
   'counterparty:update': VoidOrReceipt,
   'counterparty:deactivate': VoidOrReceipt,
+  'counterparty:set-default-account': VoidOrReceipt,
 
   // Products
   'product:list': z.array(ProductSchema),
@@ -314,6 +315,7 @@ export const channelResponseMap = {
   'expense:delete-draft': VoidOrReceipt,
   'expense:list-drafts': AnyEntityList,
   'expense:finalize': FinalizeReceipt,
+  'expense:attach-receipt': z.object({ receipt_path: z.string() }).passthrough(),
   'expense:pay': PaymentReceipt,
   'expense:payBulk': BulkPaymentResultSchema,
   'expense:payments': PaymentList,

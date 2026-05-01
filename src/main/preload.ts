@@ -43,6 +43,12 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('counterparty:update', data),
   deactivateCounterparty: (data: { id: number }) =>
     ipcRenderer.invoke('counterparty:deactivate', data),
+  setCounterpartyDefaultAccount: (data: {
+    id: number
+    company_id: number
+    field: 'default_expense_account' | 'default_revenue_account'
+    account_number: string | null
+  }) => ipcRenderer.invoke('counterparty:set-default-account', data),
   // Products
   listProducts: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('product:list', data),
@@ -80,6 +86,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('expense:list-drafts', data),
   finalizeExpense: (data: { id: number }) =>
     ipcRenderer.invoke('expense:finalize', data),
+  attachReceipt: (data: { expense_id: number; source_file_path: string }) =>
+    ipcRenderer.invoke('expense:attach-receipt', data),
   payExpense: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:pay', data),
   payExpensesBulk: (data: Record<string, unknown>) =>

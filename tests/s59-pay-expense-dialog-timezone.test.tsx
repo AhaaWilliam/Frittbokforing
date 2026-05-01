@@ -43,6 +43,7 @@ describe('S59 F9 — timezone regression: PayExpenseDialog', () => {
     journal_entry_id: 1,
     paid_amount_ore: 0,
     notes: '',
+    receipt_path: null,
     created_at: '2026-04-01',
     updated_at: '2026-04-01',
     total_paid: 0,

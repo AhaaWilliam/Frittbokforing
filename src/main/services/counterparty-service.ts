@@ -234,6 +234,58 @@ export function updateCounterparty(
   }
 }
 
+/**
+ * VS-1: Sätt default-konto (kostnad eller intäkt) på motpart.
+ * Tunn IPC för Vardag-sheets — lär in kontering per leverantör/kund vid
+ * första bokföringen utan att gå via fullständiga UpdateCounterparty-vägen.
+ *
+ * Per Risk 1 i vardag-sheets-functional-plan: B2-strategin sätter värdet
+ * bara om det inte redan är satt (försiktig variant). Kontroll av "första
+ * gången" sker i renderern; detta API överskriver alltid (för manuell
+ * korrigering via leverantörs-detalj).
+ */
+export function setCounterpartyDefaultAccount(
+  db: Database.Database,
+  input: {
+    id: number
+    company_id: number
+    field: 'default_expense_account' | 'default_revenue_account'
+    account_number: string | null
+  },
+): IpcResult<Counterparty> {
+  const existing = getCounterparty(db, input.id, input.company_id)
+  if (!existing)
+    return {
+      success: false,
+      error: 'Motparten hittades inte.',
+      code: 'COUNTERPARTY_NOT_FOUND',
+    }
+
+  if (input.account_number !== null) {
+    const acct = db
+      .prepare('SELECT account_number FROM accounts WHERE account_number = ?')
+      .get(input.account_number) as { account_number: string } | undefined
+    if (!acct) {
+      return {
+        success: false,
+        error: `Kontot ${input.account_number} finns inte i kontoplanen.`,
+        code: 'VALIDATION_ERROR',
+        field: 'account_number',
+      }
+    }
+  }
+
+  // Whitelist via switch — undviker SQL-injektion via field-parametern.
+  const sql =
+    input.field === 'default_expense_account'
+      ? "UPDATE counterparties SET default_expense_account = ?, updated_at = datetime('now','localtime') WHERE id = ? AND company_id = ?"
+      : "UPDATE counterparties SET default_revenue_account = ?, updated_at = datetime('now','localtime') WHERE id = ? AND company_id = ?"
+
+  db.prepare(sql).run(input.account_number, input.id, input.company_id)
+  const updated = getCounterparty(db, input.id, input.company_id)!
+  return { success: true, data: updated }
+}
+
 export function deactivateCounterparty(
   db: Database.Database,
   id: number,

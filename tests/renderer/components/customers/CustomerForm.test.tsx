@@ -95,6 +95,8 @@ describe('CustomerForm', () => {
     plusgiro: null,
     bank_account: null,
     bank_clearing: null,
+    default_expense_account: null,
+    default_revenue_account: null,
     }
     await renderForm({ counterparty })
 
@@ -127,6 +129,8 @@ describe('CustomerForm', () => {
     plusgiro: null,
     bank_account: null,
     bank_clearing: null,
+    default_expense_account: null,
+    default_revenue_account: null,
     }
     await renderForm({ counterparty })
 

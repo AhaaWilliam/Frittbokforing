@@ -47,6 +47,7 @@ export function makeExpenseDraft(
     total_amount_ore: 125000,
     paid_amount_ore: 0,
     notes: 'Testanteckning',
+    receipt_path: null,
     created_at: '2025-12-15T12:00:00Z',
     updated_at: '2025-12-15T12:00:00Z',
     lines: [

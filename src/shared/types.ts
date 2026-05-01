@@ -151,6 +151,8 @@ export interface Counterparty {
   plusgiro: string | null
   bank_account: string | null
   bank_clearing: string | null
+  default_expense_account: string | null
+  default_revenue_account: string | null
   is_active: number
   created_at: string
   updated_at: string
@@ -472,6 +474,7 @@ export interface Expense {
   total_amount_ore: number
   paid_amount_ore: number
   notes: string
+  receipt_path: string | null
   created_at: string
   updated_at: string
 }

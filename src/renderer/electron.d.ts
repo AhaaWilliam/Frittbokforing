@@ -88,6 +88,12 @@ interface ElectronAPI {
     id: number
     company_id: number
   }) => Promise<IpcResult<Counterparty>>
+  setCounterpartyDefaultAccount: (data: {
+    id: number
+    company_id: number
+    field: 'default_expense_account' | 'default_revenue_account'
+    account_number: string | null
+  }) => Promise<IpcResult<Counterparty>>
   listProducts: (data: {
     company_id: number
     search?: string
@@ -246,6 +252,10 @@ interface ElectronAPI {
   listExpenseDrafts: (data: {
     fiscal_year_id: number
   }) => Promise<IpcResult<import('../shared/types').ExpenseDraftListItem[]>>
+  attachReceipt: (data: {
+    expense_id: number
+    source_file_path: string
+  }) => Promise<IpcResult<{ receipt_path: string }>>
   finalizeExpense: (data: {
     id: number
   }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>

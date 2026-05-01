@@ -29,6 +29,8 @@ const COUNTERPARTY: Counterparty = {
     plusgiro: null,
     bank_account: null,
     bank_clearing: null,
+    default_expense_account: null,
+    default_revenue_account: null,
 }
 
 const DEFAULT_PROPS = {

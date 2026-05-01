@@ -1969,6 +1969,18 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
       ALTER TABLE accrual_schedules_new RENAME TO accrual_schedules;
     `,
   },
+  // ── Migration 058 — Vardag Sheets VS-1: receipt_path på expenses ──
+  //
+  // Lägger till valfri kvittoreferens på expenses. NULL = ingen kvitto-fil
+  // bilagd. Pathen är relativ mot app.getPath('documents')/Fritt Bokföring/.
+  //
+  // ADD COLUMN med konstant DEFAULT (NULL) — M127-kompatibel.
+  // expenses har inkommande FK från expense_lines + expense_payments
+  // (M122-inventering), men ADD COLUMN kräver INTE table-recreate.
+  // Inga triggers på kolumnen, ingen cross-table-trigger berörs.
+  {
+    sql: `ALTER TABLE expenses ADD COLUMN receipt_path TEXT DEFAULT NULL;`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

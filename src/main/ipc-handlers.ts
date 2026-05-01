@@ -27,7 +27,9 @@ import {
   createCounterparty,
   updateCounterparty,
   deactivateCounterparty,
+  setCounterpartyDefaultAccount,
 } from './services/counterparty-service'
+import { saveReceiptFile } from './services/receipt-storage'
 import {
   listProducts,
   getProduct,
@@ -286,6 +288,8 @@ import {
   UpdateCompanyInputSchema,
   CreateCounterpartyInputSchema,
   UpdateCounterpartyInputSchema,
+  SetCounterpartyDefaultAccountSchema,
+  AttachReceiptSchema,
   CreateProductInputSchema,
   UpdateProductInputSchema,
   SaveExpenseDraftSchema,
@@ -512,6 +516,13 @@ export function registerIpcHandlers(): void {
     ),
   )
 
+  ipcMain.handle(
+    'counterparty:set-default-account',
+    wrapIpcHandler(SetCounterpartyDefaultAccountSchema, (data) =>
+      setCounterpartyDefaultAccount(db, data),
+    ),
+  )
+
   // === Products ===
   ipcMain.handle(
     'product:list',
@@ -601,6 +612,11 @@ export function registerIpcHandlers(): void {
     wrapIpcHandler(FinalizeExpenseSchema, (data) =>
       finalizeExpense(db, data.id),
     ),
+  )
+
+  ipcMain.handle(
+    'expense:attach-receipt',
+    wrapIpcHandler(AttachReceiptSchema, (data) => saveReceiptFile(db, data)),
   )
 
   ipcMain.handle(

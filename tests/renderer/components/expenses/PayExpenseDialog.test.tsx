@@ -22,6 +22,7 @@ const EXPENSE: ExpenseDetail = {
   total_amount_ore: 500000,
   paid_amount_ore: 100000,
   notes: '',
+  receipt_path: null,
   created_at: '2026-03-01',
   updated_at: '2026-03-01',
   lines: [],
