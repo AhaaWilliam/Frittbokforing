@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Field } from '../../components/ui/Field'
+import { KbdChord } from '../../components/ui/KbdChip'
 import {
   KonteringHeader,
   KonteringRow,
@@ -381,16 +382,22 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           >
             Behöver lägga till fler rader?
           </button>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <BottomSheetClose>Avbryt</BottomSheetClose>
             <button
               type="button"
               disabled={!canSubmit}
               onClick={handleSubmit}
-              className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               data-testid="vardag-faktura-submit"
             >
-              {submitting ? 'Skickar…' : 'Skicka'}
+              <span>{submitting ? 'Skickar…' : 'Skicka'}</span>
+              <KbdChord
+                keys={['⌘', '↵']}
+                ariaLabel="Kommando plus Enter"
+                size="sm"
+                className="opacity-80"
+              />
             </button>
           </div>
         </div>
