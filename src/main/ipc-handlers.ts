@@ -240,6 +240,7 @@ import {
   GlobalSearchSchema,
   AgingInputSchema,
   Sie4SelectFileSchema,
+  SelectReceiptFileSchema,
   Sie4ValidateSchema,
   Sie4ImportSchema,
   Sie5SelectFileSchema,
@@ -1115,6 +1116,29 @@ export function registerIpcHandlers(): void {
     wrapIpcHandler(AgingInputSchema, (data) =>
       getAgingPayables(db, data.fiscal_year_id, data.as_of_date),
     ),
+  )
+
+  ipcMain.handle(
+    'expense:select-receipt-file',
+    wrapIpcHandler(SelectReceiptFileSchema, async () => {
+      // E2E dialog bypass (M63 + M147) — E2E_MOCK_OPEN_FILE env points to fixture
+      const e2eMockPath = getE2EMockOpenFile()
+      if (e2eMockPath) return { filePath: e2eMockPath }
+
+      const win =
+        BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openFile'],
+        filters: [
+          {
+            name: 'Kvitto',
+            extensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'heic'],
+          },
+        ],
+      })
+      if (result.canceled || !result.filePaths[0]) return null
+      return { filePath: result.filePaths[0] }
+    }),
   )
 
   // === SIE4 Import ===

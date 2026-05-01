@@ -60,6 +60,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [vatCodeId, setVatCodeId] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [receiptPath, setReceiptPath] = useState<string | null>(null)
 
   // Default till IP1 (25%) när vatCodes laddats.
   useEffect(() => {
@@ -92,7 +93,16 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     setAccountManuallyEdited(false)
     setError(null)
     setSubmitting(false)
+    setReceiptPath(null)
   }, [open])
+
+  async function handlePickReceipt() {
+    const res = await window.api.selectReceiptFile()
+    if (!res.success) return
+    if (res.data && res.data.filePath) {
+      setReceiptPath(res.data.filePath)
+    }
+  }
 
   const amountInclVatOre = kronorToOre(amountKr)
   const vatRate = useMemo(() => {
@@ -141,6 +151,19 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
         return
       }
 
+      // Receipt-attach: best-effort innan finalize. Misslyckas tyst —
+      // bokföringen blockeras inte av disk-fel eller behörighetsfel.
+      if (receiptPath) {
+        try {
+          await window.api.attachReceipt({
+            expense_id: draft.data.id,
+            source_file_path: receiptPath,
+          })
+        } catch {
+          /* best-effort */
+        }
+      }
+
       const finalized = await window.api.finalizeExpense({ id: draft.data.id })
       if (!finalized.success) {
         setError(finalized.error)
@@ -184,7 +207,11 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       description="Kvitto eller faktura — fyll i, eller låt Fritt föreslå."
     >
       <div className="grid grid-cols-[200px_1fr] gap-6">
-        <ReceiptVisual />
+        <ReceiptVisual
+          path={receiptPath}
+          onPick={handlePickReceipt}
+          onClear={() => setReceiptPath(null)}
+        />
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Datum" hint="ÅÅÅÅ-MM-DD">
@@ -318,15 +345,55 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   )
 }
 
-function ReceiptVisual() {
-  return (
-    <div className="flex aspect-[3/4] items-center justify-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 text-center">
-      <div className="px-4">
-        <div className="mb-2 text-3xl">🧾</div>
-        <p className="text-xs text-[var(--text-faint)]">
-          Dra in kvitto eller foto
+function ReceiptVisual({
+  path,
+  onPick,
+  onClear,
+}: {
+  path: string | null
+  onPick: () => void
+  onClear: () => void
+}) {
+  if (path) {
+    const filename = path.split('/').pop() ?? path
+    return (
+      <div
+        className="flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3 text-center"
+        data-testid="vardag-kostnad-receipt-attached"
+      >
+        <div className="mb-2 text-3xl">📎</div>
+        <p
+          className="break-all text-[10px] font-mono text-[var(--text-secondary)]"
+          title={path}
+        >
+          {filename}
         </p>
+        <button
+          type="button"
+          onClick={onClear}
+          className="mt-2 text-[10px] text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+          data-testid="vardag-kostnad-receipt-clear"
+        >
+          Ta bort
+        </button>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 text-center transition-colors hover:bg-[var(--surface-secondary)]/70"
+      data-testid="vardag-kostnad-receipt-pick"
+    >
+      <div className="mb-2 text-3xl">🧾</div>
+      <p className="text-xs text-[var(--text-faint)]">
+        Klicka för att välja kvitto
+      </p>
+      <p className="mt-1 text-[10px] text-[var(--text-faint)]">
+        PDF, PNG, JPG, HEIC
+      </p>
+    </button>
   )
 }

@@ -146,6 +146,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   listExpenseDrafts: 'expense:list-drafts',
   finalizeExpense: 'expense:finalize',
   attachReceipt: 'expense:attach-receipt',
+  selectReceiptFile: 'expense:select-receipt-file',
   payExpense: 'expense:pay',
   payExpensesBulk: 'expense:payBulk',
   getExpensePayments: 'expense:payments',

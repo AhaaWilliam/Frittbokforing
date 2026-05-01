@@ -256,6 +256,7 @@ interface ElectronAPI {
     expense_id: number
     source_file_path: string
   }) => Promise<IpcResult<{ receipt_path: string }>>
+  selectReceiptFile: () => Promise<IpcResult<{ filePath: string } | null>>
   finalizeExpense: (data: {
     id: number
   }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>

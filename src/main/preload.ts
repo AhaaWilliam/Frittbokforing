@@ -88,6 +88,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('expense:finalize', data),
   attachReceipt: (data: { expense_id: number; source_file_path: string }) =>
     ipcRenderer.invoke('expense:attach-receipt', data),
+  selectReceiptFile: () =>
+    ipcRenderer.invoke('expense:select-receipt-file', {}),
   payExpense: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:pay', data),
   payExpensesBulk: (data: Record<string, unknown>) =>

@@ -254,4 +254,136 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     expect(ipcCalls('setCounterpartyDefaultAccount')).toEqual([])
   })
+
+  // VS-7: receipt-attach UI
+
+  it('VS-7 receipt-pick visar attached-state med filnamn', async () => {
+    mockIpcResponse('expense:select-receipt-file', {
+      success: true,
+      data: { filePath: '/Users/test/Downloads/kvitto-mars.pdf' },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-kostnad-receipt-attached'),
+      ).toHaveTextContent('kvitto-mars.pdf')
+    })
+  })
+
+  it('VS-7 receipt-clear återställer pick-knappen', async () => {
+    mockIpcResponse('expense:select-receipt-file', {
+      success: true,
+      data: { filePath: '/tmp/abc.pdf' },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('vardag-kostnad-receipt-attached'),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByTestId('vardag-kostnad-receipt-clear'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-receipt-pick')).toBeInTheDocument(),
+    )
+  })
+
+  it('VS-7 submit anropar attachReceipt när kvitto är valt', async () => {
+    mockIpcResponse('expense:select-receipt-file', {
+      success: true,
+      data: { filePath: '/tmp/kvitto.pdf' },
+    })
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 99 }),
+    })
+    mockIpcResponse('expense:attach-receipt', {
+      success: true,
+      data: { receipt_path: 'receipts/99/kvitto.pdf' },
+    })
+    mockIpcResponse('expense:finalize', {
+      success: true,
+      data: { id: 99, journal_entry_id: 500, verification_number: 1 },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('vardag-kostnad-receipt-attached'),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.change(screen.getByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+    fireEvent.click(screen.getByTestId('vardag-kostnad-submit'))
+
+    await waitFor(() =>
+      expect(ipcCalls('attachReceipt').length).toBe(1),
+    )
+    expect(ipcCalls('attachReceipt')[0][0]).toMatchObject({
+      expense_id: 99,
+      source_file_path: '/tmp/kvitto.pdf',
+    })
+  })
+
+  it('VS-7 submit utan kvitto anropar inte attachReceipt', async () => {
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 99 }),
+    })
+    mockIpcResponse('expense:finalize', {
+      success: true,
+      data: { id: 99, journal_entry_id: 500, verification_number: 1 },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+    fireEvent.click(screen.getByTestId('vardag-kostnad-submit'))
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+
+    expect(ipcCalls('attachReceipt')).toEqual([])
+  })
 })

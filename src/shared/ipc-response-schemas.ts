@@ -316,6 +316,7 @@ export const channelResponseMap = {
   'expense:list-drafts': AnyEntityList,
   'expense:finalize': FinalizeReceipt,
   'expense:attach-receipt': z.object({ receipt_path: z.string() }).passthrough(),
+  'expense:select-receipt-file': z.object({ filePath: z.string() }).nullable(),
   'expense:pay': PaymentReceipt,
   'expense:payBulk': BulkPaymentResultSchema,
   'expense:payments': PaymentList,

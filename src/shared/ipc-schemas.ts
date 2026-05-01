@@ -1011,6 +1011,15 @@ export const BudgetSummaryByYearSchema = z
 // === SIE4 Import ===
 export const Sie4SelectFileSchema = z.object({}).strict()
 
+// VS-7: Vardag-sheets — välj kvitto-fil via native open-dialog.
+// Returnerar { filePath } eller null vid avbryt.
+// `.optional()` så renderer kan anropa utan args (preload skickar inget).
+export const SelectReceiptFileSchema = z
+  .object({})
+  .strict()
+  .optional()
+  .default({})
+
 export const Sie4ValidateSchema = z
   .object({
     filePath: z.string().min(1),
@@ -1420,6 +1429,7 @@ export const channelMap = {
   'expense:list': ListExpensesSchema,
   'expense:create-credit-note-draft': CreateExpenseCreditNoteDraftSchema,
   'expense:attach-receipt': AttachReceiptSchema,
+  'expense:select-receipt-file': SelectReceiptFileSchema,
 
   // Manual Entries
   'manual-entry:save-draft': SaveManualEntryDraftSchema,
