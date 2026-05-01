@@ -7,6 +7,7 @@ import App from '../../src/renderer/App'
 interface AuthMock {
   status: ReturnType<typeof vi.fn>
   logout: ReturnType<typeof vi.fn>
+  listUsers: ReturnType<typeof vi.fn>
 }
 interface ApiMock {
   getSetting: ReturnType<typeof vi.fn>
@@ -28,6 +29,7 @@ function setupMocks(opts: {
         ? vi.fn().mockReturnValue(new Promise(() => {}))
         : vi.fn().mockResolvedValue(opts.authStatus),
     logout: vi.fn(),
+    listUsers: vi.fn().mockResolvedValue({ success: true, data: [] }),
   }
   ;(window as unknown as { auth: AuthMock }).auth = auth
 
@@ -114,6 +116,7 @@ describe('App', () => {
         data: { locked: false, userId: 'u', msUntilLock: 9000 },
       }),
       logout: vi.fn(),
+      listUsers: vi.fn().mockResolvedValue({ success: true, data: [] }),
     }
     ;(window as unknown as { auth: AuthMock }).auth = auth
     const api: ApiMock = {
