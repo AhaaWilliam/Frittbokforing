@@ -44,28 +44,28 @@ beforeEach(() => {
 
 describe('AppShell — 3-zone-grid struktur', () => {
   it('renderar app-ready efter init', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false })
+    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
     await waitFor(() => {
       expect(screen.getByTestId('app-ready')).toBeInTheDocument()
     })
   })
 
   it('zone-vad (Sidebar) finns på vänster', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false })
+    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
     await waitFor(() => {
       expect(screen.getByTestId('zone-vad')).toBeInTheDocument()
     })
   })
 
   it('main-content (mitten-zon) finns och har korrekt id', async () => {
-    const { container } = await renderWithProviders(<AppShell />, { axeCheck: false })
+    const { container } = await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
     await waitFor(() => {
       expect(container.querySelector('#main-content')).toBeInTheDocument()
     })
   })
 
   it('SkipLinks rendreras (a11y krav, M156)', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false })
+    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
     // SkipLinks är sr-only, kolla att skip-länkar finns
     await waitFor(() => {
       const skipLinks = screen.getAllByRole('link', { name: /Hoppa till|main|nav/i })
@@ -74,7 +74,7 @@ describe('AppShell — 3-zone-grid struktur', () => {
   })
 
   it('default-page (overview) renderas i mitten-zonen', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false })
+    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
     await waitFor(() => {
       expect(screen.getByTestId('page-overview')).toBeInTheDocument()
     })
@@ -83,7 +83,7 @@ describe('AppShell — 3-zone-grid struktur', () => {
   it('utan activeCompany returnerar null (defensiv fallback)', async () => {
     // Override default activeCompany via test-helper
     const { container } = await renderWithProviders(<AppShell />, {
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — struktur-test, inte a11y
       // Pass null company by having no companies
     })
     // Default test-helper ger activeCompany — så vi får app-ready, inte null
@@ -94,7 +94,7 @@ describe('AppShell — 3-zone-grid struktur', () => {
 
   it('topbar finns med italic Fritt-brand', async () => {
     const { container } = await renderWithProviders(<AppShell />, {
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — struktur-test, inte a11y
     })
     await waitFor(() => {
       const italic = container.querySelector('.font-serif-italic')
@@ -104,7 +104,7 @@ describe('AppShell — 3-zone-grid struktur', () => {
 
   it('grid-cols-[240px_1fr_360px] på 3-zone-griden', async () => {
     const { container } = await renderWithProviders(<AppShell />, {
-      axeCheck: false,
+      axeCheck: false, // M133 exempt — struktur-test, inte a11y
     })
     await waitFor(() => {
       // Det grid-element som har 3-zone-layout
