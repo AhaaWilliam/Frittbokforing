@@ -54,6 +54,8 @@ function VardagAppInner({ companyName }: { companyName: string }) {
 
   useKeyboardShortcuts({
     'mod+shift+b': () => setMode('bokforare'),
+    'mod+n': () => setSheet('kostnad'),
+    'mod+i': () => setSheet('faktura'),
   })
 
   const dayLabel = useMemo(() => {
@@ -125,13 +127,16 @@ function VardagAppInner({ companyName }: { companyName: string }) {
 
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-[18px] text-[11px] text-[var(--text-faint)]">
           <span>
+            <KbdChip>⌘N</KbdChip> ny kostnad
+          </span>
+          <span>
+            <KbdChip>⌘I</KbdChip> ny faktura
+          </span>
+          <span>
             <KbdChip>⌘K</KbdChip> sök allt
           </span>
           <span>
             <KbdChip>⌘⇧B</KbdChip> Bokförare-läget
-          </span>
-          <span>
-            <KbdChip>?</KbdChip> hjälp
           </span>
         </div>
       </div>

@@ -36,6 +36,9 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
     expect(screen.getByText('⌘K')).toBeInTheDocument()
     // ⌘⇧B förekommer både i topbar-switch-knapp och kbd-hints — räcker med >0
     expect(screen.getAllByText('⌘⇧B').length).toBeGreaterThan(0)
+    // VS-24
+    expect(screen.getByText('⌘N')).toBeInTheDocument()
+    expect(screen.getByText('⌘I')).toBeInTheDocument()
   })
 
   it('renders greeting "Vad vill du göra idag?"', async () => {

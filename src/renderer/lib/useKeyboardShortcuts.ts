@@ -32,6 +32,12 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
         shortcutsRef.current['mod+n']()
         return
       }
+      // mod+i: skapa ny inkomst/faktura (Vardag-läget)
+      if (mod && key === 'i' && shortcutsRef.current['mod+i']) {
+        e.preventDefault()
+        shortcutsRef.current['mod+i']()
+        return
+      }
       if (mod && key === 'k' && shortcutsRef.current['mod+k']) {
         e.preventDefault()
         shortcutsRef.current['mod+k']()

@@ -43,7 +43,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
   const { setMode } = useUiMode()
-  const { data: vatCodes = [] } = useVatCodes('outgoing')
+  const { data: vatCodesData } = useVatCodes('outgoing')
+  const vatCodes = vatCodesData ?? []
   const { data: allAccountsData } = useAllAccounts(true)
   const allAccounts = allAccountsData ?? []
 

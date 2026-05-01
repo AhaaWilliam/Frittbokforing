@@ -55,7 +55,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
   const { setMode } = useUiMode()
-  const { data: vatCodes = [] } = useVatCodes('incoming')
+  const { data: vatCodesData } = useVatCodes('incoming')
+  const vatCodes = vatCodesData ?? []
   const { data: allAccountsData } = useAllAccounts(true)
   const allAccounts = allAccountsData ?? []
 

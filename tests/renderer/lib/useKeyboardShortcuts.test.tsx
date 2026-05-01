@@ -69,6 +69,13 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
+  it('mod+i triggar mod+i-handler (VS-24, ny inkomst i Vardag)', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+i': handler }))
+    fireKey({ key: 'i', metaKey: true })
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
   it('mod+n triggar mod+n-handler', () => {
     const handler = vi.fn()
     renderHook(() => useKeyboardShortcuts({ 'mod+n': handler }))
