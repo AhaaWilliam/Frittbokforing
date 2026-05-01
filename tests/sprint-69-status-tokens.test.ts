@@ -32,19 +32,16 @@ describe('Sprint 69 — status-token-paritet', () => {
     },
   )
 
-  it.each(STATUS_PALETTE)(
-    'tokens.ts definierar %s100/500/600/700',
-    (name) => {
-      const tokens = readFileSync(
-        resolve(repoRoot, 'src/renderer/styles/tokens.ts'),
-        'utf8',
-      )
-      for (const tone of STATUS_TONES) {
-        const re = new RegExp(`${name}${tone}:\\s*['"]#`)
-        expect(tokens).toMatch(re)
-      }
-    },
-  )
+  it.each(STATUS_PALETTE)('tokens.ts definierar %s100/500/600/700', (name) => {
+    const tokens = readFileSync(
+      resolve(repoRoot, 'src/renderer/styles/tokens.ts'),
+      'utf8',
+    )
+    for (const tone of STATUS_TONES) {
+      const re = new RegExp(`${name}${tone}:\\s*['"]#`)
+      expect(tokens).toMatch(re)
+    }
+  })
 
   it('index.css har semantisk alias --color-status-overdue', () => {
     const css = readFileSync(

@@ -136,10 +136,14 @@ function ViewEntry({
           {entry.verification_number}
         </h2>
         {entry.je_status === 'corrected' && (
-          <Pill variant="danger" withDot>Korrigerad</Pill>
+          <Pill variant="danger" withDot>
+            Korrigerad
+          </Pill>
         )}
         {entry.corrects_entry_id != null && (
-          <Pill variant="info" withDot>Korrigering</Pill>
+          <Pill variant="info" withDot>
+            Korrigering
+          </Pill>
         )}
       </div>
 

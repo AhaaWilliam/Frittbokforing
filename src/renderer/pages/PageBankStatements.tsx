@@ -140,11 +140,7 @@ function BankStatementList({
 
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <TableSkeleton
-            columns={7}
-            rows={5}
-            ariaLabel="Laddar kontoutdrag"
-          />
+          <TableSkeleton columns={7} rows={5} ariaLabel="Laddar kontoutdrag" />
         ) : !statements || statements.length === 0 ? (
           <div className="text-sm text-muted-foreground">
             Inga kontoutdrag importerade ännu.

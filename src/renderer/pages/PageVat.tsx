@@ -191,11 +191,7 @@ export function PageVat() {
       </div>
 
       <div className="space-y-6 p-8 print:space-y-3 print:p-[15mm] print:text-[10pt]">
-        <Callout
-          variant="info"
-          data-testid="vat-info"
-          className="print:hidden"
-        >
+        <Callout variant="info" data-testid="vat-info" className="print:hidden">
           Visar utgående och ingående moms per kvartal baserat på bokförda
           verifikationer. Avser inrikes transaktioner — export och omvänd
           skattskyldighet stöds inte i denna version. Underlagen för 12% och 6%

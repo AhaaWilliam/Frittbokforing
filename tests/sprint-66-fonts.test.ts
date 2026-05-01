@@ -47,10 +47,7 @@ describe('Sprint 66 — font-bundling-paritet', () => {
   })
 
   it('LICENSE-FONTS.txt nämner alla tre font-familjer', () => {
-    const license = readFileSync(
-      resolve(repoRoot, 'LICENSE-FONTS.txt'),
-      'utf8',
-    )
+    const license = readFileSync(resolve(repoRoot, 'LICENSE-FONTS.txt'), 'utf8')
     expect(license).toContain('Fraunces')
     expect(license).toContain('Inter Tight')
     expect(license).toContain('JetBrains Mono')
@@ -58,10 +55,7 @@ describe('Sprint 66 — font-bundling-paritet', () => {
   })
 
   it('LICENSE-FONTS.txt listar exakt filnamnen som index.css refererar', () => {
-    const license = readFileSync(
-      resolve(repoRoot, 'LICENSE-FONTS.txt'),
-      'utf8',
-    )
+    const license = readFileSync(resolve(repoRoot, 'LICENSE-FONTS.txt'), 'utf8')
     for (const f of EXPECTED_FONTS) {
       expect(license).toContain(f)
     }

@@ -14,7 +14,10 @@ import { resolve } from 'node:path'
 const repoRoot = resolve(__dirname, '..')
 
 describe('Sprint 73 — StepCompany FieldError-migration', () => {
-  const file = resolve(repoRoot, 'src/renderer/components/wizard/StepCompany.tsx')
+  const file = resolve(
+    repoRoot,
+    'src/renderer/components/wizard/StepCompany.tsx',
+  )
 
   it('inga raw text-red-500 inline error <p>-element', () => {
     const src = readFileSync(file, 'utf8')
@@ -33,7 +36,9 @@ describe('Sprint 73 — ManualEntries Pill-migration', () => {
     'src/renderer/pages/PageManualEntries.tsx',
   ])('%s — inga inline rounded-full bg-(red|blue)-100 badges', (path) => {
     const src = readFileSync(resolve(repoRoot, path), 'utf8')
-    expect(src).not.toMatch(/inline-flex[^"]*rounded-full[^"]*bg-(red|blue)-100/)
+    expect(src).not.toMatch(
+      /inline-flex[^"]*rounded-full[^"]*bg-(red|blue)-100/,
+    )
   })
 
   it.each([
@@ -41,7 +46,9 @@ describe('Sprint 73 — ManualEntries Pill-migration', () => {
     'src/renderer/pages/PageManualEntries.tsx',
   ])('%s — importerar Pill', (path) => {
     const src = readFileSync(resolve(repoRoot, path), 'utf8')
-    expect(src).toMatch(/import\s*\{[^}]*\bPill\b[^}]*\}\s*from\s*['"][^'"]*ui\/Pill['"]/)
+    expect(src).toMatch(
+      /import\s*\{[^}]*\bPill\b[^}]*\}\s*from\s*['"][^'"]*ui\/Pill['"]/,
+    )
   })
 })
 

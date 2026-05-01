@@ -44,28 +44,30 @@ beforeEach(() => {
 
 describe('AppShell — 3-zone-grid struktur', () => {
   it('renderar app-ready efter init', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
+    await renderWithProviders(<AppShell />, { axeCheck: false }) // M133 exempt — struktur-test, inte a11y
     await waitFor(() => {
       expect(screen.getByTestId('app-ready')).toBeInTheDocument()
     })
   })
 
   it('zone-vad (Sidebar) finns på vänster', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
+    await renderWithProviders(<AppShell />, { axeCheck: false }) // M133 exempt — struktur-test, inte a11y
     await waitFor(() => {
       expect(screen.getByTestId('zone-vad')).toBeInTheDocument()
     })
   })
 
   it('main-content (mitten-zon) finns och har korrekt id', async () => {
-    const { container } = await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
+    const { container } = await renderWithProviders(<AppShell />, {
+      axeCheck: false, // M133 exempt — struktur-test, inte a11y
+    })
     await waitFor(() => {
       expect(container.querySelector('#main-content')).toBeInTheDocument()
     })
   })
 
   it('SkipLinks rendreras (a11y krav, M156)', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
+    await renderWithProviders(<AppShell />, { axeCheck: false }) // M133 exempt — struktur-test, inte a11y
     // SkipLinks är sr-only, kolla att skip-länkar finns
     await waitFor(() => {
       const skipLinks = screen.getAllByRole('link', { name: /Hoppa till|main|nav/i })
@@ -74,7 +76,7 @@ describe('AppShell — 3-zone-grid struktur', () => {
   })
 
   it('default-page (overview) renderas i mitten-zonen', async () => {
-    await renderWithProviders(<AppShell />, { axeCheck: false } // M133 exempt — struktur-test, inte a11y)
+    await renderWithProviders(<AppShell />, { axeCheck: false }) // M133 exempt — struktur-test, inte a11y
     await waitFor(() => {
       expect(screen.getByTestId('page-overview')).toBeInTheDocument()
     })

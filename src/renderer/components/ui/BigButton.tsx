@@ -24,7 +24,13 @@ const COLOR_TOKEN: Record<BigButtonColor, string> = {
  * en serif-rubrik, en hint-rad och en pil. Hover lyfter knappen 2px och
  * ger djupare skugga.
  */
-export function BigButton({ color, label, hint, onClick, testId }: BigButtonProps) {
+export function BigButton({
+  color,
+  label,
+  hint,
+  onClick,
+  testId,
+}: BigButtonProps) {
   const [hover, setHover] = useState(false)
 
   return (

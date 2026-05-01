@@ -83,16 +83,22 @@ export const ExpenseListRow = memo(function ExpenseListRow({
           </span>
         )}
       </td>
-      <td className="px-4 py-3 font-mono">{item.supplier_invoice_number || '\u2014'}</td>
+      <td className="px-4 py-3 font-mono">
+        {item.supplier_invoice_number || '\u2014'}
+      </td>
       <td className="px-4 py-3 text-right font-mono font-medium">
         {formatKr(item.total_amount_ore)}
       </td>
       <td className="px-4 py-3 text-right font-mono">
         {item.total_paid > 0 ? formatKr(item.total_paid) : ''}
       </td>
-      <td className="px-4 py-3 text-right font-mono">{formatKr(item.remaining)}</td>
+      <td className="px-4 py-3 text-right font-mono">
+        {formatKr(item.remaining)}
+      </td>
       <td className="px-4 py-3">
-        <Pill variant={pill.variant} withDot>{pill.label}</Pill>
+        <Pill variant={pill.variant} withDot>
+          {pill.label}
+        </Pill>
       </td>
       <td
         className={`px-4 py-3 font-mono ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}

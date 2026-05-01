@@ -100,9 +100,7 @@ describe('Sprint 53 — exakt reason-text för guards (StringLiteral-mutanter)',
 
     const draftJeId = (
       db
-        .prepare(
-          'SELECT journal_entry_id FROM manual_entries WHERE id = ?',
-        )
+        .prepare('SELECT journal_entry_id FROM manual_entries WHERE id = ?')
         .get(draft.data.id) as { journal_entry_id: number | null }
     ).journal_entry_id
     if (!draftJeId) {
@@ -145,7 +143,9 @@ describe('Sprint 53 — exakt reason-text för guards (StringLiteral-mutanter)',
     expect(result.success).toBe(true)
     if (!result.success) return
     expect(result.data.canCorrect).toBe(false)
-    expect(result.data.reason).toBe('Korrigeringsverifikat kan inte korrigeras.')
+    expect(result.data.reason).toBe(
+      'Korrigeringsverifikat kan inte korrigeras.',
+    )
   })
 
   it('canCorrect=false för obefintligt verifikat → reason innehåller "hittades inte"', () => {

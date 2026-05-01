@@ -76,9 +76,7 @@ describe('ProductFormStateSchema', () => {
   })
 
   it('_priceKr text-skräp → fel', () => {
-    const r = ProductFormStateSchema.safeParse(
-      makeForm({ _priceKr: 'abc' }),
-    )
+    const r = ProductFormStateSchema.safeParse(makeForm({ _priceKr: 'abc' }))
     expect(r.success).toBe(false)
   })
 })

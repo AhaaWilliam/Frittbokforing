@@ -7,10 +7,7 @@ import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip } from '../../components/ui/KbdChip'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Field } from '../../components/ui/Field'
-import {
-  KonteringHeader,
-  KonteringRow,
-} from '../../components/ui/KonteringRow'
+import { KonteringHeader, KonteringRow } from '../../components/ui/KonteringRow'
 import { VardagShell } from './VardagShell'
 
 /**
@@ -152,7 +149,13 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   )
 }
 
-function StatusPill({ tone, label }: { tone: 'mint' | 'warning'; label: string }) {
+function StatusPill({
+  tone,
+  label,
+}: {
+  tone: 'mint' | 'warning'
+  label: string
+}) {
   const dotColor =
     tone === 'mint' ? 'var(--color-mint-500)' : 'var(--color-warning-500)'
   return (

@@ -246,13 +246,7 @@ export function CustomerIllustration() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle
-        cx="32"
-        cy="22"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
+      <circle cx="32" cy="22" r="10" stroke="currentColor" strokeWidth="2" />
       <path
         d="M14 54c0-10 8-16 18-16s18 6 18 16"
         stroke="currentColor"

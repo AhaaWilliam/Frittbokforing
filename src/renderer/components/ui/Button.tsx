@@ -57,8 +57,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     'border border-danger-100 bg-transparent text-danger-500 hover:bg-danger-100/50 focus-visible:ring-danger-500',
   warning:
     'bg-warning-500 text-white hover:bg-warning-600 focus-visible:ring-warning-500',
-  ghost:
-    'text-foreground hover:bg-muted focus-visible:ring-primary',
+  ghost: 'text-foreground hover:bg-muted focus-visible:ring-primary',
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -100,42 +99,44 @@ function Spinner({ size }: { size: ButtonSize }) {
   )
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  {
-    variant = 'primary',
-    size = 'md',
-    leftIcon,
-    rightIcon,
-    isLoading = false,
-    disabled,
-    className,
-    children,
-    type = 'button',
-    ...rest
-  },
-  ref,
-) {
-  const classes = [
-    BASE_CLASSES,
-    VARIANT_CLASSES[variant],
-    SIZE_CLASSES[size],
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
+    {
+      variant = 'primary',
+      size = 'md',
+      leftIcon,
+      rightIcon,
+      isLoading = false,
+      disabled,
+      className,
+      children,
+      type = 'button',
+      ...rest
+    },
+    ref,
+  ) {
+    const classes = [
+      BASE_CLASSES,
+      VARIANT_CLASSES[variant],
+      SIZE_CLASSES[size],
+      className ?? '',
+    ]
+      .filter(Boolean)
+      .join(' ')
 
-  return (
-    <button
-      ref={ref}
-      type={type}
-      disabled={disabled || isLoading}
-      className={classes}
-      aria-busy={isLoading || undefined}
-      {...rest}
-    >
-      {isLoading ? <Spinner size={size} /> : leftIcon}
-      {children}
-      {!isLoading && rightIcon}
-    </button>
-  )
-})
+    return (
+      <button
+        ref={ref}
+        type={type}
+        disabled={disabled || isLoading}
+        className={classes}
+        aria-busy={isLoading || undefined}
+        {...rest}
+      >
+        {isLoading ? <Spinner size={size} /> : leftIcon}
+        {children}
+        {!isLoading && rightIcon}
+      </button>
+    )
+  },
+)

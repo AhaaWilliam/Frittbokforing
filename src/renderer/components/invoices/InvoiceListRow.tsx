@@ -89,13 +89,19 @@ export const InvoiceListRow = memo(function InvoiceListRow({
       </td>
       <td className="px-4 py-3 font-mono">{item.invoice_date}</td>
       <td className="px-4 py-3">{item.counterparty_name}</td>
-      <td className="px-4 py-3 text-right font-mono">{formatKr(item.net_amount_ore)}</td>
-      <td className="px-4 py-3 text-right font-mono">{formatKr(item.vat_amount_ore)}</td>
+      <td className="px-4 py-3 text-right font-mono">
+        {formatKr(item.net_amount_ore)}
+      </td>
+      <td className="px-4 py-3 text-right font-mono">
+        {formatKr(item.vat_amount_ore)}
+      </td>
       <td className="px-4 py-3 text-right font-mono font-medium">
         {formatKr(item.total_amount_ore)}
       </td>
       <td className="px-4 py-3">
-        <Pill variant={pill.variant} withDot>{pill.label}</Pill>
+        <Pill variant={pill.variant} withDot>
+          {pill.label}
+        </Pill>
       </td>
       <td
         className={`px-4 py-3 font-mono ${item.status === 'overdue' ? 'text-status-overdue' : ''}`}

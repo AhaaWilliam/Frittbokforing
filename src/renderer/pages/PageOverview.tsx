@@ -108,7 +108,8 @@ function WelcomeCtas({ navigate }: { navigate: (path: string) => void }) {
       data-testid="welcome-empty-state"
     >
       <h2 className="font-serif text-lg font-normal">
-        Välkommen till <span className="font-serif-italic">Fritt</span> Bokföring
+        Välkommen till <span className="font-serif-italic">Fritt</span>{' '}
+        Bokföring
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Börja med ett av följande för att komma igång. Siffrorna nedan

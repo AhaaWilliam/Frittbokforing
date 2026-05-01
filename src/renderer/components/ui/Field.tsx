@@ -35,10 +35,7 @@ export function Field({ label, children, hint, error, span = 1 }: FieldProps) {
         <p className="mt-1 text-xs text-[var(--text-faint)]">{hint}</p>
       )}
       {error && (
-        <p
-          className="mt-1 text-xs text-[var(--color-danger-600)]"
-          role="alert"
-        >
+        <p className="mt-1 text-xs text-[var(--color-danger-600)]" role="alert">
           {error}
         </p>
       )}

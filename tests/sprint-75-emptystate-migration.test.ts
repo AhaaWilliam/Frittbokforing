@@ -36,6 +36,8 @@ describe('Sprint 75 — Draft-list EmptyState-paritet', () => {
   ])('%s — inga ad-hoc px-8 py-16 text-center empty-divs', (path) => {
     const src = readFileSync(resolve(repoRoot, path), 'utf8')
     // Mönstret som ersattes
-    expect(src).not.toMatch(/px-8 py-16 text-center text-sm text-muted-foreground/)
+    expect(src).not.toMatch(
+      /px-8 py-16 text-center text-sm text-muted-foreground/,
+    )
   })
 })

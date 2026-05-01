@@ -76,7 +76,9 @@ function SidebarLink({
       {count != null && (
         <span
           className={`font-mono text-xs ${
-            count > 0 ? 'text-[var(--text-secondary)]' : 'text-[var(--text-faint)]'
+            count > 0
+              ? 'text-[var(--text-secondary)]'
+              : 'text-[var(--text-faint)]'
           }`}
           data-testid={testId ? `${testId}-count` : undefined}
         >

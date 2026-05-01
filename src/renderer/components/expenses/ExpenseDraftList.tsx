@@ -54,7 +54,9 @@ export function ExpenseDraftList({ onSelect }: ExpenseDraftListProps) {
                 {formatKr(expense.total_amount_ore)}
               </td>
               <td className="px-4 py-3">
-                <Pill variant="warning" withDot>Utkast</Pill>
+                <Pill variant="warning" withDot>
+                  Utkast
+                </Pill>
               </td>
             </tr>
           ))}

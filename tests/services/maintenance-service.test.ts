@@ -36,7 +36,9 @@ describe('vacuumDatabase', () => {
     if (!result.success) {
       throw new Error('Expected success')
     }
-    expect(result.data.after_bytes).toBeLessThanOrEqual(result.data.before_bytes)
+    expect(result.data.after_bytes).toBeLessThanOrEqual(
+      result.data.before_bytes,
+    )
   })
 
   it('storlek är multipel av page_size', () => {

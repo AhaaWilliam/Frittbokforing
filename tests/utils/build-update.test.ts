@@ -15,7 +15,9 @@ beforeEach(() => {
       updated_at TEXT
     )
   `)
-  db.prepare(`INSERT INTO users (id, name, email, role) VALUES (1, 'a', 'a@x', 'admin')`).run()
+  db.prepare(
+    `INSERT INTO users (id, name, email, role) VALUES (1, 'a', 'a@x', 'admin')`,
+  ).run()
 })
 
 afterEach(() => {
@@ -48,7 +50,9 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
     )
     expect(built?.fieldCount).toBe(1) // bara name
     built!.run('id = ?', [1])
-    const row = db.prepare('SELECT role FROM users WHERE id = 1').get() as { role: string }
+    const row = db.prepare('SELECT role FROM users WHERE id = 1').get() as {
+      role: string
+    }
     expect(row.role).toBe('admin') // oförändrat
   })
 
@@ -71,7 +75,9 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
     )
     expect(built?.fieldCount).toBe(1)
     built!.run('id = ?', [1])
-    const row = db.prepare('SELECT email FROM users WHERE id = 1').get() as { email: string }
+    const row = db.prepare('SELECT email FROM users WHERE id = 1').get() as {
+      email: string
+    }
     expect(row.email).toBe('a@x') // oförändrat
   })
 
@@ -84,7 +90,9 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
     )
     expect(built?.fieldCount).toBe(1)
     built!.run('id = ?', [1])
-    const row = db.prepare('SELECT name FROM users WHERE id = 1').get() as { name: string | null }
+    const row = db.prepare('SELECT name FROM users WHERE id = 1').get() as {
+      name: string | null
+    }
     expect(row.name).toBeNull()
   })
 
@@ -100,7 +108,13 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
     )
     expect(built?.fieldCount).toBe(1)
     built!.run('id = ?', [1])
-    expect((db.prepare('SELECT name FROM users WHERE id = 1').get() as { name: string }).name).toBe('Bobby')
+    expect(
+      (
+        db.prepare('SELECT name FROM users WHERE id = 1').get() as {
+          name: string
+        }
+      ).name,
+    ).toBe('Bobby')
   })
 
   it('touchUpdatedAt lägger till updated_at = datetime("now","localtime")', () => {
@@ -111,7 +125,9 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
       { allowedColumns: ALLOWED, touchUpdatedAt: true },
     )
     built!.run('id = ?', [1])
-    const row = db.prepare('SELECT updated_at FROM users WHERE id = 1').get() as { updated_at: string }
+    const row = db
+      .prepare('SELECT updated_at FROM users WHERE id = 1')
+      .get() as { updated_at: string }
     expect(row.updated_at).toBeTruthy()
     expect(row.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}/)
   })
@@ -124,7 +140,9 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
       { allowedColumns: ALLOWED },
     )
     built!.run('id = ?', [1])
-    const row = db.prepare('SELECT updated_at FROM users WHERE id = 1').get() as { updated_at: string | null }
+    const row = db
+      .prepare('SELECT updated_at FROM users WHERE id = 1')
+      .get() as { updated_at: string | null }
     expect(row.updated_at).toBeNull()
   })
 
@@ -137,9 +155,13 @@ describe('buildUpdate — security boundary (whitelist + bound params)', () => {
     )
     built!.run('id = ?', [1])
     // Tabellen finns kvar, värdet sparades som-är
-    const row = db.prepare('SELECT name FROM users WHERE id = 1').get() as { name: string }
+    const row = db.prepare('SELECT name FROM users WHERE id = 1').get() as {
+      name: string
+    }
     expect(row.name).toBe("'; DROP TABLE users; --")
     // Verifiera att tabellen finns kvar
-    expect(db.prepare('SELECT COUNT(*) as c FROM users').get()).toEqual({ c: 1 })
+    expect(db.prepare('SELECT COUNT(*) as c FROM users').get()).toEqual({
+      c: 1,
+    })
   })
 })

@@ -24,19 +24,16 @@ const RAW_BLUE_BANNER_RE =
   /border-blue-200[^"']*bg-blue-50[^"']*text-blue-(?:600|700|800)/
 
 describe('Sprint 78 — info-Callout-migration vakter', () => {
-  it.each(MIGRATED)(
-    '%s — inga raw blue info-banner-mönster',
-    (path) => {
-      const src = readFileSync(resolve(repoRoot, path), 'utf8')
-      const m = src.match(RAW_BLUE_BANNER_RE)
-      if (m) {
-        throw new Error(
-          `Raw blue-banner i ${path}: "${m[0]}". Använd <Callout variant="info"> istället.`,
-        )
-      }
-      expect(m).toBeNull()
-    },
-  )
+  it.each(MIGRATED)('%s — inga raw blue info-banner-mönster', (path) => {
+    const src = readFileSync(resolve(repoRoot, path), 'utf8')
+    const m = src.match(RAW_BLUE_BANNER_RE)
+    if (m) {
+      throw new Error(
+        `Raw blue-banner i ${path}: "${m[0]}". Använd <Callout variant="info"> istället.`,
+      )
+    }
+    expect(m).toBeNull()
+  })
 
   it.each(MIGRATED)('%s — importerar Callout', (path) => {
     const src = readFileSync(resolve(repoRoot, path), 'utf8')

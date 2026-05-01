@@ -12,8 +12,8 @@ export function ReTransferButton() {
       <div className="mt-6">
         <Callout variant="warning" data-testid="re-transfer-confirm">
           <p>
-            Befintlig IB (O1) ersätts med ny beräkning baserad på föregående
-            års saldon. Fortsätt?
+            Befintlig IB (O1) ersätts med ny beräkning baserad på föregående års
+            saldon. Fortsätt?
           </p>
           <div className="mt-3 flex gap-2">
             <button

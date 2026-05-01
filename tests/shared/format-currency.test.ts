@@ -33,15 +33,15 @@ describe('formatOreToKr', () => {
   })
 
   it('minFractionDigits=0 droppar decimaler för heltal-kr', () => {
-    expect(formatOreToKr(10000, { minFractionDigits: 0, maxFractionDigits: 0 })).toBe(
-      '100',
-    )
+    expect(
+      formatOreToKr(10000, { minFractionDigits: 0, maxFractionDigits: 0 }),
+    ).toBe('100')
   })
 
   it('nbspGroup byter mellanslag mot non-breaking space (PDF)', () => {
     const out = formatOreToKr(123456, { nbspGroup: true })
     expect(out).toContain(' ')
-    expect(out).not.toMatch(/ 234/)  // vanligt mellanslag → nej
+    expect(out).not.toMatch(/ 234/) // vanligt mellanslag → nej
   })
 
   it('negativa belopp behåller tecken (default)', () => {

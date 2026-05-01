@@ -44,6 +44,8 @@ describe('Sprint 71 — Pill-migration vakter', () => {
 
   it.each(MIGRATED)('%s — importerar Pill', (path) => {
     const src = readFileSync(resolve(repoRoot, path), 'utf8')
-    expect(src).toMatch(/import\s*\{[^}]*\bPill\b[^}]*\}\s*from\s*['"][^'"]*ui\/Pill['"]/)
+    expect(src).toMatch(
+      /import\s*\{[^}]*\bPill\b[^}]*\}\s*from\s*['"][^'"]*ui\/Pill['"]/,
+    )
   })
 })

@@ -121,7 +121,10 @@ export function ManualEntryList({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border-default)] text-left text-xs text-[var(--text-secondary)]">
-                    <th className="w-6 pb-2 pr-2 font-medium" aria-label="Status" />
+                    <th
+                      className="w-6 pb-2 pr-2 font-medium"
+                      aria-label="Status"
+                    />
                     <th className="pb-2 pr-4 font-medium">Verifikat</th>
                     <th className="pb-2 pr-4 font-medium">Datum</th>
                     <th className="pb-2 pr-4 font-medium">Beskrivning</th>
@@ -181,11 +184,7 @@ export function ManualEntryList({
   )
 }
 
-function StatusDot({
-  tone,
-}: {
-  tone: 'mint' | 'warning' | 'danger' | 'info'
-}) {
+function StatusDot({ tone }: { tone: 'mint' | 'warning' | 'danger' | 'info' }) {
   const color =
     tone === 'mint'
       ? 'var(--color-mint-500)'

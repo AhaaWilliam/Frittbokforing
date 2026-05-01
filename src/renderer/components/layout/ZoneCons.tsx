@@ -23,7 +23,11 @@ interface ZoneConsProps {
  * I H+G-5 är zonen en placeholder med "KONSEKVENS"-rubrik och tom yta.
  * Innehåll kommer i Sprint H+G-7.
  */
-export function ZoneCons({ label = 'Konsekvens', pulse, children }: ZoneConsProps) {
+export function ZoneCons({
+  label = 'Konsekvens',
+  pulse,
+  children,
+}: ZoneConsProps) {
   return (
     <aside
       className="flex flex-col overflow-hidden border-l border-[var(--border-default)] bg-[var(--surface-secondary)]"

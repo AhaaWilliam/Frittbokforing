@@ -335,9 +335,13 @@ export function PageAccounts() {
                     </td>
                     <td className="px-3 py-2">
                       {account.is_active === 1 ? (
-                        <Pill variant="success" withDot>Aktiv</Pill>
+                        <Pill variant="success" withDot>
+                          Aktiv
+                        </Pill>
                       ) : (
-                        <Pill variant="neutral" withDot>Inaktiv</Pill>
+                        <Pill variant="neutral" withDot>
+                          Inaktiv
+                        </Pill>
                       )}
                     </td>
                     <td className="px-3 py-2">

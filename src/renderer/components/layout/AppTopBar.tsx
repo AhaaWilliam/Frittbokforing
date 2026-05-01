@@ -69,10 +69,7 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
             <span className="opacity-50" aria-hidden="true">
               ·
             </span>
-            <span
-              className="text-sm opacity-75"
-              data-testid="topbar-period"
-            >
+            <span className="text-sm opacity-75" data-testid="topbar-period">
               {periodLabel}
             </span>
           </>
@@ -84,7 +81,9 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
         onClick={() => setMode(isVardag ? 'bokforare' : 'vardag')}
         className="inline-flex items-center gap-2 rounded-md border border-current px-3 py-1.5 text-sm font-medium opacity-90 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-current"
         data-testid={isVardag ? 'switch-to-bokforare' : 'switch-to-vardag'}
-        aria-label={isVardag ? 'Byt till bokförar-läge' : 'Byt till vardag-läge'}
+        aria-label={
+          isVardag ? 'Byt till bokförar-läge' : 'Byt till vardag-läge'
+        }
       >
         <span>{isVardag ? 'Bokförar-läge' : 'Vardag-läge'}</span>
         <KbdChip variant={isVardag ? 'light' : 'dark'}>⌘⇧B</KbdChip>
@@ -94,10 +93,7 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
 }
 
 function formatPeriodLabel(
-  fy:
-    | { start_date: string; end_date: string }
-    | null
-    | undefined,
+  fy: { start_date: string; end_date: string } | null | undefined,
 ): string | null {
   if (!fy) return null
   const start = new Date(fy.start_date)

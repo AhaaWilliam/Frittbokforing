@@ -21,30 +21,30 @@
 
 export const colorBase = {
   // Neutral scale — varmare papper-toner (Sprint H+G-1, var zinc-baserad)
-  neutral50: '#fbfaf8',   // card
-  neutral100: '#f1f0ee',  // bg, papperston
-  neutral200: '#e7e6e2',  // card-2, sekundär yta
-  neutral300: '#d6d4cf',  // border
-  neutral400: '#a8a6a0',  // border-strong
-  neutral500: '#8d8b85',  // faint, tertiärtext
-  neutral600: '#56544f',  // muted, sekundärtext
+  neutral50: '#fbfaf8', // card
+  neutral100: '#f1f0ee', // bg, papperston
+  neutral200: '#e7e6e2', // card-2, sekundär yta
+  neutral300: '#d6d4cf', // border
+  neutral400: '#a8a6a0', // border-strong
+  neutral500: '#8d8b85', // faint, tertiärtext
+  neutral600: '#56544f', // muted, sekundärtext
   neutral700: '#3a3935',
-  neutral800: '#2b2a27',  // dark-soft
-  neutral900: '#1d1c1a',  // dark
-  neutral950: '#1a1a18',  // text — varm primärsvart
+  neutral800: '#2b2a27', // dark-soft
+  neutral900: '#1d1c1a', // dark
+  neutral950: '#1a1a18', // text — varm primärsvart
 
   // Brand — dusty teal (Sprint H+G-1, var tech-blå)
   brand50: '#f1f4f4',
-  brand100: '#dde3e3',    // plommon-soft (selected, hover)
-  brand500: '#7a9498',    // plommon (main)
+  brand100: '#dde3e3', // plommon-soft (selected, hover)
+  brand500: '#7a9498', // plommon (main)
   brand600: '#5e7a7e',
   brand700: '#4a6266',
   brand900: '#2a3b3e',
 
   // Mint — sage green (NY sekundär accent)
   mint50: '#f3f5f0',
-  mint100: '#e1e4dc',     // mint-soft
-  mint500: '#94a58c',     // mint (main)
+  mint100: '#e1e4dc', // mint-soft
+  mint500: '#94a58c', // mint (main)
   mint600: '#768867',
   mint700: '#5e6e54',
 
@@ -53,19 +53,19 @@ export const colorBase = {
   darkSoft: '#2b2a27',
 
   // Status — alignade med prototyp
-  success100: '#e1e4dc',  // alias mint-100 (success = positivt = mint)
+  success100: '#e1e4dc', // alias mint-100 (success = positivt = mint)
   success500: '#94a58c',
   success600: '#768867',
   success700: '#5e6e54',
-  warning100: '#ead9c8',  // dusty terracotta-soft
+  warning100: '#ead9c8', // dusty terracotta-soft
   warning500: '#b08568',
   warning600: '#93704f',
   warning700: '#75593e',
   danger100: '#f4dada',
-  danger500: '#9a4d4d',   // dämpad röd (var #dc2626)
+  danger500: '#9a4d4d', // dämpad röd (var #dc2626)
   danger600: '#7c3d3d',
   danger700: '#5c2d2d',
-  info100: '#dde3e3',     // alias brand-100 (info = neutral upplysning)
+  info100: '#dde3e3', // alias brand-100 (info = neutral upplysning)
   info500: '#7a9498',
   info600: '#5e7a7e',
   info700: '#4a6266',
@@ -214,27 +214,27 @@ export type UiMode = 'vardag' | 'bokforare'
 export const modeTokens = {
   vardag: {
     // Vardag = papper, ljus topbar, generös typografi
-    surface: '#f1f0ee',                      // papperston
-    surfaceElevated: '#fbfaf8',              // card
+    surface: '#f1f0ee', // papperston
+    surfaceElevated: '#fbfaf8', // card
     textPrimary: '#1a1a18',
     textSecondary: '#56544f',
     border: '#d6d4cf',
-    accent: colorBase.brand500,              // dusty teal
-    fontSizeBase: fontSize.base,             // 14px (luftigare)
-    topBarSurface: '#fbfaf8',                // ljus topbar i Vardag
+    accent: colorBase.brand500, // dusty teal
+    fontSizeBase: fontSize.base, // 14px (luftigare)
+    topBarSurface: '#fbfaf8', // ljus topbar i Vardag
     topBarText: '#1a1a18',
   },
   bokforare: {
     // Bokförare = papper, mörk topbar, tät spacing
-    surface: '#f1f0ee',                      // papperston (samma som Vardag)
-    surfaceElevated: '#fbfaf8',              // card
+    surface: '#f1f0ee', // papperston (samma som Vardag)
+    surfaceElevated: '#fbfaf8', // card
     textPrimary: '#1a1a18',
     textSecondary: '#56544f',
     border: '#d6d4cf',
-    accent: colorBase.brand500,              // dusty teal
-    fontSizeBase: fontSize.sm,               // 13px (tightare)
+    accent: colorBase.brand500, // dusty teal
+    fontSizeBase: fontSize.sm, // 13px (tightare)
     // Top-bar är mörk i Bokförare-läget (matchar prototyp H+G)
-    topBarSurface: colorBase.dark,           // #1d1c1a
+    topBarSurface: colorBase.dark, // #1d1c1a
     topBarText: '#ebeae6',
   },
 } as const

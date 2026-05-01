@@ -55,11 +55,28 @@ describe('routes-tabellen', () => {
 
   it('alla page-string mappar till en känd AppShell-page-id', () => {
     const knownPages = new Set([
-      'overview', 'income', 'expenses', 'vat', 'tax',
-      'reports', 'export', 'settings', 'customers', 'products',
-      'manual-entries', 'imported-entries', 'accounts', 'suppliers',
-      'account-statement', 'aging', 'budget', 'accruals', 'fixed-assets',
-      'import', 'bank-statements', 'sepa-dd',
+      'overview',
+      'income',
+      'expenses',
+      'vat',
+      'tax',
+      'reports',
+      'export',
+      'settings',
+      'customers',
+      'products',
+      'manual-entries',
+      'imported-entries',
+      'accounts',
+      'suppliers',
+      'account-statement',
+      'aging',
+      'budget',
+      'accruals',
+      'fixed-assets',
+      'import',
+      'bank-statements',
+      'sepa-dd',
     ])
     for (const r of routes) {
       expect(knownPages.has(r.page)).toBe(true)

@@ -68,10 +68,7 @@ describe('queryKeys', () => {
     })
 
     it('invoiceNextNumber inkluderar fyId', () => {
-      expect(queryKeys.invoiceNextNumber(1)).toEqual([
-        'invoice-next-number',
-        1,
-      ])
+      expect(queryKeys.invoiceNextNumber(1)).toEqual(['invoice-next-number', 1])
     })
 
     it('invoicePayments inkluderar invoiceId', () => {
