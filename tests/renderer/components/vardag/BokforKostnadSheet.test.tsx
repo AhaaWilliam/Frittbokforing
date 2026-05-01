@@ -277,6 +277,56 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     })
   })
 
+  it('VS-19 visar inline-fel om kontonummer inte finns i kontoplan', async () => {
+    mockIpcResponse('account:list-all', {
+      success: true,
+      data: [
+        {
+          id: 1,
+          account_number: '6110',
+          name: 'Kontorsmateriel',
+          account_type: 'expense',
+          is_active: 1,
+          k2_allowed: 1,
+          k3_only: 0,
+          is_system_account: 0,
+        },
+      ],
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const accountInput = await screen.findByTestId('vardag-kostnad-account')
+    fireEvent.change(accountInput, { target: { value: '9999' } })
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-kostnad-account-error'),
+      ).toHaveTextContent('finns inte i kontoplanen')
+    })
+
+    expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
+  })
+
+  it('VS-19 inget fel visas innan accounts laddats (false-positive-skydd)', async () => {
+    // account:list-all utan mock → mock-ipc default = success: true, data: null
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    await screen.findByTestId('vardag-kostnad-account')
+
+    // Default-konto 6110 finns inte i tomma listan, men eftersom listan
+    // INTE har laddats än ska vi inte flagga fel.
+    expect(
+      screen.queryByTestId('vardag-kostnad-account-error'),
+    ).toBeNull()
+  })
+
   it('VS-18 belopp-fältet är auto-fokuserat när sheet öppnas', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,

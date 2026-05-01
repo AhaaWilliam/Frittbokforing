@@ -10,7 +10,7 @@ import {
 import { CustomerPicker } from '../../components/invoices/CustomerPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
-import { useCounterparty, useVatCodes } from '../../lib/hooks'
+import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
 import { fiscalYearDateError, kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
@@ -44,6 +44,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const { activeCompany } = useActiveCompany()
   const { setMode } = useUiMode()
   const { data: vatCodes = [] } = useVatCodes('outgoing')
+  const { data: allAccountsData } = useAllAccounts(true)
+  const allAccounts = allAccountsData ?? []
 
   function openInBokforare() {
     window.location.hash = '/income/create'
@@ -128,6 +130,14 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       )
     : null
 
+  // VS-19: Inline-validering av kontonummer mot kontoplan.
+  const accountError =
+    /^\d{4}$/.test(accountNumber) && allAccounts.length > 0
+      ? allAccounts.some((a) => a.account_number === accountNumber)
+        ? null
+        : `Kontot ${accountNumber} finns inte i kontoplanen.`
+      : null
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -138,6 +148,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
     /^\d{4}$/.test(accountNumber) &&
     vatCodeId !== null &&
     !dateError &&
+    !accountError &&
     !submitting
 
   async function handleSubmit() {
@@ -317,9 +328,23 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
               }}
               maxLength={4}
               pattern="\d{4}"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+              aria-invalid={!!accountError}
+              aria-describedby={
+                accountError ? 'vardag-faktura-account-err' : undefined
+              }
+              className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${accountError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
               data-testid="vardag-faktura-account"
             />
+            {accountError && (
+              <p
+                id="vardag-faktura-account-err"
+                role="alert"
+                className="mt-1 text-xs text-danger-600"
+                data-testid="vardag-faktura-account-error"
+              >
+                {accountError}
+              </p>
+            )}
           </Field>
           <Field label="Moms">
             <select

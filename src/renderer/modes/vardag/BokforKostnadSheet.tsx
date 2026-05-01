@@ -10,7 +10,7 @@ import {
 import { SupplierPicker } from '../../components/expenses/SupplierPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
-import { useCounterparty, useVatCodes } from '../../lib/hooks'
+import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
 import {
   fiscalYearDateError,
   kronorToOre,
@@ -56,6 +56,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const { activeCompany } = useActiveCompany()
   const { setMode } = useUiMode()
   const { data: vatCodes = [] } = useVatCodes('incoming')
+  const { data: allAccountsData } = useAllAccounts(true)
+  const allAccounts = allAccountsData ?? []
 
   function openInBokforare() {
     window.location.hash = '/expenses/create'
@@ -148,6 +150,16 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       )
     : null
 
+  // VS-19: Inline-validering av kontonummer mot kontoplan.
+  // Vänta tills accounts laddats innan vi flaggar fel (annars false-positive
+  // initialt).
+  const accountError =
+    /^\d{4}$/.test(accountNumber) && allAccounts.length > 0
+      ? allAccounts.some((a) => a.account_number === accountNumber)
+        ? null
+        : `Kontot ${accountNumber} finns inte i kontoplanen.`
+      : null
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -157,6 +169,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     /^\d{4}$/.test(accountNumber) &&
     vatCodeId !== null &&
     !dateError &&
+    !accountError &&
     !submitting
 
   async function handleSubmit() {
@@ -320,9 +333,23 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 }}
                 maxLength={4}
                 pattern="\d{4}"
-                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+                aria-invalid={!!accountError}
+                aria-describedby={
+                  accountError ? 'vardag-kostnad-account-err' : undefined
+                }
+                className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${accountError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
                 data-testid="vardag-kostnad-account"
               />
+              {accountError && (
+                <p
+                  id="vardag-kostnad-account-err"
+                  role="alert"
+                  className="mt-1 text-xs text-danger-600"
+                  data-testid="vardag-kostnad-account-error"
+                >
+                  {accountError}
+                </p>
+              )}
             </Field>
             <Field label="Moms">
               <select
