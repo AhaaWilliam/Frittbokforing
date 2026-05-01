@@ -168,8 +168,10 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   async function handleFinalize() {
     if (!finalizeItem) return
     try {
-      await finalizeMutation.mutateAsync({ id: finalizeItem.id })
-      toast.success('Faktura bokförd')
+      const result = await finalizeMutation.mutateAsync({
+        id: finalizeItem.id,
+      })
+      toast.success(`Faktura bokförd som A${result.verification_number}`)
       setFinalizeItem(null)
     } catch (err) {
       console.error('Finalize invoice failed:', err)

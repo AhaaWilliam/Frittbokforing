@@ -161,8 +161,10 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   async function handleFinalize() {
     if (!finalizeItem) return
     try {
-      await finalizeMutation.mutateAsync({ id: finalizeItem.id })
-      toast.success('Kostnad bokförd')
+      const result = await finalizeMutation.mutateAsync({
+        id: finalizeItem.id,
+      })
+      toast.success(`Kostnad bokförd som B${result.verification_number}`)
       setFinalizeItem(null)
     } catch (err) {
       console.error('Finalize expense failed:', err)
