@@ -21,6 +21,12 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
         shortcutsRef.current['mod+s']()
         return
       }
+      // mod+enter: submit-shortcut för transactional formulär (sheets m.fl.)
+      if (mod && key === 'enter' && shortcutsRef.current['mod+enter']) {
+        e.preventDefault()
+        shortcutsRef.current['mod+enter']()
+        return
+      }
       if (mod && key === 'n' && shortcutsRef.current['mod+n']) {
         e.preventDefault()
         shortcutsRef.current['mod+n']()

@@ -19,6 +19,7 @@ import {
 import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
 import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
+import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -219,6 +220,17 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       setSubmitting(false)
     }
   }
+
+  // VS-16: Cmd/Ctrl+Enter submit. Aktiv endast när sheet är öppen.
+  useKeyboardShortcuts(
+    open
+      ? {
+          'mod+enter': () => {
+            if (canSubmit) handleSubmit()
+          },
+        }
+      : {},
+  )
 
   return (
     <BottomSheet

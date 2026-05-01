@@ -48,6 +48,27 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
+  it('mod+enter (Cmd) triggar mod+enter-handler (VS-16)', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+enter': handler }))
+    fireKey({ key: 'Enter', metaKey: true })
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('mod+enter (Ctrl) triggar mod+enter-handler', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+enter': handler }))
+    fireKey({ key: 'Enter', ctrlKey: true })
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('Enter utan modifier triggar INTE mod+enter', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+enter': handler }))
+    fireKey({ key: 'Enter' })
+    expect(handler).not.toHaveBeenCalled()
+  })
+
   it('mod+n triggar mod+n-handler', () => {
     const handler = vi.fn()
     renderHook(() => useKeyboardShortcuts({ 'mod+n': handler }))

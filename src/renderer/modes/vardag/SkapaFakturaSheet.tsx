@@ -13,6 +13,7 @@ import { useCounterparty, useVatCodes } from '../../lib/hooks'
 import { fiscalYearDateError, kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
+import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 
 /**
  * Sprint VS-4 — SkapaFakturaSheet (funktionell).
@@ -188,6 +189,17 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       setSubmitting(false)
     }
   }
+
+  // VS-16: Cmd/Ctrl+Enter submit
+  useKeyboardShortcuts(
+    open
+      ? {
+          'mod+enter': () => {
+            if (canSubmit) handleSubmit()
+          },
+        }
+      : {},
+  )
 
   return (
     <BottomSheet

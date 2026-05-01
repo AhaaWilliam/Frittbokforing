@@ -277,6 +277,53 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     })
   })
 
+  it('VS-16 Cmd+Enter triggar submit när formulär är giltigt', async () => {
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 99 }),
+    })
+    mockIpcResponse('expense:finalize', {
+      success: true,
+      data: { id: 99, journal_entry_id: 500, verification_number: 1 },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+
+    // Cmd+Enter
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+    expect(ipcCalls('saveExpenseDraft').length).toBe(1)
+  })
+
+  it('VS-16 Cmd+Enter triggar INTE submit när formulär är ogiltigt', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    await screen.findByTestId('vardag-kostnad-amount')
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+
+    await new Promise((r) => setTimeout(r, 50))
+    expect(ipcCalls('saveExpenseDraft')).toEqual([])
+  })
+
   it('VS-14 visar inline-fel om datum utanför aktivt FY', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
