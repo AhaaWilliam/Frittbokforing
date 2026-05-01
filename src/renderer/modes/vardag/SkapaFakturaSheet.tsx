@@ -138,6 +138,12 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       )
     : null
 
+  // VS-27: Slå upp namn för fasta konton (1510 kundfordran, 2610
+  // utgående moms) från kontoplan med fallback.
+  function accountName(num: string, fallback: string): string {
+    return allAccounts.find((a) => a.account_number === num)?.name ?? fallback
+  }
+
   // VS-19: Inline-validering av kontonummer mot kontoplan.
   const matchedAccount = allAccounts.find(
     (a) => a.account_number === accountNumber,
@@ -398,7 +404,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
             <>
               <KonteringRow
                 account="1510"
-                description="Kundfordran"
+                description={accountName('1510', 'Kundfordran')}
                 debit={totalOre}
               />
               <KonteringRow
@@ -409,7 +415,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
               {vatOre > 0 && (
                 <KonteringRow
                   account="2610"
-                  description="Utgående moms"
+                  description={accountName('2610', 'Utgående moms')}
                   credit={vatOre}
                 />
               )}

@@ -162,6 +162,13 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       )
     : null
 
+  // VS-27: Slå upp namn för fasta konton (2640 ingående moms, 2440
+  // leverantörsskuld) från kontoplan, fall tillbaka till hårdkodade
+  // labels om kontot saknas (kundens chart kan ha ändrat numreringen).
+  function accountName(num: string, fallback: string): string {
+    return allAccounts.find((a) => a.account_number === num)?.name ?? fallback
+  }
+
   // VS-19: Inline-validering av kontonummer mot kontoplan.
   // Vänta tills accounts laddats innan vi flaggar fel (annars false-positive
   // initialt).
@@ -422,13 +429,13 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 {vatOre > 0 && (
                   <KonteringRow
                     account="2640"
-                    description="Ingående moms"
+                    description={accountName('2640', 'Ingående moms')}
                     debit={vatOre}
                   />
                 )}
                 <KonteringRow
                   account="2440"
-                  description="Leverantörsskuld"
+                  description={accountName('2440', 'Leverantörsskuld')}
                   credit={amountInclVatOre}
                 />
               </>
