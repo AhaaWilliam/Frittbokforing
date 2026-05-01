@@ -12,6 +12,7 @@ import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useCounterparty, useVatCodes } from '../../lib/hooks'
 import { kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
+import { useUiMode } from '../../lib/use-ui-mode'
 
 /**
  * Sprint VS-4 — SkapaFakturaSheet (funktionell).
@@ -39,7 +40,14 @@ const FALLBACK_REVENUE_ACCOUNT = '3001'
 export function SkapaFakturaSheet({ open, onClose }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
+  const { setMode } = useUiMode()
   const { data: vatCodes = [] } = useVatCodes('outgoing')
+
+  function openInBokforare() {
+    window.location.hash = '/income/create'
+    setMode('bokforare')
+    onClose()
+  }
 
   const [date, setDate] = useState(todayLocal())
   const [paymentTerms, setPaymentTerms] = useState(30)
@@ -330,17 +338,27 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           </div>
         )}
 
-        <div className="flex justify-end gap-2">
-          <BottomSheetClose>Avbryt</BottomSheetClose>
+        <div className="flex items-center justify-between gap-2">
           <button
             type="button"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-            className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            data-testid="vardag-faktura-submit"
+            onClick={openInBokforare}
+            className="text-xs text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+            data-testid="vardag-faktura-multiline-cta"
           >
-            {submitting ? 'Skickar…' : 'Skicka'}
+            Behöver lägga till fler rader?
           </button>
+          <div className="flex gap-2">
+            <BottomSheetClose>Avbryt</BottomSheetClose>
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={handleSubmit}
+              className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              data-testid="vardag-faktura-submit"
+            >
+              {submitting ? 'Skickar…' : 'Skicka'}
+            </button>
+          </div>
         </div>
       </div>
     </BottomSheet>

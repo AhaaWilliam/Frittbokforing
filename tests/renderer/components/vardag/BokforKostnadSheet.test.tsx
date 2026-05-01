@@ -386,4 +386,21 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     expect(ipcCalls('attachReceipt')).toEqual([])
   })
+
+  // VS-8: Multi-line escape-hatch CTA
+
+  it('VS-8 multi-line CTA navigerar till /expenses/create i bokförare-läget', async () => {
+    const onClose = vi.fn()
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={onClose} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(
+      await screen.findByTestId('vardag-kostnad-multiline-cta'),
+    )
+
+    expect(window.location.hash).toBe('#/expenses/create')
+    expect(onClose).toHaveBeenCalled()
+  })
 })

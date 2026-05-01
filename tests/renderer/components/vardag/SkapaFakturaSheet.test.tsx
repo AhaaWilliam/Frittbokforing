@@ -213,6 +213,21 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     ).toHaveTextContent('Perioden är stängd.')
   })
 
+  it('VS-8 multi-line CTA navigerar till /income/create i bokförare-läget', async () => {
+    const onClose = vi.fn()
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={onClose} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(
+      await screen.findByTestId('vardag-faktura-multiline-cta'),
+    )
+
+    expect(window.location.hash).toBe('#/income/create')
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('konto pre-fylls från customer.default_revenue_account', async () => {
     mockIpcResponse('counterparty:get', {
       success: true,

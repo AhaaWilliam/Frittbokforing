@@ -13,6 +13,7 @@ import { useCounterparty, useVatCodes } from '../../lib/hooks'
 import { kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
 import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
+import { useUiMode } from '../../lib/use-ui-mode'
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -46,7 +47,14 @@ const FALLBACK_EXPENSE_ACCOUNT = '6110'
 export function BokforKostnadSheet({ open, onClose }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
+  const { setMode } = useUiMode()
   const { data: vatCodes = [] } = useVatCodes('incoming')
+
+  function openInBokforare() {
+    window.location.hash = '/expenses/create'
+    setMode('bokforare')
+    onClose()
+  }
 
   const [date, setDate] = useState(todayLocal())
   const [amountKr, setAmountKr] = useState('')
@@ -327,17 +335,27 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
-            <BottomSheetClose>Avbryt</BottomSheetClose>
+          <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              disabled={!canSubmit}
-              onClick={handleSubmit}
-              className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              data-testid="vardag-kostnad-submit"
+              onClick={openInBokforare}
+              className="text-xs text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+              data-testid="vardag-kostnad-multiline-cta"
             >
-              {submitting ? 'Bokför…' : 'Bokför'}
+              Behöver dela upp på flera konton?
             </button>
+            <div className="flex gap-2">
+              <BottomSheetClose>Avbryt</BottomSheetClose>
+              <button
+                type="button"
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+                className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                data-testid="vardag-kostnad-submit"
+              >
+                {submitting ? 'Bokför…' : 'Bokför'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
