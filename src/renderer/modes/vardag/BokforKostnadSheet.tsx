@@ -10,7 +10,12 @@ import { SupplierPicker } from '../../components/expenses/SupplierPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useCounterparty, useVatCodes } from '../../lib/hooks'
-import { kronorToOre, pathBasename, todayLocal } from '../../lib/format'
+import {
+  fiscalYearDateError,
+  kronorToOre,
+  pathBasename,
+  todayLocal,
+} from '../../lib/format'
 import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
 import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
@@ -123,6 +128,14 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   )
   const vatOre = amountInclVatOre - netOre
 
+  const dateError = activeFiscalYear
+    ? fiscalYearDateError(
+        date,
+        activeFiscalYear.start_date,
+        activeFiscalYear.end_date,
+      )
+    : null
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -131,6 +144,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     description.trim().length > 0 &&
     /^\d{4}$/.test(accountNumber) &&
     vatCodeId !== null &&
+    !dateError &&
     !submitting
 
   async function handleSubmit() {
@@ -228,9 +242,21 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+                aria-invalid={!!dateError}
+                aria-describedby={dateError ? 'vardag-kostnad-date-err' : undefined}
+                className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${dateError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
                 data-testid="vardag-kostnad-date"
               />
+              {dateError && (
+                <p
+                  id="vardag-kostnad-date-err"
+                  role="alert"
+                  className="mt-1 text-xs text-danger-600"
+                  data-testid="vardag-kostnad-date-error"
+                >
+                  {dateError}
+                </p>
+              )}
             </Field>
             <Field label="Belopp inkl. moms">
               <input

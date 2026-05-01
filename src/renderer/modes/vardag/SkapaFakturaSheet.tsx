@@ -10,7 +10,7 @@ import { CustomerPicker } from '../../components/invoices/CustomerPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useCounterparty, useVatCodes } from '../../lib/hooks'
-import { kronorToOre, todayLocal } from '../../lib/format'
+import { fiscalYearDateError, kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 
@@ -109,6 +109,14 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const vatOre = Math.round((lineNetOre * vatRate) / 100)
   const totalOre = lineNetOre + vatOre
 
+  const dateError = activeFiscalYear
+    ? fiscalYearDateError(
+        date,
+        activeFiscalYear.start_date,
+        activeFiscalYear.end_date,
+      )
+    : null
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -118,6 +126,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
     description.trim().length > 0 &&
     /^\d{4}$/.test(accountNumber) &&
     vatCodeId !== null &&
+    !dateError &&
     !submitting
 
   async function handleSubmit() {
@@ -206,9 +215,21 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+              aria-invalid={!!dateError}
+              aria-describedby={dateError ? 'vardag-faktura-date-err' : undefined}
+              className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${dateError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
               data-testid="vardag-faktura-date"
             />
+            {dateError && (
+              <p
+                id="vardag-faktura-date-err"
+                role="alert"
+                className="mt-1 text-xs text-danger-600"
+                data-testid="vardag-faktura-date-error"
+              >
+                {dateError}
+              </p>
+            )}
           </Field>
           <Field label="Betalningsvillkor" hint="dagar">
             <input

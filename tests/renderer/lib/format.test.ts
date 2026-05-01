@@ -8,6 +8,7 @@ import {
   unitLabel,
   formatDate,
   pathBasename,
+  fiscalYearDateError,
 } from '../../../src/renderer/lib/format'
 
 describe('toKr', () => {
@@ -170,5 +171,39 @@ describe('pathBasename (VS-13)', () => {
 
   it('hanterar trailing-separator', () => {
     expect(pathBasename('/var/www/')).toBe('www')
+  })
+})
+
+describe('fiscalYearDateError (VS-14)', () => {
+  const fyStart = '2026-01-01'
+  const fyEnd = '2026-12-31'
+
+  it('returnerar null när datum är inom intervall', () => {
+    expect(fiscalYearDateError('2026-06-15', fyStart, fyEnd)).toBeNull()
+  })
+
+  it('returnerar null på exakt start-datum', () => {
+    expect(fiscalYearDateError('2026-01-01', fyStart, fyEnd)).toBeNull()
+  })
+
+  it('returnerar null på exakt slut-datum', () => {
+    expect(fiscalYearDateError('2026-12-31', fyStart, fyEnd)).toBeNull()
+  })
+
+  it('returnerar fel-meddelande för datum före FY', () => {
+    const err = fiscalYearDateError('2025-12-31', fyStart, fyEnd)
+    expect(err).toContain('utanför räkenskapsåret')
+    expect(err).toContain('2026-01-01')
+    expect(err).toContain('2026-12-31')
+  })
+
+  it('returnerar fel för datum efter FY', () => {
+    const err = fiscalYearDateError('2027-01-01', fyStart, fyEnd)
+    expect(err).toContain('utanför räkenskapsåret')
+  })
+
+  it('returnerar null vid ogiltigt format (formvalidering tar över)', () => {
+    expect(fiscalYearDateError('not-a-date', fyStart, fyEnd)).toBeNull()
+    expect(fiscalYearDateError('', fyStart, fyEnd)).toBeNull()
   })
 })

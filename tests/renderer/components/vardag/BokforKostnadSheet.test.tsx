@@ -277,6 +277,28 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     })
   })
 
+  it('VS-14 visar inline-fel om datum utanför aktivt FY', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false, fiscalYear: { id: 1, label: '2026' } },
+    )
+
+    // FY från fixturen är 2026 (start 2026-01-01, end 2026-12-31).
+    // Sätt datum till 2024-06-15 → ska trigga error.
+    fireEvent.change(await screen.findByTestId('vardag-kostnad-date'), {
+      target: { value: '2024-06-15' },
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-kostnad-date-error'),
+      ).toHaveTextContent('utanför räkenskapsåret')
+    })
+
+    // Submit-knappen ska vara disabled så länge datum är ogiltigt.
+    expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
+  })
+
   it('VS-12 cross-platform: backslash-paths visar bara filnamn', async () => {
     mockIpcResponse('expense:select-receipt-file', {
       success: true,

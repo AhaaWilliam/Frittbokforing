@@ -45,6 +45,26 @@ export function formatDate(dateStr: string): string {
 }
 
 /**
+ * VS-14: Kontrollera om ett ISO-datum (YYYY-MM-DD) ligger inom ett
+ * räkenskapsår-intervall. Returnerar `null` om inom, annars
+ * felmeddelande på svenska redo att visa i UI.
+ *
+ * Tolerant mot ogiltigt input — returnerar null så form-validering inte
+ * dubbelflaggar (separat regex i form-schema fångar format-fel).
+ */
+export function fiscalYearDateError(
+  date: string,
+  fyStart: string,
+  fyEnd: string,
+): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+  if (date < fyStart || date > fyEnd) {
+    return `Datumet ligger utanför räkenskapsåret (${fyStart} – ${fyEnd}).`
+  }
+  return null
+}
+
+/**
  * Extrahera basename från en absolut sökväg, plattforms-oberoende.
  * Hanterar både POSIX (`/`) och Windows (`\`) separatorer.
  *
