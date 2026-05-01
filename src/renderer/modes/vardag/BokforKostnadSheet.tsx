@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
+import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
 import { KbdChord } from '../../components/ui/KbdChip'
 import {
@@ -440,13 +441,9 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
           </div>
 
           {error && (
-            <div
-              role="alert"
-              className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800"
-              data-testid="vardag-kostnad-error"
-            >
+            <Callout variant="danger" data-testid="vardag-kostnad-error">
               {error}
-            </div>
+            </Callout>
           )}
 
           <div className="flex items-center justify-between gap-2">
