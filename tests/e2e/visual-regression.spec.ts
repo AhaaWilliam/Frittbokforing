@@ -554,4 +554,105 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
       await cleanup()
     }
   })
+
+  // Sprint H+G-82: baselines för Reports + Budget + Aging — sista
+  // wide-rapport-pages utan visual coverage.
+  test('Rapporter empty (page-reports)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/reports'
+      })
+      await expect(window.getByTestId('page-reports')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-reports-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Åldersanalys empty (page-aging)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/aging'
+      })
+      await expect(window.getByTestId('page-aging')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-aging-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
+
+  test('Kontoutdrag empty (page-account-statement)', async () => {
+    const { window, cleanup } = await launchAppWithFreshDb()
+    try {
+      await window.setViewportSize(VIEWPORT)
+      await createAndLoginTestUser(window)
+      await seedCompanyViaIPC(window)
+      await window.evaluate(async (iso) => {
+        await (
+          window as unknown as {
+            __testApi: { freezeClock: (s: string) => Promise<unknown> }
+          }
+        ).__testApi.freezeClock(iso)
+      }, FROZEN_TIME)
+      await window.reload()
+      await expect(window.getByTestId('app-ready')).toBeVisible({
+        timeout: 15_000,
+      })
+      await window.evaluate(() => {
+        location.hash = '#/account-statement'
+      })
+      await expect(window.getByTestId('page-account-statement')).toBeVisible({
+        timeout: 10_000,
+      })
+      await window.waitForTimeout(500)
+
+      await expect(window).toHaveScreenshot('app-shell-account-statement-empty.png', {
+        maxDiffPixels: 50,
+      })
+    } finally {
+      await cleanup()
+    }
+  })
 })
