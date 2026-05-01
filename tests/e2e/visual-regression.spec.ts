@@ -333,7 +333,7 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     }
   })
 
-  test('Vardag sheet öppen (BokforKostnadSheet placeholder)', async () => {
+  test('Vardag sheet öppen (BokforKostnadSheet wired — VS-3)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
       await window.setViewportSize(VIEWPORT)
@@ -372,7 +372,7 @@ test.describe('Visual regression — Fritt Bokföring UI', () => {
     }
   })
 
-  test('Vardag sheet öppen (SkapaFakturaSheet placeholder)', async () => {
+  test('Vardag sheet öppen (SkapaFakturaSheet wired — VS-4)', async () => {
     const { window, cleanup } = await launchAppWithFreshDb()
     try {
       await window.setViewportSize(VIEWPORT)
