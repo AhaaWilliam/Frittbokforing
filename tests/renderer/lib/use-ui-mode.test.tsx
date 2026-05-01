@@ -92,4 +92,41 @@ describe('useUiMode', () => {
     rerender()
     expect(getSettingMock).toHaveBeenCalledTimes(1)
   })
+
+  it('setMode broadcastar till andra useUiMode-instanser (cross-instance sync)', async () => {
+    // Bug-regression: ModeRouter och AppShellInner är separata useUiMode-
+    // instanser. Innan fixen uppdaterade setMode bara den anropande
+    // instansen — andra (t.ex. ModeRouter) plockade inte upp ändringen
+    // → vy-byte fungerade inte.
+    const hookA = renderHook(() => useUiMode())
+    const hookB = renderHook(() => useUiMode())
+    await waitFor(() => expect(hookA.result.current.loading).toBe(false))
+    await waitFor(() => expect(hookB.result.current.loading).toBe(false))
+
+    expect(hookA.result.current.mode).toBe('bokforare')
+    expect(hookB.result.current.mode).toBe('bokforare')
+
+    act(() => {
+      hookA.result.current.setMode('vardag')
+    })
+
+    expect(hookA.result.current.mode).toBe('vardag')
+    expect(hookB.result.current.mode).toBe('vardag') // synkad via broadcast
+    expect(document.documentElement.dataset.mode).toBe('vardag')
+  })
+
+  it('cleanup tar bort event-listener vid unmount', async () => {
+    const hookA = renderHook(() => useUiMode())
+    const hookB = renderHook(() => useUiMode())
+    await waitFor(() => expect(hookA.result.current.loading).toBe(false))
+    await waitFor(() => expect(hookB.result.current.loading).toBe(false))
+
+    hookB.unmount()
+
+    act(() => {
+      hookA.result.current.setMode('vardag')
+    })
+    // hookA uppdateras, hookB är unmountad — ingen krasch
+    expect(hookA.result.current.mode).toBe('vardag')
+  })
 })

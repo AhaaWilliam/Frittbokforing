@@ -31,6 +31,13 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
         shortcutsRef.current['mod+k']()
         return
       }
+      // mod+shift+b: mode-toggle (Vardag ↔ Bokförare). Använder e.shiftKey
+      // istället för key 'b' eftersom shift+b på vissa layouter blir 'B'.
+      if (mod && e.shiftKey && key === 'b' && shortcutsRef.current['mod+shift+b']) {
+        e.preventDefault()
+        shortcutsRef.current['mod+shift+b']()
+        return
+      }
     }
 
     window.addEventListener('keydown', handler)

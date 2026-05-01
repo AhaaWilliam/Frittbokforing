@@ -62,6 +62,41 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).toHaveBeenCalledOnce()
   })
 
+  it('mod+shift+b triggar mod+shift+b-handler (mode-toggle)', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+shift+b': handler }))
+    const ev = new KeyboardEvent('keydown', {
+      key: 'b',
+      metaKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    window.dispatchEvent(ev)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(ev.defaultPrevented).toBe(true)
+  })
+
+  it('mod+b utan shift triggar INTE mod+shift+b', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+shift+b': handler }))
+    fireKey({ key: 'b', metaKey: true })
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('shift+b utan mod triggar INTE mod+shift+b', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ 'mod+shift+b': handler }))
+    const ev = new KeyboardEvent('keydown', {
+      key: 'b',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    window.dispatchEvent(ev)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
   it('case-insensitiv key-matching (S → s)', () => {
     const handler = vi.fn()
     renderHook(() => useKeyboardShortcuts({ 'mod+s': handler }))
