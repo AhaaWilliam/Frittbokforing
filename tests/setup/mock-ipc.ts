@@ -81,6 +81,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   createCounterparty: 'counterparty:create',
   updateCounterparty: 'counterparty:update',
   deactivateCounterparty: 'counterparty:deactivate',
+  setCounterpartyDefaultAccount: 'counterparty:set-default-account',
   // Products
   listProducts: 'product:list',
   getProduct: 'product:get',
@@ -144,6 +145,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   deleteExpenseDraft: 'expense:delete-draft',
   listExpenseDrafts: 'expense:list-drafts',
   finalizeExpense: 'expense:finalize',
+  attachReceipt: 'expense:attach-receipt',
   payExpense: 'expense:pay',
   payExpensesBulk: 'expense:payBulk',
   getExpensePayments: 'expense:payments',

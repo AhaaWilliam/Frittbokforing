@@ -1,5 +1,4 @@
-import type { z } from 'zod'
-import { SaveExpenseDraftSchema } from '../../shared/ipc-schemas'
+import type { SaveExpenseDraftInput } from '../../shared/types'
 import { addDays } from '../../shared/date-utils'
 
 /**
@@ -22,7 +21,7 @@ import { addDays } from '../../shared/date-utils'
  * öres-fel mellan (netto + moms) och (totalbelopp) hanteras av
  * öresutjämning vid betalning (M99) — inte här.
  */
-export type SaveExpenseDraftPayload = z.input<typeof SaveExpenseDraftSchema>
+export type SaveExpenseDraftPayload = SaveExpenseDraftInput
 
 export interface QuickExpenseInput {
   fiscal_year_id: number
@@ -67,7 +66,6 @@ export function buildQuickExpensePayload(
   return {
     fiscal_year_id: input.fiscal_year_id,
     counterparty_id: input.counterparty_id,
-    expense_type: 'normal',
     supplier_invoice_number: input.supplier_invoice_number ?? null,
     expense_date: input.expense_date,
     due_date: dueDate,

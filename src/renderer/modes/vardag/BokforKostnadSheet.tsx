@@ -1,0 +1,332 @@
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
+import { Field } from '../../components/ui/Field'
+import {
+  KonteringHeader,
+  KonteringRow,
+} from '../../components/ui/KonteringRow'
+import { SupplierPicker } from '../../components/expenses/SupplierPicker'
+import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
+import { useCounterparty, useVatCodes } from '../../lib/hooks'
+import { kronorToOre, todayLocal } from '../../lib/format'
+import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
+import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
+
+/**
+ * Sprint VS-3 — BokforKostnadSheet (funktionell).
+ *
+ * 1-rads-snabbokföring för Vardag-läget. Användaren matar in:
+ *   datum, totalbelopp inkl. moms, leverantör, beskrivning, momssats.
+ *
+ * Konto väljs automatiskt från `counterparties.default_expense_account`
+ * (B2-strategin) — om null, default 6110 (kontorsmateriel) som fallback.
+ * Användaren ändrar manuellt vid behov via konto-input.
+ *
+ * Submit-flow:
+ *   1. expense:save-draft (med 1-rad payload)
+ *   2. expense:finalize (auto)
+ *   3. counterparty:set-default-account (om null från start)
+ *
+ * Multi-line-fall hänvisas till bokförare-läget via CTA "Behöver dela
+ * upp?" (ej i denna sprint).
+ *
+ * Receipt-attach via dialog.showOpenDialog är planerad men kvarstår
+ * som drag-zone-placeholder i denna sprint (kommande iteration).
+ */
+
+interface Props {
+  open: boolean
+  onClose: () => void
+}
+
+const FALLBACK_EXPENSE_ACCOUNT = '6110'
+
+export function BokforKostnadSheet({ open, onClose }: Props) {
+  const { activeFiscalYear } = useFiscalYearContext()
+  const { activeCompany } = useActiveCompany()
+  const { data: vatCodes = [] } = useVatCodes('incoming')
+
+  const [date, setDate] = useState(todayLocal())
+  const [amountKr, setAmountKr] = useState('')
+  const [supplier, setSupplier] = useState<{
+    id: number
+    name: string
+  } | null>(null)
+  const [description, setDescription] = useState('')
+  const [accountNumber, setAccountNumber] = useState(FALLBACK_EXPENSE_ACCOUNT)
+  const [accountManuallyEdited, setAccountManuallyEdited] = useState(false)
+  const [vatCodeId, setVatCodeId] = useState<number | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Default till IP1 (25%) när vatCodes laddats.
+  useEffect(() => {
+    if (vatCodeId === null && vatCodes.length > 0) {
+      const ip1 = vatCodes.find((vc) => vc.rate_percent === 25) ?? vatCodes[0]
+      setVatCodeId(ip1.id)
+    }
+  }, [vatCodes, vatCodeId])
+
+  // Hämta full counterparty för default_expense_account-fallback.
+  const { data: supplierFull } = useCounterparty(supplier?.id)
+
+  // När leverantör väljs och har default → prefill konto (om ej manuellt
+  // ändrat).
+  useEffect(() => {
+    if (!supplierFull || accountManuallyEdited) return
+    if (supplierFull.default_expense_account) {
+      setAccountNumber(supplierFull.default_expense_account)
+    }
+  }, [supplierFull, accountManuallyEdited])
+
+  // Reset state vid stängning.
+  useEffect(() => {
+    if (open) return
+    setDate(todayLocal())
+    setAmountKr('')
+    setSupplier(null)
+    setDescription('')
+    setAccountNumber(FALLBACK_EXPENSE_ACCOUNT)
+    setAccountManuallyEdited(false)
+    setError(null)
+    setSubmitting(false)
+  }, [open])
+
+  const amountInclVatOre = kronorToOre(amountKr)
+  const vatRate = useMemo(() => {
+    return vatCodes.find((vc) => vc.id === vatCodeId)?.rate_percent ?? 25
+  }, [vatCodes, vatCodeId])
+  const netOre = useMemo(
+    () =>
+      amountInclVatOre > 0 ? netFromInclVatOre(amountInclVatOre, vatRate) : 0,
+    [amountInclVatOre, vatRate],
+  )
+  const vatOre = amountInclVatOre - netOre
+
+  const canSubmit =
+    !!activeFiscalYear &&
+    !!activeCompany &&
+    !!supplier &&
+    amountInclVatOre > 0 &&
+    description.trim().length > 0 &&
+    /^\d{4}$/.test(accountNumber) &&
+    vatCodeId !== null &&
+    !submitting
+
+  async function handleSubmit() {
+    if (!canSubmit || !activeFiscalYear || !supplier || vatCodeId === null)
+      return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const payload = buildQuickExpensePayload({
+        fiscal_year_id: activeFiscalYear.id,
+        expense_date: date,
+        amount_incl_vat_ore: amountInclVatOre,
+        vat_rate_percent: vatRate,
+        counterparty_id: supplier.id,
+        description: description.trim(),
+        account_number: accountNumber,
+        vat_code_id: vatCodeId,
+      })
+
+      const draft = await window.api.saveExpenseDraft(payload)
+      if (!draft.success) {
+        setError(draft.error)
+        setSubmitting(false)
+        return
+      }
+
+      const finalized = await window.api.finalizeExpense({ id: draft.data.id })
+      if (!finalized.success) {
+        setError(finalized.error)
+        setSubmitting(false)
+        return
+      }
+
+      // B2-strategin: sätt default_expense_account om null från start.
+      if (
+        supplierFull &&
+        !supplierFull.default_expense_account &&
+        activeCompany
+      ) {
+        try {
+          await window.api.setCounterpartyDefaultAccount({
+            id: supplier.id,
+            company_id: activeCompany.id,
+            field: 'default_expense_account',
+            account_number: accountNumber,
+          })
+        } catch {
+          /* best-effort, blockerar inte success-toast */
+        }
+      }
+
+      toast.success('Kostnaden bokförd')
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+      title="Bokför kostnad"
+      description="Kvitto eller faktura — fyll i, eller låt Fritt föreslå."
+    >
+      <div className="grid grid-cols-[200px_1fr] gap-6">
+        <ReceiptVisual />
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Datum" hint="ÅÅÅÅ-MM-DD">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+                data-testid="vardag-kostnad-date"
+              />
+            </Field>
+            <Field label="Belopp inkl. moms">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amountKr}
+                onChange={(e) => setAmountKr(e.target.value)}
+                placeholder="0,00"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-right text-sm font-mono"
+                data-testid="vardag-kostnad-amount"
+              />
+            </Field>
+            <Field label="Leverantör" span={2}>
+              <SupplierPicker
+                value={supplier}
+                onChange={(s) => setSupplier({ id: s.id, name: s.name })}
+                testId="vardag-kostnad-supplier"
+              />
+            </Field>
+            <Field label="Beskrivning" span={2}>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Vad var det här?"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+                data-testid="vardag-kostnad-description"
+              />
+            </Field>
+            <Field label="Konto" hint="4-siffrig BAS">
+              <input
+                type="text"
+                value={accountNumber}
+                onChange={(e) => {
+                  setAccountNumber(e.target.value)
+                  setAccountManuallyEdited(true)
+                }}
+                maxLength={4}
+                pattern="\d{4}"
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm font-mono"
+                data-testid="vardag-kostnad-account"
+              />
+            </Field>
+            <Field label="Moms">
+              <select
+                value={vatCodeId ?? ''}
+                onChange={(e) => setVatCodeId(Number(e.target.value))}
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+                data-testid="vardag-kostnad-vat"
+              >
+                {vatCodes.map((vc) => (
+                  <option key={vc.id} value={vc.id}>
+                    {vc.code} — {vc.rate_percent}%
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <div
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
+            aria-live="polite"
+          >
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+              Förslag-kontering
+            </p>
+            <KonteringHeader />
+            {amountInclVatOre > 0 ? (
+              <>
+                <KonteringRow
+                  account={accountNumber}
+                  description={description || '(beskrivning)'}
+                  debit={netOre}
+                />
+                {vatOre > 0 && (
+                  <KonteringRow
+                    account="2640"
+                    description="Ingående moms"
+                    debit={vatOre}
+                  />
+                )}
+                <KonteringRow
+                  account="2440"
+                  description="Leverantörsskuld"
+                  credit={amountInclVatOre}
+                />
+              </>
+            ) : (
+              <KonteringRow
+                account="—"
+                description="Fyll i belopp för förslag"
+              />
+            )}
+          </div>
+
+          {error && (
+            <div
+              role="alert"
+              className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+              data-testid="vardag-kostnad-error"
+            >
+              {error}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <BottomSheetClose>Avbryt</BottomSheetClose>
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={handleSubmit}
+              className="rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              data-testid="vardag-kostnad-submit"
+            >
+              {submitting ? 'Bokför…' : 'Bokför'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function ReceiptVisual() {
+  return (
+    <div className="flex aspect-[3/4] items-center justify-center rounded-md border border-dashed border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 text-center">
+      <div className="px-4">
+        <div className="mb-2 text-3xl">🧾</div>
+        <p className="text-xs text-[var(--text-faint)]">
+          Dra in kvitto eller foto
+        </p>
+      </div>
+    </div>
+  )
+}

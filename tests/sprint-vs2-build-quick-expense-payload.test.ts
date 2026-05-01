@@ -95,11 +95,6 @@ describe('buildQuickExpensePayload', () => {
     expect(p.lines![0].unit_price_ore).toBe(50_000)
   })
 
-  it('expense_type alltid "normal" (sheets stödjer inte kreditfakturor)', () => {
-    const p = buildQuickExpensePayload(BASE)
-    expect(p.expense_type).toBe('normal')
-  })
-
   it('supplier_invoice_number kan sättas', () => {
     const p = buildQuickExpensePayload({
       ...BASE,
