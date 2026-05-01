@@ -155,7 +155,7 @@ export function PageSepaDd() {
       <PageHeader title="Autogiro (SEPA DD)" />
 
       <div className="border-b px-6">
-        <nav
+        <div
           role="tablist"
           aria-label="SEPA Direct Debit-sektioner"
           className="flex gap-1"
@@ -178,7 +178,7 @@ export function PageSepaDd() {
           >
             Batcher
           </TabButton>
-        </nav>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto px-6 pb-6 pt-4">

@@ -28,7 +28,7 @@ import {
 } from '../src/main/services/manual-entry-service'
 
 let db: Database.Database
-let companyId: number
+let _companyId: number
 let fiscalYearId: number
 
 function createTestDb(): Database.Database {
@@ -57,7 +57,7 @@ beforeEach(() => {
     fiscal_year_start: '2026-01-01',
     fiscal_year_end: '2026-12-31',
   })
-  companyId = (
+  _companyId = (
     db.prepare('SELECT id FROM companies LIMIT 1').get() as { id: number }
   ).id
   fiscalYearId = (
