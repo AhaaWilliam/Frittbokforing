@@ -56,7 +56,7 @@ vi.mock(
 
 // sonner toast mock
 vi.mock('sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }))
 
 // Toast mock för verifiering av success-call
@@ -65,6 +65,7 @@ import { toast } from 'sonner'
 beforeEach(() => {
   vi.mocked(toast.success).mockClear()
   vi.mocked(toast.error).mockClear()
+  vi.mocked(toast.warning).mockClear()
   setupMockIpc()
   mockIpcResponse('vat-code:list', {
     success: true,
@@ -480,6 +481,56 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('vardag-kostnad-receipt-pick')).toBeInTheDocument(),
+    )
+  })
+
+  it('VS-21 visar toast.warning om receipt-attach misslyckas (men bokför ändå)', async () => {
+    mockIpcResponse('expense:select-receipt-file', {
+      success: true,
+      data: { filePath: '/tmp/kvitto.pdf' },
+    })
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 99 }),
+    })
+    mockIpcResponse('expense:attach-receipt', {
+      success: false,
+      error: 'Disk full',
+      code: 'UNEXPECTED_ERROR',
+    })
+    mockIpcResponse('expense:finalize', {
+      success: true,
+      data: { id: 99, journal_entry_id: 500, verification_number: 1 },
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('vardag-kostnad-receipt-attached'),
+      ).toBeInTheDocument(),
+    )
+
+    fireEvent.change(screen.getByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Pennor' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+    fireEvent.click(screen.getByTestId('vardag-kostnad-submit'))
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+    expect(toast.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Kvittot kunde inte sparas'),
     )
   })
 

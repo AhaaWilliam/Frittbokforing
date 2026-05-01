@@ -201,16 +201,19 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
         return
       }
 
-      // Receipt-attach: best-effort innan finalize. Misslyckas tyst —
-      // bokföringen blockeras inte av disk-fel eller behörighetsfel.
+      // Receipt-attach: best-effort innan finalize. Bokföringen blockeras
+      // inte av disk-fel — men användaren informeras via toast.warning så
+      // hen kan bifoga kvittot manuellt (BFL 7 kap arkivering).
+      let receiptAttachFailed = false
       if (receiptPath) {
         try {
-          await window.api.attachReceipt({
+          const r = await window.api.attachReceipt({
             expense_id: draft.data.id,
             source_file_path: receiptPath,
           })
+          if (!r.success) receiptAttachFailed = true
         } catch {
-          /* best-effort */
+          receiptAttachFailed = true
         }
       }
 
@@ -241,6 +244,11 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
 
       const verNum = finalized.data.verification_number
       toast.success(`Kostnaden bokförd som B${verNum}`)
+      if (receiptAttachFailed) {
+        toast.warning(
+          'Kvittot kunde inte sparas — bifoga manuellt i kostnadsvyn för att uppfylla arkivkrav.',
+        )
+      }
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')
