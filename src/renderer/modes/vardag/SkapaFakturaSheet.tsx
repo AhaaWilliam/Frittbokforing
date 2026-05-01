@@ -171,7 +171,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
         }
       }
 
-      toast.success('Fakturan skickad')
+      const verNum = finalized.data.verification_number
+      toast.success(`Fakturan skickad som A${verNum}`)
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')

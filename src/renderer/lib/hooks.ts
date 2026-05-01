@@ -556,12 +556,12 @@ export function useInvoiceList(
 }
 
 export function useFinalizeInvoice(_fiscalYearId?: number | undefined) {
-  return useIpcMutation<{ id: number }, InvoiceWithLines>(
-    (data) => window.api.finalizeInvoice(data),
-    {
-      invalidate: [queryKeys.allInvoices(), queryKeys.anyInvoice()],
-    },
-  )
+  return useIpcMutation<
+    { id: number },
+    { id: number; verification_number: number }
+  >((data) => window.api.finalizeInvoice(data), {
+    invalidate: [queryKeys.allInvoices(), queryKeys.anyInvoice()],
+  })
 }
 
 export function useUpdateSentInvoice() {
@@ -636,7 +636,7 @@ export function useDeleteExpenseDraft() {
 }
 
 export function useFinalizeExpense() {
-  return useIpcMutation<{ id: number }, ExpenseWithLines>(
+  return useIpcMutation<{ id: number }, { id: number; verification_number: number }>(
     (data) => window.api.finalizeExpense(data),
     {
       invalidate: [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()],

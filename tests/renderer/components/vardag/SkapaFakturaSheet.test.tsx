@@ -149,7 +149,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     fireEvent.click(screen.getByTestId('vardag-faktura-submit'))
 
     await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith('Fakturan skickad'),
+      expect(toast.success).toHaveBeenCalledWith('Fakturan skickad som A1'),
     )
     expect(onClose).toHaveBeenCalled()
 

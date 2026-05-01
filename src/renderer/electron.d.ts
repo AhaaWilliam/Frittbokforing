@@ -215,7 +215,7 @@ interface ElectronAPI {
   >
   finalizeInvoice: (data: {
     id: number
-  }) => Promise<IpcResult<InvoiceWithLines>>
+  }) => Promise<IpcResult<{ id: number; verification_number: number }>>
   updateSentInvoice: (data: {
     id: number
     notes?: string | null
@@ -259,7 +259,7 @@ interface ElectronAPI {
   selectReceiptFile: () => Promise<IpcResult<{ filePath: string } | null>>
   finalizeExpense: (data: {
     id: number
-  }) => Promise<IpcResult<import('../shared/types').ExpenseWithLines>>
+  }) => Promise<IpcResult<{ id: number; verification_number: number }>>
   payExpense: (data: {
     expense_id: number
     amount_ore: number

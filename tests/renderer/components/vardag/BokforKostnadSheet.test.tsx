@@ -141,7 +141,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     fireEvent.click(screen.getByTestId('vardag-kostnad-submit'))
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Kostnaden bokförd')
+      expect(toast.success).toHaveBeenCalledWith('Kostnaden bokförd som B1')
     })
     expect(onClose).toHaveBeenCalled()
 
