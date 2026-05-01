@@ -374,14 +374,19 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
               <select
                 value={vatCodeId ?? ''}
                 onChange={(e) => setVatCodeId(Number(e.target.value))}
-                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm"
+                disabled={vatCodes.length === 0}
+                className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-sm disabled:opacity-60"
                 data-testid="vardag-kostnad-vat"
               >
-                {vatCodes.map((vc) => (
-                  <option key={vc.id} value={vc.id}>
-                    {vc.code} — {vc.rate_percent}%
-                  </option>
-                ))}
+                {vatCodes.length === 0 ? (
+                  <option value="">Laddar momskoder…</option>
+                ) : (
+                  vatCodes.map((vc) => (
+                    <option key={vc.id} value={vc.id}>
+                      {vc.code} — {vc.rate_percent}%
+                    </option>
+                  ))
+                )}
               </select>
             </Field>
           </div>

@@ -312,6 +312,22 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
   })
 
+  it('VS-22 moms-dropdown visar "Laddar momskoder…" innan vat-codes laddats', async () => {
+    // beforeEach mockar vat-code:list med fixture, override till tom array.
+    mockIpcResponse('vat-code:list', { success: true, data: [] })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    const vatSelect = (await screen.findByTestId(
+      'vardag-kostnad-vat',
+    )) as HTMLSelectElement
+    expect(vatSelect).toBeDisabled()
+    expect(vatSelect).toHaveTextContent('Laddar momskoder')
+  })
+
   it('VS-20 visar kontonamn när kontonummer matchar', async () => {
     mockIpcResponse('account:list-all', {
       success: true,
