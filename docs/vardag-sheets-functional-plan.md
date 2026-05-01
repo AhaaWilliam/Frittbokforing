@@ -1,13 +1,25 @@
 # Vardag Sheets — funktionell integration: analys & plan
 
-**Status per 2026-05-01:** ✅ **Levererat.** Sprintar VS-1 (7a6e9c6),
-VS-2 (37e5a9e), VS-3 (c4c2445), VS-4, VS-5 (8590b0a), VS-6.
-46 nya VS-tester gröna, ny princip M162 i CLAUDE.md. Båda sheet:ar är
-funktionella 1-rads-snabbflöden. Multi-line-fall hänvisas till bokförare-
-läget. Drag-zon för kvitto: backend (receipt-storage + IPC) klar; UI
-för dialog.showOpenDialog kvarstår som follow-up när användaren behöver
-det. OCR (A2/A3) är medvetet uppskjuten — A4-leveransen täcker 80% av
-värdet.
+**Status per 2026-05-01:** ✅ **Levererat + utvidgat.** Original plan
+VS-1..VS-6 (commits `7a6e9c6`, `37e5a9e`, `c4c2445`, `c8b30b1`,
+`8590b0a`, `f4827ed`) levererad enligt design.
+
+Follow-up-arc VS-7..VS-14 (commits `45ae871`, `68a749e`, `4c52aa8`,
+`01f537d`, `cc154e3`, `9fc8dfb`, `08e0729`, `f5f0229`) tillade:
+- Receipt-attach UI med dialog.showOpenDialog (VS-7)
+- Multi-line escape-hatch CTA (VS-8)
+- Dedikerade a11y-tester med axe enabled (VS-9)
+- Verifikationsnummer i toast — i Vardag + bokförare-läget (VS-10/11)
+- Cross-platform path-separator-fix för Windows (VS-12)
+- pathBasename-helper med PageExport-spillover (VS-13)
+- Inline FY-datum-validering (VS-14)
+
+**Total: 62 nya VS-tester, 4 nya IPC-kanaler, 1 migration, 4 helpers,
+1 princip (M162). Båda sheets axe-clean.**
+
+OCR (A2/A3) medvetet uppskjuten — A4 levererar 80% av värdet.
+Multi-line direkt i sheets, PDF-generation, VerifikatLivePreview
+kräver produktbeslut och kvarstår på backlog.
 
 Original plan nedan bevarad för historik.
 
