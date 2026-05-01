@@ -150,12 +150,12 @@ describe('useJournalPreview', () => {
     const { rerender } = renderHook(
       ({ inp }: { inp: Parameters<typeof window.api.previewJournalLines>[0] }) =>
         useJournalPreview(inp),
-      { initialProps: { inp: { x: 1 } as Parameters<typeof window.api.previewJournalLines>[0] } },
+      { initialProps: { inp: { x: 1 } as unknown as Parameters<typeof window.api.previewJournalLines>[0] } },
     )
     await act(async () => {
       vi.advanceTimersByTime(50)
     })
-    rerender({ inp: { x: 2 } as Parameters<typeof window.api.previewJournalLines>[0] })
+    rerender({ inp: { x: 2 } as unknown as Parameters<typeof window.api.previewJournalLines>[0] })
     await act(async () => {
       vi.advanceTimersByTime(150)
     })
