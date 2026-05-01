@@ -1045,6 +1045,49 @@ brutet räkenskapsår kan producera upp till 20 perioder för typiska
 kombinationer. Relax till 18 enligt BFL 3:3 max-duration kräver ny
 migration + motsvarande schema-refines + renderer-clamp-uppdateringar.
 
+## 64. Vardag-sheets är 1-rads-snabbflöden (M162)
+
+**M162.** Vardag-läget exponerar `BokforKostnadSheet` och `SkapaFakturaSheet`
+som **1-rads-snabbflöden** för småbolagets vardag — *inte* fullskaliga
+ersättare för bokförare-lägets multi-line-formulär. Multi-line-fall
+(t.ex. fakturor med flera artiklar, kostnader uppdelade på flera konton)
+hänvisas explicit till bokförare-läget via CTA "Behöver dela upp på flera
+konton?" / "Lägg till fler rader".
+
+**Konsekvens för design:**
+- `quantity` hårdkodas till 1 i `buildQuickExpensePayload` (M130: expense
+  är heltal). Faktura-helpern accepterar fraktionell quantity (default 1)
+  eftersom konsultfakturering är vanligt i vardag.
+- Default-konto pre-fylls från `counterparty.default_expense_account`
+  / `default_revenue_account` (B2-strategi: lärs in vid första bokföring,
+  uppdateras inte automatiskt vid senare bokningar — manuell ändring i
+  motpart-detaljvyn).
+- Sheets duplicerar INTE bokföringslogik — submit-flow är
+  `save-draft` → `finalize` → `set-default-account` (om null), alla via
+  befintliga IPC-kanaler. M100 strukturerade fel propagerar till
+  Callout-komponent i sheet:n.
+
+**Helper-mönster:** `buildQuickExpensePayload` och `buildQuickInvoicePayload`
+(`src/renderer/lib/`) är single-source-of-truth för payload-byggande.
+Sheet-komponenter ska INTE bygga `SaveExpenseDraftInput` /
+`SaveDraftInput` direkt — alltid via helpern. Helpers använder
+`netFromInclVatOre()` (heltalsaritmetik per M131) för netto-uträkning
+från totalbelopp inkl. moms.
+
+**Receipt-storage:** kvitto-filer lagras under
+`<documents>/Fritt Bokföring/receipts/<expense_id>/<basename>` med
+sanerat filnamn (path-traversal-skydd via `sanitizeBasename`).
+`expenses.receipt_path` håller relativ path mot
+`<documents>/Fritt Bokföring/`. Best-effort: receipt-attach-fail
+blockerar inte bokföringen.
+
+**Avgränsning:** OCR-pipeline (Tesseract.js eller cloud-API) är
+medvetet uppskjuten — A4-strategin (drag-zon + manuell inmatning)
+levererar 80% av värdet med 5% av komplexiteten. Återupptas vid behov.
+
+**Referens:** Sprint VS-1 t.o.m. VS-6 (2026-04-22..2026-05-01),
+`docs/vardag-sheets-functional-plan.md`.
+
 ## Architecture Decision Records
 
 Beslut som annars skulle omdebatteras varje sprint lever i `docs/adr/`.

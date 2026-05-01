@@ -1,9 +1,15 @@
 # Vardag Sheets — funktionell integration: analys & plan
 
-**Status per 2026-05-01:** `BokforKostnadSheet` och `SkapaFakturaSheet` är
-visuella prototyper sedan H+G-8 (commit 7bebeb5). Alla input-fält saknar
-`onChange`, knapparna är hårdkodade `disabled`. Block 2 i
-[redesign-h-plus-g-handoff-v2.md](redesign-h-plus-g-handoff-v2.md).
+**Status per 2026-05-01:** ✅ **Levererat.** Sprintar VS-1 (7a6e9c6),
+VS-2 (37e5a9e), VS-3 (c4c2445), VS-4, VS-5 (8590b0a), VS-6.
+46 nya VS-tester gröna, ny princip M162 i CLAUDE.md. Båda sheet:ar är
+funktionella 1-rads-snabbflöden. Multi-line-fall hänvisas till bokförare-
+läget. Drag-zon för kvitto: backend (receipt-storage + IPC) klar; UI
+för dialog.showOpenDialog kvarstår som follow-up när användaren behöver
+det. OCR (A2/A3) är medvetet uppskjuten — A4-leveransen täcker 80% av
+värdet.
+
+Original plan nedan bevarad för historik.
 
 ---
 
