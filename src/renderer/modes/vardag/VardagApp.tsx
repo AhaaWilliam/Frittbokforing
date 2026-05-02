@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import {
   FiscalYearProvider,
@@ -81,15 +81,6 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   }, [])
 
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), [])
-
-  useEffect(() => {
-    if (!sheet) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setSheet(null)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [sheet])
 
   return (
     <VardagShell companyName={companyName}>
