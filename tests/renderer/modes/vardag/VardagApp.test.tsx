@@ -32,7 +32,9 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
       expect(screen.getByTestId('vardag-status-pills')).toBeInTheDocument()
     })
     expect(screen.getByText(/Inkorgen är tom/)).toBeInTheDocument()
-    expect(screen.getByText(/Momsperiod/)).toBeInTheDocument()
+    // VS-115c: pillen visar "Moms <period>: <datum> (<dagar>)" eller
+    // "Moms: ingen deadline" (om FY saknas i mock).
+    expect(screen.getByTestId('vardag-pill-vat')).toBeInTheDocument()
     expect(screen.getByText('⌘K')).toBeInTheDocument()
     // ⌘⇧B förekommer både i topbar-switch-knapp och kbd-hints — räcker med >0
     expect(screen.getAllByText('⌘⇧B').length).toBeGreaterThan(0)

@@ -78,7 +78,8 @@ function CheckIcon({ status }: { status: 'ok' | 'warning' | 'na' }) {
 
 export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
-  const { data: periods = [] } = useFiscalPeriods(activeFiscalYear?.id)
+  const { data: periodsRaw } = useFiscalPeriods(activeFiscalYear?.id)
+  const periods = periodsRaw ?? []
   const closePeriodMutation = useClosePeriod(activeFiscalYear?.id)
 
   const activePeriod = useMemo(() => {

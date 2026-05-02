@@ -77,6 +77,7 @@ describe('routes-tabellen', () => {
       'import',
       'bank-statements',
       'sepa-dd',
+      'inbox',
     ])
     for (const r of routes) {
       expect(knownPages.has(r.page)).toBe(true)
