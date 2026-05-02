@@ -349,6 +349,11 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 placeholder="0,00"
                 className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-right text-sm font-mono"
                 data-testid="vardag-kostnad-amount"
+                aria-describedby={
+                  amountInclVatOre > 0
+                    ? 'vardag-kostnad-summary'
+                    : undefined
+                }
               />
             </Field>
             <Field label="Leverantör" span={2}>
@@ -430,6 +435,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
               uppdelningen tydligt innan submit. */}
           {amountInclVatOre > 0 && (
             <div
+              id="vardag-kostnad-summary"
               className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
               aria-live="polite"
               data-testid="vardag-kostnad-summary"

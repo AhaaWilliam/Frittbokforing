@@ -344,6 +344,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
             <span
               className="px-1 py-2 text-right font-mono text-xs text-[var(--text-secondary)]"
               data-testid="vardag-faktura-line-total"
+              aria-live="polite"
+              aria-label="Radens nettobelopp"
             >
               {(lineNetOre / 100).toFixed(2)}
             </span>
