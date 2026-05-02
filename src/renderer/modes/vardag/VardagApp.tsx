@@ -18,6 +18,7 @@ import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
 import { BokforKostnadSheet } from './BokforKostnadSheet'
 import { SkapaFakturaSheet } from './SkapaFakturaSheet'
+import { CloseMonthDialog } from '../../components/period/CloseMonthDialog'
 
 /**
  * Sprint H+G-3 — VardagApp som hero-screen (matchar H+G-prototyp).
@@ -77,6 +78,7 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   void expenseDrafts
   void invoiceDrafts
   const [sheet, setSheet] = useState<VardagSheet>(null)
+  const [closeMonthOpen, setCloseMonthOpen] = useState(false)
   const [now, setNow] = useState(() => new Date())
 
   useKeyboardShortcuts({
@@ -139,7 +141,7 @@ function VardagAppInner({ companyName }: { companyName: string }) {
             color="dark"
             label="Stäng månad"
             hint="Avstämning, moms, lås period"
-            onClick={() => setMode('bokforare')}
+            onClick={() => setCloseMonthOpen(true)}
             testId="vardag-bigbtn-stang-manad"
           />
         </div>
@@ -203,6 +205,10 @@ function VardagAppInner({ companyName }: { companyName: string }) {
       <SkapaFakturaSheet
         open={sheet === 'faktura'}
         onClose={() => setSheet(null)}
+      />
+      <CloseMonthDialog
+        open={closeMonthOpen}
+        onClose={() => setCloseMonthOpen(false)}
       />
     </VardagShell>
   )
