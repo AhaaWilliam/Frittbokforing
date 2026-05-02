@@ -978,6 +978,10 @@ export function useMatchBankTransaction() {
       queryKeys.allBankStatements(),
       queryKeys.allInvoices(),
       queryKeys.allExpenses(),
+      queryKeys.allPayments(),
+      queryKeys.allExpensePayments(),
+      queryKeys.allLatestVerifications(),
+      queryKeys.allDashboard(),
     ],
   })
 }
@@ -1019,6 +1023,11 @@ export function useUnmatchBankTransaction() {
       queryKeys.allBankStatements(),
       queryKeys.allInvoices(),
       queryKeys.allExpenses(),
+      queryKeys.allPayments(),
+      queryKeys.allExpensePayments(),
+      queryKeys.allLatestVerifications(),
+      queryKeys.allDashboard(),
+      queryKeys.allManualEntries(),
     ],
   })
 }
@@ -1063,8 +1072,11 @@ export function useUnmatchBankBatch() {
       queryKeys.allBankStatements(),
       queryKeys.allInvoices(),
       queryKeys.allExpenses(),
+      queryKeys.allPayments(),
+      queryKeys.allExpensePayments(),
       queryKeys.allDashboard(),
       queryKeys.allManualEntries(),
+      queryKeys.allLatestVerifications(),
     ],
   })
 }
