@@ -9,6 +9,7 @@ import { loadVatCodeMap, computeLineVat } from './shared/line-vat'
 import { VAT_IN_ACCOUNT } from '../../shared/vat-accounts'
 import { escapeLikePattern } from '../../shared/escape-like'
 import { validateAccountsActive } from './account-service'
+import { _unlinkReceiptFromExpenseTx } from './receipt-service'
 import type {
   Expense,
   ExpenseLine,
@@ -333,7 +334,15 @@ export function deleteExpenseDraft(
       code: 'VALIDATION_ERROR',
     }
 
-  db.prepare('DELETE FROM expenses WHERE id = ?').run(id) // CASCADE deletes lines
+  // VS-119: Om en receipt råkar vara länkad till denna expense (förekommer
+  // ej i nuvarande draft-flow men möjligt om link sker före finalize i
+  // framtida flöden), återställ den till inbox FÖRST. Annars FK ON DELETE
+  // SET NULL → receipt.expense_id=NULL medan status='booked' → bryter
+  // CHECK-constraint i migration 059. Hela operationen ska vara atomär.
+  db.transaction(() => {
+    _unlinkReceiptFromExpenseTx(db, id)
+    db.prepare('DELETE FROM expenses WHERE id = ?').run(id) // CASCADE deletes lines
+  })()
   return { success: true, data: undefined }
 }
 
