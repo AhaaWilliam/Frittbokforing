@@ -49,7 +49,7 @@ function BackupReminder({
           <button
             type="button"
             onClick={() => navigate('/settings')}
-            className="flex-shrink-0 rounded-md border border-warning-500/30 bg-white px-3 py-1.5 text-xs font-medium text-neutral-900 hover:bg-warning-100/40"
+            className="flex-shrink-0 rounded-md border border-warning-500/30 bg-[var(--surface-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-warning-100/40"
           >
             Öppna inställningar
           </button>
