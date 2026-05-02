@@ -43,6 +43,7 @@ function makeAllPeriods(): FiscalPeriod[] {
       start_date: `2026-${m}-01`,
       end_date: `2026-${m}-28`,
       is_closed: 0,
+      closed_at: null,
     }
   })
 }

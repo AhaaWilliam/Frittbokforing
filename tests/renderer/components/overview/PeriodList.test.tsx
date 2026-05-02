@@ -6,7 +6,11 @@ import { renderWithProviders } from '../../../helpers/render-with-providers'
 import { PeriodList } from '../../../../src/renderer/components/overview/PeriodList'
 import type { FiscalPeriod } from '../../../../src/shared/types'
 
-function makePeriod(month: number, isClosed: boolean): FiscalPeriod {
+function makePeriod(
+  month: number,
+  isClosed: boolean,
+  closedAt: string | null = null,
+): FiscalPeriod {
   const m = String(month).padStart(2, '0')
   const endDay = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]
   return {
@@ -16,6 +20,7 @@ function makePeriod(month: number, isClosed: boolean): FiscalPeriod {
     start_date: `2026-${m}-01`,
     end_date: `2026-${m}-${endDay}`,
     is_closed: isClosed ? 1 : 0,
+    closed_at: isClosed ? closedAt : null,
   }
 }
 
@@ -256,6 +261,45 @@ describe('PeriodList', () => {
     // No close/reopen buttons when readOnly
     expect(screen.queryByText(/Stäng januari/)).toBeNull()
     expect(screen.queryByText(/Öppna mars/)).toBeNull()
+  })
+
+  // VS-130: Closed periods visar "Stängd <datum>" istället för "Klar"
+  // när closed_at finns i datat. Faller tillbaka till "Klar" om saknas.
+  it('VS-130: closed period with closed_at shows "Stängd <datum>"', async () => {
+    const periods = makeAllPeriods(0)
+    periods[0] = {
+      ...periods[0],
+      is_closed: 1,
+      closed_at: '2026-02-15 10:30:00',
+    }
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+
+    await waitFor(() => {
+      expect(screen.getByText('Januari')).toBeInTheDocument()
+    })
+    const closedSpan = screen.getByTestId('period-closed-1')
+    expect(closedSpan.textContent).toMatch(/^Stängd /)
+    expect(closedSpan.textContent).toMatch(/15 feb/i)
+    expect(closedSpan.getAttribute('title')).toBe('Stängd 2026-02-15 10:30:00')
+  })
+
+  it('VS-130: closed period without closed_at falls back to "Klar"', async () => {
+    const periods = makeAllPeriods(0)
+    periods[0] = {
+      ...periods[0],
+      is_closed: 1,
+      closed_at: null,
+    }
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+
+    await waitFor(() => {
+      expect(screen.getByText('Januari')).toBeInTheDocument()
+    })
+    const closedSpan = screen.getByTestId('period-closed-1')
+    expect(closedSpan.textContent).toBe('Klar')
+    expect(closedSpan.getAttribute('title')).toBeNull()
   })
 
   it('passes axe a11y check', async () => {

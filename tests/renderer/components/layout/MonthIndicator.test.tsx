@@ -15,6 +15,7 @@ function makePeriod(month: number, isClosed: boolean): FiscalPeriod {
     start_date: `2026-${m}-01`,
     end_date: `2026-${m}-28`,
     is_closed: isClosed ? 1 : 0,
+    closed_at: null,
   }
 }
 

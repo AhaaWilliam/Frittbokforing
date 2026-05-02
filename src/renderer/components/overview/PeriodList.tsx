@@ -19,6 +19,18 @@ function getMonthName(period: FiscalPeriod): string {
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
+// VS-130: Formatera closed_at (datetime('now','localtime')) som svenskt datum.
+// Returnerar null om closed_at saknas eller inte kan parsas.
+function formatClosedAt(closedAt: string | null): string | null {
+  if (!closedAt) return null
+  const date = new Date(closedAt.replace(' ', 'T'))
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('sv-SE', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 export function PeriodList() {
   const { activeFiscalYear, isReadOnly } = useFiscalYearContext()
   const { data: periods = [] } = useFiscalPeriods(activeFiscalYear?.id)
@@ -58,9 +70,26 @@ export function PeriodList() {
               <span>{monthName}</span>
               <div className="flex items-center gap-2">
                 {period.is_closed === 1 ? (
-                  <Pill variant="success" withDot>
-                    Klar
-                  </Pill>
+                  (() => {
+                    // VS-130: Visa "Stängd <datum>" istället för bara "Klar"
+                    // när closed_at finns. Faller tillbaka till "Klar" om
+                    // datumet saknas (legacy-rader, edge cases).
+                    const closedDate = formatClosedAt(period.closed_at)
+                    return (
+                      <Pill variant="success" withDot>
+                        <span
+                          data-testid={`period-closed-${period.id}`}
+                          title={
+                            period.closed_at
+                              ? `Stängd ${period.closed_at}`
+                              : undefined
+                          }
+                        >
+                          {closedDate ? `Stängd ${closedDate}` : 'Klar'}
+                        </span>
+                      </Pill>
+                    )
+                  })()
                 ) : (
                   <Pill variant="neutral" withDot>
                     Öppen

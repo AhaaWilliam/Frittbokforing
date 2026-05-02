@@ -138,6 +138,7 @@ export interface FiscalPeriod {
   start_date: string
   end_date: string
   is_closed: 0 | 1
+  closed_at: string | null
 }
 
 // === Counterparty ===
