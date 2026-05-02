@@ -232,9 +232,18 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
         return
       }
 
-      // Receipt-attach: best-effort innan finalize. Bokföringen blockeras
-      // inte av disk-fel — men användaren informeras via toast.warning så
-      // hen kan bifoga kvittot manuellt (BFL 7 kap arkivering).
+      const finalized = await window.api.finalizeExpense({ id: draft.data.id })
+      if (!finalized.success) {
+        setError(finalized.error)
+        submittingRef.current = false; setSubmitting(false)
+        return
+      }
+
+      // VS-38: Receipt-attach EFTER finalize — undviker föräldralös receipt-fil
+      // om finalize failar (annars skulle filen kopieras till disken och
+      // expenses.receipt_path uppdateras på en draft som sedan inte kan bokas).
+      // Best-effort: attach-fel blockerar inte bokföringen, användaren får
+      // toast.warning för manuellt re-attach.
       let receiptAttachFailed = false
       if (receiptPath) {
         try {
@@ -246,13 +255,6 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
         } catch {
           receiptAttachFailed = true
         }
-      }
-
-      const finalized = await window.api.finalizeExpense({ id: draft.data.id })
-      if (!finalized.success) {
-        setError(finalized.error)
-        submittingRef.current = false; setSubmitting(false)
-        return
       }
 
       // B2-strategin: sätt default_expense_account om null från start.
