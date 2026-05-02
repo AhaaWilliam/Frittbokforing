@@ -5,6 +5,7 @@ import { useGlobalSearch, useDebouncedSearch } from '../../lib/hooks'
 import { useNavigate } from '../../lib/router'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { isMac, modKey } from '../ui/KbdChip'
+import { isAnyModalOpen } from '../../lib/is-modal-open'
 import type {
   SearchResult,
   SearchResultType,
@@ -91,10 +92,12 @@ export function GlobalSearch() {
     [navigate, setSearch],
   )
 
-  // Global keyboard shortcut: Ctrl+K / Cmd+K
+  // Global keyboard shortcut: Ctrl+K / Cmd+K. VS-105: skippa om en
+  // Radix-modal är öppen så att fokus inte stjäls från modalen.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        if (isAnyModalOpen()) return
         e.preventDefault()
         inputRef.current?.focus()
       }

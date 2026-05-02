@@ -19,6 +19,7 @@ import {
   type RecentItem,
 } from '../components/command-palette/commands'
 import { useKeyboardShortcuts } from '../lib/useKeyboardShortcuts'
+import { isAnyModalOpen } from '../lib/is-modal-open'
 import { useUiMode } from '../lib/use-ui-mode'
 import {
   useDraftInvoices,
@@ -175,7 +176,17 @@ function AppShellInner({ company }: AppShellInnerProps) {
     [navigate, recentItems, setMode, activeFiscalYear, reTransferIB],
   )
   useKeyboardShortcuts({
-    'mod+k': () => setPaletteOpen((open) => !open),
+    'mod+k': () => {
+      // VS-105: Om palette redan är öppen, låt mod+k stänga den (toggle).
+      // Om någon annan modal är öppen, skippa — annars skulle palette
+      // poppa upp bakom modal och stjäla fokus.
+      if (paletteOpen) {
+        setPaletteOpen(false)
+        return
+      }
+      if (isAnyModalOpen()) return
+      setPaletteOpen(true)
+    },
     'mod+shift+b': () => setMode('vardag'),
   })
 
