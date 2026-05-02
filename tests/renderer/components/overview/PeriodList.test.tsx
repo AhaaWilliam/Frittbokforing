@@ -86,6 +86,57 @@ describe('PeriodList', () => {
     expect(screen.queryByText(/Stäng april/i)).toBeNull()
   })
 
+  // VS-122: status-prick visas på första öppna period med advisory-checks.
+  it('VS-122 visar "Klar för stängning" på första öppna period när allOk', async () => {
+    const periods = makeAllPeriods(2) // Jan-Feb closed, Mar first open
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    mockIpcResponse('period:checks', {
+      success: true,
+      data: {
+        period_id: 3,
+        period_start: '2026-03-01',
+        period_end: '2026-03-31',
+        bankReconciliation: { status: 'na', count: 0, detail: '' },
+        salaryBooked: { status: 'na', count: 0, detail: '' },
+        vatReportReady: { status: 'ok', count: 0, detail: '' },
+        supplierPayments: { status: 'ok', count: 0, detail: '' },
+        allOk: true,
+      },
+    })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+
+    await waitFor(() => {
+      expect(screen.getByTestId('period-checks-status-3')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Klar för stängning')).toBeInTheDocument()
+    // Endast på första öppna — inte på andra rader.
+    expect(screen.queryByTestId('period-checks-status-4')).toBeNull()
+  })
+
+  it('VS-122 visar "Varningar" när checks har warning-status', async () => {
+    const periods = makeAllPeriods(0) // Jan first open
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    mockIpcResponse('period:checks', {
+      success: true,
+      data: {
+        period_id: 1,
+        period_start: '2026-01-01',
+        period_end: '2026-01-31',
+        bankReconciliation: { status: 'na', count: 0, detail: '' },
+        salaryBooked: { status: 'warning', count: 0, detail: 'lön saknas' },
+        vatReportReady: { status: 'ok', count: 0, detail: '' },
+        supplierPayments: { status: 'ok', count: 0, detail: '' },
+        allOk: false,
+      },
+    })
+    await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+
+    await waitFor(() => {
+      expect(screen.getByTestId('period-checks-status-1')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Varningar')).toBeInTheDocument()
+  })
+
   it('reopen button only on lastClosedIndex', async () => {
     const periods = makeAllPeriods(3) // Jan-Mar closed
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })

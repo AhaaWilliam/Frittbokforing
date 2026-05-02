@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import { useFiscalPeriods, useReopenPeriod } from '../../lib/hooks'
+import {
+  useFiscalPeriods,
+  useReopenPeriod,
+  usePeriodChecks,
+} from '../../lib/hooks'
 import { formatFiscalYearLabel } from '../layout/YearPicker'
 import { Callout } from '../ui/Callout'
 import { CloseMonthDialog } from '../period/CloseMonthDialog'
@@ -21,11 +25,17 @@ export function PeriodList() {
   const reopenPeriod = useReopenPeriod(activeFiscalYear?.id)
   const [closeDialogId, setCloseDialogId] = useState<number | null>(null)
 
-  if (periods.length === 0) return null
-
   const firstOpenIndex = periods.findIndex((p) => p.is_closed === 0)
   const lastClosedIndex = periods.findLastIndex((p) => p.is_closed === 1)
   const allClosed = firstOpenIndex === -1
+  const firstOpenPeriod =
+    firstOpenIndex === -1 ? undefined : periods[firstOpenIndex]
+  // VS-122: pre-fetcha advisory-checks för första öppna period så
+  // ChecksBadge kan visa status utan att vänta tills användaren öppnar
+  // CloseMonthDialog.
+  const { data: firstOpenChecks } = usePeriodChecks(firstOpenPeriod?.id)
+
+  if (periods.length === 0) return null
 
   const handleReopen = (periodId: number) => {
     reopenPeriod.mutate({ period_id: periodId })
@@ -54,6 +64,22 @@ export function PeriodList() {
                 ) : (
                   <Pill variant="neutral" withDot>
                     Öppen
+                  </Pill>
+                )}
+                {/* VS-122: status-prick för advisory-checks visas bara på
+                    första öppna period (den enda som kan stängas). */}
+                {idx === firstOpenIndex && firstOpenChecks && (
+                  <Pill
+                    variant={firstOpenChecks.allOk ? 'success' : 'warning'}
+                    size="xs"
+                    withDot
+                    className=""
+                  >
+                    <span data-testid={`period-checks-status-${period.id}`}>
+                      {firstOpenChecks.allOk
+                        ? 'Klar för stängning'
+                        : 'Varningar'}
+                    </span>
                   </Pill>
                 )}
                 {canClose && (
