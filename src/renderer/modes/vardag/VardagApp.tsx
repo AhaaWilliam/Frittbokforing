@@ -192,6 +192,12 @@ function VardagAppInner({
             now={now}
             vatFrequency={vatFrequency}
             fiscalYearEnd={activeFiscalYear?.end_date}
+            onClick={() => {
+              // VS-117: pillen är klickbar och navigerar till moms-rapporten
+              // i bokförare-läget. Vardag har ingen sub-routing.
+              setMode('bokforare')
+              navigate('/vat')
+            }}
           />
         </div>
 
@@ -231,10 +237,12 @@ function VatDeadlinePill({
   now,
   vatFrequency,
   fiscalYearEnd,
+  onClick,
 }: {
   now: Date
   vatFrequency: 'monthly' | 'quarterly' | 'yearly'
   fiscalYearEnd: string | undefined
+  onClick?: () => void
 }) {
   // VS-115c: dynamisk pill som visar nästa moms-deadline med tone baserat
   // på dagar kvar (mint/warning/danger). Beräknas mot nu (lokal tid),
@@ -251,6 +259,7 @@ function VatDeadlinePill({
         tone="mint"
         label="Moms: ingen deadline"
         testId="vardag-pill-vat"
+        onClick={onClick}
       />
     )
   }
@@ -267,7 +276,14 @@ function VatDeadlinePill({
   } else {
     label = `Moms ${result.periodLabel}: ${dueLocal} (${result.daysUntil} dagar)`
   }
-  return <StatusPill tone={tone} label={label} testId="vardag-pill-vat" />
+  return (
+    <StatusPill
+      tone={tone}
+      label={label}
+      testId="vardag-pill-vat"
+      onClick={onClick}
+    />
+  )
 }
 
 function StatusPill({

@@ -153,6 +153,23 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
     })
   })
 
+  // VS-117: VAT-pillen är klickbar och navigerar till /vat i bokförare-läget.
+  it('VS-117 klick på vat-pill navigerar till /vat och växlar mode', async () => {
+    const user = userEvent.setup()
+    window.location.hash = '/'
+    await renderWithProviders(<VardagApp />, { axeCheck: false }) // M133 exempt — dedicated axe test above
+
+    await waitFor(() => {
+      expect(screen.getByTestId('vardag-pill-vat')).toBeInTheDocument()
+    })
+    const pill = screen.getByTestId('vardag-pill-vat')
+    expect(pill.tagName).toBe('BUTTON')
+    await user.click(pill)
+    await waitFor(() => {
+      expect(window.location.hash).toContain('/vat')
+    })
+  })
+
   it('VS-42 visar inte latest-pill när IPC returnerar null', async () => {
     mockIpcResponse('journal:latest-verification', {
       success: true,
