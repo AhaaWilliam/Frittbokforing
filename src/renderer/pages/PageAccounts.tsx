@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Callout } from '../components/ui/Callout'
@@ -101,12 +102,20 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
   const inputClass =
     'block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 
+  // VS-55: Migrerar till Radix Dialog (M156 + ADR 003).
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-xl">
-        <h2 className="mb-4 text-base font-medium">
-          {isEdit ? 'Redigera konto' : 'Lägg till konto'}
-        </h2>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-xl focus:outline-none">
+          <Dialog.Title className="mb-4 text-base font-medium">
+            {isEdit ? 'Redigera konto' : 'Lägg till konto'}
+          </Dialog.Title>
 
         {error && (
           <div className="mb-4">
@@ -176,13 +185,14 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
-            >
-              Avbryt
-            </button>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
+              >
+                Avbryt
+              </button>
+            </Dialog.Close>
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
@@ -192,8 +202,9 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
