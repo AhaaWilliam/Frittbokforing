@@ -200,6 +200,15 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   previewJournalLines: 'preview:journal-lines',
   // Sprint VS-113: Period checks (advisory)
   getPeriodChecks: 'period:checks',
+  // Sprint VS-108: Inkorgen / receipts
+  listReceipts: 'receipt:list',
+  createReceipt: 'receipt:create',
+  updateReceiptNotes: 'receipt:update-notes',
+  archiveReceipt: 'receipt:archive',
+  bulkArchiveReceipts: 'receipt:archive-bulk',
+  receiptCounts: 'receipt:counts',
+  deleteReceipt: 'receipt:delete',
+  linkReceiptToExpense: 'receipt:link-to-expense',
   // Sprint VS-123: receipt CSV export
   exportReceiptsCsv: 'receipt:export-csv',
 }

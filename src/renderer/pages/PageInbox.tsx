@@ -18,7 +18,9 @@ import {
   ImageIcon,
   Send,
   Download,
+  StickyNote,
 } from 'lucide-react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import {
   useReceipts,
@@ -28,6 +30,7 @@ import {
   useBulkArchiveReceipts,
   useDeleteReceipt,
   useExportReceiptsCsv,
+  useUpdateReceiptNotes,
 } from '../lib/hooks'
 import { Button } from '../components/ui/Button'
 import { Callout } from '../components/ui/Callout'
@@ -76,6 +79,9 @@ export function PageInbox() {
   const [uploading, setUploading] = useState(false)
   const [bokforReceipt, setBokforReceipt] = useState<Receipt | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
+  // VS-126: notes-editor dialog
+  const [notesTarget, setNotesTarget] = useState<Receipt | null>(null)
+  const [notesDraft, setNotesDraft] = useState('')
 
   const { data: receipts = [], isLoading } = useReceipts({ status: tab })
   const { data: counts } = useReceiptCounts()
@@ -84,6 +90,28 @@ export function PageInbox() {
   const bulkArchiveMutation = useBulkArchiveReceipts()
   const deleteMutation = useDeleteReceipt()
   const exportCsvMutation = useExportReceiptsCsv()
+  const updateNotesMutation = useUpdateReceiptNotes()
+
+  function openNotesEditor(r: Receipt) {
+    setNotesTarget(r)
+    setNotesDraft(r.notes ?? '')
+  }
+
+  async function saveNotes() {
+    if (!notesTarget) return
+    const id = notesTarget.id
+    const trimmed = notesDraft.trim()
+    setNotesTarget(null)
+    try {
+      await updateNotesMutation.mutateAsync({
+        id,
+        notes: trimmed.length > 0 ? trimmed : null,
+      })
+      toast.success('Anteckning sparad')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
 
   async function handleExportCsv() {
     try {
@@ -374,6 +402,7 @@ export function PageInbox() {
             onArchive={handleArchiveOne}
             onDelete={handleDelete}
             onBokfor={(r) => setBokforReceipt(r)}
+            onEditNotes={openNotesEditor}
           />
         )}
       </div>
@@ -401,6 +430,52 @@ export function PageInbox() {
         variant="danger"
         onConfirm={performDelete}
       />
+      <Dialog.Root
+        open={notesTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) setNotesTarget(null)
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-[var(--surface-elevated)] p-6 shadow-xl focus:outline-none"
+            data-testid="receipt-notes-dialog"
+          >
+            <Dialog.Title className="font-serif text-lg">
+              Anteckning
+            </Dialog.Title>
+            <Dialog.Description className="mt-0.5 text-sm text-[var(--text-secondary)]">
+              {notesTarget?.original_filename}
+            </Dialog.Description>
+            <textarea
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              maxLength={500}
+              rows={5}
+              className="mt-4 w-full rounded-md border border-input bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Frivillig anteckning (max 500 tecken)…"
+              data-testid="receipt-notes-textarea"
+            />
+            <div className="mt-1 text-right text-xs text-[var(--text-faint)]">
+              {notesDraft.length}/500
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setNotesTarget(null)}>
+                Avbryt
+              </Button>
+              <Button
+                variant="primary"
+                onClick={saveNotes}
+                isLoading={updateNotesMutation.isPending}
+                data-testid="receipt-notes-save"
+              >
+                Spara
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
@@ -414,6 +489,7 @@ interface ReceiptTableProps {
   onArchive: (id: number) => void
   onDelete: (id: number) => void
   onBokfor: (r: Receipt) => void
+  onEditNotes: (r: Receipt) => void
 }
 
 function ReceiptTable({
@@ -425,6 +501,7 @@ function ReceiptTable({
   onArchive,
   onDelete,
   onBokfor,
+  onEditNotes,
 }: ReceiptTableProps) {
   return (
     <table className="w-full text-sm" data-testid="inbox-list">
@@ -500,6 +577,27 @@ function ReceiptTable({
                     </Button>
                   </>
                 )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onEditNotes(r)}
+                  title={
+                    r.notes ? `Anteckning: ${r.notes}` : 'Lägg till anteckning'
+                  }
+                  data-testid={`inbox-row-notes-${r.id}`}
+                  aria-label={
+                    r.notes
+                      ? `Redigera anteckning för ${r.original_filename}`
+                      : `Lägg till anteckning för ${r.original_filename}`
+                  }
+                >
+                  <StickyNote
+                    className={`h-3.5 w-3.5 ${
+                      r.notes ? 'text-[var(--color-warning-600)]' : ''
+                    }`}
+                    aria-hidden="true"
+                  />
+                </Button>
                 {!isBooked && (
                   <Button
                     size="sm"
