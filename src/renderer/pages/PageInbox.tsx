@@ -31,6 +31,7 @@ import {
 } from '../lib/hooks'
 import { Button } from '../components/ui/Button'
 import { Callout } from '../components/ui/Callout'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { BokforKostnadSheet } from '../modes/vardag/BokforKostnadSheet'
@@ -74,6 +75,7 @@ export function PageInbox() {
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [bokforReceipt, setBokforReceipt] = useState<Receipt | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null)
 
   const { data: receipts = [], isLoading } = useReceipts({ status: tab })
   const { data: counts } = useReceiptCounts()
@@ -198,8 +200,15 @@ export function PageInbox() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm('Radera kvittot permanent? Filen tas bort från disk.')) return
+  function handleDelete(id: number) {
+    // VS-124: Radix AlertDialog ersätter native confirm() (M156).
+    setPendingDeleteId(id)
+  }
+
+  async function performDelete() {
+    if (pendingDeleteId === null) return
+    const id = pendingDeleteId
+    setPendingDeleteId(null)
     try {
       await deleteMutation.mutateAsync({ id })
       toast.success('Kvitto raderat')
@@ -380,6 +389,17 @@ export function PageInbox() {
               }
             : undefined
         }
+      />
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null)
+        }}
+        title="Radera kvitto?"
+        description="Kvittot raderas permanent och filen tas bort från disk. Detta går inte att ångra."
+        confirmLabel="Radera"
+        variant="danger"
+        onConfirm={performDelete}
       />
     </div>
   )
