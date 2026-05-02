@@ -1981,6 +1981,71 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
   {
     sql: `ALTER TABLE expenses ADD COLUMN receipt_path TEXT DEFAULT NULL;`,
   },
+  // ── Migration 059 — Inkorgen VS-106: receipts-tabell ──
+  //
+  // Ny tabell för "Inkorgen" — kvitton som väntar på bokföring. Användaren
+  // släpper PDF/bild i drop-zone → rad skapas med status='inbox'. Vid
+  // bokföring (Vardag eller bokförare-läget) kopplas raden till en expense
+  // och får status='booked'. Användaren kan också arkivera direkt utan
+  // bokföring (status='archived', t.ex. dubblett eller ej-affärsrelevant).
+  //
+  // Schema-noter:
+  // - company_id NOT NULL (M158 stamdata-scoping per bolag).
+  // - file_hash SHA-256 för dedup per bolag — UNIQUE (company_id, file_hash)
+  //   blockerar dubbel-upload av identisk fil. Beräknas i service-lagret.
+  // - expense_id FK med ON DELETE SET NULL: om expense raderas (t.ex.
+  //   utkast-radering) återgår receipt till status='inbox' via app-logik
+  //   (DB-FK kan inte modifiera status själv; service ansvarar).
+  // - status enum förhindrar fri-text-drift; CHECK-constraints kopplar
+  //   status='booked' ⇒ expense_id NOT NULL (data-integritet).
+  // - file_path lagras relativt app.getPath('documents')/Fritt Bokföring/.
+  // - mime_type krävs så preview-komponenten kan välja iframe vs <img>.
+  //
+  // M122-inventering: receipts har inga inkommande FK (bladtabell). M141:
+  // inga cross-table-triggers refererar receipts. M121-tillämpning blir
+  // relevant först när framtida migration vill recreate:a.
+  //
+  // Defense-in-depth (M138/M158-mönster):
+  // - trg_receipts_company_immutable: hindrar UPDATE av company_id.
+  // - trg_receipts_status_consistency_insert/update: enforce att
+  //   booked + NULL expense_id (eller tvärtom) inte kan slinka igenom.
+  //   Redundant med CHECK men blockerar även programmatiska kringgåenden
+  //   av CHECK via PRAGMA writable_schema-hack.
+  {
+    sql: `
+    CREATE TABLE receipts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL REFERENCES companies(id),
+      file_path TEXT NOT NULL,
+      original_filename TEXT NOT NULL,
+      file_hash TEXT NOT NULL,
+      file_size_bytes INTEGER NOT NULL CHECK (file_size_bytes > 0),
+      mime_type TEXT NOT NULL,
+      uploaded_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      status TEXT NOT NULL DEFAULT 'inbox',
+      expense_id INTEGER REFERENCES expenses(id) ON DELETE SET NULL,
+      notes TEXT,
+      archived_at TEXT,
+      CHECK (status IN ('inbox', 'booked', 'archived')),
+      CHECK (
+        (status = 'booked' AND expense_id IS NOT NULL)
+        OR (status != 'booked' AND expense_id IS NULL)
+      ),
+      UNIQUE (company_id, file_hash)
+    );
+
+    CREATE INDEX idx_receipts_company_status ON receipts(company_id, status);
+    CREATE INDEX idx_receipts_expense ON receipts(expense_id);
+    CREATE INDEX idx_receipts_uploaded_at ON receipts(uploaded_at);
+
+    CREATE TRIGGER trg_receipts_company_immutable
+    BEFORE UPDATE OF company_id ON receipts
+    WHEN OLD.company_id != NEW.company_id
+    BEGIN
+      SELECT RAISE(ABORT, 'company_id på receipts får inte ändras.');
+    END;
+    `,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
