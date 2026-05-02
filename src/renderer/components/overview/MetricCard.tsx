@@ -51,7 +51,7 @@ export function MetricCard({
 }: MetricCardProps) {
   const valueNode: ReactNode =
     isLoading && value === undefined ? (
-      <span className="inline-block h-7 w-24 animate-pulse rounded bg-neutral-100 align-middle" />
+      <span className="inline-block h-7 w-24 animate-pulse rounded bg-[var(--surface-secondary)] align-middle" />
     ) : variant === 'default' ? (
       (value ?? '–')
     ) : (

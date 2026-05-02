@@ -23,7 +23,7 @@ interface CheckLineProps {
 const STATE_ICON_CLASSES: Record<CheckLineState, string> = {
   check: 'text-success-500',
   cross: 'text-danger-500',
-  pending: 'text-neutral-400',
+  pending: 'text-[var(--text-faint)]',
   info: 'text-info-500',
 }
 
@@ -125,9 +125,11 @@ export function CheckLine({
       </span>
       <span className="sr-only">{STATE_LABEL[state]}: </span>
       <div className="flex flex-col gap-0.5">
-        <span className="text-neutral-900">{label}</span>
+        <span className="text-[var(--text-primary)]">{label}</span>
         {description != null && (
-          <span className="text-xs text-neutral-500">{description}</span>
+          <span className="text-xs text-[var(--text-secondary)]">
+            {description}
+          </span>
         )}
       </div>
     </div>

@@ -141,9 +141,9 @@ export function Callout({
       </span>
       <div className="flex flex-col gap-1 text-sm">
         {title != null && (
-          <div className="font-medium text-neutral-900">{title}</div>
+          <div className="font-medium text-[var(--text-primary)]">{title}</div>
         )}
-        <div className="text-neutral-700">{children}</div>
+        <div className="text-[var(--text-secondary)]">{children}</div>
       </div>
     </div>
   )
