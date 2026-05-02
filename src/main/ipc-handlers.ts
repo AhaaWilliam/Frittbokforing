@@ -302,8 +302,23 @@ import {
   SaveDraftInputSchema,
   UpdateDraftInputSchema,
   PreviewJournalLinesInputSchema,
+  ReceiptListInputSchema,
+  CreateReceiptInputSchema,
+  UpdateReceiptNotesInputSchema,
+  ArchiveReceiptInputSchema,
+  BulkArchiveReceiptInputSchema,
+  ReceiptCountsInputSchema,
 } from './ipc-schemas'
 import { previewJournalLines } from './services/preview-service'
+import {
+  listReceipts,
+  createReceipt,
+  updateReceiptNotes,
+  archiveReceipt,
+  bulkArchiveReceipts,
+  getReceiptCounts,
+  deleteReceipt,
+} from './services/receipt-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
 import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
@@ -1656,6 +1671,47 @@ export function registerIpcHandlers(): void {
         db.pragma('query_only = OFF')
       }
     }),
+  )
+
+  // === Receipts / Inkorgen (Sprint VS-108) ===
+  // Validering via Zod-scheman; service hanterar fil-IO och dedup.
+  ipcMain.handle(
+    'receipt:list',
+    wrapIpcHandler(ReceiptListInputSchema, (data) => listReceipts(db, data)),
+  )
+  ipcMain.handle(
+    'receipt:create',
+    wrapIpcHandler(CreateReceiptInputSchema, (data) => createReceipt(db, data)),
+  )
+  ipcMain.handle(
+    'receipt:update-notes',
+    wrapIpcHandler(UpdateReceiptNotesInputSchema, (data) =>
+      updateReceiptNotes(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'receipt:archive',
+    wrapIpcHandler(ArchiveReceiptInputSchema, (data) =>
+      archiveReceipt(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'receipt:archive-bulk',
+    wrapIpcHandler(BulkArchiveReceiptInputSchema, (data) =>
+      bulkArchiveReceipts(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'receipt:counts',
+    wrapIpcHandler(ReceiptCountsInputSchema, (data) =>
+      getReceiptCounts(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'receipt:delete',
+    wrapIpcHandler(ArchiveReceiptInputSchema, (data) =>
+      deleteReceipt(db, data),
+    ),
   )
 
   // Test-only IPC endpoints — registered ONLY when FRITT_TEST=1.

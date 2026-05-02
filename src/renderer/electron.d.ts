@@ -32,6 +32,7 @@ import type {
   UpdateExpenseDraftInput,
   SaveManualEntryDraftInput,
   UpdateManualEntryDraftInput,
+  Receipt,
 } from '../shared/types'
 import type { GlobalSearchResponse } from '../shared/search-types'
 
@@ -770,6 +771,39 @@ interface ElectronAPI {
       warnings: ReadonlyArray<string>
     }>
   >
+  // Sprint VS-108 — Inkorgen / receipts
+  listReceipts: (data: {
+    company_id: number
+    status?: 'inbox' | 'booked' | 'archived'
+  }) => Promise<IpcResult<Receipt[]>>
+  createReceipt: (data: {
+    company_id: number
+    source_path: string
+    original_filename: string
+    notes?: string | null
+  }) => Promise<IpcResult<Receipt>>
+  updateReceiptNotes: (data: {
+    id: number
+    company_id: number
+    notes: string | null
+  }) => Promise<IpcResult<Receipt>>
+  archiveReceipt: (data: {
+    id: number
+    company_id: number
+  }) => Promise<IpcResult<Receipt>>
+  bulkArchiveReceipts: (data: { ids: number[]; company_id: number }) => Promise<
+    IpcResult<{
+      succeeded: number[]
+      failed: Array<{ id: number; code: string; error: string }>
+    }>
+  >
+  receiptCounts: (data: {
+    company_id: number
+  }) => Promise<IpcResult<{ inbox: number; booked: number; archived: number }>>
+  deleteReceipt: (data: {
+    id: number
+    company_id: number
+  }) => Promise<IpcResult<{ deleted: boolean }>>
 }
 
 export interface UserMeta {

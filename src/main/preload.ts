@@ -454,6 +454,28 @@ contextBridge.exposeInMainWorld('api', {
   // Sprint 16 — Live verifikat-preview (ADR 006)
   previewJournalLines: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('preview:journal-lines', data),
+  // Sprint VS-108 — Inkorgen / receipts
+  listReceipts: (data: { company_id: number; status?: string }) =>
+    ipcRenderer.invoke('receipt:list', data),
+  createReceipt: (data: {
+    company_id: number
+    source_path: string
+    original_filename: string
+    notes?: string | null
+  }) => ipcRenderer.invoke('receipt:create', data),
+  updateReceiptNotes: (data: {
+    id: number
+    company_id: number
+    notes: string | null
+  }) => ipcRenderer.invoke('receipt:update-notes', data),
+  archiveReceipt: (data: { id: number; company_id: number }) =>
+    ipcRenderer.invoke('receipt:archive', data),
+  bulkArchiveReceipts: (data: { ids: number[]; company_id: number }) =>
+    ipcRenderer.invoke('receipt:archive-bulk', data),
+  receiptCounts: (data: { company_id: number }) =>
+    ipcRenderer.invoke('receipt:counts', data),
+  deleteReceipt: (data: { id: number; company_id: number }) =>
+    ipcRenderer.invoke('receipt:delete', data),
 })
 
 // Auth — separate namespace (window.auth.*) for the local-login + SQLCipher
