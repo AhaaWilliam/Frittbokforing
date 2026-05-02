@@ -20,6 +20,8 @@ export default function App() {
       <div
         className="flex h-screen items-center justify-center"
         data-testid="app-loading"
+        role="status"
+        aria-live="polite"
       >
         <p className="text-muted-foreground">Laddar...</p>
       </div>
@@ -59,6 +61,8 @@ function AuthenticatedApp() {
       <div
         className="flex h-screen items-center justify-center"
         data-testid="app-loading"
+        role="status"
+        aria-live="polite"
       >
         <p className="text-muted-foreground">Laddar...</p>
       </div>
@@ -106,6 +110,8 @@ function ModeRouter() {
       <div
         className="flex h-screen items-center justify-center"
         data-testid="mode-loading"
+        role="status"
+        aria-live="polite"
       >
         <p className="text-muted-foreground">Laddar...</p>
       </div>
