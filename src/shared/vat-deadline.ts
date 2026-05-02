@@ -76,11 +76,15 @@ function monthName(idx0: number): string {
   return SV_MONTHS[((idx0 % 12) + 12) % 12]
 }
 
-function addMonths(year: number, month1Indexed: number, delta: number): {
+function addMonths(
+  year: number,
+  month1Indexed: number,
+  delta: number,
+): {
   year: number
   month: number
 } {
-  const idx = (month1Indexed - 1) + delta
+  const idx = month1Indexed - 1 + delta
   const yDelta = Math.floor(idx / 12)
   const m = ((idx % 12) + 12) % 12
   return { year: year + yDelta, month: m + 1 }
@@ -141,7 +145,10 @@ export function computeVatDeadline(
 
   if (input.frequency === 'quarterly') {
     // Quarter-end-månad: 3, 6, 9, 12. Deadline = 12:e i (quarter-end+2).
-    function quarterEndOf(year: number, month1: number): {
+    function quarterEndOf(
+      year: number,
+      month1: number,
+    ): {
       year: number
       qEndMonth: number
     } {

@@ -13,6 +13,10 @@ import {
   useReceiptCounts,
 } from '../../lib/hooks'
 import { useNavigate } from '../../lib/router'
+import {
+  computeVatDeadline,
+  vatDeadlineTone,
+} from '../../../shared/vat-deadline'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -54,12 +58,21 @@ export function VardagApp() {
 
   return (
     <FiscalYearProvider key={activeCompany.id}>
-      <VardagAppInner companyName={activeCompany.name} />
+      <VardagAppInner
+        companyName={activeCompany.name}
+        vatFrequency={activeCompany.vat_frequency}
+      />
     </FiscalYearProvider>
   )
 }
 
-function VardagAppInner({ companyName }: { companyName: string }) {
+function VardagAppInner({
+  companyName,
+  vatFrequency,
+}: {
+  companyName: string
+  vatFrequency: 'monthly' | 'quarterly' | 'yearly'
+}) {
   const { setMode } = useUiMode()
   const { activeFiscalYear } = useFiscalYearContext()
   const fyId = activeFiscalYear?.id
@@ -175,10 +188,10 @@ function VardagAppInner({ companyName }: { companyName: string }) {
               testId="vardag-pill-latest"
             />
           )}
-          <StatusPill
-            tone="mint"
-            label="Momsperiod: aktuell"
-            testId="vardag-pill-vat"
+          <VatDeadlinePill
+            now={now}
+            vatFrequency={vatFrequency}
+            fiscalYearEnd={activeFiscalYear?.end_date}
           />
         </div>
 
@@ -214,19 +227,66 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   )
 }
 
+function VatDeadlinePill({
+  now,
+  vatFrequency,
+  fiscalYearEnd,
+}: {
+  now: Date
+  vatFrequency: 'monthly' | 'quarterly' | 'yearly'
+  fiscalYearEnd: string | undefined
+}) {
+  // VS-115c: dynamisk pill som visar nästa moms-deadline med tone baserat
+  // på dagar kvar (mint/warning/danger). Beräknas mot nu (lokal tid),
+  // refreshar var minut via parent's `now`-state.
+  const asOf = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const result = computeVatDeadline({
+    frequency: vatFrequency,
+    asOf,
+    fiscal_year_end: fiscalYearEnd,
+  })
+  if (!result) {
+    return (
+      <StatusPill
+        tone="mint"
+        label="Moms: ingen deadline"
+        testId="vardag-pill-vat"
+      />
+    )
+  }
+  const tone = vatDeadlineTone(result.daysUntil)
+  const dueLocal = new Date(result.dueDate).toLocaleDateString('sv-SE', {
+    day: 'numeric',
+    month: 'short',
+  })
+  let label: string
+  if (result.daysUntil < 0) {
+    label = `Moms ${result.periodLabel}: ${-result.daysUntil} dag(ar) försent`
+  } else if (result.daysUntil === 0) {
+    label = `Moms ${result.periodLabel}: deadline idag`
+  } else {
+    label = `Moms ${result.periodLabel}: ${dueLocal} (${result.daysUntil} dagar)`
+  }
+  return <StatusPill tone={tone} label={label} testId="vardag-pill-vat" />
+}
+
 function StatusPill({
   tone,
   label,
   testId,
   onClick,
 }: {
-  tone: 'mint' | 'warning'
+  tone: 'mint' | 'warning' | 'danger'
   label: string
   testId?: string
   onClick?: () => void
 }) {
   const dotColor =
-    tone === 'mint' ? 'var(--color-mint-500)' : 'var(--color-warning-500)'
+    tone === 'mint'
+      ? 'var(--color-mint-500)'
+      : tone === 'warning'
+        ? 'var(--color-warning-500)'
+        : 'var(--color-danger-500)'
   const content = (
     <>
       <span
