@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { ImportSelectPhase } from '../components/import/ImportSelectPhase'
@@ -40,6 +41,7 @@ function formatLabel(format: ImportFormat): string {
 }
 
 export function PageImport() {
+  const queryClient = useQueryClient()
   const [phase, setPhase] = useState<Phase>('select')
   const [format, setFormat] = useState<ImportFormat>('sie4')
   const [filePath, setFilePath] = useState<string | null>(null)
@@ -95,6 +97,11 @@ export function PageImport() {
       }
       setImportResult(result.data)
       setPhase('done')
+      // VS-71: SIE4/SIE5-import skapar I-serie-verifikat (M145), kan lägga
+      // till konton, och uppdaterar bolagsnamn vid merge-strategi.
+      // invalidateQueries() utan argument nukar all cache — säkraste
+      // valet eftersom importen kan röra många domäner samtidigt.
+      await queryClient.invalidateQueries()
       toast.success('Import klar')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Import misslyckades')
