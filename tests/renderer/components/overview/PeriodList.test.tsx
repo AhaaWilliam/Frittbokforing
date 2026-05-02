@@ -237,9 +237,8 @@ describe('PeriodList', () => {
 
   it('returns null when no periods', async () => {
     mockIpcResponse('fiscal-period:list', { success: true, data: [] })
-    const { container } = await renderWithProviders(<PeriodList />, {
-      axeCheck: false,
-    }) // M133 exempt — dedicated axe test below
+    // prettier-ignore
+    const { container } = await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     // Give time for query to resolve
     await waitFor(() => {})
