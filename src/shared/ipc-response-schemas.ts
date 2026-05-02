@@ -120,6 +120,14 @@ const DashboardSummarySchema = z.object({
   bankBalanceOre: z.number(),
 })
 
+const LatestVerificationSchema = z
+  .object({
+    series: z.string(),
+    number: z.number().int().nonnegative(),
+    entry_date: z.string(),
+  })
+  .nullable()
+
 const BulkPaymentResultSchema = z.object({
   batch_id: z.number().nullable(),
   status: z.enum(['completed', 'partial', 'cancelled']),
@@ -356,6 +364,7 @@ export const channelResponseMap = {
 
   // Dashboard & Reports
   'dashboard:summary': DashboardSummarySchema,
+  'journal:latest-verification': LatestVerificationSchema,
   'vat:report': VatReport,
   'tax:forecast': TaxForecast,
   'report:income-statement': ReportPayload,

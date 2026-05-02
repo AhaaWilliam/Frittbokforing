@@ -580,6 +580,14 @@ export interface VatReport {
   fiscalYearId: number
 }
 
+// VS-42: Senast bokförda verifikatet inom ett räkenskapsår, oavsett serie.
+// Returneras som null om inga bokade verifikat finns.
+export interface LatestVerification {
+  series: string
+  number: number
+  entry_date: string
+}
+
 export interface DashboardSummary {
   revenueOre: number
   expensesOre: number

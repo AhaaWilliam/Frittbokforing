@@ -177,6 +177,8 @@ contextBridge.exposeInMainWorld('api', {
   // Dashboard
   getDashboardSummary: (data: { fiscalYearId: number }) =>
     ipcRenderer.invoke('dashboard:summary', data),
+  getLatestVerification: (data: { fiscalYearId: number }) =>
+    ipcRenderer.invoke('journal:latest-verification', data),
   // VAT Report
   getVatReport: (data: { fiscal_year_id: number }) =>
     ipcRenderer.invoke('vat:report', data),

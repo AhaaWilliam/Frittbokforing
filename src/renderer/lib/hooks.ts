@@ -18,6 +18,7 @@ import type {
   SaveDraftInput,
   UpdateDraftInput,
   DashboardSummary,
+  LatestVerification,
   TaxForecast,
   VatReport,
   IncomeStatementResult,
@@ -758,6 +759,15 @@ export function useDashboardSummary(fiscalYearId: number | undefined) {
     queryKeys.dashboard(fiscalYearId!),
     () => window.api.getDashboardSummary({ fiscalYearId: fiscalYearId! }),
     { enabled: !!fiscalYearId, staleTime: 30_000 },
+  )
+}
+
+// VS-42: Senast bokförda verifikatet inom fiscal year, för hero-pill.
+export function useLatestVerification(fiscalYearId: number | undefined) {
+  return useIpcQuery<LatestVerification | null>(
+    queryKeys.latestVerification(fiscalYearId!),
+    () => window.api.getLatestVerification({ fiscalYearId: fiscalYearId! }),
+    { enabled: !!fiscalYearId, staleTime: 10_000 },
   )
 }
 

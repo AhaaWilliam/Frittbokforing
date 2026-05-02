@@ -22,6 +22,7 @@ import type {
   VatCode,
   Account,
   DashboardSummary,
+  LatestVerification,
   TaxForecast,
   VatReport,
   IncomeStatementResult,
@@ -319,6 +320,9 @@ interface ElectronAPI {
   getDashboardSummary: (data: {
     fiscalYearId: number
   }) => Promise<IpcResult<DashboardSummary>>
+  getLatestVerification: (data: {
+    fiscalYearId: number
+  }) => Promise<IpcResult<LatestVerification | null>>
   // VAT Report
   getVatReport: (input: {
     fiscal_year_id: number

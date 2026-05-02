@@ -69,7 +69,10 @@ import {
   listExpenses,
   createExpenseCreditNoteDraft,
 } from './services/expense-service'
-import { getDashboardSummary } from './services/dashboard-service'
+import {
+  getDashboardSummary,
+  getLatestVerification,
+} from './services/dashboard-service'
 import { getTaxForecast } from './services/tax-service'
 import { getVatReport } from './services/vat-report-service'
 import { exportSie5 } from './services/sie5/sie5-export-service'
@@ -192,6 +195,7 @@ import {
   InvoiceListInputSchema,
   PayInvoiceInputSchema,
   DashboardSummaryInputSchema,
+  JournalLatestVerificationInputSchema,
   TaxForecastInputSchema,
   VatReportInputSchema,
   ExpenseIdSchema,
@@ -800,6 +804,14 @@ export function registerIpcHandlers(): void {
     'dashboard:summary',
     wrapIpcHandler(DashboardSummaryInputSchema, (parsed) =>
       getDashboardSummary(db, parsed.fiscalYearId),
+    ),
+  )
+
+  // VS-42: hero-pill "Senast bokfört" på Vardag-skärmen.
+  ipcMain.handle(
+    'journal:latest-verification',
+    wrapIpcHandler(JournalLatestVerificationInputSchema, (parsed) =>
+      getLatestVerification(db, parsed.fiscalYearId),
     ),
   )
 

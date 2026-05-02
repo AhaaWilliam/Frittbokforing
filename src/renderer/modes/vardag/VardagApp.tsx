@@ -6,7 +6,11 @@ import {
 } from '../../contexts/FiscalYearContext'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
-import { useExpenseDrafts, useDraftInvoices } from '../../lib/hooks'
+import {
+  useExpenseDrafts,
+  useDraftInvoices,
+  useLatestVerification,
+} from '../../lib/hooks'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -58,6 +62,7 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   const fyId = activeFiscalYear?.id
   const { data: expenseDrafts } = useExpenseDrafts(fyId)
   const { data: invoiceDrafts } = useDraftInvoices(fyId)
+  const { data: latestVer } = useLatestVerification(fyId)
   const inboxCount = (expenseDrafts?.length ?? 0) + (invoiceDrafts?.length ?? 0)
   const [sheet, setSheet] = useState<VardagSheet>(null)
 
@@ -141,6 +146,13 @@ function VardagAppInner({ companyName }: { companyName: string }) {
             }
             testId="vardag-pill-inbox"
           />
+          {latestVer && (
+            <StatusPill
+              tone="mint"
+              label={`Senast bokfört: ${latestVer.series}${String(latestVer.number).padStart(4, '0')}`}
+              testId="vardag-pill-latest"
+            />
+          )}
           <StatusPill
             tone="mint"
             label="Momsperiod: aktuell"

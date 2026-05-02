@@ -608,6 +608,13 @@ export const DashboardSummaryInputSchema = z
   })
   .strict()
 
+// VS-42: Hero-pill "Senast bokfört" på Vardag-skärmen.
+export const JournalLatestVerificationInputSchema = z
+  .object({
+    fiscalYearId: z.number().int().positive(),
+  })
+  .strict()
+
 // === Tax ===
 export const TaxForecastInputSchema = z
   .object({
@@ -1447,6 +1454,7 @@ export const channelMap = {
 
   // Dashboard & Reports
   'dashboard:summary': DashboardSummaryInputSchema,
+  'journal:latest-verification': JournalLatestVerificationInputSchema,
   'vat:report': VatReportInputSchema,
   'tax:forecast': TaxForecastInputSchema,
   'report:income-statement': ReportRequestSchema,

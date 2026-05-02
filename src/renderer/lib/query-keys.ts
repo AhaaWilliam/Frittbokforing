@@ -68,6 +68,8 @@ export const queryKeys = {
 
   // === Rapporter ===
   dashboard: (fyId: number) => ['dashboard', 'summary', fyId] as const,
+  latestVerification: (fyId: number) =>
+    ['journal', 'latest-verification', fyId] as const,
   vatReport: (fyId: number) => ['vat', 'report', fyId] as const,
   taxForecast: (fyId: number) => ['tax', 'forecast', fyId] as const,
   netResult: (fyId: number) => ['net-result', fyId] as const,

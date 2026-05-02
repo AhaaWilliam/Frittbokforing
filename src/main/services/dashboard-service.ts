@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3'
-import type { DashboardSummary } from '../../shared/types'
+import type { DashboardSummary, LatestVerification } from '../../shared/types'
 import { calculateResultBreakdown } from './result-service'
 import {
   VAT_OUTGOING_ACCOUNTS,
@@ -107,4 +107,41 @@ export function getDashboardSummary(
   })
 
   return run()
+}
+
+/**
+ * VS-42: Senast bokförda verifikatet i ett räkenskapsår, oavsett serie.
+ * Sorterar primärt på entry_date desc, sekundärt på id desc (tie-break
+ * vid samma datum). Returnerar null om inga bokade verifikat finns.
+ */
+export function getLatestVerification(
+  db: Database.Database,
+  fiscalYearId: number,
+): LatestVerification | null {
+  const row = db
+    .prepare(
+      `
+      SELECT verification_series, verification_number, entry_date
+      FROM journal_entries
+      WHERE fiscal_year_id = ?
+        AND status = 'booked'
+        AND verification_number IS NOT NULL
+      ORDER BY entry_date DESC, id DESC
+      LIMIT 1
+    `,
+    )
+    .get(fiscalYearId) as
+    | {
+        verification_series: string
+        verification_number: number
+        entry_date: string
+      }
+    | undefined
+
+  if (!row) return null
+  return {
+    series: row.verification_series,
+    number: row.verification_number,
+    entry_date: row.entry_date,
+  }
 }
