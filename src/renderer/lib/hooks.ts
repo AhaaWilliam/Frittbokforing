@@ -1245,6 +1245,7 @@ export function useDisposeFixedAsset() {
       queryKeys.allIncomeStatement(),
       queryKeys.allBalanceSheet(),
       queryKeys.allManualEntries(),
+      queryKeys.allLatestVerifications(),
     ],
   })
 }
@@ -1269,6 +1270,7 @@ export function useExecuteDepreciationPeriod() {
       queryKeys.incomeStatementByFy(fiscal_year_id),
       queryKeys.balanceSheetByFy(fiscal_year_id),
       queryKeys.allManualEntries(),
+      queryKeys.allLatestVerifications(),
     ],
   })
 }
