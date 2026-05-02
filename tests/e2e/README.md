@@ -54,7 +54,7 @@ bypassar också wrappern. Samma regel: rebuild manuellt efter körning.
 - Fixed asset form dialog: `fixed-asset-form-dialog`, `fa-name`, `fa-cost`, `fa-submit`
 - Pagination: `pag-invoices-position`, `pag-invoices-next`, `pag-invoices-prev`, `pag-expenses-position`, `pag-expenses-next`, `pag-expenses-prev` — state synced to URL query `?invoices_page=N` / `?expenses_page=N` (Sprint C B1)
 - Bank reconciliation: `bank-import-input` — file input for CAMT/MT940/BGMax import, `bank-match-dialog` — match confirmation dialog, `bank-match-submit` — submit button inside match dialog, `bank-match-entity-select` — entity type/id selector inside match dialog
-- Vardag-sheets (VS-3 + VS-4 + VS-7 + VS-8): `vardag-bigbtn-kostnad`, `vardag-bigbtn-faktura`, `vardag-bigbtn-stang-manad`, `vardag-hero`, `vardag-shell`, `vardag-kostnad-{date,amount,supplier,description,account,vat,submit,error,receipt-pick,receipt-attached,receipt-clear,multiline-cta}`, `vardag-faktura-{customer,date,payment-terms,description,qty,price,line-total,account,vat,submit,error,multiline-cta}`
+- Vardag-sheets (VS-3..VS-28): `vardag-bigbtn-kostnad`, `vardag-bigbtn-faktura`, `vardag-bigbtn-stang-manad`, `vardag-hero`, `vardag-shell`, `vardag-kostnad-{date,amount,supplier,description,account,vat,submit,error,receipt-pick,receipt-attached,receipt-clear,multiline-cta,date-error,account-error,account-name,missing-hint}`, `vardag-faktura-{customer,date,payment-terms,description,qty,price,line-total,account,vat,submit,error,multiline-cta,date-error,account-error,account-name,missing-hint}`
 
 ## How to run
 
