@@ -194,6 +194,23 @@ export function ConsequencePane({
           </ul>
         </Callout>
       )}
+
+      {/* VS-30: Förklaring vid moms-uppdelning. Visas när 26xx-konto finns
+          bland raderna — typiskt på kostnadsbokningar med ingående moms. */}
+      {hasVatLine(preview.lines) && (
+        <Callout
+          variant="info"
+          title="Varför är beloppet uppdelat?"
+          data-testid="consequence-pane-vat-explainer"
+        >
+          Moms bokförs separat på 26xx-konto så att momsdeklarationen blir
+          korrekt. Nettobeloppet hamnar på kostnaden eller intäkten.
+        </Callout>
+      )}
     </div>
   )
+}
+
+function hasVatLine(lines: ReadonlyArray<PreviewLine>): boolean {
+  return lines.some((l) => l.account_number.startsWith('26'))
 }

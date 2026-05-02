@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
-import { FiscalYearProvider } from '../../contexts/FiscalYearContext'
+import {
+  FiscalYearProvider,
+  useFiscalYearContext,
+} from '../../contexts/FiscalYearContext'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
+import { useExpenseDrafts, useDraftInvoices } from '../../lib/hooks'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -50,6 +54,11 @@ export function VardagApp() {
 
 function VardagAppInner({ companyName }: { companyName: string }) {
   const { setMode } = useUiMode()
+  const { activeFiscalYear } = useFiscalYearContext()
+  const fyId = activeFiscalYear?.id
+  const { data: expenseDrafts } = useExpenseDrafts(fyId)
+  const { data: invoiceDrafts } = useDraftInvoices(fyId)
+  const inboxCount = (expenseDrafts?.length ?? 0) + (invoiceDrafts?.length ?? 0)
   const [sheet, setSheet] = useState<VardagSheet>(null)
 
   useKeyboardShortcuts({
@@ -121,8 +130,22 @@ function VardagAppInner({ companyName }: { companyName: string }) {
           className="mb-10 flex gap-7 text-xs text-[var(--text-secondary)]"
           data-testid="vardag-status-pills"
         >
-          <StatusPill tone="mint" label="Inkorgen är tom" />
-          <StatusPill tone="mint" label="Momsperiod: aktuell" />
+          <StatusPill
+            tone={inboxCount > 0 ? 'warning' : 'mint'}
+            label={
+              inboxCount === 0
+                ? 'Inkorgen är tom'
+                : inboxCount === 1
+                  ? '1 obokförd post'
+                  : `${inboxCount} obokförda poster`
+            }
+            testId="vardag-pill-inbox"
+          />
+          <StatusPill
+            tone="mint"
+            label="Momsperiod: aktuell"
+            testId="vardag-pill-vat"
+          />
         </div>
 
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-[18px] text-[11px] text-[var(--text-faint)]">
@@ -156,14 +179,16 @@ function VardagAppInner({ companyName }: { companyName: string }) {
 function StatusPill({
   tone,
   label,
+  testId,
 }: {
   tone: 'mint' | 'warning'
   label: string
+  testId?: string
 }) {
   const dotColor =
     tone === 'mint' ? 'var(--color-mint-500)' : 'var(--color-warning-500)'
   return (
-    <span className="inline-flex items-center">
+    <span className="inline-flex items-center" data-testid={testId}>
       <span
         className="mr-2 inline-block h-1.5 w-1.5 rounded-full"
         style={{ background: dotColor }}
