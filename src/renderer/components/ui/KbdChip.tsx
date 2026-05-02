@@ -52,8 +52,8 @@ export function KbdChip({
 
   const variantClasses =
     variant === 'dark'
-      ? 'border-neutral-700 bg-neutral-800 text-neutral-200'
-      : 'border-neutral-200 bg-neutral-50 text-neutral-700'
+      ? 'border-[var(--color-dark-soft)] bg-[var(--color-dark)] text-[var(--text-faint)]'
+      : 'border-[var(--border-default)] bg-[var(--surface-secondary)]/40 text-[var(--text-secondary)]'
 
   const classes = [
     'inline-flex items-center justify-center font-mono font-medium',
@@ -105,7 +105,7 @@ export function KbdChord({
         // Index-key OK eftersom keys-arrayen är en stabil tangent-sekvens.
         <span className="inline-flex items-center gap-1" key={i}>
           {i > 0 && (
-            <span aria-hidden="true" className="text-xs text-neutral-400">
+            <span aria-hidden="true" className="text-xs text-[var(--text-faint)]">
               {separator}
             </span>
           )}

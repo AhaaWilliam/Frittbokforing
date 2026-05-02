@@ -32,8 +32,11 @@ describe('Pill', () => {
     render(<Pill variant={variant}>label</Pill>)
     const pill = screen.getByText('label')
     expect(pill).toHaveAttribute('data-variant', variant)
-    // Tailwind class for bg-{variant}-... should be present
-    expect(pill.className).toMatch(new RegExp(`(bg-${variant}|bg-neutral)`))
+    // VS-80: variant-bg-class kan vara Tailwind (bg-{variant}-) eller
+    // design-token (bg-[var(--surface-secondary)] för neutral).
+    expect(pill.className).toMatch(
+      new RegExp(`(bg-${variant}|bg-\\[var\\(--surface)`),
+    )
   })
 
   it('renders dot when withDot=true', () => {

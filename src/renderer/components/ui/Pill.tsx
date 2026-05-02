@@ -31,7 +31,8 @@ interface PillProps {
 }
 
 const VARIANT_CLASSES: Record<PillVariant, string> = {
-  neutral: 'bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-200',
+  neutral:
+    'bg-[var(--surface-secondary)]/60 text-[var(--text-secondary)] ring-1 ring-inset ring-[var(--border-default)]',
   brand: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
   success: 'bg-success-100 text-success-500 ring-1 ring-inset ring-success-100',
   warning: 'bg-warning-100 text-warning-500 ring-1 ring-inset ring-warning-100',
@@ -40,7 +41,7 @@ const VARIANT_CLASSES: Record<PillVariant, string> = {
 }
 
 const DOT_CLASSES: Record<PillVariant, string> = {
-  neutral: 'bg-neutral-400',
+  neutral: 'bg-[var(--text-faint)]',
   brand: 'bg-brand-500',
   success: 'bg-success-500',
   warning: 'bg-warning-500',
