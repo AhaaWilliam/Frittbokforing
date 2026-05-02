@@ -122,6 +122,7 @@ export function Sidebar({ company }: SidebarProps) {
     <aside
       className="flex h-full flex-col border-r border-[var(--border-default)] bg-[var(--surface-secondary)]"
       data-testid="zone-vad"
+      aria-label="Sidopanel"
     >
       {/* Header */}
       <div className="border-b px-4 pb-4 pt-4">
