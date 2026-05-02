@@ -315,6 +315,7 @@ export const UpdateCompanyInputSchema = z
     board_members: z.string().max(500).nullable().optional(),
     approved_for_f_tax: z.number().int().min(0).max(1).optional(),
     has_employees: z.number().int().min(0).max(1).optional(),
+    vat_frequency: z.enum(['monthly', 'quarterly', 'yearly']).optional(),
   })
   .strict()
 

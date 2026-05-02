@@ -308,4 +308,5 @@ const ALLOWED_COMPANY_COLUMNS = new Set([
   'base_currency',
   'approved_for_f_tax',
   'has_employees',
+  'vat_frequency',
 ])

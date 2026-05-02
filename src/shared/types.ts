@@ -205,6 +205,7 @@ export interface UpdateCompanyInput {
   board_members?: string | null
   approved_for_f_tax?: number
   has_employees?: number
+  vat_frequency?: 'monthly' | 'quarterly' | 'yearly'
 }
 
 // === Counterparty Input ===

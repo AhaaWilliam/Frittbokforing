@@ -411,6 +411,9 @@ export function PageSettings() {
   const [boardMembers, setBoardMembers] = useState('')
   const [approvedForFTax, setApprovedForFTax] = useState(true)
   const [hasEmployees, setHasEmployees] = useState(false)
+  const [vatFrequency, setVatFrequency] = useState<
+    'monthly' | 'quarterly' | 'yearly'
+  >('quarterly')
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -429,6 +432,7 @@ export function PageSettings() {
       setBoardMembers(company.board_members ?? '')
       setApprovedForFTax(company.approved_for_f_tax !== 0)
       setHasEmployees(company.has_employees === 1)
+      setVatFrequency(company.vat_frequency)
     }
   }, [company])
 
@@ -461,6 +465,7 @@ export function PageSettings() {
       board_members: boardMembers.trim() || null,
       approved_for_f_tax: approvedForFTax ? 1 : 0,
       has_employees: hasEmployees ? 1 : 0,
+      vat_frequency: vatFrequency,
     }
 
     try {
@@ -715,6 +720,30 @@ export function PageSettings() {
                 Bolaget har anställda (lönebokföring förväntas vid
                 månadsstängning)
               </label>
+            </div>
+
+            <div>
+              <label htmlFor="vat_frequency" className={labelClass}>
+                Moms-deklarationsfrekvens
+              </label>
+              <select
+                id="vat_frequency"
+                value={vatFrequency}
+                onChange={(e) =>
+                  setVatFrequency(
+                    e.target.value as 'monthly' | 'quarterly' | 'yearly',
+                  )
+                }
+                className={inputClass}
+              >
+                <option value="monthly">Månadsvis</option>
+                <option value="quarterly">Kvartalsvis</option>
+                <option value="yearly">Årsvis</option>
+              </select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Styr deadline-pillen i Vardag-vyn. SKV-standard för småbolag är
+                kvartalsvis.
+              </p>
             </div>
 
             <div className="pt-4">
