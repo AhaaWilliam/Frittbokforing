@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import type { ExpenseDetail } from '../../../shared/types'
 import { usePayExpense } from '../../lib/hooks'
 import { formatKr, toOre, toKr, todayLocal } from '../../lib/format'
@@ -50,17 +51,26 @@ export function PayExpenseDialog({
     }
   }
 
+  // VS-52: Migrerar till Radix Dialog (M156 + ADR 003).
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pay-expense-title"
-        className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
-      >
-        <h2 id="pay-expense-title" className="text-lg font-semibold mb-4">
-          Registrera betalning
-        </h2>
+    <Dialog.Root
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-xl focus:outline-none"
+          aria-labelledby="pay-expense-title"
+        >
+          <Dialog.Title
+            id="pay-expense-title"
+            className="text-lg font-semibold mb-4"
+          >
+            Registrera betalning
+          </Dialog.Title>
 
         <div className="space-y-2 mb-6 text-sm">
           <div className="flex justify-between">
@@ -191,12 +201,11 @@ export function PayExpenseDialog({
         )}
 
         <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]"
-          >
-            Avbryt
-          </button>
+          <Dialog.Close asChild>
+            <button className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]">
+              Avbryt
+            </button>
+          </Dialog.Close>
           <button
             onClick={handleSubmit}
             disabled={payMutation.isPending}
@@ -205,7 +214,8 @@ export function PayExpenseDialog({
             {payMutation.isPending ? 'Registrerar...' : 'Registrera'}
           </button>
         </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
