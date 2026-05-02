@@ -166,6 +166,7 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   listImportedEntries: 'journal-entry:list-imported',
   // Dashboard & Reports
   getDashboardSummary: 'dashboard:summary',
+  getLatestVerification: 'journal:latest-verification',
   getVatReport: 'vat:report',
   getTaxForecast: 'tax:forecast',
   getIncomeStatement: 'report:income-statement',

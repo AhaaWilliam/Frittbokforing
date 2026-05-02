@@ -108,4 +108,31 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
     const { axeResults } = await renderWithProviders(<VardagApp />)
     expect(axeResults?.violations).toEqual([])
   })
+
+  // VS-59: regressionstest för VS-42 (latest-verification-pill).
+  it('VS-42 visar "Senast bokfört: A0042" när IPC returnerar data', async () => {
+    mockIpcResponse('journal:latest-verification', {
+      success: true,
+      data: { series: 'A', number: 42, entry_date: '2026-04-15' },
+    })
+    await renderWithProviders(<VardagApp />, { axeCheck: false }) // M133 exempt — dedicated axe test above
+    await waitFor(() => {
+      expect(screen.getByTestId('vardag-pill-latest')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('vardag-pill-latest')).toHaveTextContent(
+      'Senast bokfört: A0042',
+    )
+  })
+
+  it('VS-42 visar inte latest-pill när IPC returnerar null', async () => {
+    mockIpcResponse('journal:latest-verification', {
+      success: true,
+      data: null,
+    })
+    await renderWithProviders(<VardagApp />, { axeCheck: false }) // M133 exempt — dedicated axe test above
+    await waitFor(() => {
+      expect(screen.getByTestId('vardag-status-pills')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('vardag-pill-latest')).not.toBeInTheDocument()
+  })
 })
