@@ -14,6 +14,15 @@ const COLOR_TOKEN: Record<BigButtonColor, string> = {
   dark: 'var(--color-dark)',
 }
 
+// VS-84: focus-ring matchar dot-färgen så tab-navigation visuellt
+// kopplas till knappens identitet ("Stäng månad" får mörk ring, inte
+// plommon).
+const FOCUS_RING_CLASS: Record<BigButtonColor, string> = {
+  plommon: 'focus-visible:ring-[var(--color-brand-500)]',
+  mint: 'focus-visible:ring-[var(--color-mint-500)]',
+  dark: 'focus-visible:ring-[var(--color-dark)]',
+}
+
 /**
  * BigButton — 220×220 hero-knapp för Vardag-läget (H+G-prototyp).
  *
@@ -35,7 +44,7 @@ export function BigButton({
       type="button"
       onClick={onClick}
       data-testid={testId}
-      className="group flex h-[220px] w-[220px] flex-col justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6 text-left shadow-[0_1px_2px_rgba(30,30,28,.04)] transition-all hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_12px_28px_rgba(30,30,28,.10)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className={`group flex h-[220px] w-[220px] flex-col justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6 text-left shadow-[0_1px_2px_rgba(30,30,28,.04)] transition-all hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_12px_28px_rgba(30,30,28,.10)] focus:outline-none focus-visible:ring-2 ${FOCUS_RING_CLASS[color]}`}
     >
       <span
         className="block h-9 w-9 rounded-full"
