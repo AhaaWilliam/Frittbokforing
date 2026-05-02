@@ -82,6 +82,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [receiptPath, setReceiptPath] = useState<string | null>(null)
   const amountInputRef = useRef<HTMLInputElement | null>(null)
+  // VS-37: synkron submit-guard mot double-click race (se SkapaFakturaSheet).
+  const submittingRef = useRef(false)
 
   // VS-25: Rensa submit-fel automatiskt så fort användaren börjar
   // redigera ett fält efter ett misslyckat submit (t.ex. ändra datum
@@ -132,7 +134,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     setAccountNumber(FALLBACK_EXPENSE_ACCOUNT)
     setAccountManuallyEdited(false)
     setError(null)
-    setSubmitting(false)
+    submittingRef.current = false; setSubmitting(false)
     setReceiptPath(null)
   }, [open])
 
@@ -203,9 +205,11 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     !submitting
 
   async function handleSubmit() {
+    if (submittingRef.current) return
     if (!canSubmit || !activeFiscalYear || !supplier || vatCodeId === null)
       return
 
+    submittingRef.current = true
     setSubmitting(true)
     setError(null)
 
@@ -224,7 +228,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       const draft = await window.api.saveExpenseDraft(payload)
       if (!draft.success) {
         setError(draft.error)
-        setSubmitting(false)
+        submittingRef.current = false; setSubmitting(false)
         return
       }
 
@@ -247,7 +251,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       const finalized = await window.api.finalizeExpense({ id: draft.data.id })
       if (!finalized.success) {
         setError(finalized.error)
-        setSubmitting(false)
+        submittingRef.current = false; setSubmitting(false)
         return
       }
 
@@ -279,7 +283,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')
-      setSubmitting(false)
+      submittingRef.current = false; setSubmitting(false)
     }
   }
 
