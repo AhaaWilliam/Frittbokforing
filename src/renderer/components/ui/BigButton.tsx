@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 type BigButtonColor = 'plommon' | 'mint' | 'dark'
 
 interface BigButtonProps {
@@ -22,7 +20,8 @@ const COLOR_TOKEN: Record<BigButtonColor, string> = {
  * Tre primära handlingar i Vardag: "Bokför kostnad", "Skapa faktura",
  * "Stäng månad". Varje knapp visar en färgad cirkel-marker (token-baserad),
  * en serif-rubrik, en hint-rad och en pil. Hover lyfter knappen 2px och
- * ger djupare skugga.
+ * ger djupare skugga via CSS hover-pseudoklass (VS-65 — undviker
+ * useState-baserad re-render per mus-event).
  */
 export function BigButton({
   color,
@@ -31,23 +30,12 @@ export function BigButton({
   onClick,
   testId,
 }: BigButtonProps) {
-  const [hover, setHover] = useState(false)
-
   return (
     <button
       type="button"
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       data-testid={testId}
-      className="flex h-[220px] w-[220px] flex-col justify-between rounded-md border bg-[var(--surface-elevated)] p-6 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-      style={{
-        borderColor: hover ? 'var(--border-strong)' : 'var(--border-default)',
-        transform: hover ? 'translateY(-2px)' : 'none',
-        boxShadow: hover
-          ? '0 12px 28px rgba(30,30,28,.10)'
-          : '0 1px 2px rgba(30,30,28,.04)',
-      }}
+      className="group flex h-[220px] w-[220px] flex-col justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-elevated)] p-6 text-left shadow-[0_1px_2px_rgba(30,30,28,.04)] transition-all hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_12px_28px_rgba(30,30,28,.10)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
       <span
         className="block h-9 w-9 rounded-full"
@@ -63,10 +51,7 @@ export function BigButton({
         </span>
       </span>
       <span
-        className="self-end text-lg transition-colors"
-        style={{
-          color: hover ? 'var(--text-primary)' : 'var(--text-faint)',
-        }}
+        className="self-end text-lg text-[var(--text-faint)] transition-colors group-hover:text-[var(--text-primary)]"
         aria-hidden="true"
       >
         →
