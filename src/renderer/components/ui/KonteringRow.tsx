@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { formatKr } from '../../lib/format'
 
 interface KonteringRowProps {
@@ -15,8 +16,11 @@ interface KonteringRowProps {
  *
  * Använd i sheets för att visa förslag-kontering eller i ZoneCons för
  * live-preview vid bokföring.
+ *
+ * VS-103: React.memo så förälder-re-renders (flash, focus, etc.) inte
+ * triggar omberäkning av varje konto-rad.
  */
-export function KonteringRow({
+export const KonteringRow = memo(function KonteringRow({
   account,
   description,
   debit,
@@ -38,12 +42,12 @@ export function KonteringRow({
       </span>
     </div>
   )
-}
+})
 
 /**
  * Header-rad för en lista av KonteringRow.
  */
-export function KonteringHeader() {
+export const KonteringHeader = memo(function KonteringHeader() {
   return (
     <div className="grid grid-cols-[60px_1fr_88px_88px] items-center gap-2 border-b border-[var(--border-strong)] pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
       <span>Konto</span>
@@ -52,4 +56,4 @@ export function KonteringHeader() {
       <span className="text-right">Kredit</span>
     </div>
   )
-}
+})
