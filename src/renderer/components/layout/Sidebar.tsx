@@ -137,7 +137,11 @@ export function Sidebar({ company }: SidebarProps) {
       <GlobalSearch />
 
       {/* Nav */}
-      <nav id="primary-nav" className="flex-1 overflow-y-auto px-2 py-3">
+      <nav
+        id="primary-nav"
+        aria-label="Huvudnavigation"
+        className="flex-1 overflow-y-auto px-2 py-3"
+      >
         <SectionLabel className="mb-1 px-3">Hantera</SectionLabel>
         <SidebarLink
           to="/overview"
