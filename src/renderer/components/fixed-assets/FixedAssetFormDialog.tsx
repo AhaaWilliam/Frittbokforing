@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 import {
   DEPRECIATION_DEFAULTS,
@@ -184,28 +185,23 @@ export function FixedAssetFormDialog({
       ? 'Spara ändringar'
       : 'Skapa tillgång'
 
+  // VS-54: Migrerar till Radix Dialog (M156 + ADR 003) — manuell click-
+  // outside + Escape-handling ersätts av Radix-primitives.
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="fixed-asset-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onOpenChange(false)
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onOpenChange(false)
-      }}
-      data-testid="fixed-asset-form-dialog"
-    >
-      <div className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-lg">
-        <h2
-          id="fixed-asset-dialog-title"
-          className="mb-4 text-lg font-semibold"
+    <Dialog.Root open onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-lg focus:outline-none"
+          aria-labelledby="fixed-asset-dialog-title"
+          data-testid="fixed-asset-form-dialog"
         >
-          {title}
-        </h2>
+          <Dialog.Title
+            id="fixed-asset-dialog-title"
+            className="mb-4 text-lg font-semibold"
+          >
+            {title}
+          </Dialog.Title>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -430,13 +426,14 @@ export function FixedAssetFormDialog({
           {formError && <Callout variant="danger">{formError}</Callout>}
 
           <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-md border px-4 py-2 text-sm"
-            >
-              Avbryt
-            </button>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="rounded-md border px-4 py-2 text-sm"
+              >
+                Avbryt
+              </button>
+            </Dialog.Close>
             <button
               type="submit"
               disabled={isPending}
@@ -447,7 +444,8 @@ export function FixedAssetFormDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
