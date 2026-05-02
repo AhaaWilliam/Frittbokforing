@@ -248,7 +248,7 @@ export function PageFixedAssets() {
                               data-testid={`fa-edit-${a.id}`}
                               className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
                           )}
                         {a.status === 'active' && (
@@ -261,7 +261,7 @@ export function PageFixedAssets() {
                             title="Avyttra"
                             data-testid={`fa-dispose-${a.id}`}
                           >
-                            <XCircle className="h-3.5 w-3.5" />
+                            <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
                           </button>
                         )}
                         {a.status === 'active' &&
@@ -275,7 +275,7 @@ export function PageFixedAssets() {
                               title="Radera"
                               data-testid={`fa-delete-${a.id}`}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
                           )}
                       </td>
