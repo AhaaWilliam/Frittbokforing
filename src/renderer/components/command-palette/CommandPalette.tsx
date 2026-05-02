@@ -114,7 +114,7 @@ export function CommandPalette({
           data-testid="command-palette-overlay"
         />
         <Dialog.Content
-          className="fixed left-1/2 top-[20vh] z-[var(--z-command-palette)] w-[min(640px,90vw)] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white shadow-lg"
+          className="fixed left-1/2 top-[20vh] z-[var(--z-command-palette)] w-[min(640px,90vw)] -translate-x-1/2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-lg"
           aria-label="Kommandopalett"
           data-testid="command-palette"
           onOpenAutoFocus={(e) => {
@@ -129,7 +129,7 @@ export function CommandPalette({
             navigera och Enter för att aktivera.
           </Dialog.Description>
 
-          <div className="border-b border-neutral-200 p-3">
+          <div className="border-b border-[var(--border-default)] p-3">
             <input
               ref={inputRef}
               type="text"
@@ -142,7 +142,7 @@ export function CommandPalette({
               aria-controls={listboxId}
               aria-autocomplete="list"
               aria-activedescendant={kb.activeId}
-              className="w-full bg-transparent text-base outline-none placeholder:text-neutral-400"
+              className="w-full bg-transparent text-base outline-none placeholder:text-[var(--text-faint)]"
               data-testid="command-palette-input"
             />
           </div>
@@ -155,13 +155,13 @@ export function CommandPalette({
             data-testid="command-palette-list"
           >
             {flatItems.length === 0 ? (
-              <li className="px-4 py-8 text-center text-sm text-neutral-500">
+              <li className="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">
                 Inga kommandon matchar &ldquo;{query}&rdquo;
               </li>
             ) : (
               grouped.map((group) => (
                 <li key={group.section}>
-                  <div className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+                  <div className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wider text-[var(--text-faint)]">
                     {group.label}
                   </div>
                   <ul role="group">
@@ -178,7 +178,7 @@ export function CommandPalette({
                           className={`mx-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm ${
                             isActive
                               ? 'bg-brand-50 text-brand-700'
-                              : 'text-neutral-700 hover:bg-neutral-50'
+                              : 'text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]/50'
                           }`}
                           onClick={() => {
                             onOpenChange(false)
@@ -208,7 +208,7 @@ export function CommandPalette({
             )}
           </ul>
 
-          <div className="flex items-center justify-between gap-3 border-t border-neutral-200 px-4 py-2 text-xs text-neutral-500">
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--border-default)] px-4 py-2 text-xs text-[var(--text-secondary)]">
             <span className="flex items-center gap-1.5">
               <KbdChip size="sm">↑</KbdChip>
               <KbdChip size="sm">↓</KbdChip>
