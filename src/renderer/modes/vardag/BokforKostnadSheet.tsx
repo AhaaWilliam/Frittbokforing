@@ -14,6 +14,7 @@ import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
 import {
   fiscalYearDateError,
+  formatKr,
   kronorToOre,
   pathBasename,
   todayLocal,
@@ -418,6 +419,31 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             </Field>
           </div>
 
+          {/* VS-32: "Att betala"-sammanställning matchar SkapaFakturaSheets
+              VS-32-summary. Visar Netto/Moms/Totalt så användaren ser
+              uppdelningen tydligt innan submit. */}
+          {amountInclVatOre > 0 && (
+            <div
+              className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
+              aria-live="polite"
+              data-testid="vardag-kostnad-summary"
+            >
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+                Att betala
+              </p>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <CostSummaryCell label="Netto" value={formatKr(netOre)} />
+                <CostSummaryCell label="Moms" value={formatKr(vatOre)} />
+                <CostSummaryCell
+                  label="Totalt"
+                  value={formatKr(amountInclVatOre)}
+                  emphasis
+                  testId="vardag-kostnad-summary-total"
+                />
+              </div>
+            </div>
+          )}
+
           <div
             className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
             aria-live="polite"
@@ -582,5 +608,35 @@ function ReceiptVisual({
         PDF, PNG, JPG, HEIC
       </p>
     </button>
+  )
+}
+
+function CostSummaryCell({
+  label,
+  value,
+  emphasis,
+  testId,
+}: {
+  label: string
+  value: string
+  emphasis?: boolean
+  testId?: string
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] uppercase tracking-wider text-[var(--text-faint)]">
+        {label}
+      </span>
+      <span
+        className={
+          emphasis
+            ? 'font-mono text-base font-semibold text-[var(--text-primary)]'
+            : 'font-mono text-sm text-[var(--text-secondary)]'
+        }
+        data-testid={testId}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
