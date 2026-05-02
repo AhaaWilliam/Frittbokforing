@@ -270,7 +270,13 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             field: 'default_expense_account',
             account_number: accountNumber,
           })
-        } catch {
+        } catch (e) {
+          // VS-40: best-effort men inte tyst — logga så fel kan upptäckas
+          // i felsökning utan att blockera bokföringen.
+          console.warn(
+            '[BokforKostnadSheet] setCounterpartyDefaultAccount failed:',
+            e,
+          )
           /* best-effort, blockerar inte success-toast */
         }
       }

@@ -230,7 +230,13 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
             field: 'default_revenue_account',
             account_number: accountNumber,
           })
-        } catch {
+        } catch (e) {
+          // VS-40: best-effort men inte tyst — logga så fel kan upptäckas
+          // i felsökning utan att blockera bokföringen.
+          console.warn(
+            '[SkapaFakturaSheet] setCounterpartyDefaultAccount failed:',
+            e,
+          )
           /* best-effort */
         }
       }
