@@ -1009,7 +1009,13 @@ export function useCreateBankFeeEntry() {
     },
     import('../../main/services/bank/bank-fee-entry-service').CreateBankFeeEntryResult
   >((data) => window.api.createBankFeeEntry(data), {
-    invalidate: [queryKeys.allBankStatements()],
+    invalidate: [
+      queryKeys.allBankStatements(),
+      queryKeys.allManualEntries(),
+      queryKeys.allLatestVerifications(),
+      queryKeys.allDashboard(),
+      queryKeys.allIncomeStatement(),
+    ],
   })
 }
 
