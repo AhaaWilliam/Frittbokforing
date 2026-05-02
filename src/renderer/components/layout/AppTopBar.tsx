@@ -85,6 +85,16 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
           isVardag ? 'Byt till bokförar-läge' : 'Byt till vardag-läge'
         }
       >
+        <span
+          className="inline-block h-1.5 w-1.5 rounded-full"
+          style={{
+            background: isVardag
+              ? 'var(--color-mint-500)'
+              : 'var(--color-brand-500)',
+          }}
+          aria-hidden="true"
+          data-testid="topbar-mode-dot"
+        />
         <span>{isVardag ? 'Bokförar-läge' : 'Vardag-läge'}</span>
         <KbdChip variant={isVardag ? 'light' : 'dark'}>⌘⇧B</KbdChip>
       </button>
