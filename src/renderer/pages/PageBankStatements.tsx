@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 import { ArrowLeft, Upload } from 'lucide-react'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
@@ -509,15 +510,23 @@ function MatchDialog({
     }
   }
 
+  // VS-57: Migrerar till Radix Dialog (M156 + ADR 003).
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      role="dialog"
-      aria-modal="true"
-      data-testid="bank-match-dialog"
+    <Dialog.Root
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
     >
-      <div className="w-full max-w-md rounded-lg bg-background p-4 shadow-xl">
-        <h2 className="mb-2 text-lg font-semibold">Matcha bank-transaktion</h2>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-4 shadow-xl focus:outline-none"
+          data-testid="bank-match-dialog"
+        >
+          <Dialog.Title className="mb-2 text-lg font-semibold">
+            Matcha bank-transaktion
+          </Dialog.Title>
         <div className="mb-3 text-sm text-muted-foreground">
           {tx.value_date} · {fmtKr(tx.amount_ore)} ·{' '}
           {direction === 'invoice'
@@ -559,13 +568,14 @@ function MatchDialog({
           />
         </label>
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
-            onClick={onClose}
-          >
-            Avbryt
-          </button>
+          <Dialog.Close asChild>
+            <button
+              type="button"
+              className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
+            >
+              Avbryt
+            </button>
+          </Dialog.Close>
           <button
             type="button"
             className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
@@ -576,8 +586,9 @@ function MatchDialog({
             Matcha
           </button>
         </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
