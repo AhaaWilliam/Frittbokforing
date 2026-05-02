@@ -104,6 +104,8 @@ export interface Company {
   plusgiro: string | null
   website: string | null
   approved_for_f_tax: number
+  /** VS-115: SKV moms-deklarations-frekvens. Default 'quarterly'. */
+  vat_frequency: 'monthly' | 'quarterly' | 'yearly'
   created_at: string
 }
 

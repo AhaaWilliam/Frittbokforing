@@ -2046,6 +2046,24 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
     END;
     `,
   },
+  // ── Migration 060 — VAT-deadline VS-115: companies.vat_frequency ──
+  //
+  // Tre möjliga värden för moms-deklarations-frekvens enligt SKV:
+  //   'monthly'   — månadsmoms (deadline 26:e dag andra månaden efter)
+  //   'quarterly' — kvartalsmoms (deadline 12:e dag andra månaden efter)
+  //   'yearly'    — årsmoms (deadline 26 februari året efter)
+  //
+  // ADD COLUMN med konstant DEFAULT är M127-kompatibel. Backfill: alla
+  // befintliga rader får 'quarterly' via DEFAULT-klausulen — matchar
+  // SKV:s vanligaste val för småbolag (omsättning < 40 MSEK).
+  //
+  // CHECK-constraint enforce:ar enum-värden. companies har inkommande FK
+  // från flera tabeller men ADD COLUMN kräver inte table-recreate.
+  {
+    sql: `ALTER TABLE companies ADD COLUMN vat_frequency TEXT NOT NULL
+      DEFAULT 'quarterly'
+      CHECK (vat_frequency IN ('monthly', 'quarterly', 'yearly'));`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {
