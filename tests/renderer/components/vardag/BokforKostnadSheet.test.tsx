@@ -768,4 +768,47 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(window.location.hash).toBe('#/expenses/create')
     expect(onClose).toHaveBeenCalled()
   })
+
+  // VS-47: regression-test för VS-37 (submittingRef-guard mot double-click).
+  it('VS-37 dubbelklick på submit anropar saveExpenseDraft endast en gång', async () => {
+    mockIpcResponse('expense:save-draft', {
+      success: true,
+      data: makeExpenseDraft({ id: 77 }),
+    })
+    mockIpcResponse('expense:finalize', {
+      success: true,
+      data: { id: 77, journal_entry_id: 500, verification_number: 1 },
+    })
+    mockIpcResponse('counterparty:set-default-account', {
+      success: true,
+      data: supplierFixtures[0],
+    })
+
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+
+    fireEvent.change(screen.getByTestId('vardag-kostnad-amount'), {
+      target: { value: '500,00' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-kostnad-description'), {
+      target: { value: 'Kontorsmaterial' },
+    })
+    fireEvent.click(screen.getByTestId('supplier-picker-mock'))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-kostnad-submit')).not.toBeDisabled(),
+    )
+
+    const submitBtn = screen.getByTestId('vardag-kostnad-submit')
+    fireEvent.click(submitBtn)
+    fireEvent.click(submitBtn)
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+
+    expect(ipcCalls('saveExpenseDraft').length).toBe(1)
+    expect(ipcCalls('finalizeExpense').length).toBe(1)
+  })
 })
