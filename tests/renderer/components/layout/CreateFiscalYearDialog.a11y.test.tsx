@@ -16,17 +16,17 @@ beforeEach(() => {
 
 describe('CreateFiscalYearDialog — F49 a11y', () => {
   it('dialog has role="dialog", aria-modal, aria-labelledby and passes axe', async () => {
-    const { container } = await renderWithProviders(
+    await renderWithProviders(
       <CreateFiscalYearDialog open={true} onClose={vi.fn()} />,
     )
 
-    const dialog = container.querySelector('[role="dialog"]')
-    expect(dialog).not.toBeNull()
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    // VS-51: Radix Dialog renderar i Portal (utanför container) — använder
+    // screen för att söka document-wide.
+    const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveAttribute('aria-labelledby', 'create-fy-title')
 
     // Title element referenced by aria-labelledby exists
-    const title = container.querySelector('#create-fy-title')
+    const title = document.getElementById('create-fy-title')
     expect(title).not.toBeNull()
     expect(title).toHaveTextContent('Skapa nytt räkenskapsår')
   })

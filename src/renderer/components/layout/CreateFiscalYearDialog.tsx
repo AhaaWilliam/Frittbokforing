@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useNetResult, useCreateNewFiscalYear } from '../../lib/hooks'
 import { addOneDay, addMonthsMinusOneDay } from '../../../shared/date-utils'
@@ -94,17 +95,26 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
     }
   }
 
+  // VS-51: Migrerar till Radix Dialog (M156 + ADR 003).
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-fy-title"
-        className="w-full max-w-md rounded-lg border bg-background p-6 shadow-xl"
-      >
-        <h2 id="create-fy-title" className="mb-4 text-lg font-semibold">
-          Skapa nytt räkenskapsår
-        </h2>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose()
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-background p-6 shadow-xl focus:outline-none"
+          aria-labelledby="create-fy-title"
+        >
+          <Dialog.Title
+            id="create-fy-title"
+            className="mb-4 text-lg font-semibold"
+          >
+            Skapa nytt räkenskapsår
+          </Dialog.Title>
 
         {error && (
           <div className="mb-4">
@@ -269,7 +279,8 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
             </button>
           </div>
         )}
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
