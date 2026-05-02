@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 import { useCreateAccrual, useAccounts } from '../../lib/hooks'
 import type { AccrualType } from '../../../shared/types'
@@ -87,17 +88,21 @@ export function CreateAccrualDialog({
     }
   }
 
+  // VS-53: Migrerar till Radix Dialog (M156 + ADR 003).
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-accrual-title"
-        className="w-full max-w-lg rounded-lg bg-background p-6 shadow-xl"
-      >
-        <h2 id="create-accrual-title" className="mb-4 text-base font-semibold">
-          Ny periodisering
-        </h2>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-xl focus:outline-none"
+          aria-labelledby="create-accrual-title"
+        >
+          <Dialog.Title
+            id="create-accrual-title"
+            className="mb-4 text-base font-semibold"
+          >
+            Ny periodisering
+          </Dialog.Title>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
@@ -291,13 +296,14 @@ export function CreateAccrualDialog({
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
-            >
-              Avbryt
-            </button>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Avbryt
+              </button>
+            </Dialog.Close>
             <button
               type="submit"
               disabled={createMutation.isPending}
@@ -307,7 +313,8 @@ export function CreateAccrualDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
