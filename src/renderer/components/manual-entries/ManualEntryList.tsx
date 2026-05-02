@@ -1,4 +1,5 @@
 import { useManualEntryDrafts, useManualEntries } from '../../lib/hooks'
+import { consumeFlashable } from '../../lib/flashable'
 import { formatKr } from '../../lib/format'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
@@ -141,10 +142,14 @@ export function ManualEntryList({
                       : isCorrection
                         ? 'info'
                         : 'mint'
+                    // VS-45: flash-animation om denna entry just bokfördes.
+                    // consumeFlashable returnerar true en gång — re-render
+                    // får inte upprepa animationen.
+                    const flash = consumeFlashable('manualEntry', entry.id)
                     return (
                       <tr
                         key={entry.id}
-                        className="cursor-pointer border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--surface-secondary)]/40"
+                        className={`cursor-pointer border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--surface-secondary)]/40${flash ? ' fritt-flash' : ''}`}
                         onClick={() => onView?.(entry.id)}
                       >
                         <td className="py-2 pr-2">

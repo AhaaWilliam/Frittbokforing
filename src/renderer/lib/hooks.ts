@@ -41,6 +41,7 @@ import type {
 import { useIpcQuery } from './use-ipc-query'
 import { useIpcMutation } from './use-ipc-mutation'
 import { queryKeys } from './query-keys'
+import { markFlashable } from './flashable'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 
 // === Company ===
@@ -562,6 +563,10 @@ export function useFinalizeInvoice(_fiscalYearId?: number | undefined) {
     { id: number; verification_number: number }
   >((data) => window.api.finalizeInvoice(data), {
     invalidate: [queryKeys.allInvoices(), queryKeys.anyInvoice()],
+    onSuccess: (data) => {
+      // VS-45: flash-markering för listvyn.
+      markFlashable('invoice', data.id)
+    },
   })
 }
 
@@ -641,6 +646,11 @@ export function useFinalizeExpense() {
     (data) => window.api.finalizeExpense(data),
     {
       invalidate: [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()],
+      onSuccess: (data) => {
+        // VS-45: markera den nyfinaliserade kostnaden för flash-animation
+        // i listvyn när användaren navigerar dit.
+        markFlashable('expense', data.id)
+      },
     },
   )
 }
@@ -1055,6 +1065,12 @@ export function useFinalizeManualEntry() {
         queryKeys.allManualEntries(),
         queryKeys.allDashboard(),
       ],
+      onSuccess: (_data, input) => {
+        // VS-45: flash-markering på manual_entry.id (= input.id).
+        // finalizeManualEntry returnerar journalEntryId — listvyn visar
+        // dock manual_entry.id, så vi tracker det.
+        markFlashable('manualEntry', input.id)
+      },
     },
   )
 }
