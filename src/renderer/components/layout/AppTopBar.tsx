@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useFiscalYearContextOptional } from '../../contexts/FiscalYearContext'
 import { KbdChip, modKey } from '../ui/KbdChip'
@@ -39,8 +40,19 @@ const SV_MONTHS = [
 export function AppTopBar({ companyName }: AppTopBarProps) {
   const { mode, setMode } = useUiMode()
   const fyContext = useFiscalYearContextOptional()
+  const [now, setNow] = useState(() => new Date())
 
-  const periodLabel = formatPeriodLabel(fyContext?.activeFiscalYear ?? null)
+  // VS-72: Refresha 'now' varje minut så periodLabel följer månadsskifte
+  // även om appen står öppen. Symmetri med VS-62 (VardagApp).
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const periodLabel = formatPeriodLabel(
+    fyContext?.activeFiscalYear ?? null,
+    now,
+  )
   const isVardag = mode === 'vardag'
 
   return (
@@ -106,11 +118,11 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
 
 function formatPeriodLabel(
   fy: { start_date: string; end_date: string } | null | undefined,
+  now: Date,
 ): string | null {
   if (!fy) return null
   const start = new Date(fy.start_date)
   const end = new Date(fy.end_date)
-  const now = new Date()
 
   const within = now >= start && now <= end
   const month = within ? now.getMonth() : start.getMonth()
