@@ -68,6 +68,7 @@ export function PeriodList() {
                 )}
                 {canClose && (
                   <button
+                    type="button"
                     onClick={() => setConfirmId(period.id)}
                     className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
                   >
@@ -76,6 +77,7 @@ export function PeriodList() {
                 )}
                 {canReopen && (
                   <button
+                    type="button"
                     onClick={() => handleReopen(period.id)}
                     className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
                   >
