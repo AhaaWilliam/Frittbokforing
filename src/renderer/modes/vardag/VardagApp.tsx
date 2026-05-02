@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import {
   FiscalYearProvider,
@@ -65,6 +65,7 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   const { data: latestVer } = useLatestVerification(fyId)
   const inboxCount = (expenseDrafts?.length ?? 0) + (invoiceDrafts?.length ?? 0)
   const [sheet, setSheet] = useState<VardagSheet>(null)
+  const [now, setNow] = useState(() => new Date())
 
   useKeyboardShortcuts({
     'mod+shift+b': () => setMode('bokforare'),
@@ -72,15 +73,24 @@ function VardagAppInner({ companyName }: { companyName: string }) {
     'mod+i': () => setSheet('faktura'),
   })
 
-  const dayLabel = useMemo(() => {
-    return new Date().toLocaleDateString('sv-SE', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    })
+  // VS-62: Refresha klockan varje minut så dayLabel och greeting följer
+  // verkligheten även om appen står öppen över midnatt eller morgon→kväll.
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
   }, [])
 
-  const greeting = useMemo(() => greetingForHour(new Date().getHours()), [])
+  const dayLabel = useMemo(
+    () =>
+      now.toLocaleDateString('sv-SE', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }),
+    [now],
+  )
+
+  const greeting = useMemo(() => greetingForHour(now.getHours()), [now])
 
   return (
     <VardagShell companyName={companyName}>

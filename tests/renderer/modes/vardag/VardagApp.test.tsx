@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupMockIpc, mockIpcResponse } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
@@ -122,6 +122,33 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
     expect(screen.getByTestId('vardag-pill-latest')).toHaveTextContent(
       'Senast bokfört: A0042',
     )
+  })
+
+  // VS-62: dayLabel och greeting refreshar vid timme/dag-skifte
+  describe('VS-62 minute-tick refresh', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('greeting går från "God morgon" till "Hej" vid 10:00-passering', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      vi.setSystemTime(new Date('2026-05-02T09:59:00'))
+
+      await renderWithProviders(<VardagApp />, { axeCheck: false }) // M133 exempt — dedicated axe test above
+
+      await waitFor(() => {
+        expect(screen.getByText(/God morgon/)).toBeInTheDocument()
+      })
+
+      await act(async () => {
+        vi.setSystemTime(new Date('2026-05-02T10:00:30'))
+        await vi.advanceTimersByTimeAsync(60_000)
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText(/^Hej\.$/)).toBeInTheDocument()
+      })
+    })
   })
 
   it('VS-42 visar inte latest-pill när IPC returnerar null', async () => {
