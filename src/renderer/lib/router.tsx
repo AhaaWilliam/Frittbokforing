@@ -194,6 +194,9 @@ export function Link({
     <a
       href={`#${to}`}
       onClick={handleClick}
+      // VS-87: aria-current="page" så skärmläsare annonserar aktuell route
+      // i navigation-listor (sidebar). Symmetri med NavItem (VS-83).
+      aria-current={isActive ? 'page' : undefined}
       className={`${className} ${isActive ? activeClassName : ''}`.trim()}
       data-testid={testId}
     >
