@@ -13,6 +13,7 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
 import { fiscalYearDateError, formatKr, kronorToOre, todayLocal } from '../../lib/format'
+import { multiplyDecimalByOre } from '../../../shared/money'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
@@ -123,7 +124,9 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   }, [quantity])
 
   const unitPriceOre = kronorToOre(priceKr)
-  const lineNetOre = Math.round(qtyNum * unitPriceOre)
+  // M131: heltalsaritmetik via shared/money för att undvika IEEE 754-fel
+  // vid fraktionell qty (t.ex. 0.29 * 5000 → fel utan helper).
+  const lineNetOre = multiplyDecimalByOre(qtyNum, unitPriceOre)
   const vatRate = useMemo(() => {
     return vatCodes.find((vc) => vc.id === vatCodeId)?.rate_percent ?? 25
   }, [vatCodes, vatCodeId])
