@@ -282,7 +282,7 @@ function BankStatementDetail({ statementId }: { statementId: number }) {
             onClick={() => navigate('/bank-statements')}
             data-testid="bank-back-btn"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Tillbaka
           </button>
         }

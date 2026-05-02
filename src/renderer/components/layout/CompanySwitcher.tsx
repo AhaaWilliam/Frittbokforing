@@ -45,7 +45,10 @@ export function CompanySwitcher() {
           aria-expanded={open}
         >
           <span className="truncate">{activeCompany.name}</span>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <ChevronDown
+            className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
         </button>
 
         {open && (
@@ -86,7 +89,7 @@ export function CompanySwitcher() {
                 className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
                 data-testid="company-switcher-add"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 Lägg till bolag
               </button>
             </li>

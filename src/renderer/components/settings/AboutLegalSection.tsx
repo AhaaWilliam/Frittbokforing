@@ -156,7 +156,7 @@ export function AboutLegalSection() {
           className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
           data-testid="open-tos"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-4 w-4" aria-hidden="true" />
           Användarvillkor
         </button>
         <button
@@ -165,7 +165,7 @@ export function AboutLegalSection() {
           className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
           data-testid="open-privacy"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-4 w-4" aria-hidden="true" />
           Integritetspolicy
         </button>
         <button

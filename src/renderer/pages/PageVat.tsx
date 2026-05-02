@@ -162,9 +162,12 @@ export function PageVat() {
                 data-testid="vat-copy-clipboard"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-success-600" />
+                  <Check
+                    className="h-4 w-4 text-success-600"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4" aria-hidden="true" />
                 )}
                 {copied ? 'Kopierat' : 'Kopiera deklaration'}
               </button>

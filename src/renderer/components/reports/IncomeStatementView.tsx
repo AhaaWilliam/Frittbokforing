@@ -53,9 +53,15 @@ function ReportGroupSection({
                 {hasAccounts && !printMode && (
                   <span className="w-4 text-muted-foreground">
                     {isOpen ? (
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <ChevronDown
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
                     ) : (
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <ChevronRight
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
                     )}
                   </span>
                 )}
