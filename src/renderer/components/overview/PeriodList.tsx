@@ -7,6 +7,7 @@ import {
 } from '../../lib/hooks'
 import { formatFiscalYearLabel } from '../layout/YearPicker'
 import { Callout } from '../ui/Callout'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { Pill } from '../ui/Pill'
 import type { FiscalPeriod } from '../../../shared/types'
 
@@ -96,34 +97,26 @@ export function PeriodList() {
         </div>
       )}
 
-      {/* Bekräftelse-dialog */}
-      {confirmId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg">
-            <h3 className="text-base font-semibold">
-              Stäng {getMonthName(periods.find((p) => p.id === confirmId)!)}?
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Inga nya transaktioner kan bokföras i denna månad efter detta. Du
-              kan öppna månaden igen om det behövs.
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmId(null)}
-                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={() => handleClose(confirmId)}
-                className="rounded-md bg-[var(--color-dark)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-dark-soft)]"
-              >
-                Stäng månaden
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* VS-49: ConfirmDialog (Radix AlertDialog) ersätter custom modal —
+          a11y-rätt focus-trap, escape-stäng, och 'dark'-variant signalerar
+          period-låsning som irreversibel action (M156 + ADR 003). */}
+      <ConfirmDialog
+        open={confirmId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmId(null)
+        }}
+        title={
+          confirmId !== null
+            ? `Stäng ${getMonthName(periods.find((p) => p.id === confirmId)!)}?`
+            : ''
+        }
+        description="Inga nya transaktioner kan bokföras i denna månad efter detta. Du kan öppna månaden igen om det behövs."
+        confirmLabel="Stäng månaden"
+        variant="dark"
+        onConfirm={() => {
+          if (confirmId !== null) handleClose(confirmId)
+        }}
+      />
     </div>
   )
 }

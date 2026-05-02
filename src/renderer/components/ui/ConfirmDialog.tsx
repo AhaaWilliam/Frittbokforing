@@ -9,7 +9,8 @@ interface ConfirmDialogProps {
   description: string
   confirmLabel?: string
   cancelLabel?: string
-  variant?: 'danger' | 'warning' | 'default'
+  // VS-49: 'dark' = irreversibel period/system-action (M156).
+  variant?: 'danger' | 'warning' | 'default' | 'dark'
   onConfirm: () => void
 }
 
@@ -28,7 +29,9 @@ export const ConfirmDialog = memo(function ConfirmDialog({
       ? 'destructive'
       : variant === 'warning'
         ? 'warning'
-        : 'primary'
+        : variant === 'dark'
+          ? 'dark'
+          : 'primary'
 
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
