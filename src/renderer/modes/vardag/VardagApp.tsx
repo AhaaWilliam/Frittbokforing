@@ -8,7 +8,7 @@ import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { useExpenseDrafts, useDraftInvoices } from '../../lib/hooks'
 import { BigButton } from '../../components/ui/BigButton'
-import { KbdChip } from '../../components/ui/KbdChip'
+import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
 import { BokforKostnadSheet } from './BokforKostnadSheet'
 import { SkapaFakturaSheet } from './SkapaFakturaSheet'
@@ -150,16 +150,16 @@ function VardagAppInner({ companyName }: { companyName: string }) {
 
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-[18px] text-[11px] text-[var(--text-faint)]">
           <span>
-            <KbdChip>⌘N</KbdChip> ny kostnad
+            <KbdChip>{`${modKey()}N`}</KbdChip> ny kostnad
           </span>
           <span>
-            <KbdChip>⌘I</KbdChip> ny faktura
+            <KbdChip>{`${modKey()}I`}</KbdChip> ny faktura
           </span>
           <span>
-            <KbdChip>⌘K</KbdChip> sök allt
+            <KbdChip>{`${modKey()}K`}</KbdChip> sök allt
           </span>
           <span>
-            <KbdChip>⌘⇧B</KbdChip> Bokförare-läget
+            <KbdChip>{`${modKey()}⇧B`}</KbdChip> Bokförare-läget
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useFiscalYearContextOptional } from '../../contexts/FiscalYearContext'
-import { KbdChip } from '../ui/KbdChip'
+import { KbdChip, modKey } from '../ui/KbdChip'
 
 interface AppTopBarProps {
   companyName: string
@@ -96,7 +96,7 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
           data-testid="topbar-mode-dot"
         />
         <span>{isVardag ? 'Bokförar-läge' : 'Vardag-läge'}</span>
-        <KbdChip variant={isVardag ? 'light' : 'dark'}>⌘⇧B</KbdChip>
+        <KbdChip variant={isVardag ? 'light' : 'dark'}>{`${modKey()}⇧B`}</KbdChip>
       </button>
     </header>
   )

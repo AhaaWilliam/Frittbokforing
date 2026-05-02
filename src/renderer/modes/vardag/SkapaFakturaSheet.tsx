@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
-import { KbdChord } from '../../components/ui/KbdChip'
+import { KbdChord, modKey, modLabel } from '../../components/ui/KbdChip'
 import {
   KonteringHeader,
   KonteringRow,
@@ -494,8 +494,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
             >
               <span>{submitting ? 'Skickar…' : 'Skicka'}</span>
               <KbdChord
-                keys={['⌘', '↵']}
-                ariaLabel="Kommando plus Enter"
+                keys={[modKey(), '↵']}
+                ariaLabel={`${modLabel()} plus Enter`}
                 size="sm"
                 className="opacity-80"
               />

@@ -1,6 +1,26 @@
 import type { ReactNode } from 'react'
 
 /**
+ * VS-34: Plattformsmedveten mod-tangent. Returnerar `⌘` på macOS, annars
+ * `Ctrl`. Lazy evaluation eftersom navigator inte finns i node-miljö
+ * (test-loader kan cacha modulen mellan jsdom/node-miljöer).
+ */
+export function isMac(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const platform = navigator.platform || ''
+  const ua = navigator.userAgent || ''
+  return /Mac|iPhone|iPad|iPod|darwin/i.test(platform + ' ' + ua)
+}
+
+export function modKey(): string {
+  return isMac() ? '⌘' : 'Ctrl'
+}
+
+export function modLabel(): string {
+  return isMac() ? 'Kommando' : 'Ctrl'
+}
+
+/**
  * KbdChip — `<kbd>`-styled tangentchip för keyboard-genvägar.
  *
  * Användning: visa shortcuts inline i menyer/tooltips ("Ny faktura ⌘N"),

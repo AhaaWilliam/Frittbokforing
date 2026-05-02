@@ -14,6 +14,7 @@
  */
 
 import type { ReactNode } from 'react'
+import { modKey } from '../ui/KbdChip'
 
 export type CommandSection = 'navigation' | 'create' | 'view' | 'system'
 
@@ -230,7 +231,7 @@ export function buildBokforareCommands(
       label: 'Ny faktura',
       section: 'create',
       keywords: ['kundfaktura', 'income', 'sälja'],
-      shortcut: ['⌘', 'N'],
+      shortcut: [modKey(), 'N'],
       run: () => navigate('/income/create'),
     },
     {
