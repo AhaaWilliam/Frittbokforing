@@ -142,7 +142,7 @@ export const InvoiceListRow = memo(function InvoiceListRow({
                 title="Registrera betalning"
                 className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs font-medium hover:bg-muted"
               >
-                <CreditCard className="h-3 w-3" />
+                <CreditCard className="h-3 w-3" aria-hidden="true" />
                 Betala
               </button>
             )}

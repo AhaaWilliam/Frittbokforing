@@ -441,7 +441,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
               onClick={() => setShowBulkDialog(true)}
               className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
-              <CreditCard className="h-3 w-3" />
+              <CreditCard className="h-3 w-3" aria-hidden="true" />
               Bulk-betala
             </button>
           )}
