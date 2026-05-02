@@ -312,6 +312,33 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(screen.getByTestId('vardag-kostnad-submit')).toBeDisabled()
   })
 
+  it('VS-28 visar hint om saknade fält när submit är disabled', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false },
+    )
+
+    await screen.findByTestId('vardag-kostnad-amount')
+
+    // Initialt: alla obligatoriska fält tomma → hint listar dem
+    const hint = await screen.findByTestId('vardag-kostnad-missing-hint')
+    expect(hint).toHaveTextContent('Saknas:')
+    expect(hint).toHaveTextContent('belopp')
+    expect(hint).toHaveTextContent('leverantör')
+    expect(hint).toHaveTextContent('beskrivning')
+
+    // Fyll i belopp → "belopp" försvinner från listan
+    fireEvent.change(screen.getByTestId('vardag-kostnad-amount'), {
+      target: { value: '125,00' },
+    })
+
+    await waitFor(() => {
+      const updated = screen.getByTestId('vardag-kostnad-missing-hint')
+      expect(updated).not.toHaveTextContent('belopp')
+      expect(updated).toHaveTextContent('leverantör')
+    })
+  })
+
   it('VS-25 submit-fel rensas när användaren börjar redigera', async () => {
     mockIpcResponse('expense:save-draft', {
       success: true,

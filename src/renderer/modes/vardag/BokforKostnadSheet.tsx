@@ -182,6 +182,13 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
         : `Kontot ${accountNumber} finns inte i kontoplanen.`
       : null
 
+  // VS-28: Lista vad som saknas för att kunna submitta. Visas som
+  // diskret hint vid disabled submit-knapp.
+  const missingFields: string[] = []
+  if (amountInclVatOre <= 0) missingFields.push('belopp')
+  if (!supplier) missingFields.push('leverantör')
+  if (description.trim().length === 0) missingFields.push('beskrivning')
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -453,7 +460,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             </Callout>
           )}
 
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-end justify-between gap-2">
             <button
               type="button"
               onClick={openInBokforare}
@@ -462,23 +469,33 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
             >
               Behöver dela upp på flera konton?
             </button>
-            <div className="flex items-center gap-2">
-              <BottomSheetClose>Avbryt</BottomSheetClose>
-              <button
-                type="button"
-                disabled={!canSubmit}
-                onClick={handleSubmit}
-                className="inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                data-testid="vardag-kostnad-submit"
-              >
-                <span>{submitting ? 'Bokför…' : 'Bokför'}</span>
-                <KbdChord
-                  keys={['⌘', '↵']}
-                  ariaLabel="Kommando plus Enter"
-                  size="sm"
-                  className="opacity-80"
-                />
-              </button>
+            <div className="flex flex-col items-end gap-1">
+              {!canSubmit && missingFields.length > 0 && !submitting && (
+                <p
+                  className="text-[11px] text-[var(--text-faint)]"
+                  data-testid="vardag-kostnad-missing-hint"
+                >
+                  Saknas: {missingFields.join(', ')}
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <BottomSheetClose>Avbryt</BottomSheetClose>
+                <button
+                  type="button"
+                  disabled={!canSubmit}
+                  onClick={handleSubmit}
+                  className="inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  data-testid="vardag-kostnad-submit"
+                >
+                  <span>{submitting ? 'Bokför…' : 'Bokför'}</span>
+                  <KbdChord
+                    keys={['⌘', '↵']}
+                    ariaLabel="Kommando plus Enter"
+                    size="sm"
+                    className="opacity-80"
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

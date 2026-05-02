@@ -155,6 +155,13 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
         : `Kontot ${accountNumber} finns inte i kontoplanen.`
       : null
 
+  // VS-28: Lista vad som saknas för att kunna submitta.
+  const missingFields: string[] = []
+  if (!customer) missingFields.push('kund')
+  if (description.trim().length === 0) missingFields.push('beskrivning')
+  if (qtyNum <= 0) missingFields.push('antal')
+  if (unitPriceOre <= 0) missingFields.push('à-pris')
+
   const canSubmit =
     !!activeFiscalYear &&
     !!activeCompany &&
@@ -434,7 +441,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           </Callout>
         )}
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-end justify-between gap-2">
           <button
             type="button"
             onClick={openInBokforare}
@@ -443,7 +450,16 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           >
             Behöver lägga till fler rader?
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end gap-1">
+            {!canSubmit && missingFields.length > 0 && !submitting && (
+              <p
+                className="text-[11px] text-[var(--text-faint)]"
+                data-testid="vardag-faktura-missing-hint"
+              >
+                Saknas: {missingFields.join(', ')}
+              </p>
+            )}
+            <div className="flex items-center gap-2">
             <BottomSheetClose>Avbryt</BottomSheetClose>
             <button
               type="button"
@@ -460,6 +476,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
                 className="opacity-80"
               />
             </button>
+            </div>
           </div>
         </div>
       </div>
