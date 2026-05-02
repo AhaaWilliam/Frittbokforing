@@ -204,11 +204,15 @@ export function PayExpenseDialog({
 
           <div className="flex justify-end gap-3 mt-6">
             <Dialog.Close asChild>
-              <button className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]"
+              >
                 Avbryt
               </button>
             </Dialog.Close>
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={payMutation.isPending}
               className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
