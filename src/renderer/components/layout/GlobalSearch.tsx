@@ -106,6 +106,19 @@ export function GlobalSearch() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
+  // VS-118: cross-mode focus-request. Vardag-läget har ingen GlobalSearch
+  // monterad — mod+k där dispatchar 'global-search:focus' efter mode-byte
+  // så att denna komponent (mountad i bokförare-Sidebar) kan ta fokus.
+  useEffect(() => {
+    function onFocusRequest() {
+      if (isAnyModalOpen()) return
+      inputRef.current?.focus()
+    }
+    window.addEventListener('global-search:focus', onFocusRequest)
+    return () =>
+      window.removeEventListener('global-search:focus', onFocusRequest)
+  }, [])
+
   // Close dropdown on click outside
   useEffect(() => {
     function onClick(e: MouseEvent) {

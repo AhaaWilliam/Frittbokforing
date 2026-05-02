@@ -170,6 +170,30 @@ describe('VardagApp (H+G-3 hero-screen)', () => {
     })
   })
 
+  // VS-118: mod+k i Vardag växlar till bokförare och dispatchar
+  // global-search:focus så GlobalSearch-input tar fokus.
+  it('VS-118 mod+k växlar mode och dispatchar global-search:focus', async () => {
+    const events: string[] = []
+    const listener = () => events.push('focus-requested')
+    window.addEventListener('global-search:focus', listener)
+
+    await renderWithProviders(<VardagApp />, { axeCheck: false }) // M133 exempt — dedicated axe test above
+    await waitFor(() => {
+      expect(screen.getByTestId('vardag-hero')).toBeInTheDocument()
+    })
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'k', metaKey: true }),
+      )
+      // setTimeout(0) inom handlern → flush via real timers.
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    })
+
+    expect(events).toContain('focus-requested')
+    window.removeEventListener('global-search:focus', listener)
+  })
+
   it('VS-42 visar inte latest-pill när IPC returnerar null', async () => {
     mockIpcResponse('journal:latest-verification', {
       success: true,

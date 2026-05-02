@@ -98,6 +98,15 @@ function VardagAppInner({
     'mod+shift+b': () => setMode('bokforare'),
     'mod+n': () => setSheet('kostnad'),
     'mod+i': () => setSheet('faktura'),
+    // VS-118: ⌘K (annonserad i kbd-hint) växlar till bokförare-läget och
+    // skickar focus-request så GlobalSearch-input (i bokförare-Sidebar)
+    // tar fokus efter mount. setTimeout(0) ger React en commit-tick.
+    'mod+k': () => {
+      setMode('bokforare')
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('global-search:focus'))
+      }, 0)
+    },
   })
 
   // VS-62: Refresha klockan varje minut så dayLabel och greeting följer
