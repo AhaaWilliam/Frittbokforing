@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { useAllAccounts } from '../../lib/hooks'
 import { todayLocal } from '../../../shared/date-utils'
 import { parseDecimal } from '../../../shared/money'
@@ -43,18 +44,27 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
     })
   }
 
+  // VS-50: Migrerar till Radix Dialog (M156 + ADR 003) — focus-trap,
+  // Escape-stäng, scroll-lock och inert bakgrund hanteras automatiskt.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="dispose-dialog-title"
-      data-testid="dispose-dialog"
+    <Dialog.Root
+      open
+      onOpenChange={(open) => {
+        if (!open) onCancel()
+      }}
     >
-      <div className="w-full max-w-md rounded-lg bg-background p-4 shadow-xl">
-        <h2 id="dispose-dialog-title" className="mb-3 text-lg font-semibold">
-          Avyttra {assetName}
-        </h2>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+        <Dialog.Content
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-4 shadow-xl focus:outline-none"
+          data-testid="dispose-dialog"
+        >
+          <Dialog.Title
+            id="dispose-dialog-title"
+            className="mb-3 text-lg font-semibold"
+          >
+            Avyttra {assetName}
+          </Dialog.Title>
 
         <label className="mb-3 block text-sm">
           <span className="mb-1 block text-xs uppercase text-muted-foreground">
@@ -119,13 +129,14 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
         )}
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
-            onClick={onCancel}
-          >
-            Avbryt
-          </button>
+          <Dialog.Close asChild>
+            <button
+              type="button"
+              className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
+            >
+              Avbryt
+            </button>
+          </Dialog.Close>
           <button
             type="button"
             className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
@@ -135,7 +146,8 @@ export function DisposeDialog({ assetName, onConfirm, onCancel }: Props) {
             Avyttra
           </button>
         </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
