@@ -22,7 +22,8 @@ beforeEach(() => {
 describe('GlobalSearch', () => {
   it('renders input with placeholder', async () => {
     await renderWithProviders(<GlobalSearch />, { axeCheck: false }) // M133 exempt — dedicated axe test below
-    expect(screen.getByPlaceholderText(/Sök.*Ctrl\+K/)).toBeInTheDocument()
+    // VS-63: plattformsmedveten — ⌘K på Mac, Ctrl+K annars
+    expect(screen.getByPlaceholderText(/Sök \((⌘K|Ctrl\+K)\)/)).toBeInTheDocument()
   })
 
   it('typing < 2 chars does not open dropdown', async () => {

@@ -4,6 +4,7 @@ import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useGlobalSearch, useDebouncedSearch } from '../../lib/hooks'
 import { useNavigate } from '../../lib/router'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
+import { isMac, modKey } from '../ui/KbdChip'
 import type {
   SearchResult,
   SearchResultType,
@@ -183,7 +184,7 @@ export function GlobalSearch() {
                 ? `search-result-${activeIndex}`
                 : undefined
             }
-            placeholder="Sök (Ctrl+K)..."
+            placeholder={`Sök (${modKey()}${isMac() ? '' : '+'}K)...`}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
