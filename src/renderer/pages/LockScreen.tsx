@@ -246,6 +246,10 @@ function LoginForm({
         id="lockscreen-password"
         data-testid="lockscreen-password"
         type="password"
+        // VS-73: autoFocus är motiverat — denna vy är en dedikerad inloggning
+        // där användaren förväntar sig direkt input. Skärmläsare annonserar
+        // labelen via htmlFor=lockscreen-password.
+        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
         autoComplete="current-password"
         value={password}
@@ -317,6 +321,9 @@ function RecoveryForm({
       </p>
       <textarea
         data-testid="lockscreen-recovery-phrase"
+        // VS-73: autoFocus motiverat — recovery-formuläret är dedikerat
+        // input-flöde där fokus ska landa direkt på fraseringsfältet.
+        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
         rows={4}
         value={phrase}
