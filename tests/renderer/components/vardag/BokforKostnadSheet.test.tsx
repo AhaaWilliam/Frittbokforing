@@ -81,7 +81,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('renderar sheet med tomma fält när öppen', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
     expect(
       await screen.findByTestId('vardag-kostnad-amount'),
@@ -93,7 +93,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('Bokför-knapp disabled när formulär är tomt', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
     const submit = (await screen.findByTestId(
       'vardag-kostnad-submit',
@@ -118,7 +118,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={onClose} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -180,7 +180,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -209,7 +209,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('supplier-picker-mock'))
@@ -235,7 +235,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -266,7 +266,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
@@ -297,7 +297,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const accountInput = await screen.findByTestId('vardag-kostnad-account')
@@ -315,7 +315,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-28 visar hint om saknade fält när submit är disabled', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     await screen.findByTestId('vardag-kostnad-amount')
@@ -352,7 +352,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -388,7 +388,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const vatSelect = (await screen.findByTestId(
@@ -417,7 +417,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     // Default-konto 6110 är förvalt — kontonamn ska visas direkt
@@ -432,7 +432,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     // account:list-all utan mock → mock-ipc default = success: true, data: null
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     await screen.findByTestId('vardag-kostnad-account')
@@ -447,7 +447,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-18 belopp-fältet är auto-fokuserat när sheet öppnas', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const amount = await screen.findByTestId('vardag-kostnad-amount')
@@ -468,7 +468,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -493,7 +493,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-16 Cmd+Enter triggar INTE submit när formulär är ogiltigt', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     await screen.findByTestId('vardag-kostnad-amount')
@@ -506,7 +506,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-14 visar inline-fel om datum utanför aktivt FY', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false, fiscalYear: { id: 1, label: '2026' } },
+      { axeCheck: false, fiscalYear: { id: 1, label: '2026' } }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     // FY från fixturen är 2026 (start 2026-01-01, end 2026-12-31).
@@ -533,7 +533,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
@@ -553,7 +553,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
@@ -573,7 +573,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-23 drag-drop kvitto-fil sätter receipt-state', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const pickZone = await screen.findByTestId('vardag-kostnad-receipt-pick')
@@ -597,7 +597,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
   it('VS-23 drag-drop utan path (browser-mode) ignoreras säkert', async () => {
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const pickZone = await screen.findByTestId('vardag-kostnad-receipt-pick')
@@ -638,7 +638,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
@@ -687,7 +687,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('vardag-kostnad-receipt-pick'))
@@ -731,7 +731,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.change(await screen.findByTestId('vardag-kostnad-amount'), {
@@ -758,7 +758,7 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     const onClose = vi.fn()
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={onClose} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(

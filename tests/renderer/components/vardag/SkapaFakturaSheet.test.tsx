@@ -90,7 +90,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
   it('renderar med tomma fält när öppen', async () => {
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
     expect(
       await screen.findByTestId('vardag-faktura-description'),
@@ -102,7 +102,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
   it('Skicka-knapp disabled när formulär är tomt', async () => {
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
     const submit = (await screen.findByTestId(
       'vardag-faktura-submit',
@@ -127,7 +127,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
 
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={onClose} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('customer-picker-mock'))
@@ -192,7 +192,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
 
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('customer-picker-mock'))
@@ -216,7 +216,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
   it('VS-18 beskrivnings-fältet är auto-fokuserat när sheet öppnas', async () => {
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const desc = await screen.findByTestId('vardag-faktura-description')
@@ -229,7 +229,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     const onClose = vi.fn()
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={onClose} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(
@@ -248,7 +248,7 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
 
     await renderWithProviders(
       <SkapaFakturaSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     fireEvent.click(await screen.findByTestId('customer-picker-mock'))

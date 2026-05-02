@@ -2,7 +2,7 @@
 /**
  * Sprint VS-9 — A11y-tester för Vardag-sheets med axe enabled.
  *
- * VS-3 + VS-4 testfiler skippar axe (axeCheck: false) för att kunna köra
+ * VS-3 + VS-4 testfiler skippar axe (axeCheck = false) för att kunna köra
  * många test-cases per fil. Denna fil renderar varje sheet ENA gången
  * med axe enabled för att fånga a11y-violations.
  *
@@ -128,7 +128,7 @@ describe('VS-9 — Vardag-sheets a11y', () => {
 
     const { container } = await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false }, // M133 exempt — vi mutar tillstånd och testar igen
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx // M133 exempt — vi mutar tillstånd och testar igen
     )
 
     // Trigger fel-state via attempting submit utan att fylla i (canSubmit=false)
@@ -145,7 +145,7 @@ describe('VS-9 — Vardag-sheets a11y', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const pick = await screen.findByTestId('vardag-kostnad-receipt-pick')
@@ -165,7 +165,7 @@ describe('VS-9 — Vardag-sheets a11y', () => {
 
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
-      { axeCheck: false },
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
     )
 
     const cta = await screen.findByTestId('vardag-kostnad-multiline-cta')
