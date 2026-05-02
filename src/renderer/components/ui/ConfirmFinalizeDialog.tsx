@@ -32,7 +32,7 @@ export function ConfirmFinalizeDialog({
           onEscapeKeyDown={(e) => {
             if (isLoading) e.preventDefault()
           }}
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-xl focus:outline-none"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-[var(--surface-elevated)] p-6 shadow-xl focus:outline-none"
         >
           <AlertDialog.Title className="mb-2 text-base font-semibold">
             {title}

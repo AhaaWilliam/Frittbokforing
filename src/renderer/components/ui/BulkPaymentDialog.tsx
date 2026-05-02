@@ -94,7 +94,7 @@ export function BulkPaymentDialog({
           onEscapeKeyDown={(e) => {
             if (isLoading) e.preventDefault()
           }}
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg bg-background p-6 shadow-xl focus:outline-none"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl max-h-[80vh] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg bg-[var(--surface-elevated)] p-6 shadow-xl focus:outline-none"
         >
           <Dialog.Title className="mb-4 text-base font-semibold">
             {title}
