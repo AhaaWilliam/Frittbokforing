@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { Plus, XCircle, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
@@ -250,6 +250,15 @@ function MandatesSection() {
     }
   }
 
+  // VS-132: stabil callback-referens för MandateRow (memo) — undviker
+  // re-render av alla rader varje gång parent state ändras.
+  const handleRevoke = useCallback((mandate: SepaMandate) => {
+    setPendingRevoke({
+      id: mandate.id,
+      mandateRef: mandate.mandate_reference,
+    })
+  }, [])
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border bg-card p-4">
@@ -307,16 +316,7 @@ function MandatesSection() {
               </thead>
               <tbody>
                 {mandatesQuery.data.map((m) => (
-                  <MandateRow
-                    key={m.id}
-                    mandate={m}
-                    onRevoke={() =>
-                      setPendingRevoke({
-                        id: m.id,
-                        mandateRef: m.mandate_reference,
-                      })
-                    }
-                  />
+                  <MandateRow key={m.id} mandate={m} onRevoke={handleRevoke} />
                 ))}
               </tbody>
             </table>
@@ -346,12 +346,15 @@ function MandatesSection() {
   )
 }
 
-function MandateRow({
+// VS-132: React.memo så orörda rader inte re-renderas när bara
+// pendingRevoke-state ändras i parent. Stabil callback från parent
+// (handleRevoke via useCallback) gör att shallow-compare slår.
+const MandateRow = memo(function MandateRow({
   mandate,
   onRevoke,
 }: {
   mandate: SepaMandate
-  onRevoke: () => void
+  onRevoke: (mandate: SepaMandate) => void
 }) {
   return (
     <tr className="border-b last:border-b-0">
@@ -376,7 +379,7 @@ function MandateRow({
         {mandate.status === 'active' && (
           <button
             type="button"
-            onClick={onRevoke}
+            onClick={() => onRevoke(mandate)}
             className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-muted"
           >
             <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -386,7 +389,7 @@ function MandateRow({
       </td>
     </tr>
   )
-}
+})
 
 function CreateMandateForm({
   counterpartyId,
