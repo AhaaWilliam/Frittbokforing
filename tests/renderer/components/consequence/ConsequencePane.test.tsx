@@ -69,7 +69,7 @@ describe('ConsequencePane', () => {
   it('renders pending state', () => {
     render(<ConsequencePane preview={null} pending={true} error={null} />)
     expect(screen.getByTestId('consequence-pane-pending')).toBeInTheDocument()
-    expect(screen.getByText('Beräknar...')).toBeInTheDocument()
+    expect(screen.getByText('Beräknar…')).toBeInTheDocument()
   })
 
   it('renders error state takes priority', () => {
