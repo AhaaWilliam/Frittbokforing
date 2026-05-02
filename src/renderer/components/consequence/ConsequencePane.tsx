@@ -77,7 +77,9 @@ export function ConsequencePane({
         {/* VS-58: serif-italic matchar prototypens lugna idle-ton — pillar
             visuellt bort skillnaden mot active-state istället för att
             agera neutralt. */}
-        <p className="font-serif-italic text-sm text-neutral-500">{idleHint}</p>
+        <p className="font-serif-italic text-sm text-[var(--text-secondary)]">
+          {idleHint}
+        </p>
       </div>
     )
   }
@@ -86,7 +88,9 @@ export function ConsequencePane({
   if (!preview && pending) {
     return (
       <div className="p-4" data-testid="consequence-pane-pending">
-        <p className="font-serif-italic text-sm text-neutral-400">Beräknar…</p>
+        <p className="font-serif-italic text-sm text-[var(--text-faint)]">
+          Beräknar…
+        </p>
       </div>
     )
   }
@@ -103,10 +107,10 @@ export function ConsequencePane({
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h3 className="font-serif text-lg font-normal text-neutral-900">
+          <h3 className="font-serif text-lg font-normal text-[var(--text-primary)]">
             Verifikat-förhandsgranskning
           </h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-[var(--text-secondary)]">
             {preview.entry_date}
             {preview.description ? ` — ${preview.description}` : ''}
           </p>
@@ -121,9 +125,9 @@ export function ConsequencePane({
       </div>
 
       {/* Tabell-vy av rader */}
-      <div className="overflow-hidden rounded-md border border-neutral-200">
+      <div className="overflow-hidden rounded-md border border-[var(--border-default)]">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-xs uppercase tracking-wider text-neutral-500">
+          <thead className="bg-[var(--surface-secondary)]/40 text-xs uppercase tracking-wider text-[var(--text-secondary)]">
             <tr>
               <th className="px-3 py-2 text-left font-medium">Konto</th>
               <th className="px-3 py-2 text-right font-medium">Debet</th>
@@ -134,15 +138,15 @@ export function ConsequencePane({
             {preview.lines.map((line, i) => (
               <tr
                 key={i}
-                className="border-t border-neutral-200"
+                className="border-t border-[var(--border-default)]"
                 data-testid={`preview-line-${i}`}
               >
                 <td className="px-3 py-2">
-                  <div className="font-mono text-xs text-neutral-700">
+                  <div className="font-mono text-xs text-[var(--text-primary)]">
                     {line.account_number}
                   </div>
                   {line.account_name && (
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[var(--text-secondary)]">
                       {line.account_name}
                     </div>
                   )}
@@ -155,8 +159,8 @@ export function ConsequencePane({
                 </td>
               </tr>
             ))}
-            <tr className="border-t-2 border-neutral-300 bg-neutral-50 font-medium">
-              <td className="px-3 py-2 text-right text-xs uppercase tracking-wider text-neutral-500">
+            <tr className="border-t-2 border-[var(--border-strong)] bg-[var(--surface-secondary)]/40 font-medium">
+              <td className="px-3 py-2 text-right text-xs uppercase tracking-wider text-[var(--text-secondary)]">
                 Summa
               </td>
               <td
