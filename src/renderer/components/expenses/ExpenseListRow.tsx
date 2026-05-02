@@ -1,7 +1,8 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { CheckCircle, CreditCard } from 'lucide-react'
 import type { ExpenseListItem } from '../../../shared/types'
 import { formatKr } from '../../lib/format'
+import { consumeFlashable } from '../../lib/flashable'
 import { Pill, type PillVariant } from '../ui/Pill'
 
 // Sprint 13b — Pill-migration. Speglar InvoiceListRow.
@@ -43,6 +44,8 @@ export const ExpenseListRow = memo(function ExpenseListRow({
   onCreateCreditNote,
 }: ExpenseListRowProps) {
   const pill = STATUS_PILL[item.status] ?? STATUS_PILL.draft
+  // VS-46: flash om denna expense just bokfördes (se VS-45 för detaljer).
+  const flash = useMemo(() => consumeFlashable('expense', item.id), [item.id])
   return (
     <tr
       ref={onRef}
@@ -50,7 +53,7 @@ export const ExpenseListRow = memo(function ExpenseListRow({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       onClick={() => onRowClick(item)}
-      className="cursor-pointer border-b transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+      className={`cursor-pointer border-b transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring${flash ? ' fritt-flash' : ''}`}
     >
       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
         {isSelectable ? (

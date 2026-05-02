@@ -1,7 +1,8 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { FileDown, CheckCircle, CreditCard } from 'lucide-react'
 import type { InvoiceListItem } from '../../../shared/types'
 import { formatKr } from '../../lib/format'
+import { consumeFlashable } from '../../lib/flashable'
 import { Pill, type PillVariant } from '../ui/Pill'
 
 // Sprint 13b — Pill-migration. Tidigare inline-badge med Tailwind-palett
@@ -49,6 +50,10 @@ export const InvoiceListRow = memo(function InvoiceListRow({
   onGeneratePdf,
 }: InvoiceListRowProps) {
   const pill = STATUS_PILL[item.status] ?? STATUS_PILL.draft
+  // VS-46: flash-animation om denna invoice just bokfördes. useMemo
+  // evaluerar bara vid id-byte så consume bara träffar vid första render
+  // av specifik rad — perfekt för one-shot-animationen.
+  const flash = useMemo(() => consumeFlashable('invoice', item.id), [item.id])
   return (
     <tr
       ref={onRef}
@@ -56,7 +61,7 @@ export const InvoiceListRow = memo(function InvoiceListRow({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       onClick={() => onRowClick(item)}
-      className="cursor-pointer border-b transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+      className={`cursor-pointer border-b transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring${flash ? ' fritt-flash' : ''}`}
     >
       <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
         {isSelectable ? (
