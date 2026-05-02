@@ -203,9 +203,9 @@ function checkSalaryBooked(
   db: Database.Database,
   period: PeriodScope,
 ): CheckResult {
-  // Heuristik: finns det rader mot löne-konton inom periodens journal-
-  // entries? Bolag utan anställda har inga sådana → 'na' (inget att
-  // kontrollera). Vi har ingen "har anställda"-flagga ännu.
+  // VS-120: companies.has_employees styr om 0 lönerader är 'na' eller
+  // 'warning'. Solo-bolag (default has_employees=0) → 'na'. Bolag med
+  // anställda (has_employees=1) som glömt bokföra lön → 'warning'.
   const placeholders = SALARY_ACCOUNTS.map(() => '?').join(',')
   const row = db
     .prepare(
@@ -224,11 +224,19 @@ function checkSalaryBooked(
       ...SALARY_ACCOUNTS,
     ) as { cnt: number }
 
-  // Vi har ingen "har anställda"-flagga, så 0 rader rapporteras som 'na'
-  // istället för 'warning' — annars skulle alla solo-bolag få varning.
-  // Framtida: utöka companies-schema med has_employees, då kan 0 rader
-  // bli 'warning' selektivt.
   if (row.cnt === 0) {
+    const company = db
+      .prepare('SELECT has_employees FROM companies WHERE id = ?')
+      .get(period.company_id) as { has_employees: number } | undefined
+    const hasEmployees = company?.has_employees === 1
+    if (hasEmployees) {
+      return {
+        status: 'warning',
+        count: 0,
+        detail:
+          'Inga lönebokningar i perioden — bolaget har anställda enligt inställningarna.',
+      }
+    }
     return {
       status: 'na',
       count: 0,

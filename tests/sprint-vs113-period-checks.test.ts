@@ -136,4 +136,24 @@ describe('VS-113 getPeriodChecks (advisory)', () => {
     if (r.success) return
     expect(r.code).toBe('VALIDATION_ERROR')
   })
+
+  // VS-120: has_employees-flagga differentierar 'na' vs 'warning' för
+  // salary-checken.
+  it('VS-120 salaryBooked = na när has_employees=0 (default solo-bolag)', () => {
+    const { periodId } = setupCompanyAndPeriod()
+    const r = getPeriodChecks(db, { period_id: periodId })
+    if (!r.success) return
+    expect(r.data.salaryBooked.status).toBe('na')
+  })
+
+  it('VS-120 salaryBooked = warning när has_employees=1 och inga lönerader', () => {
+    const { companyId, periodId } = setupCompanyAndPeriod()
+    db.prepare('UPDATE companies SET has_employees = 1 WHERE id = ?').run(
+      companyId,
+    )
+    const r = getPeriodChecks(db, { period_id: periodId })
+    if (!r.success) return
+    expect(r.data.salaryBooked.status).toBe('warning')
+    expect(r.data.salaryBooked.detail).toMatch(/anställda/)
+  })
 })

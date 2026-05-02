@@ -307,4 +307,5 @@ const ALLOWED_COMPANY_COLUMNS = new Set([
   'fiscal_rule',
   'base_currency',
   'approved_for_f_tax',
+  'has_employees',
 ])

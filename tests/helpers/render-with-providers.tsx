@@ -127,6 +127,7 @@ export async function renderWithProviders(
     board_members: null,
     approved_for_f_tax: 0,
     vat_frequency: 'quarterly',
+    has_employees: 0,
     created_at: '2025-01-01 00:00:00',
   } as Company)
   mockIpcResponse('company:list', { success: true, data: [activeCompany] })

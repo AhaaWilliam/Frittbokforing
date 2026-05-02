@@ -314,6 +314,7 @@ export const UpdateCompanyInputSchema = z
     website: z.string().max(200).nullable().optional(),
     board_members: z.string().max(500).nullable().optional(),
     approved_for_f_tax: z.number().int().min(0).max(1).optional(),
+    has_employees: z.number().int().min(0).max(1).optional(),
   })
   .strict()
 

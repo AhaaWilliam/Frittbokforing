@@ -106,6 +106,8 @@ export interface Company {
   approved_for_f_tax: number
   /** VS-115: SKV moms-deklarations-frekvens. Default 'quarterly'. */
   vat_frequency: 'monthly' | 'quarterly' | 'yearly'
+  /** VS-120: bolaget har anställda (lönebokningar förväntas). Default 0. */
+  has_employees: number
   created_at: string
 }
 
@@ -202,6 +204,7 @@ export interface UpdateCompanyInput {
   website?: string | null
   board_members?: string | null
   approved_for_f_tax?: number
+  has_employees?: number
 }
 
 // === Counterparty Input ===

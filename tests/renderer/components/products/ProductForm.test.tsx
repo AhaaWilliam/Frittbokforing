@@ -36,6 +36,7 @@ const COMPANY: Company = {
   board_members: null,
   approved_for_f_tax: 0,
   vat_frequency: 'quarterly',
+  has_employees: 0,
   created_at: '2026-01-01T00:00:00Z',
 }
 

@@ -2064,6 +2064,23 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
       DEFAULT 'quarterly'
       CHECK (vat_frequency IN ('monthly', 'quarterly', 'yearly'));`,
   },
+  // ── Migration 061 — VS-120: companies.has_employees ────────────────
+  //
+  // Boolean-flagga (0/1) för om bolaget har anställda. Default 0 — de
+  // flesta småbolag (solo) har ingen lön. Settings-UI låter användaren
+  // toggla.
+  //
+  // Används av period-checks-service salaryBooked: om has_employees=1
+  // och inga lönebokningar i perioden → 'warning' (idag 'na'). För
+  // solo-bolag (default) förblir checken 'na' — ingen polish-burden.
+  //
+  // M127: ADD COLUMN med konstant DEFAULT är OK. Backfill via DEFAULT.
+  // CHECK enforcer 0/1.
+  {
+    sql: `ALTER TABLE companies ADD COLUMN has_employees INTEGER NOT NULL
+      DEFAULT 0
+      CHECK (has_employees IN (0, 1));`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

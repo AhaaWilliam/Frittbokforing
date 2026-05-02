@@ -410,6 +410,7 @@ export function PageSettings() {
   const [website, setWebsite] = useState('')
   const [boardMembers, setBoardMembers] = useState('')
   const [approvedForFTax, setApprovedForFTax] = useState(true)
+  const [hasEmployees, setHasEmployees] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -427,6 +428,7 @@ export function PageSettings() {
       setWebsite(company.website ?? '')
       setBoardMembers(company.board_members ?? '')
       setApprovedForFTax(company.approved_for_f_tax !== 0)
+      setHasEmployees(company.has_employees === 1)
     }
   }, [company])
 
@@ -458,6 +460,7 @@ export function PageSettings() {
       website: website.trim() || null,
       board_members: boardMembers.trim() || null,
       approved_for_f_tax: approvedForFTax ? 1 : 0,
+      has_employees: hasEmployees ? 1 : 0,
     }
 
     try {
@@ -694,6 +697,23 @@ export function PageSettings() {
                 className="text-sm text-foreground"
               >
                 Godkänd för F-skatt (visas på fakturor)
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                id="has_employees"
+                type="checkbox"
+                checked={hasEmployees}
+                onChange={(e) => setHasEmployees(e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-primary"
+              />
+              <label
+                htmlFor="has_employees"
+                className="text-sm text-foreground"
+              >
+                Bolaget har anställda (lönebokföring förväntas vid
+                månadsstängning)
               </label>
             </div>
 
