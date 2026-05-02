@@ -45,6 +45,7 @@ export function InvoiceIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="12"
@@ -89,6 +90,7 @@ export function ExpenseIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="10"
@@ -127,6 +129,7 @@ export function ManualEntryIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="10"
@@ -161,6 +164,7 @@ export function AccountIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="8"
@@ -190,6 +194,7 @@ export function DashboardIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="8"
@@ -245,6 +250,7 @@ export function CustomerIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <circle cx="32" cy="22" r="10" stroke="currentColor" strokeWidth="2" />
       <path
@@ -265,6 +271,7 @@ export function SupplierIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <rect
         x="6"
@@ -295,6 +302,7 @@ export function ProductIllustration() {
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <path
         d="M32 8l20 10v18l-20 10-20-10V18z"
