@@ -566,6 +566,10 @@ export function useFinalizeInvoice(_fiscalYearId?: number | undefined) {
       queryKeys.allInvoices(),
       queryKeys.anyInvoice(),
       queryKeys.allLatestVerifications(),
+      queryKeys.allDashboard(),
+      queryKeys.allIncomeStatement(),
+      queryKeys.allBalanceSheet(),
+      queryKeys.allVat(),
     ],
     onSuccess: (data) => {
       // VS-45: flash-markering för listvyn.
@@ -654,6 +658,10 @@ export function useFinalizeExpense() {
       queryKeys.allExpenseDrafts(),
       queryKeys.allExpenses(),
       queryKeys.allLatestVerifications(),
+      queryKeys.allDashboard(),
+      queryKeys.allIncomeStatement(),
+      queryKeys.allBalanceSheet(),
+      queryKeys.allVat(),
     ],
     onSuccess: (data) => {
       // VS-45: markera den nyfinaliserade kostnaden för flash-animation
@@ -1073,6 +1081,9 @@ export function useFinalizeManualEntry() {
         queryKeys.allManualEntries(),
         queryKeys.allDashboard(),
         queryKeys.allLatestVerifications(),
+        queryKeys.allIncomeStatement(),
+        queryKeys.allBalanceSheet(),
+        queryKeys.allVat(),
       ],
       onSuccess: (_data, input) => {
         // VS-45: flash-markering på manual_entry.id (= input.id).

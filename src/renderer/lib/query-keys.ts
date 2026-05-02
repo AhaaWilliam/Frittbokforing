@@ -139,6 +139,7 @@ export const queryKeys = {
   allLatestVerifications: () => ['journal', 'latest-verification'] as const,
   allIncomeStatement: () => ['income-statement'] as const,
   allBalanceSheet: () => ['balance-sheet'] as const,
+  allVat: () => ['vat'] as const,
   // FY-scoped prefix helpers (invaliderar alla dateRange-varianter för en FY)
   incomeStatementByFy: (fyId: number) => ['income-statement', fyId] as const,
   balanceSheetByFy: (fyId: number) => ['balance-sheet', fyId] as const,
