@@ -4,10 +4,7 @@ import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
 import { KbdChord, modKey, modLabel } from '../../components/ui/KbdChip'
-import {
-  KonteringHeader,
-  KonteringRow,
-} from '../../components/ui/KonteringRow'
+import { KonteringHeader, KonteringRow } from '../../components/ui/KonteringRow'
 import { SupplierPicker } from '../../components/expenses/SupplierPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
@@ -137,7 +134,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     setAccountNumber(FALLBACK_EXPENSE_ACCOUNT)
     setAccountManuallyEdited(false)
     setError(null)
-    submittingRef.current = false; setSubmitting(false)
+    submittingRef.current = false
+    setSubmitting(false)
     setReceiptPath(null)
   }, [open])
 
@@ -232,7 +230,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       if (!draft.success) {
         setError(draft.error)
         setErrorField(draft.field ?? null)
-        submittingRef.current = false; setSubmitting(false)
+        submittingRef.current = false
+        setSubmitting(false)
         return
       }
 
@@ -240,7 +239,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       if (!finalized.success) {
         setError(finalized.error)
         setErrorField(finalized.field ?? null)
-        submittingRef.current = false; setSubmitting(false)
+        submittingRef.current = false
+        setSubmitting(false)
         return
       }
 
@@ -296,7 +296,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')
-      submittingRef.current = false; setSubmitting(false)
+      submittingRef.current = false
+      setSubmitting(false)
     }
   }
 
@@ -339,7 +340,9 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                   errorField === 'expense_date' ||
                   errorField === 'date'
                 }
-                aria-describedby={dateError ? 'vardag-kostnad-date-err' : undefined}
+                aria-describedby={
+                  dateError ? 'vardag-kostnad-date-err' : undefined
+                }
                 className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${dateError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
                 data-testid="vardag-kostnad-date"
               />
@@ -365,9 +368,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-right text-sm font-mono"
                 data-testid="vardag-kostnad-amount"
                 aria-describedby={
-                  amountInclVatOre > 0
-                    ? 'vardag-kostnad-summary'
-                    : undefined
+                  amountInclVatOre > 0 ? 'vardag-kostnad-summary' : undefined
                 }
               />
             </Field>

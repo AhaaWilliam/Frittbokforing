@@ -77,9 +77,7 @@ export function ConsequencePane({
         {/* VS-58: serif-italic matchar prototypens lugna idle-ton — pillar
             visuellt bort skillnaden mot active-state istället för att
             agera neutralt. */}
-        <p className="font-serif-italic text-sm text-neutral-500">
-          {idleHint}
-        </p>
+        <p className="font-serif-italic text-sm text-neutral-500">{idleHint}</p>
       </div>
     )
   }
@@ -88,9 +86,7 @@ export function ConsequencePane({
   if (!preview && pending) {
     return (
       <div className="p-4" data-testid="consequence-pane-pending">
-        <p className="font-serif-italic text-sm text-neutral-400">
-          Beräknar…
-        </p>
+        <p className="font-serif-italic text-sm text-neutral-400">Beräknar…</p>
       </div>
     )
   }

@@ -103,216 +103,218 @@ export function CreateAccrualDialog({
           >
             Ny periodisering
           </Dialog.Title>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="accrual-description"
-              className="mb-1 block text-sm font-medium"
-            >
-              Beskrivning
-            </label>
-            <input
-              id="accrual-description"
-              type="text"
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
-              required
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="T.ex. Förutbetald hyra 2025"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="accrual-type"
-              className="mb-1 block text-sm font-medium"
-            >
-              Typ
-            </label>
-            <select
-              id="accrual-type"
-              value={form.accrual_type}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  accrual_type: e.target.value as AccrualType,
-                }))
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              {ACCRUAL_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="accrual-balance-account"
+                htmlFor="accrual-description"
                 className="mb-1 block text-sm font-medium"
               >
-                Balanskonto (klass 1–2)
+                Beskrivning
               </label>
               <input
-                id="accrual-balance-account"
+                id="accrual-description"
                 type="text"
-                value={form.balance_account}
+                value={form.description}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, balance_account: e.target.value }))
+                  setForm((f) => ({ ...f, description: e.target.value }))
                 }
                 required
-                placeholder="1710"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="T.ex. Förutbetald hyra 2025"
               />
-              {form.balance_account && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {getAccountName(form.balance_account)}
-                </p>
-              )}
             </div>
+
             <div>
               <label
-                htmlFor="accrual-result-account"
+                htmlFor="accrual-type"
                 className="mb-1 block text-sm font-medium"
               >
-                Resultatkonto (klass 3–8)
-              </label>
-              <input
-                id="accrual-result-account"
-                type="text"
-                value={form.result_account}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, result_account: e.target.value }))
-                }
-                required
-                placeholder="5010"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              {form.result_account && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {getAccountName(form.result_account)}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="accrual-amount"
-              className="mb-1 block text-sm font-medium"
-            >
-              Totalbelopp (kr)
-            </label>
-            <input
-              id="accrual-amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={form.amount_kr}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, amount_kr: e.target.value }))
-              }
-              required
-              aria-invalid={!!fieldErrors.amount_kr}
-              aria-describedby={
-                fieldErrors.amount_kr ? errorIdFor('accrual-amount') : undefined
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            {fieldErrors.amount_kr && (
-              <FieldError id={errorIdFor('accrual-amount')}>
-                {fieldErrors.amount_kr}
-              </FieldError>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="accrual-start-period"
-                className="mb-1 block text-sm font-medium"
-              >
-                Startperiod
+                Typ
               </label>
               <select
-                id="accrual-start-period"
-                value={form.start_period}
-                onChange={(e) => {
-                  const sp = parseInt(e.target.value, 10)
-                  setForm((f) => ({
-                    ...f,
-                    start_period: sp,
-                    period_count: Math.min(
-                      f.period_count,
-                      periodCount - sp + 1,
-                    ),
-                  }))
-                }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                {Array.from(
-                  { length: Math.max(periodCount - 1, 1) },
-                  (_, i) => i + 1,
-                ).map((p) => (
-                  <option key={p} value={p}>
-                    Period {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="accrual-period-count"
-                className="mb-1 block text-sm font-medium"
-              >
-                Antal perioder
-              </label>
-              <select
-                id="accrual-period-count"
-                value={form.period_count}
+                id="accrual-type"
+                value={form.accrual_type}
                 onChange={(e) =>
                   setForm((f) => ({
                     ...f,
-                    period_count: parseInt(e.target.value, 10),
+                    accrual_type: e.target.value as AccrualType,
                   }))
                 }
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                {Array.from(
-                  { length: Math.max(maxPeriods - 1, 1) },
-                  (_, i) => i + 2,
-                ).map((n) => (
-                  <option key={n} value={n}>
-                    {n} perioder
+                {ACCRUAL_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
                   </option>
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Dialog.Close asChild>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="accrual-balance-account"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Balanskonto (klass 1–2)
+                </label>
+                <input
+                  id="accrual-balance-account"
+                  type="text"
+                  value={form.balance_account}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, balance_account: e.target.value }))
+                  }
+                  required
+                  placeholder="1710"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                {form.balance_account && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {getAccountName(form.balance_account)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="accrual-result-account"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Resultatkonto (klass 3–8)
+                </label>
+                <input
+                  id="accrual-result-account"
+                  type="text"
+                  value={form.result_account}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, result_account: e.target.value }))
+                  }
+                  required
+                  placeholder="5010"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                {form.result_account && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {getAccountName(form.result_account)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="accrual-amount"
+                className="mb-1 block text-sm font-medium"
+              >
+                Totalbelopp (kr)
+              </label>
+              <input
+                id="accrual-amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={form.amount_kr}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, amount_kr: e.target.value }))
+                }
+                required
+                aria-invalid={!!fieldErrors.amount_kr}
+                aria-describedby={
+                  fieldErrors.amount_kr
+                    ? errorIdFor('accrual-amount')
+                    : undefined
+                }
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              {fieldErrors.amount_kr && (
+                <FieldError id={errorIdFor('accrual-amount')}>
+                  {fieldErrors.amount_kr}
+                </FieldError>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="accrual-start-period"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Startperiod
+                </label>
+                <select
+                  id="accrual-start-period"
+                  value={form.start_period}
+                  onChange={(e) => {
+                    const sp = parseInt(e.target.value, 10)
+                    setForm((f) => ({
+                      ...f,
+                      start_period: sp,
+                      period_count: Math.min(
+                        f.period_count,
+                        periodCount - sp + 1,
+                      ),
+                    }))
+                  }}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {Array.from(
+                    { length: Math.max(periodCount - 1, 1) },
+                    (_, i) => i + 1,
+                  ).map((p) => (
+                    <option key={p} value={p}>
+                      Period {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="accrual-period-count"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Antal perioder
+                </label>
+                <select
+                  id="accrual-period-count"
+                  value={form.period_count}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      period_count: parseInt(e.target.value, 10),
+                    }))
+                  }
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {Array.from(
+                    { length: Math.max(maxPeriods - 1, 1) },
+                    (_, i) => i + 2,
+                  ).map((n) => (
+                    <option key={n} value={n}>
+                      {n} perioder
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  Avbryt
+                </button>
+              </Dialog.Close>
               <button
-                type="button"
-                className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-muted"
+                type="submit"
+                disabled={createMutation.isPending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                Avbryt
+                {createMutation.isPending ? 'Skapar...' : 'Skapa'}
               </button>
-            </Dialog.Close>
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {createMutation.isPending ? 'Skapar...' : 'Skapa'}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

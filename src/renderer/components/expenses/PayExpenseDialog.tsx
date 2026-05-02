@@ -72,148 +72,150 @@ export function PayExpenseDialog({
             Registrera betalning
           </Dialog.Title>
 
-        <div className="space-y-2 mb-6 text-sm">
-          <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)]">Kostnad:</span>
-            <span>{expense.description}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)]">Leverantor:</span>
-            <span>{expense.counterparty_name ?? '—'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)]">Totalt:</span>
-            <span className="font-medium">
-              {formatKr(expense.total_amount_ore)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)]">Redan betalt:</span>
-            <span>{formatKr(expense.total_paid)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)]">Kvarstaende:</span>
-            <span className="font-semibold text-primary">
-              {formatKr(expense.remaining)}
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="pay-expense-amount"
-              className="block text-sm font-medium mb-1"
-            >
-              Belopp (kr)
-            </label>
-            <input
-              id="pay-expense-amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={amountKr}
-              onChange={(e) => setAmountKr(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
+          <div className="space-y-2 mb-6 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[var(--text-secondary)]">Kostnad:</span>
+              <span>{expense.description}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-secondary)]">Leverantor:</span>
+              <span>{expense.counterparty_name ?? '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-secondary)]">Totalt:</span>
+              <span className="font-medium">
+                {formatKr(expense.total_amount_ore)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-secondary)]">
+                Redan betalt:
+              </span>
+              <span>{formatKr(expense.total_paid)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-secondary)]">Kvarstaende:</span>
+              <span className="font-semibold text-primary">
+                {formatKr(expense.remaining)}
+              </span>
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="pay-expense-date"
-              className="block text-sm font-medium mb-1"
-            >
-              Datum
-            </label>
-            <input
-              id="pay-expense-date"
-              type="date"
-              value={paymentDate}
-              max={today}
-              onChange={(e) => setPaymentDate(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="pay-expense-amount"
+                className="block text-sm font-medium mb-1"
+              >
+                Belopp (kr)
+              </label>
+              <input
+                id="pay-expense-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={amountKr}
+                onChange={(e) => setAmountKr(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="pay-expense-date"
+                className="block text-sm font-medium mb-1"
+              >
+                Datum
+              </label>
+              <input
+                id="pay-expense-date"
+                type="date"
+                value={paymentDate}
+                max={today}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="pay-expense-account"
+                className="block text-sm font-medium mb-1"
+              >
+                Konto
+              </label>
+              <select
+                id="pay-expense-account"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+              >
+                <option value="1930">1930 Foretagskonto</option>
+                <option value="1920">1920 PlusGiro</option>
+                <option value="1910">1910 Kassa</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="pay-expense-method"
+                className="block text-sm font-medium mb-1"
+              >
+                Betalningsmetod
+              </label>
+              <select
+                id="pay-expense-method"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+              >
+                <option value="bankgiro">Bankgiro</option>
+                <option value="swish">Swish</option>
+                <option value="kort">Kort</option>
+                <option value="kontant">Kontant</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="pay-expense-bank-fee"
+                className="block text-sm font-medium mb-1"
+              >
+                Bankavgift (kr)
+              </label>
+              <input
+                id="pay-expense-bank-fee"
+                type="number"
+                step="0.01"
+                min="0"
+                value={bankFeeStr}
+                onChange={(e) => setBankFeeStr(e.target.value)}
+                placeholder="0.00"
+                className="w-full border rounded px-3 py-2 text-sm"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="pay-expense-account"
-              className="block text-sm font-medium mb-1"
-            >
-              Konto
-            </label>
-            <select
-              id="pay-expense-account"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            >
-              <option value="1930">1930 Foretagskonto</option>
-              <option value="1920">1920 PlusGiro</option>
-              <option value="1910">1910 Kassa</option>
-            </select>
-          </div>
+          {error && (
+            <div className="mt-3">
+              <Callout variant="danger">{error}</Callout>
+            </div>
+          )}
 
-          <div>
-            <label
-              htmlFor="pay-expense-method"
-              className="block text-sm font-medium mb-1"
+          <div className="flex justify-end gap-3 mt-6">
+            <Dialog.Close asChild>
+              <button className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]">
+                Avbryt
+              </button>
+            </Dialog.Close>
+            <button
+              onClick={handleSubmit}
+              disabled={payMutation.isPending}
+              className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
             >
-              Betalningsmetod
-            </label>
-            <select
-              id="pay-expense-method"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
-            >
-              <option value="bankgiro">Bankgiro</option>
-              <option value="swish">Swish</option>
-              <option value="kort">Kort</option>
-              <option value="kontant">Kontant</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="pay-expense-bank-fee"
-              className="block text-sm font-medium mb-1"
-            >
-              Bankavgift (kr)
-            </label>
-            <input
-              id="pay-expense-bank-fee"
-              type="number"
-              step="0.01"
-              min="0"
-              value={bankFeeStr}
-              onChange={(e) => setBankFeeStr(e.target.value)}
-              placeholder="0.00"
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="mt-3">
-            <Callout variant="danger">{error}</Callout>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Dialog.Close asChild>
-            <button className="px-4 py-2 text-sm border rounded hover:bg-[var(--surface-secondary)]">
-              Avbryt
+              {payMutation.isPending ? 'Registrerar...' : 'Registrera'}
             </button>
-          </Dialog.Close>
-          <button
-            onClick={handleSubmit}
-            disabled={payMutation.isPending}
-            className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50"
-          >
-            {payMutation.isPending ? 'Registrerar...' : 'Registrera'}
-          </button>
-        </div>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

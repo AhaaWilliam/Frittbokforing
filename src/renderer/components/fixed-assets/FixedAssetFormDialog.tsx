@@ -203,247 +203,252 @@ export function FixedAssetFormDialog({
             {title}
           </Dialog.Title>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="fa-name" className="mb-1 block text-sm font-medium">
-              Namn
-            </label>
-            <input
-              id="fa-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
-              required
-              data-testid="fa-name"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="fa-date"
+                htmlFor="fa-name"
                 className="mb-1 block text-sm font-medium"
               >
-                Anskaffningsdatum
+                Namn
               </label>
               <input
-                id="fa-date"
-                type="date"
-                value={acquisitionDate}
-                onChange={(e) => setAcquisitionDate(e.target.value)}
+                id="fa-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-md border px-3 py-2 text-sm"
                 required
+                data-testid="fa-name"
               />
             </div>
-            <div>
-              <label
-                htmlFor="fa-months"
-                className="mb-1 block text-sm font-medium"
-              >
-                Nyttjandeperiod (månader)
-              </label>
-              <input
-                id="fa-months"
-                type="number"
-                min="1"
-                max="600"
-                value={months}
-                onChange={(e) => setMonths(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                required
-                aria-invalid={!!fieldErrors.months}
-                aria-describedby={
-                  fieldErrors.months ? errorIdFor('fa-months') : undefined
-                }
-              />
-              {fieldErrors.months && (
-                <FieldError id={errorIdFor('fa-months')}>
-                  {fieldErrors.months}
-                </FieldError>
-              )}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="fa-cost"
-                className="mb-1 block text-sm font-medium"
-              >
-                Anskaffningsvärde (kr)
-              </label>
-              <input
-                id="fa-cost"
-                type="number"
-                step="0.01"
-                min="0"
-                value={costKr}
-                onChange={(e) => setCostKr(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                required
-                data-testid="fa-cost"
-                aria-invalid={!!fieldErrors.cost}
-                aria-describedby={
-                  fieldErrors.cost ? errorIdFor('fa-cost') : undefined
-                }
-              />
-              {fieldErrors.cost && (
-                <FieldError id={errorIdFor('fa-cost')}>
-                  {fieldErrors.cost}
-                </FieldError>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="fa-residual"
-                className="mb-1 block text-sm font-medium"
-              >
-                Restvärde (kr)
-              </label>
-              <input
-                id="fa-residual"
-                type="number"
-                step="0.01"
-                min="0"
-                value={residualKr}
-                onChange={(e) => setResidualKr(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
-                aria-invalid={!!fieldErrors.residual}
-                aria-describedby={
-                  fieldErrors.residual ? errorIdFor('fa-residual') : undefined
-                }
-              />
-              {fieldErrors.residual && (
-                <FieldError id={errorIdFor('fa-residual')}>
-                  {fieldErrors.residual}
-                </FieldError>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="fa-method"
-              className="mb-1 block text-sm font-medium"
-            >
-              Avskrivningsmetod
-            </label>
-            <select
-              id="fa-method"
-              value={method}
-              onChange={(e) => setMethod(e.target.value as DepreciationMethod)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
-            >
-              <option value="linear">Linjär</option>
-              <option value="declining">Degressiv (räknesats)</option>
-            </select>
-          </div>
-
-          {method === 'declining' && (
-            <div>
-              <label
-                htmlFor="fa-rate"
-                className="mb-1 block text-sm font-medium"
-              >
-                Avskrivningssats (% per år)
-              </label>
-              <input
-                id="fa-rate"
-                type="number"
-                step="0.1"
-                min="0.1"
-                max="100"
-                value={decliningRatePct}
-                onChange={(e) => setDecliningRatePct(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
-              />
-            </div>
-          )}
-
-          <fieldset className="rounded-md border p-3">
-            <legend className="px-1 text-sm font-medium">
-              Bokföringskonton
-            </legend>
-            <p className="mb-2 text-xs text-muted-foreground">
-              {isEdit
-                ? 'Att byta BAS-konto rekommenderas bara om ursprungligt konto blivit inaktivt.'
-                : `Välj kontoklass från BAS-kontoplanen. Defaults sätts automatiskt via ${DEPRECIATION_DEFAULTS.length} vanliga mappningar.`}
-            </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label
-                  htmlFor="fa-asset-account"
-                  className="mb-1 block text-xs font-medium"
+                  htmlFor="fa-date"
+                  className="mb-1 block text-sm font-medium"
                 >
-                  Anskaffning
+                  Anskaffningsdatum
                 </label>
                 <input
-                  id="fa-asset-account"
-                  value={assetAccount}
-                  onChange={(e) => handleAssetAccountChange(e.target.value)}
-                  className="w-full rounded-md border px-2 py-1.5 text-sm"
-                  list="fa-asset-accounts"
-                />
-                <datalist id="fa-asset-accounts">
-                  {DEPRECIATION_DEFAULTS.map((d) => (
-                    <option key={d.asset} value={d.asset}>
-                      {d.label}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <label
-                  htmlFor="fa-acc-account"
-                  className="mb-1 block text-xs font-medium"
-                >
-                  Ack. avskrivningar
-                </label>
-                <input
-                  id="fa-acc-account"
-                  value={accAccount}
-                  onChange={(e) => setAccAccount(e.target.value)}
-                  className="w-full rounded-md border px-2 py-1.5 text-sm"
+                  id="fa-date"
+                  type="date"
+                  value={acquisitionDate}
+                  onChange={(e) => setAcquisitionDate(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  required
                 />
               </div>
               <div>
                 <label
-                  htmlFor="fa-exp-account"
-                  className="mb-1 block text-xs font-medium"
+                  htmlFor="fa-months"
+                  className="mb-1 block text-sm font-medium"
                 >
-                  Avskrivningskostnad
+                  Nyttjandeperiod (månader)
                 </label>
                 <input
-                  id="fa-exp-account"
-                  value={expAccount}
-                  onChange={(e) => setExpAccount(e.target.value)}
-                  className="w-full rounded-md border px-2 py-1.5 text-sm"
+                  id="fa-months"
+                  type="number"
+                  min="1"
+                  max="600"
+                  value={months}
+                  onChange={(e) => setMonths(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  required
+                  aria-invalid={!!fieldErrors.months}
+                  aria-describedby={
+                    fieldErrors.months ? errorIdFor('fa-months') : undefined
+                  }
                 />
+                {fieldErrors.months && (
+                  <FieldError id={errorIdFor('fa-months')}>
+                    {fieldErrors.months}
+                  </FieldError>
+                )}
               </div>
             </div>
-          </fieldset>
 
-          {formError && <Callout variant="danger">{formError}</Callout>}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="fa-cost"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Anskaffningsvärde (kr)
+                </label>
+                <input
+                  id="fa-cost"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={costKr}
+                  onChange={(e) => setCostKr(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  required
+                  data-testid="fa-cost"
+                  aria-invalid={!!fieldErrors.cost}
+                  aria-describedby={
+                    fieldErrors.cost ? errorIdFor('fa-cost') : undefined
+                  }
+                />
+                {fieldErrors.cost && (
+                  <FieldError id={errorIdFor('fa-cost')}>
+                    {fieldErrors.cost}
+                  </FieldError>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="fa-residual"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Restvärde (kr)
+                </label>
+                <input
+                  id="fa-residual"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={residualKr}
+                  onChange={(e) => setResidualKr(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  aria-invalid={!!fieldErrors.residual}
+                  aria-describedby={
+                    fieldErrors.residual ? errorIdFor('fa-residual') : undefined
+                  }
+                />
+                {fieldErrors.residual && (
+                  <FieldError id={errorIdFor('fa-residual')}>
+                    {fieldErrors.residual}
+                  </FieldError>
+                )}
+              </div>
+            </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Dialog.Close asChild>
+            <div>
+              <label
+                htmlFor="fa-method"
+                className="mb-1 block text-sm font-medium"
+              >
+                Avskrivningsmetod
+              </label>
+              <select
+                id="fa-method"
+                value={method}
+                onChange={(e) =>
+                  setMethod(e.target.value as DepreciationMethod)
+                }
+                className="w-full rounded-md border px-3 py-2 text-sm"
+              >
+                <option value="linear">Linjär</option>
+                <option value="declining">Degressiv (räknesats)</option>
+              </select>
+            </div>
+
+            {method === 'declining' && (
+              <div>
+                <label
+                  htmlFor="fa-rate"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Avskrivningssats (% per år)
+                </label>
+                <input
+                  id="fa-rate"
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  max="100"
+                  value={decliningRatePct}
+                  onChange={(e) => setDecliningRatePct(e.target.value)}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                />
+              </div>
+            )}
+
+            <fieldset className="rounded-md border p-3">
+              <legend className="px-1 text-sm font-medium">
+                Bokföringskonton
+              </legend>
+              <p className="mb-2 text-xs text-muted-foreground">
+                {isEdit
+                  ? 'Att byta BAS-konto rekommenderas bara om ursprungligt konto blivit inaktivt.'
+                  : `Välj kontoklass från BAS-kontoplanen. Defaults sätts automatiskt via ${DEPRECIATION_DEFAULTS.length} vanliga mappningar.`}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label
+                    htmlFor="fa-asset-account"
+                    className="mb-1 block text-xs font-medium"
+                  >
+                    Anskaffning
+                  </label>
+                  <input
+                    id="fa-asset-account"
+                    value={assetAccount}
+                    onChange={(e) => handleAssetAccountChange(e.target.value)}
+                    className="w-full rounded-md border px-2 py-1.5 text-sm"
+                    list="fa-asset-accounts"
+                  />
+                  <datalist id="fa-asset-accounts">
+                    {DEPRECIATION_DEFAULTS.map((d) => (
+                      <option key={d.asset} value={d.asset}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <label
+                    htmlFor="fa-acc-account"
+                    className="mb-1 block text-xs font-medium"
+                  >
+                    Ack. avskrivningar
+                  </label>
+                  <input
+                    id="fa-acc-account"
+                    value={accAccount}
+                    onChange={(e) => setAccAccount(e.target.value)}
+                    className="w-full rounded-md border px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="fa-exp-account"
+                    className="mb-1 block text-xs font-medium"
+                  >
+                    Avskrivningskostnad
+                  </label>
+                  <input
+                    id="fa-exp-account"
+                    value={expAccount}
+                    onChange={(e) => setExpAccount(e.target.value)}
+                    className="w-full rounded-md border px-2 py-1.5 text-sm"
+                  />
+                </div>
+              </div>
+            </fieldset>
+
+            {formError && <Callout variant="danger">{formError}</Callout>}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="rounded-md border px-4 py-2 text-sm"
+                >
+                  Avbryt
+                </button>
+              </Dialog.Close>
               <button
-                type="button"
-                className="rounded-md border px-4 py-2 text-sm"
+                type="submit"
+                disabled={isPending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                data-testid="fa-submit"
               >
-                Avbryt
+                {submitLabel}
               </button>
-            </Dialog.Close>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-              data-testid="fa-submit"
-            >
-              {submitLabel}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

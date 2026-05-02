@@ -4,15 +4,17 @@ import { BottomSheet, BottomSheetClose } from '../../components/ui/BottomSheet'
 import { Callout } from '../../components/ui/Callout'
 import { Field } from '../../components/ui/Field'
 import { KbdChord, modKey, modLabel } from '../../components/ui/KbdChip'
-import {
-  KonteringHeader,
-  KonteringRow,
-} from '../../components/ui/KonteringRow'
+import { KonteringHeader, KonteringRow } from '../../components/ui/KonteringRow'
 import { CustomerPicker } from '../../components/invoices/CustomerPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
-import { fiscalYearDateError, formatKr, kronorToOre, todayLocal } from '../../lib/format'
+import {
+  fiscalYearDateError,
+  formatKr,
+  kronorToOre,
+  todayLocal,
+} from '../../lib/format'
 import { multiplyDecimalByOre } from '../../../shared/money'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
@@ -85,7 +87,16 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
     if (error) setError(null)
     if (errorField) setErrorField(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, paymentTerms, customer, description, quantity, priceKr, accountNumber, vatCodeId])
+  }, [
+    date,
+    paymentTerms,
+    customer,
+    description,
+    quantity,
+    priceKr,
+    accountNumber,
+    vatCodeId,
+  ])
 
   // VS-18: Auto-focus beskrivnings-fältet när sheet öppnas. Customer
   // väljs via picker, så beskrivningen är första edit-bara textfältet.
@@ -124,7 +135,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
     setAccountNumber(FALLBACK_REVENUE_ACCOUNT)
     setAccountManuallyEdited(false)
     setError(null)
-    submittingRef.current = false; setSubmitting(false)
+    submittingRef.current = false
+    setSubmitting(false)
   }, [open])
 
   const qtyNum = useMemo(() => {
@@ -213,7 +225,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       if (!draft.success) {
         setError(draft.error)
         setErrorField(draft.field ?? null)
-        submittingRef.current = false; setSubmitting(false)
+        submittingRef.current = false
+        setSubmitting(false)
         return
       }
 
@@ -221,7 +234,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       if (!finalized.success) {
         setError(finalized.error)
         setErrorField(finalized.field ?? null)
-        submittingRef.current = false; setSubmitting(false)
+        submittingRef.current = false
+        setSubmitting(false)
         return
       }
 
@@ -253,7 +267,8 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ett oväntat fel uppstod')
-      submittingRef.current = false; setSubmitting(false)
+      submittingRef.current = false
+      setSubmitting(false)
     }
   }
 
@@ -299,7 +314,9 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
                 errorField === 'invoice_date' ||
                 errorField === 'date'
               }
-              aria-describedby={dateError ? 'vardag-faktura-date-err' : undefined}
+              aria-describedby={
+                dateError ? 'vardag-faktura-date-err' : undefined
+              }
               className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${dateError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
               data-testid="vardag-faktura-date"
             />
@@ -480,10 +497,7 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
               )}
             </>
           ) : (
-            <KonteringRow
-              account="—"
-              description="Fyll i belopp för förslag"
-            />
+            <KonteringRow account="—" description="Fyll i belopp för förslag" />
           )}
         </div>
 
@@ -512,22 +526,22 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
               </p>
             )}
             <div className="flex items-center gap-2">
-            <BottomSheetClose>Avbryt</BottomSheetClose>
-            <button
-              type="button"
-              disabled={!canSubmit}
-              onClick={handleSubmit}
-              className="inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              data-testid="vardag-faktura-submit"
-            >
-              <span>{submitting ? 'Skickar…' : 'Skicka'}</span>
-              <KbdChord
-                keys={[modKey(), '↵']}
-                ariaLabel={`${modLabel()} plus Enter`}
-                size="sm"
-                className="opacity-80"
-              />
-            </button>
+              <BottomSheetClose>Avbryt</BottomSheetClose>
+              <button
+                type="button"
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+                className="inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-500)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                data-testid="vardag-faktura-submit"
+              >
+                <span>{submitting ? 'Skickar…' : 'Skicka'}</span>
+                <KbdChord
+                  keys={[modKey(), '↵']}
+                  ariaLabel={`${modLabel()} plus Enter`}
+                  size="sm"
+                  className="opacity-80"
+                />
+              </button>
             </div>
           </div>
         </div>

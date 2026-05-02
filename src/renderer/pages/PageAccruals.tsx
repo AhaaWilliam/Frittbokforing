@@ -195,50 +195,51 @@ export function PageAccruals() {
             >
               Kör alla periodiseringar — Period {showExecuteAllPreview}
             </Dialog.Title>
-            {showExecuteAllPreview !== null && (() => {
-              const preview = getExecuteAllPreview(showExecuteAllPreview)
-              if (preview.length === 0) {
+            {showExecuteAllPreview !== null &&
+              (() => {
+                const preview = getExecuteAllPreview(showExecuteAllPreview)
+                if (preview.length === 0) {
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      Inga periodiseringar att köra.
+                    </p>
+                  )
+                }
+                const total = preview.reduce((s, p) => s + p.amountOre, 0)
                 return (
-                  <p className="text-sm text-muted-foreground">
-                    Inga periodiseringar att köra.
-                  </p>
+                  <>
+                    <p className="mb-3 text-sm text-muted-foreground">
+                      Följande {preview.length} periodiseringar kommer bokföras
+                      som separata C-serie-verifikat:
+                    </p>
+                    <ul className="mb-4 max-h-60 overflow-auto rounded border text-sm">
+                      {preview.map((p) => (
+                        <li
+                          key={p.scheduleId}
+                          className="flex items-center justify-between border-b px-3 py-2 last:border-b-0"
+                        >
+                          <span className="truncate">{p.description}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {new Intl.NumberFormat('sv-SE', {
+                              style: 'currency',
+                              currency: 'SEK',
+                            }).format(p.amountOre / 100)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mb-4 flex justify-between border-t pt-2 text-sm font-medium">
+                      <span>Total</span>
+                      <span className="tabular-nums">
+                        {new Intl.NumberFormat('sv-SE', {
+                          style: 'currency',
+                          currency: 'SEK',
+                        }).format(total / 100)}
+                      </span>
+                    </div>
+                  </>
                 )
-              }
-              const total = preview.reduce((s, p) => s + p.amountOre, 0)
-              return (
-                <>
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    Följande {preview.length} periodiseringar kommer bokföras
-                    som separata C-serie-verifikat:
-                  </p>
-                  <ul className="mb-4 max-h-60 overflow-auto rounded border text-sm">
-                    {preview.map((p) => (
-                      <li
-                        key={p.scheduleId}
-                        className="flex items-center justify-between border-b px-3 py-2 last:border-b-0"
-                      >
-                        <span className="truncate">{p.description}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {new Intl.NumberFormat('sv-SE', {
-                            style: 'currency',
-                            currency: 'SEK',
-                          }).format(p.amountOre / 100)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mb-4 flex justify-between border-t pt-2 text-sm font-medium">
-                    <span>Total</span>
-                    <span className="tabular-nums">
-                      {new Intl.NumberFormat('sv-SE', {
-                        style: 'currency',
-                        currency: 'SEK',
-                      }).format(total / 100)}
-                    </span>
-                  </div>
-                </>
-              )
-            })()}
+              })()}
             <div className="flex justify-end gap-2">
               <Dialog.Close asChild>
                 <button

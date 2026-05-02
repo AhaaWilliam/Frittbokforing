@@ -61,8 +61,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   warning:
     'bg-warning-500 text-white hover:bg-warning-600 focus-visible:ring-warning-500',
   ghost: 'text-foreground hover:bg-muted focus-visible:ring-primary',
-  dark:
-    'bg-[var(--color-dark)] text-white hover:bg-[var(--color-dark-soft)] focus-visible:ring-[var(--color-dark)]',
+  dark: 'bg-[var(--color-dark)] text-white hover:bg-[var(--color-dark-soft)] focus-visible:ring-[var(--color-dark)]',
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

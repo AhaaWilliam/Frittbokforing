@@ -96,7 +96,9 @@ export function AppTopBar({ companyName }: AppTopBarProps) {
           data-testid="topbar-mode-dot"
         />
         <span>{isVardag ? 'Bokförar-läge' : 'Vardag-läge'}</span>
-        <KbdChip variant={isVardag ? 'light' : 'dark'}>{`${modKey()}⇧B`}</KbdChip>
+        <KbdChip
+          variant={isVardag ? 'light' : 'dark'}
+        >{`${modKey()}⇧B`}</KbdChip>
       </button>
     </header>
   )

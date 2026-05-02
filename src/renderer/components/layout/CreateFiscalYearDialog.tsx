@@ -116,99 +116,136 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
             Skapa nytt räkenskapsår
           </Dialog.Title>
 
-        {error && (
-          <div className="mb-4">
-            <Callout variant="danger" data-testid="create-fy-error">
-              {error}
-            </Callout>
-          </div>
-        )}
-
-        {/* Step 0: Loading */}
-        {step === 0 && (
-          <div className="py-8 text-center text-muted-foreground">
-            Beräknar nettoresultat...
-          </div>
-        )}
-
-        {/* Step 1: Result disposition */}
-        {step === 1 && netResultData && (
-          <div>
-            <p className="mb-3 text-sm">
-              Årets resultat:{' '}
-              <span className="font-semibold">
-                {formatKronor(netResultData.netResultOre)}
-              </span>{' '}
-              ({netResultData.netResultOre > 0 ? 'vinst' : 'förlust'})
-            </p>
-
-            <div className="mb-4 rounded border bg-muted/30 p-3 text-sm">
-              <p className="mb-1 font-medium">Verifikation som skapas:</p>
-              {netResultData.netResultOre > 0 ? (
-                <>
-                  <p>
-                    Debet 8999 Årets resultat:{' '}
-                    {formatKronor(netResultData.netResultOre)}
-                  </p>
-                  <p>
-                    Kredit 2099 Årets resultat:{' '}
-                    {formatKronor(netResultData.netResultOre)}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p>
-                    Debet 2099 Årets resultat:{' '}
-                    {formatKronor(Math.abs(netResultData.netResultOre))}
-                  </p>
-                  <p>
-                    Kredit 8999 Årets resultat:{' '}
-                    {formatKronor(Math.abs(netResultData.netResultOre))}
-                  </p>
-                </>
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">
-                Datum: {prevEndDate}
-              </p>
+          {error && (
+            <div className="mb-4">
+              <Callout variant="danger" data-testid="create-fy-error">
+                {error}
+              </Callout>
             </div>
+          )}
 
-            {showSkipWarning ? (
-              <div className="mb-4 rounded border border-warning-100 bg-warning-100/40 p-3 text-sm text-warning-700">
-                <p className="mb-2 font-medium">
-                  Utan resultatbokning kan ingående balanser bli felaktiga.
+          {/* Step 0: Loading */}
+          {step === 0 && (
+            <div className="py-8 text-center text-muted-foreground">
+              Beräknar nettoresultat...
+            </div>
+          )}
+
+          {/* Step 1: Result disposition */}
+          {step === 1 && netResultData && (
+            <div>
+              <p className="mb-3 text-sm">
+                Årets resultat:{' '}
+                <span className="font-semibold">
+                  {formatKronor(netResultData.netResultOre)}
+                </span>{' '}
+                ({netResultData.netResultOre > 0 ? 'vinst' : 'förlust'})
+              </p>
+
+              <div className="mb-4 rounded border bg-muted/30 p-3 text-sm">
+                <p className="mb-1 font-medium">Verifikation som skapas:</p>
+                {netResultData.netResultOre > 0 ? (
+                  <>
+                    <p>
+                      Debet 8999 Årets resultat:{' '}
+                      {formatKronor(netResultData.netResultOre)}
+                    </p>
+                    <p>
+                      Kredit 2099 Årets resultat:{' '}
+                      {formatKronor(netResultData.netResultOre)}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      Debet 2099 Årets resultat:{' '}
+                      {formatKronor(Math.abs(netResultData.netResultOre))}
+                    </p>
+                    <p>
+                      Kredit 8999 Årets resultat:{' '}
+                      {formatKronor(Math.abs(netResultData.netResultOre))}
+                    </p>
+                  </>
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Datum: {prevEndDate}
                 </p>
+              </div>
+
+              {showSkipWarning ? (
+                <div className="mb-4 rounded border border-warning-100 bg-warning-100/40 p-3 text-sm text-warning-700">
+                  <p className="mb-2 font-medium">
+                    Utan resultatbokning kan ingående balanser bli felaktiga.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setUserChoseBook(false)
+                        setShowSkipWarning(false)
+                        setStep(2)
+                      }}
+                      className="rounded bg-warning-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-warning-600"
+                    >
+                      Fortsätt ändå
+                    </button>
+                    <button
+                      onClick={() => setShowSkipWarning(false)}
+                      className="rounded border px-3 py-1.5 text-sm hover:bg-muted"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                </div>
+              ) : (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
-                      setUserChoseBook(false)
-                      setShowSkipWarning(false)
-                      setStep(2)
-                    }}
-                    className="rounded bg-warning-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-warning-600"
+                    onClick={handleBookAndContinue}
+                    className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                   >
-                    Fortsätt ändå
+                    Bokför & fortsätt
                   </button>
                   <button
-                    onClick={() => setShowSkipWarning(false)}
-                    className="rounded border px-3 py-1.5 text-sm hover:bg-muted"
+                    onClick={handleSkipBooking}
+                    className="rounded border px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Hoppa över
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="rounded border px-4 py-2 text-sm hover:bg-muted"
                   >
                     Avbryt
                   </button>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Confirmation */}
+          {step === 2 && (
+            <div>
+              <div className="mb-4 space-y-2 text-sm">
+                <p className="font-medium">
+                  Nytt räkenskapsår: {newStartDate} – {newEndDate}
+                </p>
+                <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                  <li>Alla perioder i {activeFiscalYear.year_label} stängs</li>
+                  <li>Räkenskapsåret markeras som stängt</li>
+                  <li>IB-verifikation (O1) skapas i nya året</li>
+                </ul>
               </div>
-            ) : (
+
               <div className="flex gap-2">
                 <button
-                  onClick={handleBookAndContinue}
-                  className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  onClick={() => {
+                    handleCreate(userChoseBook)
+                  }}
+                  disabled={createMutation.isPending}
+                  className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  Bokför & fortsätt
-                </button>
-                <button
-                  onClick={handleSkipBooking}
-                  className="rounded border px-4 py-2 text-sm hover:bg-muted"
-                >
-                  Hoppa över
+                  {createMutation.isPending
+                    ? 'Skapar...'
+                    : 'Skapa räkenskapsår'}
                 </button>
                 <button
                   onClick={onClose}
@@ -217,68 +254,33 @@ export function CreateFiscalYearDialog({ open, onClose }: Props) {
                   Avbryt
                 </button>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 2: Confirmation */}
-        {step === 2 && (
-          <div>
-            <div className="mb-4 space-y-2 text-sm">
-              <p className="font-medium">
-                Nytt räkenskapsår: {newStartDate} – {newEndDate}
-              </p>
-              <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                <li>Alla perioder i {activeFiscalYear.year_label} stängs</li>
-                <li>Räkenskapsåret markeras som stängt</li>
-                <li>IB-verifikation (O1) skapas i nya året</li>
-              </ul>
             </div>
+          )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  handleCreate(userChoseBook)
-                }}
-                disabled={createMutation.isPending}
-                className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {createMutation.isPending ? 'Skapar...' : 'Skapa räkenskapsår'}
-              </button>
+          {/* Step 3: Done */}
+          {step === 3 && resultData && (
+            <div>
+              <div className="mb-4 space-y-2 text-sm">
+                <p className="text-success-700">Räkenskapsår skapat</p>
+                <p className="text-success-700">Ingående balans skapad</p>
+                <p className="text-success-700">Bytt till nytt räkenskapsår</p>
+              </div>
+
+              <div className="mb-4">
+                <Callout variant="info" data-testid="ib-transferred">
+                  Ingående balanser har överförts. Konto 2099 (Årets resultat)
+                  har automatiskt omförts till 2091 (Balanserat resultat).
+                </Callout>
+              </div>
+
               <button
                 onClick={onClose}
-                className="rounded border px-4 py-2 text-sm hover:bg-muted"
+                className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                Avbryt
+                Klar
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Step 3: Done */}
-        {step === 3 && resultData && (
-          <div>
-            <div className="mb-4 space-y-2 text-sm">
-              <p className="text-success-700">Räkenskapsår skapat</p>
-              <p className="text-success-700">Ingående balans skapad</p>
-              <p className="text-success-700">Bytt till nytt räkenskapsår</p>
-            </div>
-
-            <div className="mb-4">
-              <Callout variant="info" data-testid="ib-transferred">
-                Ingående balanser har överförts. Konto 2099 (Årets resultat) har
-                automatiskt omförts till 2091 (Balanserat resultat).
-              </Callout>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Klar
-            </button>
-          </div>
-        )}
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

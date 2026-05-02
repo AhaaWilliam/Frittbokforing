@@ -527,65 +527,65 @@ function MatchDialog({
           <Dialog.Title className="mb-2 text-lg font-semibold">
             Matcha bank-transaktion
           </Dialog.Title>
-        <div className="mb-3 text-sm text-muted-foreground">
-          {tx.value_date} · {fmtKr(tx.amount_ore)} ·{' '}
-          {direction === 'invoice'
-            ? 'Inkommande → välj faktura'
-            : 'Utgående → välj kostnad'}
-        </div>
-        <label className="mb-3 block text-sm">
-          <span className="mb-1 block text-xs uppercase text-muted-foreground">
-            {direction === 'invoice' ? 'Faktura' : 'Kostnad'}
-          </span>
-          <select
-            className="w-full rounded border bg-background p-2 text-sm"
-            value={selectedEntityId ?? ''}
-            onChange={(e) =>
-              setSelectedEntityId(
-                e.target.value ? Number(e.target.value) : null,
-              )
-            }
-            data-testid="bank-match-entity-select"
-          >
-            <option value="">— Välj —</option>
-            {candidates.map((c) => (
-              <option key={c.id} value={c.id}>
-                {describeCandidate(c, direction)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="mb-4 block text-sm">
-          <span className="mb-1 block text-xs uppercase text-muted-foreground">
-            Bankkonto
-          </span>
-          <input
-            type="text"
-            className="w-full rounded border bg-background p-2 text-sm"
-            value={paymentAccount}
-            onChange={(e) => setPaymentAccount(e.target.value)}
-            data-testid="bank-match-account-input"
-          />
-        </label>
-        <div className="flex justify-end gap-2">
-          <Dialog.Close asChild>
+          <div className="mb-3 text-sm text-muted-foreground">
+            {tx.value_date} · {fmtKr(tx.amount_ore)} ·{' '}
+            {direction === 'invoice'
+              ? 'Inkommande → välj faktura'
+              : 'Utgående → välj kostnad'}
+          </div>
+          <label className="mb-3 block text-sm">
+            <span className="mb-1 block text-xs uppercase text-muted-foreground">
+              {direction === 'invoice' ? 'Faktura' : 'Kostnad'}
+            </span>
+            <select
+              className="w-full rounded border bg-background p-2 text-sm"
+              value={selectedEntityId ?? ''}
+              onChange={(e) =>
+                setSelectedEntityId(
+                  e.target.value ? Number(e.target.value) : null,
+                )
+              }
+              data-testid="bank-match-entity-select"
+            >
+              <option value="">— Välj —</option>
+              {candidates.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {describeCandidate(c, direction)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="mb-4 block text-sm">
+            <span className="mb-1 block text-xs uppercase text-muted-foreground">
+              Bankkonto
+            </span>
+            <input
+              type="text"
+              className="w-full rounded border bg-background p-2 text-sm"
+              value={paymentAccount}
+              onChange={(e) => setPaymentAccount(e.target.value)}
+              data-testid="bank-match-account-input"
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
+              >
+                Avbryt
+              </button>
+            </Dialog.Close>
             <button
               type="button"
-              className="rounded border px-3 py-1.5 text-sm hover:bg-accent"
+              className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              disabled={!selectedEntityId || matchMutation.isPending}
+              onClick={onSubmit}
+              data-testid="bank-match-submit"
             >
-              Avbryt
+              Matcha
             </button>
-          </Dialog.Close>
-          <button
-            type="button"
-            className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            disabled={!selectedEntityId || matchMutation.isPending}
-            onClick={onSubmit}
-            data-testid="bank-match-submit"
-          >
-            Matcha
-          </button>
-        </div>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

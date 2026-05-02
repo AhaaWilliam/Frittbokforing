@@ -117,91 +117,91 @@ function AccountDialog({ open, onClose, account }: AccountDialogProps) {
             {isEdit ? 'Redigera konto' : 'Lägg till konto'}
           </Dialog.Title>
 
-        {error && (
-          <div className="mb-4">
-            <Callout variant="danger" data-testid="account-error">
-              {error}
-            </Callout>
-          </div>
-        )}
+          {error && (
+            <div className="mb-4">
+              <Callout variant="danger" data-testid="account-error">
+                {error}
+              </Callout>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="account-form-number"
-              className="mb-1 block text-sm font-medium"
-            >
-              Kontonummer
-            </label>
-            <input
-              id="account-form-number"
-              type="text"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              disabled={isEdit}
-              placeholder="4–6 siffror"
-              className={`${inputClass} ${isEdit ? 'bg-muted' : ''}`}
-            />
-            {derivedClass && !isEdit && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Kontoklass: {getAccountClass(accountNumber)} — {derivedClass}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="account-form-name"
-              className="mb-1 block text-sm font-medium"
-            >
-              Namn
-            </label>
-            <input
-              id="account-form-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={k2Allowed}
-                onChange={(e) => setK2Allowed(e.target.checked)}
-              />
-              K2
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={k3Only}
-                onChange={(e) => setK3Only(e.target.checked)}
-              />
-              Enbart K3
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="account-form-number"
+                className="mb-1 block text-sm font-medium"
               >
-                Avbryt
+                Kontonummer
+              </label>
+              <input
+                id="account-form-number"
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                disabled={isEdit}
+                placeholder="4–6 siffror"
+                className={`${inputClass} ${isEdit ? 'bg-muted' : ''}`}
+              />
+              {derivedClass && !isEdit && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Kontoklass: {getAccountClass(accountNumber)} — {derivedClass}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="account-form-name"
+                className="mb-1 block text-sm font-medium"
+              >
+                Namn
+              </label>
+              <input
+                id="account-form-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={k2Allowed}
+                  onChange={(e) => setK2Allowed(e.target.checked)}
+                />
+                K2
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={k3Only}
+                  onChange={(e) => setK3Only(e.target.checked)}
+                />
+                Enbart K3
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
+                >
+                  Avbryt
+                </button>
+              </Dialog.Close>
+              <button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isEdit ? 'Spara' : 'Skapa'}
               </button>
-            </Dialog.Close>
-            <button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isEdit ? 'Spara' : 'Skapa'}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

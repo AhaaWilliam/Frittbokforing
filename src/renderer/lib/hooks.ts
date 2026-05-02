@@ -642,17 +642,17 @@ export function useDeleteExpenseDraft() {
 }
 
 export function useFinalizeExpense() {
-  return useIpcMutation<{ id: number }, { id: number; verification_number: number }>(
-    (data) => window.api.finalizeExpense(data),
-    {
-      invalidate: [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()],
-      onSuccess: (data) => {
-        // VS-45: markera den nyfinaliserade kostnaden för flash-animation
-        // i listvyn när användaren navigerar dit.
-        markFlashable('expense', data.id)
-      },
+  return useIpcMutation<
+    { id: number },
+    { id: number; verification_number: number }
+  >((data) => window.api.finalizeExpense(data), {
+    invalidate: [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()],
+    onSuccess: (data) => {
+      // VS-45: markera den nyfinaliserade kostnaden för flash-animation
+      // i listvyn när användaren navigerar dit.
+      markFlashable('expense', data.id)
     },
-  )
+  })
 }
 
 export function useExpense(id: number | undefined) {
