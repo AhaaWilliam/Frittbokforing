@@ -191,6 +191,7 @@ function AppShellInner({ company }: AppShellInnerProps) {
         <Sidebar company={company} />
         <main
           id="main-content"
+          aria-label="Huvudinnehåll"
           className="flex flex-col overflow-hidden bg-[var(--surface-elevated)]"
         >
           <ReadOnlyBanner />
