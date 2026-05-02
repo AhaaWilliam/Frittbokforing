@@ -483,6 +483,19 @@ export function useCreateCreditNoteDraft(fiscalYearId: number | undefined) {
   })
 }
 
+/**
+ * VS-66/VS-67: keys som bör invalideras när journal_entries muteras
+ * (finalize, payment, bulk-payment). Påverkar dashboard, RR, BR, VAT
+ * och hero-pillen "Senast bokfört".
+ */
+const JOURNAL_MUTATION_DERIVED_KEYS = [
+  () => queryKeys.allLatestVerifications(),
+  () => queryKeys.allDashboard(),
+  () => queryKeys.allIncomeStatement(),
+  () => queryKeys.allBalanceSheet(),
+  () => queryKeys.allVat(),
+] as const
+
 export function usePayInvoice() {
   return useIpcMutation(
     (input: {
@@ -497,6 +510,7 @@ export function usePayInvoice() {
         queryKeys.allInvoices(),
         queryKeys.anyInvoice(),
         queryKeys.allPayments(),
+        ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
       ],
     },
   )
@@ -522,6 +536,7 @@ export function useBulkPayInvoices() {
         queryKeys.allInvoices(),
         queryKeys.anyInvoice(),
         queryKeys.allPayments(),
+        ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
       ],
     },
   )
@@ -565,11 +580,7 @@ export function useFinalizeInvoice(_fiscalYearId?: number | undefined) {
     invalidate: [
       queryKeys.allInvoices(),
       queryKeys.anyInvoice(),
-      queryKeys.allLatestVerifications(),
-      queryKeys.allDashboard(),
-      queryKeys.allIncomeStatement(),
-      queryKeys.allBalanceSheet(),
-      queryKeys.allVat(),
+      ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
     ],
     onSuccess: (data) => {
       // VS-45: flash-markering för listvyn.
@@ -657,11 +668,7 @@ export function useFinalizeExpense() {
     invalidate: [
       queryKeys.allExpenseDrafts(),
       queryKeys.allExpenses(),
-      queryKeys.allLatestVerifications(),
-      queryKeys.allDashboard(),
-      queryKeys.allIncomeStatement(),
-      queryKeys.allBalanceSheet(),
-      queryKeys.allVat(),
+      ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
     ],
     onSuccess: (data) => {
       // VS-45: markera den nyfinaliserade kostnaden för flash-animation
@@ -707,6 +714,7 @@ export function usePayExpense() {
         queryKeys.allExpenses(),
         queryKeys.anyExpense(),
         queryKeys.allExpensePayments(),
+        ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
       ],
     },
   )
@@ -733,6 +741,7 @@ export function useBulkPayExpenses() {
         queryKeys.allExpenses(),
         queryKeys.anyExpense(),
         queryKeys.allExpensePayments(),
+        ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
       ],
     },
   )
@@ -1079,11 +1088,7 @@ export function useFinalizeManualEntry() {
       invalidate: [
         queryKeys.allManualEntryDrafts(),
         queryKeys.allManualEntries(),
-        queryKeys.allDashboard(),
-        queryKeys.allLatestVerifications(),
-        queryKeys.allIncomeStatement(),
-        queryKeys.allBalanceSheet(),
-        queryKeys.allVat(),
+        ...JOURNAL_MUTATION_DERIVED_KEYS.map((fn) => fn()),
       ],
       onSuccess: (_data, input) => {
         // VS-45: flash-markering på manual_entry.id (= input.id).
