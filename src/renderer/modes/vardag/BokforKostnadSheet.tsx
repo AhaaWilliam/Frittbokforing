@@ -80,6 +80,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [vatCodeId, setVatCodeId] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // VS-41: M100 field-propagation, se SkapaFakturaSheet.
+  const [errorField, setErrorField] = useState<string | null>(null)
   const [receiptPath, setReceiptPath] = useState<string | null>(null)
   const amountInputRef = useRef<HTMLInputElement | null>(null)
   // VS-37: synkron submit-guard mot double-click race (se SkapaFakturaSheet).
@@ -92,6 +94,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   // istället läses error genom closure varje gång input-deps ändras.
   useEffect(() => {
     if (error) setError(null)
+    if (errorField) setErrorField(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, amountKr, supplier, description, accountNumber, vatCodeId])
 
@@ -228,6 +231,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       const draft = await window.api.saveExpenseDraft(payload)
       if (!draft.success) {
         setError(draft.error)
+        setErrorField(draft.field ?? null)
         submittingRef.current = false; setSubmitting(false)
         return
       }
@@ -235,6 +239,7 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       const finalized = await window.api.finalizeExpense({ id: draft.data.id })
       if (!finalized.success) {
         setError(finalized.error)
+        setErrorField(finalized.field ?? null)
         submittingRef.current = false; setSubmitting(false)
         return
       }
@@ -329,7 +334,11 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                aria-invalid={!!dateError}
+                aria-invalid={
+                  !!dateError ||
+                  errorField === 'expense_date' ||
+                  errorField === 'date'
+                }
                 aria-describedby={dateError ? 'vardag-kostnad-date-err' : undefined}
                 className={`w-full rounded-md border bg-[var(--surface)] px-3 py-2 text-sm font-mono ${dateError ? 'border-danger-500' : 'border-[var(--border-default)]'}`}
                 data-testid="vardag-kostnad-date"
