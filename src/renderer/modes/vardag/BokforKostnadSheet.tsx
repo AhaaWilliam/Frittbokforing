@@ -92,7 +92,9 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   useEffect(() => {
     if (error) setError(null)
     if (errorField) setErrorField(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // VS-96: error/errorField avsiktligt utelämnade ur deps — closure-läsning
+    // förhindrar self-loop. Rule react-hooks/exhaustive-deps är inte
+    // konfigurerad i denna repo, så disable-kommentaren togs bort.
   }, [date, amountKr, supplier, description, accountNumber, vatCodeId])
 
   // VS-18: Auto-focus belopp-fältet när sheet öppnas. Belopp är nästan

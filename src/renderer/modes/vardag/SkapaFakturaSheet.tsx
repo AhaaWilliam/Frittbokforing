@@ -83,10 +83,11 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
   const submittingRef = useRef(false)
 
   // VS-25: Rensa submit-fel när användaren börjar redigera efter fail.
+  // VS-96: error/errorField avsiktligt utelämnade ur deps — closure-läsning
+  // förhindrar self-loop. react-hooks/exhaustive-deps inte konfigurerad här.
   useEffect(() => {
     if (error) setError(null)
     if (errorField) setErrorField(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     date,
     paymentTerms,

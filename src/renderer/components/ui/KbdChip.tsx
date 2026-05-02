@@ -105,7 +105,10 @@ export function KbdChord({
         // Index-key OK eftersom keys-arrayen är en stabil tangent-sekvens.
         <span className="inline-flex items-center gap-1" key={i}>
           {i > 0 && (
-            <span aria-hidden="true" className="text-xs text-[var(--text-faint)]">
+            <span
+              aria-hidden="true"
+              className="text-xs text-[var(--text-faint)]"
+            >
               {separator}
             </span>
           )}
