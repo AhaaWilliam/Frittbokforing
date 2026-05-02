@@ -809,6 +809,35 @@ interface ElectronAPI {
     expense_id: number
     company_id: number
   }) => Promise<IpcResult<{ linked: boolean }>>
+  // VS-113: månadsstängnings-checks
+  getPeriodChecks: (data: { period_id: number }) => Promise<
+    IpcResult<{
+      period_id: number
+      period_start: string
+      period_end: string
+      bankReconciliation: {
+        status: 'ok' | 'warning' | 'na'
+        count: number
+        detail: string
+      }
+      salaryBooked: {
+        status: 'ok' | 'warning' | 'na'
+        count: number
+        detail: string
+      }
+      vatReportReady: {
+        status: 'ok' | 'warning' | 'na'
+        count: number
+        detail: string
+      }
+      supplierPayments: {
+        status: 'ok' | 'warning' | 'na'
+        count: number
+        detail: string
+      }
+      allOk: boolean
+    }>
+  >
 }
 
 export interface UserMeta {

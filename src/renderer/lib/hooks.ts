@@ -1487,4 +1487,38 @@ export function useDeleteReceipt() {
   )
 }
 
+// === Period checks (Sprint VS-113) ===
+export function usePeriodChecks(periodId: number | undefined) {
+  return useIpcQuery<{
+    period_id: number
+    period_start: string
+    period_end: string
+    bankReconciliation: {
+      status: 'ok' | 'warning' | 'na'
+      count: number
+      detail: string
+    }
+    salaryBooked: {
+      status: 'ok' | 'warning' | 'na'
+      count: number
+      detail: string
+    }
+    vatReportReady: {
+      status: 'ok' | 'warning' | 'na'
+      count: number
+      detail: string
+    }
+    supplierPayments: {
+      status: 'ok' | 'warning' | 'na'
+      count: number
+      detail: string
+    }
+    allOk: boolean
+  }>(
+    queryKeys.periodChecks(periodId ?? 0),
+    () => window.api.getPeriodChecks({ period_id: periodId! }),
+    { enabled: !!periodId, staleTime: 30_000 },
+  )
+}
+
 export { useDebouncedSearch } from './use-debounced-search'

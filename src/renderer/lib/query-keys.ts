@@ -125,6 +125,10 @@ export const queryKeys = {
     ['receipts', 'counts', companyId] as const,
   allReceipts: () => ['receipts'] as const,
 
+  // === Period checks (Sprint VS-113) ===
+  periodChecks: (periodId: number) => ['period-checks', periodId] as const,
+  allPeriodChecks: () => ['period-checks'] as const,
+
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
   budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,

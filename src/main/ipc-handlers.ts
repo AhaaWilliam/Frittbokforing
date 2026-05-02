@@ -309,6 +309,7 @@ import {
   BulkArchiveReceiptInputSchema,
   ReceiptCountsInputSchema,
   LinkReceiptToExpenseInputSchema,
+  PeriodChecksInputSchema,
 } from './ipc-schemas'
 import { previewJournalLines } from './services/preview-service'
 import {
@@ -321,6 +322,7 @@ import {
   deleteReceipt,
   linkReceiptToExpense,
 } from './services/receipt-service'
+import { getPeriodChecks } from './services/period-checks-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
 import { wrapIpcHandler } from './ipc/wrap-ipc-handler'
@@ -1719,6 +1721,14 @@ export function registerIpcHandlers(): void {
     'receipt:link-to-expense',
     wrapIpcHandler(LinkReceiptToExpenseInputSchema, (data) =>
       linkReceiptToExpense(db, data),
+    ),
+  )
+
+  // Sprint VS-113: Månadsstängnings-checks (advisory).
+  ipcMain.handle(
+    'period:checks',
+    wrapIpcHandler(PeriodChecksInputSchema, (data) =>
+      getPeriodChecks(db, data),
     ),
   )
 

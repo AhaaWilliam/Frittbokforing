@@ -272,6 +272,13 @@ export const LinkReceiptToExpenseInputSchema = z
   })
   .strict()
 
+// VS-113: månadsstängnings-checks.
+export const PeriodChecksInputSchema = z
+  .object({
+    period_id: z.number().int().positive(),
+  })
+  .strict()
+
 // VS-1: Sätt default-konto på leverantör/kund (4-siffrig BAS).
 // Används av Vardag-sheets för att lära in kontering per motpart.
 export const SetCounterpartyDefaultAccountSchema = z
@@ -1605,6 +1612,7 @@ export const channelMap = {
   'receipt:counts': ReceiptCountsInputSchema,
   'receipt:delete': ArchiveReceiptInputSchema,
   'receipt:link-to-expense': LinkReceiptToExpenseInputSchema,
+  'period:checks': PeriodChecksInputSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

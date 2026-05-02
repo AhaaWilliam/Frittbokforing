@@ -481,6 +481,9 @@ contextBridge.exposeInMainWorld('api', {
     expense_id: number
     company_id: number
   }) => ipcRenderer.invoke('receipt:link-to-expense', data),
+  // VS-113: månadsstängnings-checks
+  getPeriodChecks: (data: { period_id: number }) =>
+    ipcRenderer.invoke('period:checks', data),
 })
 
 // Auth — separate namespace (window.auth.*) for the local-login + SQLCipher
