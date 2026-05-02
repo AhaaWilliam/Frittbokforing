@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
@@ -175,31 +176,26 @@ export function PageAccruals() {
         periodCount={periodCount}
       />
 
-      {showExecuteAllPreview !== null && (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="exec-all-preview-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowExecuteAllPreview(null)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setShowExecuteAllPreview(null)
-          }}
-        >
-          <div
-            className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg"
+      {/* VS-56: Migrerar till Radix Dialog (M156 + ADR 003). */}
+      <Dialog.Root
+        open={showExecuteAllPreview !== null}
+        onOpenChange={(o) => {
+          if (!o) setShowExecuteAllPreview(null)
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background p-6 shadow-lg focus:outline-none"
             data-testid="accrual-preview-dialog"
           >
-            <h3
+            <Dialog.Title
               id="exec-all-preview-title"
               className="mb-3 text-lg font-semibold"
             >
               Kör alla periodiseringar — Period {showExecuteAllPreview}
-            </h3>
-            {(() => {
+            </Dialog.Title>
+            {showExecuteAllPreview !== null && (() => {
               const preview = getExecuteAllPreview(showExecuteAllPreview)
               if (preview.length === 0) {
                 return (
@@ -244,16 +240,20 @@ export function PageAccruals() {
               )
             })()}
             <div className="flex justify-end gap-2">
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="rounded-md border px-4 py-2 text-sm"
+                >
+                  Avbryt
+                </button>
+              </Dialog.Close>
               <button
                 type="button"
-                onClick={() => setShowExecuteAllPreview(null)}
-                className="rounded-md border px-4 py-2 text-sm"
-              >
-                Avbryt
-              </button>
-              <button
-                type="button"
-                onClick={() => handleExecuteAllConfirmed(showExecuteAllPreview)}
+                onClick={() =>
+                  showExecuteAllPreview !== null &&
+                  handleExecuteAllConfirmed(showExecuteAllPreview)
+                }
                 disabled={executeAllMutation.isPending}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 data-testid="accrual-preview-confirm"
@@ -261,9 +261,9 @@ export function PageAccruals() {
                 {executeAllMutation.isPending ? 'Kör…' : 'Bekräfta'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
