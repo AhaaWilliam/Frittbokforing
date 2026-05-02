@@ -90,6 +90,42 @@ describe('CloseMonthDialog', () => {
     expect(row.getAttribute('tabindex')).toBeNull()
   })
 
+  // VS-128: navigation från warning-rad växlar även mode → bokförare
+  // (annars renderas inte target-pagen i Vardag-läget).
+  it('VS-128 klick i Vardag-läget växlar till bokförare via setSetting', async () => {
+    mockIpcResponse('period:checks', {
+      success: true,
+      data: makeChecks({ supplierPayments: 'warning' }),
+    })
+    // Spara mode-skiften via setSetting-mock (useUiMode persistar via settings)
+    const settingsCalls: Array<[string, unknown]> = []
+    mockIpcResponse('settings:set', { success: true, data: undefined })
+    mockIpcResponse('settings:get', 'vardag') // initial mode = vardag
+    const original = window.api.setSetting
+    window.api.setSetting = ((key: string, value: unknown) => {
+      settingsCalls.push([key, value])
+      return original?.(key, value) ?? Promise.resolve({ success: true })
+    }) as typeof window.api.setSetting
+
+    window.location.hash = '/'
+    await renderWithProviders(
+      <CloseMonthDialog open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test below
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId('check-supplierPayments')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByTestId('check-supplierPayments'))
+
+    await waitFor(() => {
+      expect(window.location.hash).toContain('/expenses')
+    })
+    // useUiMode skriver ui_mode='bokforare' via settings
+    expect(
+      settingsCalls.some(([k, v]) => k === 'ui_mode' && v === 'bokforare'),
+    ).toBe(true)
+  })
+
   it('VS-127 Enter-tangent på warning-rad navigerar', async () => {
     mockIpcResponse('period:checks', {
       success: true,

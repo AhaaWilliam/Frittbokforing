@@ -26,6 +26,7 @@ import {
   usePeriodChecks,
 } from '../../lib/hooks'
 import { useNavigate } from '../../lib/router'
+import { useUiMode } from '../../lib/use-ui-mode'
 import { Button } from '../ui/Button'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { todayLocal } from '../../lib/format'
@@ -99,6 +100,7 @@ export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
   const periods = periodsRaw ?? []
   const closePeriodMutation = useClosePeriod(activeFiscalYear?.id)
   const navigate = useNavigate()
+  const { setMode } = useUiMode()
 
   const activePeriod = useMemo(() => {
     if (periodIdOverride) {
@@ -183,6 +185,10 @@ export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
                     c.status === 'warning' ? CHECK_NAVIGATION[key] : undefined
                   const handleNavigate = () => {
                     if (!navigateTo) return
+                    // VS-128: säkerställ att vi är i bokförare-läget innan
+                    // navigation (Vardag har ingen sub-routing — pages
+                    // renderas bara i bokförare-mode).
+                    setMode('bokforare')
                     navigate(navigateTo)
                     onClose()
                   }
