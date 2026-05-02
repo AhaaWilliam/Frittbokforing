@@ -12,18 +12,35 @@
  */
 import { useMemo } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { CheckCircle, AlertTriangle, MinusCircle, X } from 'lucide-react'
+import {
+  CheckCircle,
+  AlertTriangle,
+  MinusCircle,
+  X,
+  ArrowRight,
+} from 'lucide-react'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import {
   useFiscalPeriods,
   useClosePeriod,
   usePeriodChecks,
 } from '../../lib/hooks'
+import { useNavigate } from '../../lib/router'
 import { Button } from '../ui/Button'
 import { LoadingSpinner } from '../ui/LoadingSpinner'
 import { todayLocal } from '../../lib/format'
 import { toast } from 'sonner'
 import type { FiscalPeriod } from '../../../shared/types'
+
+// VS-127: navigation-target per check-key. Bara warnings är klickbara.
+const CHECK_NAVIGATION: Record<string, string> = {
+  bankReconciliation: '/bank-statements',
+  vatReportReady: '/vat',
+  supplierPayments: '/expenses',
+  // salaryBooked har ingen självklar destination — manuella verifikat är
+  // bredare än lön, men det är där lönebokningar registreras.
+  salaryBooked: '/manual-entries',
+}
 
 interface Props {
   open: boolean
@@ -81,6 +98,7 @@ export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
   const { data: periodsRaw } = useFiscalPeriods(activeFiscalYear?.id)
   const periods = periodsRaw ?? []
   const closePeriodMutation = useClosePeriod(activeFiscalYear?.id)
+  const navigate = useNavigate()
 
   const activePeriod = useMemo(() => {
     if (periodIdOverride) {
@@ -161,11 +179,41 @@ export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
                   ] as const
                 ).map((key) => {
                   const c = checks[key]
+                  const navigateTo =
+                    c.status === 'warning' ? CHECK_NAVIGATION[key] : undefined
+                  const handleNavigate = () => {
+                    if (!navigateTo) return
+                    navigate(navigateTo)
+                    onClose()
+                  }
                   return (
+                    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- list-item används som button via role="button" + tabindex (M156-mönster för warning-rader som hela är klickbara)
                     <li
                       key={key}
-                      className="flex items-start gap-2"
+                      className={`flex items-start gap-2 rounded-md ${
+                        navigateTo
+                          ? 'cursor-pointer p-1 hover:bg-[var(--surface-secondary)]/50'
+                          : ''
+                      }`}
                       data-testid={`check-${key}`}
+                      onClick={navigateTo ? handleNavigate : undefined}
+                      onKeyDown={
+                        navigateTo
+                          ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                handleNavigate()
+                              }
+                            }
+                          : undefined
+                      }
+                      role={navigateTo ? 'button' : undefined}
+                      tabIndex={navigateTo ? 0 : undefined}
+                      aria-label={
+                        navigateTo
+                          ? `${CHECK_LABELS[key]} — gå till ${navigateTo} för att åtgärda`
+                          : undefined
+                      }
                     >
                       <span className="mt-0.5">
                         <CheckIcon status={c.status} />
@@ -176,6 +224,12 @@ export function CloseMonthDialog({ open, onClose, periodIdOverride }: Props) {
                           {c.detail}
                         </span>
                       </span>
+                      {navigateTo && (
+                        <ArrowRight
+                          className="mt-0.5 h-3.5 w-3.5 text-[var(--text-faint)]"
+                          aria-hidden="true"
+                        />
+                      )}
                     </li>
                   )
                 })}
