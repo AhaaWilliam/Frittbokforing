@@ -61,6 +61,10 @@ export type ErrorCode =
   | 'USER_NOT_FOUND'
   | 'NOT_AUTHENTICATED'
   | 'WEAK_PASSWORD'
+  | 'RECEIPT_NOT_FOUND'
+  | 'RECEIPT_DUPLICATE_HASH'
+  | 'RECEIPT_BOOKED'
+  | 'RECEIPT_FILE_ERROR'
 
 // === Page navigation ===
 export type PageId =
@@ -1045,4 +1049,56 @@ export interface ExecuteDepreciationPeriodResult {
     code: ErrorCode
   }>
   batch_status: 'completed' | 'partial' | 'cancelled'
+}
+
+// === Inkorgen / receipts (Sprint VS-106..115) ===
+export type ReceiptStatus = 'inbox' | 'booked' | 'archived'
+
+export interface Receipt {
+  id: number
+  company_id: number
+  file_path: string
+  original_filename: string
+  file_hash: string
+  file_size_bytes: number
+  mime_type: string
+  uploaded_at: string
+  status: ReceiptStatus
+  expense_id: number | null
+  notes: string | null
+  archived_at: string | null
+}
+
+export interface ReceiptListInput {
+  company_id: number
+  status?: ReceiptStatus
+}
+
+export interface CreateReceiptInput {
+  company_id: number
+  source_path: string
+  original_filename: string
+  notes?: string | null
+}
+
+export interface UpdateReceiptNotesInput {
+  id: number
+  company_id: number
+  notes: string | null
+}
+
+export interface ArchiveReceiptInput {
+  id: number
+  company_id: number
+}
+
+export interface BulkArchiveReceiptInput {
+  ids: number[]
+  company_id: number
+}
+
+export interface ReceiptCounts {
+  inbox: number
+  booked: number
+  archived: number
 }

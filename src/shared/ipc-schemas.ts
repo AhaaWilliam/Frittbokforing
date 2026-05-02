@@ -211,6 +211,57 @@ export const CounterpartyIdSchema = z
   })
   .strict()
 
+// === Receipts / Inkorgen (Sprint VS-106..115) ===
+// VS-107: kvitton som väntar på bokföring. Manuell strategi — användaren
+// släpper PDF/bild i drop-zone, raden hamnar i status='inbox'.
+const ReceiptStatusEnum = z.enum(['inbox', 'booked', 'archived'])
+
+export const ReceiptListInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+    status: ReceiptStatusEnum.optional(),
+  })
+  .strict()
+
+export const CreateReceiptInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+    // Absolut path till källfilen som ska kopieras in i receipts-inbox/.
+    // Service-lagret beräknar SHA-256, kopierar filen och insertar raden.
+    source_path: z.string().min(1).max(2048),
+    original_filename: z.string().min(1).max(512),
+    notes: z.string().max(2000).nullable().optional(),
+  })
+  .strict()
+
+export const UpdateReceiptNotesInputSchema = z
+  .object({
+    id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
+    notes: z.string().max(2000).nullable(),
+  })
+  .strict()
+
+export const ArchiveReceiptInputSchema = z
+  .object({
+    id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const BulkArchiveReceiptInputSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).min(1).max(500),
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
+export const ReceiptCountsInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
 // VS-1: Sätt default-konto på leverantör/kund (4-siffrig BAS).
 // Används av Vardag-sheets för att lära in kontering per motpart.
 export const SetCounterpartyDefaultAccountSchema = z
@@ -1536,6 +1587,13 @@ export const channelMap = {
   'bank-tx-mapping:upsert': BankTxMappingUpsertSchema,
   'bank-tx-mapping:delete': BankTxMappingDeleteSchema,
   'preview:journal-lines': PreviewJournalLinesInputSchema,
+  'receipt:list': ReceiptListInputSchema,
+  'receipt:create': CreateReceiptInputSchema,
+  'receipt:update-notes': UpdateReceiptNotesInputSchema,
+  'receipt:archive': ArchiveReceiptInputSchema,
+  'receipt:archive-bulk': BulkArchiveReceiptInputSchema,
+  'receipt:counts': ReceiptCountsInputSchema,
+  'receipt:delete': ArchiveReceiptInputSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

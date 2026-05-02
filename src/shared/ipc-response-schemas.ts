@@ -323,7 +323,9 @@ export const channelResponseMap = {
   'expense:delete-draft': VoidOrReceipt,
   'expense:list-drafts': AnyEntityList,
   'expense:finalize': FinalizeReceipt,
-  'expense:attach-receipt': z.object({ receipt_path: z.string() }).passthrough(),
+  'expense:attach-receipt': z
+    .object({ receipt_path: z.string() })
+    .passthrough(),
   'expense:select-receipt-file': z.object({ filePath: z.string() }).nullable(),
   'expense:pay': PaymentReceipt,
   'expense:payBulk': BulkPaymentResultSchema,
@@ -544,6 +546,16 @@ export const channelResponseMap = {
   // Sprint 16 — Live verifikat-preview (ADR 006). Lös passthrough-spec
   // räcker här eftersom data konsumeras typat via electron.d.ts.
   'preview:journal-lines': LooseObject,
+  // Sprint VS-107 — Inkorgen receipts. Loose passthrough: list returnerar
+  // array, single returnerar entity, counts returnerar `{inbox,booked,archived}`,
+  // bulk-archive returnerar `{succeeded,failed}`, delete returnerar `{deleted}`.
+  'receipt:list': AnyEntityList,
+  'receipt:create': AnyEntity,
+  'receipt:update-notes': AnyEntity,
+  'receipt:archive': AnyEntity,
+  'receipt:archive-bulk': LooseObject,
+  'receipt:counts': LooseObject,
+  'receipt:delete': LooseObject,
 } as const satisfies Record<ChannelName, z.ZodType>
 
 export type ChannelResponseMap = typeof channelResponseMap
