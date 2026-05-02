@@ -37,6 +37,9 @@ import type {
   BudgetTarget,
   BudgetVarianceReport,
   SaveBudgetTargetItem,
+  Receipt,
+  ReceiptCounts,
+  ReceiptStatus,
 } from '../../shared/types'
 import { useIpcQuery } from './use-ipc-query'
 import { useIpcMutation } from './use-ipc-mutation'
@@ -1339,6 +1342,129 @@ export function useCopyBudgetFromPreviousFy() {
       queryKeys.budgetVariance(input.target_fiscal_year_id),
     ],
   })
+}
+
+// === Receipts / Inkorgen (Sprint VS-109) ===
+//
+// Scopas per bolag via ActiveCompanyContext (M158-mönster, samma som
+// counterparties/products). companyId saknas → enabled:false. Mutations
+// invaliderar både listan och counts; bulk-archive invaliderar dessutom
+// förmodade följdkanaler om någon framtida vy hänger på subset av status.
+
+export function useReceipts(params?: { status?: ReceiptStatus }) {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcQuery<Receipt[]>(
+    queryKeys.receipts({
+      ...(params ?? {}),
+      company_id: companyId,
+    } as Record<string, unknown>),
+    () =>
+      window.api.listReceipts({
+        company_id: companyId!,
+        ...(params ?? {}),
+      }),
+    { enabled: !!companyId },
+  )
+}
+
+export function useReceiptCounts() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcQuery<ReceiptCounts>(
+    queryKeys.receiptCounts(companyId ?? 0),
+    () => window.api.receiptCounts({ company_id: companyId! }),
+    { enabled: !!companyId },
+  )
+}
+
+export function useCreateReceipt() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<
+    {
+      source_path: string
+      original_filename: string
+      notes?: string | null
+    },
+    Receipt
+  >(
+    (data) =>
+      window.api.createReceipt({
+        company_id: companyId!,
+        ...data,
+      }),
+    {
+      invalidate: () => [queryKeys.allReceipts()],
+    },
+  )
+}
+
+export function useUpdateReceiptNotes() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<{ id: number; notes: string | null }, Receipt>(
+    (data) =>
+      window.api.updateReceiptNotes({
+        company_id: companyId!,
+        id: data.id,
+        notes: data.notes,
+      }),
+    {
+      invalidate: () => [queryKeys.allReceipts()],
+    },
+  )
+}
+
+export function useArchiveReceipt() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<{ id: number }, Receipt>(
+    (data) =>
+      window.api.archiveReceipt({
+        id: data.id,
+        company_id: companyId!,
+      }),
+    {
+      invalidate: () => [queryKeys.allReceipts()],
+    },
+  )
+}
+
+export function useBulkArchiveReceipts() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<
+    { ids: number[] },
+    {
+      succeeded: number[]
+      failed: Array<{ id: number; code: string; error: string }>
+    }
+  >(
+    (data) =>
+      window.api.bulkArchiveReceipts({
+        ids: data.ids,
+        company_id: companyId!,
+      }),
+    {
+      invalidate: () => [queryKeys.allReceipts()],
+    },
+  )
+}
+
+export function useDeleteReceipt() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<{ id: number }, { deleted: boolean }>(
+    (data) =>
+      window.api.deleteReceipt({
+        id: data.id,
+        company_id: companyId!,
+      }),
+    {
+      invalidate: () => [queryKeys.allReceipts()],
+    },
+  )
 }
 
 export { useDebouncedSearch } from './use-debounced-search'

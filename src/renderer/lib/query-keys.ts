@@ -118,6 +118,13 @@ export const queryKeys = {
   // === Bank TX code mappings (Sprint F P4) ===
   bankTxMappings: () => ['bank-tx-mappings'] as const,
 
+  // === Receipts / Inkorgen (Sprint VS-109, scopas per bolag) ===
+  receipts: (params?: Record<string, unknown>) =>
+    params ? (['receipts', params] as const) : (['receipts'] as const),
+  receiptCounts: (companyId: number) =>
+    ['receipts', 'counts', companyId] as const,
+  allReceipts: () => ['receipts'] as const,
+
   // === Budget ===
   budgetLines: () => ['budget-lines'] as const,
   budgetTargets: (fyId: number) => ['budget-targets', fyId] as const,
