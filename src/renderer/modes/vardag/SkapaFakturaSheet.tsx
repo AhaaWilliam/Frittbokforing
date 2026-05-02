@@ -12,7 +12,7 @@ import { CustomerPicker } from '../../components/invoices/CustomerPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
 import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
-import { fiscalYearDateError, kronorToOre, todayLocal } from '../../lib/format'
+import { fiscalYearDateError, formatKr, kronorToOre, todayLocal } from '../../lib/format'
 import { buildQuickInvoicePayload } from '../../lib/build-quick-invoice-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
@@ -399,6 +399,30 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
           </Field>
         </div>
 
+        {/* VS-32: "Att fakturera"-sammanställning. Speglar H+G-prototypens
+            höger-kort som ger användaren en tydlig totalsumma innan submit. */}
+        {totalOre > 0 && (
+          <div
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
+            aria-live="polite"
+            data-testid="vardag-faktura-summary"
+          >
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-faint)]">
+              Att fakturera
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <SummaryCell label="Netto" value={formatKr(lineNetOre)} />
+              <SummaryCell label="Moms" value={formatKr(vatOre)} />
+              <SummaryCell
+                label="Totalt"
+                value={formatKr(totalOre)}
+                emphasis
+                testId="vardag-faktura-summary-total"
+              />
+            </div>
+          </div>
+        )}
+
         <div
           className="rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 p-3"
           aria-live="polite"
@@ -481,5 +505,35 @@ export function SkapaFakturaSheet({ open, onClose }: Props) {
         </div>
       </div>
     </BottomSheet>
+  )
+}
+
+function SummaryCell({
+  label,
+  value,
+  emphasis,
+  testId,
+}: {
+  label: string
+  value: string
+  emphasis?: boolean
+  testId?: string
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] uppercase tracking-wider text-[var(--text-faint)]">
+        {label}
+      </span>
+      <span
+        className={
+          emphasis
+            ? 'font-mono text-base font-semibold text-[var(--text-primary)]'
+            : 'font-mono text-sm text-[var(--text-secondary)]'
+        }
+        data-testid={testId}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
