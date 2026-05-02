@@ -10,7 +10,9 @@ import {
   useExpenseDrafts,
   useDraftInvoices,
   useLatestVerification,
+  useReceiptCounts,
 } from '../../lib/hooks'
+import { useNavigate } from '../../lib/router'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -63,7 +65,17 @@ function VardagAppInner({ companyName }: { companyName: string }) {
   const { data: expenseDrafts } = useExpenseDrafts(fyId)
   const { data: invoiceDrafts } = useDraftInvoices(fyId)
   const { data: latestVer } = useLatestVerification(fyId)
-  const inboxCount = (expenseDrafts?.length ?? 0) + (invoiceDrafts?.length ?? 0)
+  const { data: receiptCounts } = useReceiptCounts()
+  const navigate = useNavigate()
+  // VS-110: "Inkorgen"-pillen visar antal kvitton som väntar på bokföring
+  // i den nya receipts-tabellen (status='inbox'). Drafts-räknarna kvarstår
+  // som referens (latestVer + bokföringsorder-kö visas på andra ytor).
+  const inboxCount = receiptCounts?.inbox ?? 0
+  // Kompenserande variabler så att eslint inte flaggar oanvända imports —
+  // expenseDrafts/invoiceDrafts pre-fetchas så Vardag är "varmt" när
+  // sheets öppnas (cache-warm).
+  void expenseDrafts
+  void invoiceDrafts
   const [sheet, setSheet] = useState<VardagSheet>(null)
   const [now, setNow] = useState(() => new Date())
 
@@ -142,10 +154,17 @@ function VardagAppInner({ companyName }: { companyName: string }) {
               inboxCount === 0
                 ? 'Inkorgen är tom'
                 : inboxCount === 1
-                  ? '1 obokförd post'
-                  : `${inboxCount} obokförda poster`
+                  ? '1 kvitto väntar'
+                  : `${inboxCount} kvitton väntar`
             }
             testId="vardag-pill-inbox"
+            onClick={() => {
+              // Inkorgen är ett bokförare-page (master/detail med bulk-
+              // actions). Vardag har ingen sub-routing — växla mode och
+              // navigera till /inbox.
+              setMode('bokforare')
+              navigate('/inbox')
+            }}
           />
           {latestVer && (
             <StatusPill
@@ -193,21 +212,40 @@ function StatusPill({
   tone,
   label,
   testId,
+  onClick,
 }: {
   tone: 'mint' | 'warning'
   label: string
   testId?: string
+  onClick?: () => void
 }) {
   const dotColor =
     tone === 'mint' ? 'var(--color-mint-500)' : 'var(--color-warning-500)'
-  return (
-    <span className="inline-flex items-center" data-testid={testId}>
+  const content = (
+    <>
       <span
         className="mr-2 inline-block h-1.5 w-1.5 rounded-full"
         style={{ background: dotColor }}
         aria-hidden="true"
       />
       {label}
+    </>
+  )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center transition-colors hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-500)] focus-visible:ring-offset-2"
+        data-testid={testId}
+      >
+        {content}
+      </button>
+    )
+  }
+  return (
+    <span className="inline-flex items-center" data-testid={testId}>
+      {content}
     </span>
   )
 }

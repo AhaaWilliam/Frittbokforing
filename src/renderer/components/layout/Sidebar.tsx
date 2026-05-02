@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   ArrowDownCircle,
   ArrowUpCircle,
+  Inbox,
   Receipt,
   Calculator,
   Download,
@@ -41,6 +42,7 @@ import {
   useAccrualSchedules,
   useFixedAssets,
   useImportedEntries,
+  useReceiptCounts,
 } from '../../lib/hooks'
 
 interface SidebarProps {
@@ -102,6 +104,7 @@ export function Sidebar({ company }: SidebarProps) {
   const { data: accrualSchedules } = useAccrualSchedules(fyId)
   const { data: fixedAssets } = useFixedAssets(fyId)
   const { data: importedEntries } = useImportedEntries(fyId)
+  const { data: receiptCounts } = useReceiptCounts()
 
   const invoiceCount = invoiceData?.counts?.total
   const expenseCount = expenseData?.counts?.total
@@ -163,6 +166,13 @@ export function Sidebar({ company }: SidebarProps) {
           label="Pengar ut"
           testId="nav-expenses"
           count={expenseCount}
+        />
+        <SidebarLink
+          to="/inbox"
+          icon={Inbox}
+          label="Inkorgen"
+          testId="nav-inbox"
+          count={receiptCounts?.inbox}
         />
         <SidebarLink
           to="/manual-entries"

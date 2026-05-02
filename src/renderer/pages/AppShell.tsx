@@ -50,6 +50,7 @@ import { PageFixedAssets } from './PageFixedAssets'
 import { PageImport } from './PageImport'
 import { PageBankStatements } from './PageBankStatements'
 import { PageSepaDd } from './PageSepaDd'
+import { PageInbox } from './PageInbox'
 
 interface AppShellInnerProps {
   company: Company
@@ -101,6 +102,8 @@ function PageContent({ page }: { page: string }) {
       return <PageBankStatements />
     case 'sepa-dd':
       return <PageSepaDd />
+    case 'inbox':
+      return <PageInbox />
     default:
       return <PageOverview />
   }

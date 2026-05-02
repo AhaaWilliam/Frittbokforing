@@ -83,6 +83,7 @@ export type PageId =
   | 'suppliers'
   | 'account-statement'
   | 'bank-statements'
+  | 'inbox'
 
 // === Company ===
 export interface Company {

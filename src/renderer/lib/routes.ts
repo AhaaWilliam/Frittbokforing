@@ -52,4 +52,7 @@ export const routes: RouteDefinition[] = [
   { pattern: '/manual-entries', page: 'manual-entries' },
 
   { pattern: '/imported-entries', page: 'imported-entries' },
+
+  // Sprint VS-110 — Inkorgen (kvitto-kö före bokföring)
+  { pattern: '/inbox', page: 'inbox' },
 ]
