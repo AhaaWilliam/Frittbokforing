@@ -100,7 +100,7 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
   onNavigateRef.current = onNavigate
 
   useKeyboardShortcuts({
-    'mod+k': () => searchRef.current?.focus(),
+    '/': () => searchRef.current?.focus(),
   })
 
   // Sprint 57 C2b: pagination-state; Sprint C B1: URL-sync

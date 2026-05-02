@@ -125,6 +125,54 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
+  it('"/" triggar slash-handler (VS-104, list-search-fokus)', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ '/': handler }))
+    const ev = fireKey({ key: '/' })
+    expect(handler).toHaveBeenCalledOnce()
+    expect(ev.defaultPrevented).toBe(true)
+  })
+
+  it('"/" med modifier triggar INTE slash-handler', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ '/': handler }))
+    fireKey({ key: '/', metaKey: true })
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('"/" skippas när användaren skriver i input', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ '/': handler }))
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    const ev = new KeyboardEvent('keydown', {
+      key: '/',
+      bubbles: true,
+      cancelable: true,
+    })
+    input.dispatchEvent(ev)
+    expect(handler).not.toHaveBeenCalled()
+    expect(ev.defaultPrevented).toBe(false)
+    document.body.removeChild(input)
+  })
+
+  it('"/" skippas när användaren skriver i textarea', () => {
+    const handler = vi.fn()
+    renderHook(() => useKeyboardShortcuts({ '/': handler }))
+    const ta = document.createElement('textarea')
+    document.body.appendChild(ta)
+    ta.focus()
+    const ev = new KeyboardEvent('keydown', {
+      key: '/',
+      bubbles: true,
+      cancelable: true,
+    })
+    ta.dispatchEvent(ev)
+    expect(handler).not.toHaveBeenCalled()
+    document.body.removeChild(ta)
+  })
+
   it('case-insensitiv key-matching (S → s)', () => {
     const handler = vi.fn()
     renderHook(() => useKeyboardShortcuts({ 'mod+s': handler }))

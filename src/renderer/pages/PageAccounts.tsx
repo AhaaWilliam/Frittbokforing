@@ -217,7 +217,7 @@ export function PageAccounts() {
 
   useKeyboardShortcuts({
     'mod+n': () => handleOpenCreate(),
-    'mod+k': () => searchRef.current?.focus(),
+    '/': () => searchRef.current?.focus(),
   })
 
   const { data: accounts = [], isLoading } = useAllAccounts(

@@ -43,6 +43,24 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
         shortcutsRef.current['mod+k']()
         return
       }
+      // '/': fokusera list-search på sidor med egen sök-ruta. Skippas när
+      // användaren redan skriver i input/textarea/contenteditable, så att
+      // tecknet kommer fram normalt. Undviker mod+k-konflikt med
+      // GlobalSearch + CommandPalette (VS-104).
+      if (key === '/' && !mod && !e.shiftKey && shortcutsRef.current['/']) {
+        const target = e.target as HTMLElement | null
+        const tag = target?.tagName
+        const isTyping =
+          tag === 'INPUT' ||
+          tag === 'TEXTAREA' ||
+          tag === 'SELECT' ||
+          target?.isContentEditable === true
+        if (!isTyping) {
+          e.preventDefault()
+          shortcutsRef.current['/']()
+        }
+        return
+      }
       // mod+shift+b: mode-toggle (Vardag ↔ Bokförare). Använder e.shiftKey
       // istället för key 'b' eftersom shift+b på vissa layouter blir 'B'.
       if (

@@ -106,7 +106,7 @@ export function InvoiceList({ onNavigate }: InvoiceListProps) {
   onNavigateRef.current = onNavigate
 
   useKeyboardShortcuts({
-    'mod+k': () => searchRef.current?.focus(),
+    '/': () => searchRef.current?.focus(),
   })
 
   // Sprint 57 C2b: pagination-state (Beslut 11 + 12); Sprint C B1: URL-sync
