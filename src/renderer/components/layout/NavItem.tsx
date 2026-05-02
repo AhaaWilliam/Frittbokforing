@@ -25,7 +25,7 @@ export function NavItem({
           : 'text-muted-foreground hover:bg-accent/50'
       }`}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4" aria-hidden="true" />
       {label}
     </button>
   )

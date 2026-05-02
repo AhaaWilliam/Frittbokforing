@@ -336,7 +336,10 @@ export function ExpenseList({ onNavigate }: ExpenseListProps) {
 
       {/* Search input */}
       <div className="relative px-8 py-2">
-        <Search className="pointer-events-none absolute left-11 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          className="pointer-events-none absolute left-11 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
         <input
           ref={searchRef}
           type="text"

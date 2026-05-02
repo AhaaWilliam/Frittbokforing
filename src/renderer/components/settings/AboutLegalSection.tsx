@@ -101,7 +101,7 @@ function LegalDialog({
                 aria-label="Stäng"
                 className="rounded p-1 text-muted-foreground hover:bg-muted"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </Dialog.Close>
           </div>

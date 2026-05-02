@@ -71,7 +71,7 @@ function SidebarLink({
       activeClassName="bg-accent text-accent-foreground font-medium"
       testId={testId}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       <span className="flex-1">{label}</span>
       {count != null && (
         <span
