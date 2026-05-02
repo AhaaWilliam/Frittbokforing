@@ -35,9 +35,9 @@ interface StatusCardProps {
 }
 
 const VARIANT_VALUE_CLASSES: Record<StatusCardVariant, string> = {
-  default: 'text-neutral-950',
+  default: 'text-[var(--text-primary)]',
   accent: 'text-brand-700',
-  muted: 'text-neutral-500',
+  muted: 'text-[var(--text-secondary)]',
 }
 
 export function StatusCard({
@@ -57,7 +57,7 @@ export function StatusCard({
   ].join(' ')
 
   const rootClasses = [
-    'flex flex-col gap-1.5 rounded-lg border border-neutral-200 bg-white p-5 text-left',
+    'flex flex-col gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-elevated)] p-5 text-left',
     onClick
       ? 'transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2'
       : '',
@@ -66,8 +66,8 @@ export function StatusCard({
     .filter(Boolean)
     .join(' ')
 
-  const titleClasses = 'text-sm font-medium text-neutral-500'
-  const hintClasses = 'text-xs text-neutral-500'
+  const titleClasses = 'text-sm font-medium text-[var(--text-secondary)]'
+  const hintClasses = 'text-xs text-[var(--text-secondary)]'
 
   const inner = (
     <>

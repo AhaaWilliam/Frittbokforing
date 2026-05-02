@@ -80,8 +80,8 @@ describe('StatusCard', () => {
     (variant) => {
       render(<StatusCard title="t" value="v" variant={variant} />)
       const valueEl = screen.getByText('v')
-      // Variant affects color class on value
-      expect(valueEl.className).toMatch(/text-(neutral|brand)-/)
+      // VS-77: Variant affects color class on value (design-tokens eller brand-)
+      expect(valueEl.className).toMatch(/text-\[var\(--text-|text-brand-/)
     },
   )
 
