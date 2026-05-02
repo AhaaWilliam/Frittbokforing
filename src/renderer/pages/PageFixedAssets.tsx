@@ -18,6 +18,7 @@ import {
   useDeleteFixedAsset,
 } from '../lib/hooks'
 import { PageHeader } from '../components/layout/PageHeader'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Pill, type PillVariant } from '../components/ui/Pill'
 import { FixedAssetFormDialog } from '../components/fixed-assets/FixedAssetFormDialog'
@@ -54,6 +55,14 @@ export function PageFixedAssets() {
     name: string
   } | null>(null)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  // VS-125: ConfirmDialog ersätter native confirm() (M156).
+  const [pendingExecute, setPendingExecute] = useState<{
+    periodEnd: string
+  } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: number
+    name: string
+  } | null>(null)
   const { data: assets, isLoading } = useFixedAssets(activeFiscalYear?.id)
   const executeMutation = useExecuteDepreciationPeriod()
   const disposeMutation = useDisposeFixedAsset()
@@ -67,17 +76,18 @@ export function PageFixedAssets() {
     )
   }
 
-  async function handleExecutePeriod() {
+  function handleExecutePeriod() {
     if (!activeFiscalYear) return
     const today = todayLocal()
     const periodEnd =
       today > activeFiscalYear.end_date ? activeFiscalYear.end_date : today
-    if (
-      !confirm(
-        `Kör avskrivningar till och med ${periodEnd}? Skapar E-serie-verifikat per tillgång.`,
-      )
-    )
-      return
+    setPendingExecute({ periodEnd })
+  }
+
+  async function performExecutePeriod() {
+    if (!activeFiscalYear || !pendingExecute) return
+    const { periodEnd } = pendingExecute
+    setPendingExecute(null)
     try {
       const r = await executeMutation.mutateAsync({
         fiscal_year_id: activeFiscalYear.id,
@@ -124,13 +134,14 @@ export function PageFixedAssets() {
     }
   }
 
-  async function handleDelete(id: number, name: string) {
-    if (
-      !confirm(
-        `Radera "${name}" permanent? Kan bara raderas om inga avskrivningar bokförts.`,
-      )
-    )
-      return
+  function handleDelete(id: number, name: string) {
+    setPendingDelete({ id, name })
+  }
+
+  async function performDelete() {
+    if (!pendingDelete) return
+    const { id, name } = pendingDelete
+    setPendingDelete(null)
     try {
       await deleteMutation.mutateAsync({ id })
       toast.success(`${name} raderad`)
@@ -254,7 +265,10 @@ export function PageFixedAssets() {
                               data-testid={`fa-edit-${a.id}`}
                               className="mr-2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                             >
-                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                              <Pencil
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
                             </button>
                           )}
                         {a.status === 'active' && (
@@ -267,7 +281,10 @@ export function PageFixedAssets() {
                             title="Avyttra"
                             data-testid={`fa-dispose-${a.id}`}
                           >
-                            <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                            <XCircle
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
                           </button>
                         )}
                         {a.status === 'active' &&
@@ -281,7 +298,10 @@ export function PageFixedAssets() {
                               title="Radera"
                               data-testid={`fa-delete-${a.id}`}
                             >
-                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                              <Trash2
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
                             </button>
                           )}
                       </td>
@@ -320,6 +340,34 @@ export function PageFixedAssets() {
           onCancel={() => setDisposingAsset(null)}
         />
       )}
+      <ConfirmDialog
+        open={pendingExecute !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingExecute(null)
+        }}
+        title="Kör avskrivningar?"
+        description={
+          pendingExecute
+            ? `Skapar E-serie-verifikat per tillgång till och med ${pendingExecute.periodEnd}.`
+            : ''
+        }
+        confirmLabel="Kör avskrivningar"
+        variant="dark"
+        onConfirm={performExecutePeriod}
+      />
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title={
+          pendingDelete ? `Radera "${pendingDelete.name}"?` : 'Radera tillgång?'
+        }
+        description="Tillgången raderas permanent. Kan bara raderas om inga avskrivningar bokförts."
+        confirmLabel="Radera"
+        variant="danger"
+        onConfirm={performDelete}
+      />
     </div>
   )
 }

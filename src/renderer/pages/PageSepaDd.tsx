@@ -5,6 +5,7 @@ import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { Callout } from '../components/ui/Callout'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { Pill } from '../components/ui/Pill'
 import { BANK_FORETAGSKONTO } from '../../shared/bank-accounts'
 import { CustomerPicker } from '../components/invoices/CustomerPicker'
@@ -227,8 +228,27 @@ function MandatesSection() {
     null,
   )
   const [showForm, setShowForm] = useState(false)
+  // VS-125: ConfirmDialog ersätter native confirm() för revoke-flödet (M156).
+  const [pendingRevoke, setPendingRevoke] = useState<{
+    id: number
+    mandateRef: string
+  } | null>(null)
   const mandatesQuery = useListMandates(selected?.id)
   const revokeMutation = useRevokeMandate()
+
+  async function performRevoke() {
+    if (!pendingRevoke) return
+    const { id } = pendingRevoke
+    setPendingRevoke(null)
+    try {
+      await revokeMutation.mutateAsync({ mandate_id: id })
+      toast.success('Mandat återkallat')
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Kunde inte återkalla mandat',
+      )
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -290,25 +310,12 @@ function MandatesSection() {
                   <MandateRow
                     key={m.id}
                     mandate={m}
-                    onRevoke={async () => {
-                      if (
-                        !confirm(
-                          `Återkalla mandat ${m.mandate_reference}? Kan inte ångras.`,
-                        )
-                      ) {
-                        return
-                      }
-                      try {
-                        await revokeMutation.mutateAsync({ mandate_id: m.id })
-                        toast.success('Mandat återkallat')
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error
-                            ? err.message
-                            : 'Kunde inte återkalla mandat',
-                        )
-                      }
-                    }}
+                    onRevoke={() =>
+                      setPendingRevoke({
+                        id: m.id,
+                        mandateRef: m.mandate_reference,
+                      })
+                    }
                   />
                 ))}
               </tbody>
@@ -320,6 +327,21 @@ function MandatesSection() {
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={pendingRevoke !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRevoke(null)
+        }}
+        title={
+          pendingRevoke
+            ? `Återkalla mandat ${pendingRevoke.mandateRef}?`
+            : 'Återkalla mandat?'
+        }
+        description="Mandatet markeras som återkallat och kan inte längre användas för nya autogiro-uttag. Kan inte ångras."
+        confirmLabel="Återkalla"
+        variant="dark"
+        onConfirm={performRevoke}
+      />
     </div>
   )
 }
