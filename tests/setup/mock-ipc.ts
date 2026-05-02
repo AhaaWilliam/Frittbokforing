@@ -200,6 +200,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   previewJournalLines: 'preview:journal-lines',
   // Sprint VS-113: Period checks (advisory)
   getPeriodChecks: 'period:checks',
+  // Sprint VS-123: receipt CSV export
+  exportReceiptsCsv: 'receipt:export-csv',
 }
 
 // ── Override storage ──────────────────────────────────────────────────

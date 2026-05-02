@@ -303,6 +303,7 @@ import {
   UpdateDraftInputSchema,
   PreviewJournalLinesInputSchema,
   ReceiptListInputSchema,
+  ExportReceiptsCsvInputSchema,
   CreateReceiptInputSchema,
   UpdateReceiptNotesInputSchema,
   ArchiveReceiptInputSchema,
@@ -321,6 +322,7 @@ import {
   getReceiptCounts,
   deleteReceipt,
   linkReceiptToExpense,
+  exportReceiptsCsv,
 } from './services/receipt-service'
 import { getPeriodChecks } from './services/period-checks-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
@@ -1722,6 +1724,37 @@ export function registerIpcHandlers(): void {
     wrapIpcHandler(LinkReceiptToExpenseInputSchema, (data) =>
       linkReceiptToExpense(db, data),
     ),
+  )
+
+  // Sprint VS-123: CSV-export av kvittolista (BFL 7 kap arkivkrav).
+  // Service genererar CSV-strängen, handlern hanterar save-dialog +
+  // disk-write med E2E bypass (M147).
+  ipcMain.handle(
+    'receipt:export-csv',
+    wrapIpcHandler<
+      { company_id: number },
+      { filePath?: string; cancelled?: true }
+    >(ExportReceiptsCsvInputSchema, async (data) => {
+      const result = exportReceiptsCsv(db, data)
+      if (!result.success) return result
+      const { csv, filename } = result.data
+      const buffer = new TextEncoder().encode(csv)
+
+      const e2ePath = getE2EFilePath(filename, 'save')
+      if (e2ePath) {
+        fs.writeFileSync(e2ePath, buffer)
+        return { filePath: e2ePath }
+      }
+      const dialogResult = await dialog.showSaveDialog({
+        defaultPath: filename,
+        filters: [{ name: 'CSV', extensions: ['csv'] }],
+      })
+      if (dialogResult.canceled || !dialogResult.filePath) {
+        return { cancelled: true }
+      }
+      fs.writeFileSync(dialogResult.filePath, buffer)
+      return { filePath: dialogResult.filePath }
+    }),
   )
 
   // Sprint VS-113: Månadsstängnings-checks (advisory).

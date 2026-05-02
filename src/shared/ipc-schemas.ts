@@ -262,6 +262,13 @@ export const ReceiptCountsInputSchema = z
   })
   .strict()
 
+// VS-123: CSV-export av alla kvitton för ett bolag (BFL 7 kap arkivkrav).
+export const ExportReceiptsCsvInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
 // VS-111: koppla en inbox-receipt till en redan skapad expense.
 // Används från "Bokför från inkorgen"-flödet (VS-112).
 export const LinkReceiptToExpenseInputSchema = z
@@ -1614,6 +1621,7 @@ export const channelMap = {
   'receipt:counts': ReceiptCountsInputSchema,
   'receipt:delete': ArchiveReceiptInputSchema,
   'receipt:link-to-expense': LinkReceiptToExpenseInputSchema,
+  'receipt:export-csv': ExportReceiptsCsvInputSchema,
   'period:checks': PeriodChecksInputSchema,
 } as const satisfies Record<string, z.ZodType>
 

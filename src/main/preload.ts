@@ -481,6 +481,9 @@ contextBridge.exposeInMainWorld('api', {
     expense_id: number
     company_id: number
   }) => ipcRenderer.invoke('receipt:link-to-expense', data),
+  // VS-123: CSV-export av kvittolista
+  exportReceiptsCsv: (data: { company_id: number }) =>
+    ipcRenderer.invoke('receipt:export-csv', data),
   // VS-113: månadsstängnings-checks
   getPeriodChecks: (data: { period_id: number }) =>
     ipcRenderer.invoke('period:checks', data),

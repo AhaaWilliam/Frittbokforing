@@ -10,7 +10,15 @@
  * implementeras i VS-111. För VS-110 fokus: upload, lista, arkivera.
  */
 import { useMemo, useState } from 'react'
-import { Inbox, Trash2, Archive, FileText, ImageIcon, Send } from 'lucide-react'
+import {
+  Inbox,
+  Trash2,
+  Archive,
+  FileText,
+  ImageIcon,
+  Send,
+  Download,
+} from 'lucide-react'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import {
   useReceipts,
@@ -19,6 +27,7 @@ import {
   useArchiveReceipt,
   useBulkArchiveReceipts,
   useDeleteReceipt,
+  useExportReceiptsCsv,
 } from '../lib/hooks'
 import { Button } from '../components/ui/Button'
 import { Callout } from '../components/ui/Callout'
@@ -72,6 +81,17 @@ export function PageInbox() {
   const archiveMutation = useArchiveReceipt()
   const bulkArchiveMutation = useBulkArchiveReceipts()
   const deleteMutation = useDeleteReceipt()
+  const exportCsvMutation = useExportReceiptsCsv()
+
+  async function handleExportCsv() {
+    try {
+      const r = await exportCsvMutation.mutateAsync()
+      if (r.cancelled) return
+      toast.success(`Kvittolista exporterad till ${r.filePath}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Export misslyckades')
+    }
+  }
 
   const selectableIds = useMemo(
     () => receipts.filter((r) => r.status !== 'booked').map((r) => r.id),
@@ -248,37 +268,51 @@ export function PageInbox() {
           </Button>
         </div>
 
-        {/* Tabs */}
-        <div
-          className="mb-4 flex gap-1 border-b border-[var(--border-default)]"
-          role="tablist"
-          aria-label="Filtrera kvitton"
-        >
-          {(['inbox', 'booked', 'archived'] as ReceiptStatus[]).map((t) => {
-            const count = counts?.[t] ?? 0
-            const isActive = tab === t
-            return (
-              <button
-                key={t}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => {
-                  setTab(t)
-                  setSelectedIds(new Set())
-                }}
-                className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
-                  isActive
-                    ? 'border-[var(--color-primary)] font-medium text-[var(--text-primary)]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                }`}
-                data-testid={`inbox-tab-${t}`}
-              >
-                {TAB_LABEL[t]}{' '}
-                <span className="ml-1 text-[var(--text-faint)]">{count}</span>
-              </button>
-            )
-          })}
+        {/* Tabs + export */}
+        <div className="mb-4 flex items-center justify-between border-b border-[var(--border-default)]">
+          <div
+            className="flex gap-1"
+            role="tablist"
+            aria-label="Filtrera kvitton"
+          >
+            {(['inbox', 'booked', 'archived'] as ReceiptStatus[]).map((t) => {
+              const count = counts?.[t] ?? 0
+              const isActive = tab === t
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    setTab(t)
+                    setSelectedIds(new Set())
+                  }}
+                  className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
+                    isActive
+                      ? 'border-[var(--color-primary)] font-medium text-[var(--text-primary)]'
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
+                  data-testid={`inbox-tab-${t}`}
+                >
+                  {TAB_LABEL[t]}{' '}
+                  <span className="ml-1 text-[var(--text-faint)]">{count}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* VS-123: CSV-export av kvittolistan (BFL 7 kap arkivkrav). */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportCsv}
+            isLoading={exportCsvMutation.isPending}
+            data-testid="inbox-export-csv"
+            className="mb-2"
+          >
+            <Download className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+            Exportera CSV
+          </Button>
         </div>
 
         {/* Bulk-toolbar */}

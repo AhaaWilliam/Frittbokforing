@@ -1487,6 +1487,18 @@ export function useDeleteReceipt() {
   )
 }
 
+// VS-123: CSV-export av kvittolista
+export function useExportReceiptsCsv() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<void, { filePath?: string; cancelled?: true }>(
+    () =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IPC discriminated-union förenklas till löst objekt här
+      window.api.exportReceiptsCsv({ company_id: companyId! }) as any,
+    { invalidate: () => [] },
+  )
+}
+
 // === Period checks (Sprint VS-113) ===
 export function usePeriodChecks(periodId: number | undefined) {
   return useIpcQuery<{

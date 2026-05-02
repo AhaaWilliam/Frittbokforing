@@ -516,3 +516,112 @@ export function _unlinkReceiptFromExpenseTx(
      WHERE expense_id = ? AND status = 'booked'`,
   ).run(expenseId)
 }
+
+/**
+ * Sprint VS-123 — exportReceiptsCsv.
+ *
+ * Genererar CSV-export av alla receipts för ett bolag (alla statusar).
+ * Format: ; som separator (svensk excel-kompatibilitet), CRLF radslut,
+ * BOM för UTF-8-detektering. För revisor som vill ha lista över kvitton
+ * (BFL 7 kap-arkivkrav).
+ *
+ * Returnerar `{ csv, filename }`. Skrivning till disk + dialog hanteras
+ * i IPC-handlern.
+ */
+export function exportReceiptsCsv(
+  db: Database.Database,
+  input: { company_id: number },
+): IpcResult<{ csv: string; filename: string }> {
+  const company = db
+    .prepare('SELECT id, name, org_number FROM companies WHERE id = ?')
+    .get(input.company_id) as
+    | { id: number; name: string; org_number: string }
+    | undefined
+  if (!company) {
+    return {
+      success: false,
+      error: 'Bolaget hittades inte.',
+      code: 'NOT_FOUND' as ErrorCode,
+    }
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT r.id, r.status, r.original_filename, r.file_size_bytes,
+              r.mime_type, r.file_hash, r.expense_id, r.uploaded_at,
+              r.archived_at, r.notes,
+              e.supplier_invoice_number AS expense_invoice_number
+       FROM receipts r
+       LEFT JOIN expenses e ON e.id = r.expense_id
+       WHERE r.company_id = ?
+       ORDER BY r.uploaded_at DESC, r.id DESC`,
+    )
+    .all(input.company_id) as Array<{
+    id: number
+    status: string
+    original_filename: string
+    file_size_bytes: number
+    mime_type: string
+    file_hash: string
+    expense_id: number | null
+    uploaded_at: string
+    archived_at: string | null
+    notes: string | null
+    expense_invoice_number: string | null
+  }>
+
+  const headers = [
+    'ID',
+    'Status',
+    'Filnamn',
+    'Storlek (bytes)',
+    'MIME-typ',
+    'SHA-256',
+    'Expense-ID',
+    'Leverantörsfaktura-nr',
+    'Uppladdad',
+    'Arkiverad',
+    'Anteckningar',
+  ]
+  const lines = [headers.map(escapeCsv).join(';')]
+  for (const r of rows) {
+    lines.push(
+      [
+        r.id.toString(),
+        r.status,
+        r.original_filename,
+        r.file_size_bytes.toString(),
+        r.mime_type,
+        r.file_hash,
+        r.expense_id?.toString() ?? '',
+        r.expense_invoice_number ?? '',
+        r.uploaded_at,
+        r.archived_at ?? '',
+        r.notes ?? '',
+      ]
+        .map(escapeCsv)
+        .join(';'),
+    )
+  }
+  // BOM + CRLF för excel-kompatibilitet
+  const csv = '﻿' + lines.join('\r\n') + '\r\n'
+
+  // Filename: Kvitton_OrgNr_YYYYMMDD.csv
+  const date = getNow()
+  const ymd =
+    date.getFullYear().toString() +
+    String(date.getMonth() + 1).padStart(2, '0') +
+    String(date.getDate()).padStart(2, '0')
+  const safeOrg = company.org_number.replace(/[^0-9-]/g, '')
+  const filename = `Kvitton_${safeOrg}_${ymd}.csv`
+
+  return { success: true, data: { csv, filename } }
+}
+
+function escapeCsv(v: string): string {
+  // Escape ", ;, CR, LF genom dubbla " + omslutande quotes
+  if (/[";\r\n]/.test(v)) {
+    return '"' + v.replace(/"/g, '""') + '"'
+  }
+  return v
+}
