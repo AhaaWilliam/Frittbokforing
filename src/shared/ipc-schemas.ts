@@ -262,6 +262,16 @@ export const ReceiptCountsInputSchema = z
   })
   .strict()
 
+// VS-111: koppla en inbox-receipt till en redan skapad expense.
+// Används från "Bokför från inkorgen"-flödet (VS-112).
+export const LinkReceiptToExpenseInputSchema = z
+  .object({
+    receipt_id: z.number().int().positive(),
+    expense_id: z.number().int().positive(),
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
 // VS-1: Sätt default-konto på leverantör/kund (4-siffrig BAS).
 // Används av Vardag-sheets för att lära in kontering per motpart.
 export const SetCounterpartyDefaultAccountSchema = z
@@ -1594,6 +1604,7 @@ export const channelMap = {
   'receipt:archive-bulk': BulkArchiveReceiptInputSchema,
   'receipt:counts': ReceiptCountsInputSchema,
   'receipt:delete': ArchiveReceiptInputSchema,
+  'receipt:link-to-expense': LinkReceiptToExpenseInputSchema,
 } as const satisfies Record<string, z.ZodType>
 
 export type ChannelName = keyof typeof channelMap

@@ -804,6 +804,11 @@ interface ElectronAPI {
     id: number
     company_id: number
   }) => Promise<IpcResult<{ deleted: boolean }>>
+  linkReceiptToExpense: (data: {
+    receipt_id: number
+    expense_id: number
+    company_id: number
+  }) => Promise<IpcResult<{ linked: boolean }>>
 }
 
 export interface UserMeta {

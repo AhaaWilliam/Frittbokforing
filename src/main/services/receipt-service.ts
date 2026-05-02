@@ -18,6 +18,7 @@ import {
   ArchiveReceiptInputSchema,
   BulkArchiveReceiptInputSchema,
   ReceiptCountsInputSchema,
+  LinkReceiptToExpenseInputSchema,
 } from '../ipc-schemas'
 import { validateWithZod } from './validate-with-zod'
 import {
@@ -412,6 +413,57 @@ export function deleteReceipt(
   }
 
   return { success: true, data: { deleted: true } }
+}
+
+/**
+ * Publik: kopplar en inbox-receipt till en redan skapad expense och
+ * uppdaterar expenses.receipt_path så att UI-flöden visar kvittot. Wrapper
+ * runt _linkReceiptToExpenseTx — skapar en egen transaktion.
+ */
+export function linkReceiptToExpense(
+  db: Database.Database,
+  rawInput: unknown,
+): IpcResult<{ linked: boolean }> {
+  const v = parseOrFail(LinkReceiptToExpenseInputSchema, rawInput)
+  if (!v.ok) return v.result
+  const input = v.data
+
+  try {
+    db.transaction(() => {
+      _linkReceiptToExpenseTx(
+        db,
+        input.receipt_id,
+        input.company_id,
+        input.expense_id,
+      )
+      // Spegla file_path till expenses.receipt_path så att existerande
+      // expense-vyer (preview, PDF) hittar kvittot. Receipts behåller sin
+      // kanoniska file_path; expenses.receipt_path duplicerar för bakåt-
+      // kompatibilitet med VS-1-storage. När inbox-flödet är dominerande
+      // kan duplicering tas bort.
+      const r = db
+        .prepare('SELECT file_path FROM receipts WHERE id = ?')
+        .get(input.receipt_id) as { file_path: string } | undefined
+      if (r) {
+        db.prepare('UPDATE expenses SET receipt_path = ? WHERE id = ?').run(
+          r.file_path,
+          input.expense_id,
+        )
+      }
+    })()
+    return { success: true, data: { linked: true } }
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[receipt-service] linkReceiptToExpense:', err)
+    return {
+      success: false,
+      error: 'Kunde inte koppla kvittot till kostnaden.',
+      code: 'UNEXPECTED_ERROR',
+    }
+  }
 }
 
 /**

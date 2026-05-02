@@ -1452,6 +1452,26 @@ export function useBulkArchiveReceipts() {
   )
 }
 
+export function useLinkReceiptToExpense() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<
+    { receipt_id: number; expense_id: number },
+    { linked: boolean }
+  >(
+    (data) =>
+      window.api.linkReceiptToExpense({
+        receipt_id: data.receipt_id,
+        expense_id: data.expense_id,
+        company_id: companyId!,
+      }),
+    {
+      // Receipt-status ändras + expense.receipt_path sätts → invalidera båda
+      invalidate: () => [queryKeys.allReceipts(), queryKeys.anyExpense()],
+    },
+  )
+}
+
 export function useDeleteReceipt() {
   const { activeCompany } = useActiveCompany()
   const companyId = activeCompany?.id

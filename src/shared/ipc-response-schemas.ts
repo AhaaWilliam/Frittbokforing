@@ -556,6 +556,7 @@ export const channelResponseMap = {
   'receipt:archive-bulk': LooseObject,
   'receipt:counts': LooseObject,
   'receipt:delete': LooseObject,
+  'receipt:link-to-expense': LooseObject,
 } as const satisfies Record<ChannelName, z.ZodType>
 
 export type ChannelResponseMap = typeof channelResponseMap

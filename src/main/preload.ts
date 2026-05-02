@@ -476,6 +476,11 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('receipt:counts', data),
   deleteReceipt: (data: { id: number; company_id: number }) =>
     ipcRenderer.invoke('receipt:delete', data),
+  linkReceiptToExpense: (data: {
+    receipt_id: number
+    expense_id: number
+    company_id: number
+  }) => ipcRenderer.invoke('receipt:link-to-expense', data),
 })
 
 // Auth — separate namespace (window.auth.*) for the local-login + SQLCipher

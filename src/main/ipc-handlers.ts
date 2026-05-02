@@ -308,6 +308,7 @@ import {
   ArchiveReceiptInputSchema,
   BulkArchiveReceiptInputSchema,
   ReceiptCountsInputSchema,
+  LinkReceiptToExpenseInputSchema,
 } from './ipc-schemas'
 import { previewJournalLines } from './services/preview-service'
 import {
@@ -318,6 +319,7 @@ import {
   bulkArchiveReceipts,
   getReceiptCounts,
   deleteReceipt,
+  linkReceiptToExpense,
 } from './services/receipt-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
 import log from 'electron-log'
@@ -1711,6 +1713,12 @@ export function registerIpcHandlers(): void {
     'receipt:delete',
     wrapIpcHandler(ArchiveReceiptInputSchema, (data) =>
       deleteReceipt(db, data),
+    ),
+  )
+  ipcMain.handle(
+    'receipt:link-to-expense',
+    wrapIpcHandler(LinkReceiptToExpenseInputSchema, (data) =>
+      linkReceiptToExpense(db, data),
     ),
   )
 
