@@ -39,10 +39,16 @@ function relativizePath(absolutePath: string): string {
 /**
  * Sanera basename: behåll alfanum, bindestreck, understreck, punkt.
  * Andra tecken → '_'. Förhindrar path-traversal och konstiga filnamn.
+ *
+ * Specialfall: rena dot-filenamn (".", "..", "...") får prefix "_" så de
+ * inte tolkas som relativa paths av fs-modulen. path.basename strippar
+ * redan path-komponenter, men "..".basename = "..".
  */
 function sanitizeBasename(name: string): string {
   const base = path.basename(name)
-  return base.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200)
+  let safe = base.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200)
+  if (safe === '' || /^\.+$/.test(safe)) safe = '_' + (safe || 'file')
+  return safe
 }
 
 /**
@@ -100,7 +106,16 @@ export function saveReceiptFile(
 
     return { success: true, data: { receipt_path: relativePath } }
   } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'code' in err) {
+    // M100-strukturerade fel har BÅDE `code` (ErrorCode-union) OCH
+    // `error` (string). Node fs-fel har `code` (t.ex. 'ENOSPC') men
+    // `message` istället för `error` — kräver båda för att skilja.
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      'error' in err &&
+      typeof (err as { error: unknown }).error === 'string'
+    ) {
       const e = err as { code: ErrorCode; error: string; field?: string }
       return { success: false, error: e.error, code: e.code, field: e.field }
     }

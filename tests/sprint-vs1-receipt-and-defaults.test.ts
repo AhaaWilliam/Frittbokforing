@@ -168,6 +168,28 @@ describe('VS-1 saveReceiptFile', () => {
     if (!res.success) return
     expect(res.data.receipt_path).not.toContain('..')
   })
+
+  // VS-36: regressionstest — sanitizeBasename får inte returnera "..", "."
+  // eller tom sträng. Om källfilen heter ".." landar den under en `_..`
+  // (eller motsvarande prefix) inom expense-mappen, INTE i förälder-mappen.
+  it('sanitizeBasename guardar mot rena dot-filnamn', () => {
+    const { companyId, fiscalYearId } = setupCompany()
+    const expenseId = createDraftExpense(companyId, fiscalYearId)
+    // Skapa en källfil som heter exakt ".." (mycket osannolikt i praktiken
+    // men säkerhetsguarden ska vara explicit).
+    const sourcePath = path.join(tmpDocs, '..-receipt.pdf')
+    fs.writeFileSync(sourcePath, 'X')
+    const res = saveReceiptFile(db, {
+      expense_id: expenseId,
+      source_file_path: sourcePath,
+    })
+    expect(res.success).toBe(true)
+    if (!res.success) return
+    // Filen ska ligga under expense-mappen, inte i förälder.
+    expect(res.data.receipt_path).toMatch(
+      new RegExp(`receipts[\\\\/]${expenseId}[\\\\/]`),
+    )
+  })
 })
 
 describe('VS-1 setCounterpartyDefaultAccount', () => {
