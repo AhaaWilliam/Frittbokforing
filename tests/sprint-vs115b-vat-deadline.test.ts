@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest'
 import {
   computeVatDeadline,
   vatDeadlineTone,
+  bumpToNextWorkday,
 } from '../src/shared/vat-deadline'
 
 describe('VS-115b computeVatDeadline (monthly)', () => {
@@ -21,24 +22,27 @@ describe('VS-115b computeVatDeadline (monthly)', () => {
     expect(r!.daysUntil).toBe(11)
   })
 
-  it('precis efter passad deadline: 27 juli 2025 → 26 augusti', () => {
-    // 27 juli 2025: deadline för maj-perioden var 26 juli 2025 (passerad).
-    // Nästa: juni-perioden, deadline 26 augusti 2025.
+  // VS-129: 26 juli 2025 är lördag → bumped till 28 juli (måndag).
+  it('precis efter formell deadline (helg-bumped): 27 juli 2025 → 28 juli', () => {
+    // 27 juli 2025 (söndag): formell maj-deadline=26 juli (lör), bumped
+    // till 28 juli (mån). asOf är fortfarande FÖRE bumped deadline →
+    // maj-perioden är aktuell, daysUntil=1.
     const r = computeVatDeadline({
       frequency: 'monthly',
       asOf: '2025-07-27',
     })
-    expect(r!.dueDate).toBe('2025-08-26')
-    expect(r!.periodLabel).toContain('juni')
+    expect(r!.dueDate).toBe('2025-07-28')
+    expect(r!.periodLabel).toContain('maj')
+    expect(r!.daysUntil).toBe(1)
   })
 
-  it('deadline-dagen själv räknas som "kvar idag"', () => {
+  it('VS-129 deadline-dagen helg-bumpas: 26 juli (lör) → 28 juli (mån)', () => {
     const r = computeVatDeadline({
       frequency: 'monthly',
       asOf: '2025-07-26',
     })
-    expect(r!.dueDate).toBe('2025-07-26')
-    expect(r!.daysUntil).toBe(0)
+    expect(r!.dueDate).toBe('2025-07-28')
+    expect(r!.daysUntil).toBe(2)
   })
 })
 
@@ -97,6 +101,61 @@ describe('VS-115b computeVatDeadline (yearly)', () => {
       asOf: '2025-12-15',
     })
     expect(r).toBeNull()
+  })
+})
+
+describe('VS-129 bumpToNextWorkday — svensk helgkalender', () => {
+  it('vardag (mån) hålls som är', () => {
+    expect(bumpToNextWorkday('2025-07-28')).toBe('2025-07-28') // måndag
+  })
+
+  it('lördag bumpas till måndag', () => {
+    expect(bumpToNextWorkday('2025-07-26')).toBe('2025-07-28')
+  })
+
+  it('söndag bumpas till måndag', () => {
+    expect(bumpToNextWorkday('2025-07-27')).toBe('2025-07-28')
+  })
+
+  it('Nyårsdagen (1 jan) bumpas — 2025 är onsdag → torsdag', () => {
+    expect(bumpToNextWorkday('2025-01-01')).toBe('2025-01-02')
+  })
+
+  it('Trettondedag jul (6 jan 2025 mån) → tisdag', () => {
+    expect(bumpToNextWorkday('2025-01-06')).toBe('2025-01-07')
+  })
+
+  it('Långfredagen 2025 (18 apr fre) → måndag (annandag påsk = 21 apr)', () => {
+    // 18 apr fre (Långfredag) → 19 lör → 20 sön (Påskdag) → 21 mån (Annandag) → 22 tis
+    expect(bumpToNextWorkday('2025-04-18')).toBe('2025-04-22')
+  })
+
+  it('Första maj 2025 (tor) → fredag', () => {
+    expect(bumpToNextWorkday('2025-05-01')).toBe('2025-05-02')
+  })
+
+  it('Kristi himmelsfärds dag 2025 (29 maj tor) → fredag', () => {
+    expect(bumpToNextWorkday('2025-05-29')).toBe('2025-05-30')
+  })
+
+  it('Sveriges nationaldag 2025 (6 jun fre) → måndag', () => {
+    // 6 juni 2025 fredag → 7 lör → 8 sön → 9 mån
+    expect(bumpToNextWorkday('2025-06-06')).toBe('2025-06-09')
+  })
+
+  it('Midsommarafton är ej helgdag — 20 juni 2025 (fre) hålls', () => {
+    // Midsommarafton är de facto ledigt men inte i SKVs lista — vi
+    // räknar bara midsommardagen (lördagen 21 juni 2025).
+    expect(bumpToNextWorkday('2025-06-20')).toBe('2025-06-20')
+  })
+
+  it('Julafton 2025 (24 dec ons) bumpas — 25/26 också helgdag → 29 dec mån', () => {
+    expect(bumpToNextWorkday('2025-12-24')).toBe('2025-12-29')
+  })
+
+  it('Nyårsafton 2025 (31 dec ons) bumpas till första vardag 2026', () => {
+    // 31 dec ons (helg) → 1 jan tor (Nyårsdag) → 2 jan fre (vardag)
+    expect(bumpToNextWorkday('2025-12-31')).toBe('2026-01-02')
   })
 })
 
