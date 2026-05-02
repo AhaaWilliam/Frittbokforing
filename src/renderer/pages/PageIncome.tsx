@@ -105,7 +105,7 @@ function ViewInvoiceWrapper({
                 disabled={generatePdfMutation.isPending}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
               >
-                <FileDown className="h-4 w-4" />
+                <FileDown className="h-4 w-4" aria-hidden="true" />
                 {generatePdfMutation.isPending
                   ? 'Genererar...'
                   : 'Ladda ner PDF'}

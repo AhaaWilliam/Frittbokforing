@@ -152,7 +152,7 @@ export function PageFixedAssets() {
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
               data-testid="fa-execute-period"
             >
-              <Play className="h-4 w-4" />
+              <Play className="h-4 w-4" aria-hidden="true" />
               Kör avskrivningar
             </button>
             <button

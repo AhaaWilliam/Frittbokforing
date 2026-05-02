@@ -154,7 +154,7 @@ export function PageAgingReport() {
             onClick={() => window.print()}
             className="flex items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm font-medium hover:bg-muted print:hidden"
           >
-            <Printer className="h-4 w-4" />
+            <Printer className="h-4 w-4" aria-hidden="true" />
             Skriv ut
           </button>
         }

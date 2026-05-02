@@ -55,7 +55,7 @@ export function PageReports() {
             onClick={() => window.print()}
             className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm hover:bg-muted/50"
           >
-            <Printer className="h-4 w-4" />
+            <Printer className="h-4 w-4" aria-hidden="true" />
             Skriv ut
           </button>
         }

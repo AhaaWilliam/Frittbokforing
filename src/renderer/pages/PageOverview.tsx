@@ -123,7 +123,7 @@ function WelcomeCtas({ navigate }: { navigate: (path: string) => void }) {
             onClick={() => navigate(path)}
             className="flex items-start gap-3 rounded-md border border-border p-3 text-left transition-colors hover:border-primary hover:bg-primary/5"
           >
-            <Icon className="mt-0.5 h-5 w-5 text-primary" />
+            <Icon className="mt-0.5 h-5 w-5 text-primary" aria-hidden="true" />
             <div>
               <div className="text-sm font-medium">{label}</div>
               <div className="text-xs text-muted-foreground">{description}</div>

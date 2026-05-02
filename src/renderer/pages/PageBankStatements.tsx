@@ -132,7 +132,7 @@ function BankStatementList({
               disabled={importMutation.isPending}
               data-testid="bank-import-btn"
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="h-4 w-4" aria-hidden="true" />
               Importera {importFormat}
             </button>
           </>
