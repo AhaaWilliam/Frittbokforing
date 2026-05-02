@@ -99,9 +99,26 @@ describe('PeriodList', () => {
     expect(screen.queryByText(/Öppna februari/i)).toBeNull()
   })
 
-  it('close click opens confirmation dialog', async () => {
+  it('close click opens CloseMonthDialog with checks', async () => {
     const periods = makeAllPeriods(0) // All open, Jan is first
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    mockIpcResponse('period:checks', {
+      success: true,
+      data: {
+        period_id: 1,
+        period_start: '2026-01-01',
+        period_end: '2026-01-31',
+        bankReconciliation: {
+          status: 'na',
+          count: 0,
+          detail: 'Inga bankposter',
+        },
+        salaryBooked: { status: 'na', count: 0, detail: 'Inga lönerader' },
+        vatReportReady: { status: 'ok', count: 0, detail: 'Inga utkast' },
+        supplierPayments: { status: 'ok', count: 0, detail: 'Alla betalda' },
+        allOk: true,
+      },
+    })
     await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
@@ -110,15 +127,29 @@ describe('PeriodList', () => {
     fireEvent.click(screen.getByText(/Stäng januari/i))
 
     await waitFor(() => {
-      expect(screen.getByText('Stäng Januari?')).toBeInTheDocument()
+      expect(screen.getByTestId('close-month-dialog')).toBeInTheDocument()
     })
-    expect(screen.getByText('Stäng månaden')).toBeInTheDocument()
+    expect(screen.getByTestId('checks-list')).toBeInTheDocument()
+    expect(screen.getByTestId('close-month-confirm')).toBeInTheDocument()
     expect(screen.getByText('Avbryt')).toBeInTheDocument()
   })
 
-  it('cancel closes confirmation dialog', async () => {
+  it('cancel closes CloseMonthDialog', async () => {
     const periods = makeAllPeriods(0)
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    mockIpcResponse('period:checks', {
+      success: true,
+      data: {
+        period_id: 1,
+        period_start: '2026-01-01',
+        period_end: '2026-01-31',
+        bankReconciliation: { status: 'na', count: 0, detail: '' },
+        salaryBooked: { status: 'na', count: 0, detail: '' },
+        vatReportReady: { status: 'ok', count: 0, detail: '' },
+        supplierPayments: { status: 'ok', count: 0, detail: '' },
+        allOk: true,
+      },
+    })
     await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
@@ -132,7 +163,7 @@ describe('PeriodList', () => {
     fireEvent.click(screen.getByText('Avbryt'))
 
     await waitFor(() => {
-      expect(screen.queryByText('Stäng Januari?')).toBeNull()
+      expect(screen.queryByTestId('close-month-dialog')).toBeNull()
     })
   })
 
@@ -142,13 +173,17 @@ describe('PeriodList', () => {
     await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
 
     await waitFor(() => {
-      expect(screen.getByText(/Alla månader för 2026 är stängda/)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Alla månader för 2026 är stängda/),
+      ).toBeInTheDocument()
     })
   })
 
   it('returns null when no periods', async () => {
     mockIpcResponse('fiscal-period:list', { success: true, data: [] })
-    const { container } = await renderWithProviders(<PeriodList />, { axeCheck: false }) // M133 exempt — dedicated axe test below
+    const { container } = await renderWithProviders(<PeriodList />, {
+      axeCheck: false,
+    }) // M133 exempt — dedicated axe test below
 
     // Give time for query to resolve
     await waitFor(() => {})

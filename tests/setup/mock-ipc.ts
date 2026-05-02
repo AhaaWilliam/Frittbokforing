@@ -198,6 +198,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   deleteBankTxMapping: 'bank-tx-mapping:delete',
   // Sprint 16: Live verifikat-preview (ADR 006)
   previewJournalLines: 'preview:journal-lines',
+  // Sprint VS-113: Period checks (advisory)
+  getPeriodChecks: 'period:checks',
 }
 
 // ── Override storage ──────────────────────────────────────────────────

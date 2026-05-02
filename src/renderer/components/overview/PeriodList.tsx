@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
-import {
-  useFiscalPeriods,
-  useClosePeriod,
-  useReopenPeriod,
-} from '../../lib/hooks'
+import { useFiscalPeriods, useReopenPeriod } from '../../lib/hooks'
 import { formatFiscalYearLabel } from '../layout/YearPicker'
 import { Callout } from '../ui/Callout'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { CloseMonthDialog } from '../period/CloseMonthDialog'
 import { Pill } from '../ui/Pill'
 import type { FiscalPeriod } from '../../../shared/types'
 
@@ -22,20 +18,14 @@ function getMonthName(period: FiscalPeriod): string {
 export function PeriodList() {
   const { activeFiscalYear, isReadOnly } = useFiscalYearContext()
   const { data: periods = [] } = useFiscalPeriods(activeFiscalYear?.id)
-  const closePeriod = useClosePeriod(activeFiscalYear?.id)
   const reopenPeriod = useReopenPeriod(activeFiscalYear?.id)
-  const [confirmId, setConfirmId] = useState<number | null>(null)
+  const [closeDialogId, setCloseDialogId] = useState<number | null>(null)
 
   if (periods.length === 0) return null
 
   const firstOpenIndex = periods.findIndex((p) => p.is_closed === 0)
   const lastClosedIndex = periods.findLastIndex((p) => p.is_closed === 1)
   const allClosed = firstOpenIndex === -1
-
-  const handleClose = (periodId: number) => {
-    closePeriod.mutate({ period_id: periodId })
-    setConfirmId(null)
-  }
 
   const handleReopen = (periodId: number) => {
     reopenPeriod.mutate({ period_id: periodId })
@@ -69,7 +59,7 @@ export function PeriodList() {
                 {canClose && (
                   <button
                     type="button"
-                    onClick={() => setConfirmId(period.id)}
+                    onClick={() => setCloseDialogId(period.id)}
                     className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
                   >
                     Stäng {monthName.toLowerCase()}
@@ -99,25 +89,12 @@ export function PeriodList() {
         </div>
       )}
 
-      {/* VS-49: ConfirmDialog (Radix AlertDialog) ersätter custom modal —
-          a11y-rätt focus-trap, escape-stäng, och 'dark'-variant signalerar
-          period-låsning som irreversibel action (M156 + ADR 003). */}
-      <ConfirmDialog
-        open={confirmId !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirmId(null)
-        }}
-        title={
-          confirmId !== null
-            ? `Stäng ${getMonthName(periods.find((p) => p.id === confirmId)!)}?`
-            : ''
-        }
-        description="Inga nya transaktioner kan bokföras i denna månad efter detta. Du kan öppna månaden igen om det behövs."
-        confirmLabel="Stäng månaden"
-        variant="dark"
-        onConfirm={() => {
-          if (confirmId !== null) handleClose(confirmId)
-        }}
+      {/* VS-116: CloseMonthDialog ersätter ConfirmDialog så bokförare-läget
+          får samma advisory-checks som Vardag-läget (M156 + Stäng månad-flow). */}
+      <CloseMonthDialog
+        open={closeDialogId !== null}
+        onClose={() => setCloseDialogId(null)}
+        periodIdOverride={closeDialogId ?? undefined}
       />
     </div>
   )
