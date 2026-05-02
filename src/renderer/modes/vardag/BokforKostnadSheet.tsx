@@ -46,11 +46,23 @@ import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 interface Props {
   open: boolean
   onClose: () => void
+  /**
+   * VS-112: Förbifyllning från Inkorgen. Receipt-filen ligger redan i
+   * receipts-inbox/ — sheet:en kopierar INTE filen igen utan länkar
+   * den befintliga raden till den nya expense:n via
+   * window.api.linkReceiptToExpense efter finalize. Drop-zone:en
+   * blir read-only när detta är satt.
+   */
+  prefilledReceipt?: {
+    receipt_id: number
+    file_path: string
+    original_filename: string
+  }
 }
 
 const FALLBACK_EXPENSE_ACCOUNT = '6110'
 
-export function BokforKostnadSheet({ open, onClose }: Props) {
+export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
   const { setMode } = useUiMode()
@@ -79,7 +91,9 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   // VS-41: M100 field-propagation, se SkapaFakturaSheet.
   const [errorField, setErrorField] = useState<string | null>(null)
-  const [receiptPath, setReceiptPath] = useState<string | null>(null)
+  const [receiptPath, setReceiptPath] = useState<string | null>(
+    prefilledReceipt ? prefilledReceipt.file_path : null,
+  )
   const amountInputRef = useRef<HTMLInputElement | null>(null)
   // VS-37: synkron submit-guard mot double-click race (se SkapaFakturaSheet).
   const submittingRef = useRef(false)
@@ -138,8 +152,8 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     setError(null)
     submittingRef.current = false
     setSubmitting(false)
-    setReceiptPath(null)
-  }, [open])
+    setReceiptPath(prefilledReceipt ? prefilledReceipt.file_path : null)
+  }, [open, prefilledReceipt])
 
   async function handlePickReceipt() {
     const res = await window.api.selectReceiptFile()
@@ -251,8 +265,24 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
       // expenses.receipt_path uppdateras på en draft som sedan inte kan bokas).
       // Best-effort: attach-fel blockerar inte bokföringen, användaren får
       // toast.warning för manuellt re-attach.
+      //
+      // VS-112: Om prefilledReceipt finns ligger filen redan i receipts-
+      // inbox/ — vi länkar bara raden till den nya expense:n via
+      // linkReceiptToExpense (sätter receipts.status='booked' och speglar
+      // file_path till expenses.receipt_path) istället för att kopiera.
       let receiptAttachFailed = false
-      if (receiptPath) {
+      if (prefilledReceipt) {
+        try {
+          const r = await window.api.linkReceiptToExpense({
+            receipt_id: prefilledReceipt.receipt_id,
+            expense_id: draft.data.id,
+            company_id: activeCompany!.id,
+          })
+          if (!r.success) receiptAttachFailed = true
+        } catch {
+          receiptAttachFailed = true
+        }
+      } else if (receiptPath) {
         try {
           const r = await window.api.attachReceipt({
             expense_id: draft.data.id,
@@ -325,10 +355,13 @@ export function BokforKostnadSheet({ open, onClose }: Props) {
     >
       <div className="grid grid-cols-[200px_1fr] gap-6">
         <ReceiptVisual
-          path={receiptPath}
-          onPick={handlePickReceipt}
-          onClear={() => setReceiptPath(null)}
-          onDropPath={(p) => setReceiptPath(p)}
+          path={
+            prefilledReceipt ? prefilledReceipt.original_filename : receiptPath
+          }
+          onPick={prefilledReceipt ? () => {} : handlePickReceipt}
+          onClear={prefilledReceipt ? () => {} : () => setReceiptPath(null)}
+          onDropPath={prefilledReceipt ? () => {} : (p) => setReceiptPath(p)}
+          locked={!!prefilledReceipt}
         />
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
@@ -565,11 +598,14 @@ function ReceiptVisual({
   onPick,
   onClear,
   onDropPath,
+  locked = false,
 }: {
   path: string | null
   onPick: () => void
   onClear: () => void
   onDropPath: (filePath: string) => void
+  /** VS-112: när true visas bara filename utan möjlighet att byta. */
+  locked?: boolean
 }) {
   const [dragActive, setDragActive] = useState(false)
 
@@ -598,14 +634,16 @@ function ReceiptVisual({
         >
           {filename}
         </p>
-        <button
-          type="button"
-          onClick={onClear}
-          className="mt-2 text-[10px] text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
-          data-testid="vardag-kostnad-receipt-clear"
-        >
-          Ta bort
-        </button>
+        {!locked && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="mt-2 text-[10px] text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+            data-testid="vardag-kostnad-receipt-clear"
+          >
+            Ta bort
+          </button>
+        )}
       </div>
     )
   }

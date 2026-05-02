@@ -10,7 +10,7 @@
  * implementeras i VS-111. För VS-110 fokus: upload, lista, arkivera.
  */
 import { useMemo, useState } from 'react'
-import { Inbox, Trash2, Archive, FileText, ImageIcon } from 'lucide-react'
+import { Inbox, Trash2, Archive, FileText, ImageIcon, Send } from 'lucide-react'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import {
   useReceipts,
@@ -24,6 +24,7 @@ import { Button } from '../components/ui/Button'
 import { Callout } from '../components/ui/Callout'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { PageHeader } from '../components/layout/PageHeader'
+import { BokforKostnadSheet } from '../modes/vardag/BokforKostnadSheet'
 import { toast } from 'sonner'
 import type { Receipt, ReceiptStatus } from '../../shared/types'
 
@@ -63,6 +64,7 @@ export function PageInbox() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [bokforReceipt, setBokforReceipt] = useState<Receipt | null>(null)
 
   const { data: receipts = [], isLoading } = useReceipts({ status: tab })
   const { data: counts } = useReceiptCounts()
@@ -328,9 +330,23 @@ export function PageInbox() {
             onToggleOne={toggleOne}
             onArchive={handleArchiveOne}
             onDelete={handleDelete}
+            onBokfor={(r) => setBokforReceipt(r)}
           />
         )}
       </div>
+      <BokforKostnadSheet
+        open={bokforReceipt !== null}
+        onClose={() => setBokforReceipt(null)}
+        prefilledReceipt={
+          bokforReceipt
+            ? {
+                receipt_id: bokforReceipt.id,
+                file_path: bokforReceipt.file_path,
+                original_filename: bokforReceipt.original_filename,
+              }
+            : undefined
+        }
+      />
     </div>
   )
 }
@@ -343,6 +359,7 @@ interface ReceiptTableProps {
   onToggleOne: (id: number) => void
   onArchive: (id: number) => void
   onDelete: (id: number) => void
+  onBokfor: (r: Receipt) => void
 }
 
 function ReceiptTable({
@@ -353,6 +370,7 @@ function ReceiptTable({
   onToggleOne,
   onArchive,
   onDelete,
+  onBokfor,
 }: ReceiptTableProps) {
   return (
     <table className="w-full text-sm" data-testid="inbox-list">
@@ -405,15 +423,28 @@ function ReceiptTable({
               </td>
               <td className="py-2 text-right">
                 {!isBooked && r.status === 'inbox' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onArchive(r.id)}
-                    title="Arkivera"
-                    data-testid={`inbox-row-archive-${r.id}`}
-                  >
-                    <Archive className="h-3.5 w-3.5" aria-hidden="true" />
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => onBokfor(r)}
+                      leftIcon={
+                        <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                      }
+                      data-testid={`inbox-row-bokfor-${r.id}`}
+                    >
+                      Bokför
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onArchive(r.id)}
+                      title="Arkivera"
+                      data-testid={`inbox-row-archive-${r.id}`}
+                    >
+                      <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
+                  </>
                 )}
                 {!isBooked && (
                   <Button
