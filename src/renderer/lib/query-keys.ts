@@ -136,6 +136,7 @@ export const queryKeys = {
   allManualEntries: () => ['manual-entries'] as const,
   anyManualEntry: () => ['manual-entry'] as const,
   allDashboard: () => ['dashboard'] as const,
+  allLatestVerifications: () => ['journal', 'latest-verification'] as const,
   allIncomeStatement: () => ['income-statement'] as const,
   allBalanceSheet: () => ['balance-sheet'] as const,
   // FY-scoped prefix helpers (invaliderar alla dateRange-varianter för en FY)

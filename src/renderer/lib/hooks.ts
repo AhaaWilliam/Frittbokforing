@@ -562,7 +562,11 @@ export function useFinalizeInvoice(_fiscalYearId?: number | undefined) {
     { id: number },
     { id: number; verification_number: number }
   >((data) => window.api.finalizeInvoice(data), {
-    invalidate: [queryKeys.allInvoices(), queryKeys.anyInvoice()],
+    invalidate: [
+      queryKeys.allInvoices(),
+      queryKeys.anyInvoice(),
+      queryKeys.allLatestVerifications(),
+    ],
     onSuccess: (data) => {
       // VS-45: flash-markering för listvyn.
       markFlashable('invoice', data.id)
@@ -646,7 +650,11 @@ export function useFinalizeExpense() {
     { id: number },
     { id: number; verification_number: number }
   >((data) => window.api.finalizeExpense(data), {
-    invalidate: [queryKeys.allExpenseDrafts(), queryKeys.allExpenses()],
+    invalidate: [
+      queryKeys.allExpenseDrafts(),
+      queryKeys.allExpenses(),
+      queryKeys.allLatestVerifications(),
+    ],
     onSuccess: (data) => {
       // VS-45: markera den nyfinaliserade kostnaden för flash-animation
       // i listvyn när användaren navigerar dit.
@@ -1064,6 +1072,7 @@ export function useFinalizeManualEntry() {
         queryKeys.allManualEntryDrafts(),
         queryKeys.allManualEntries(),
         queryKeys.allDashboard(),
+        queryKeys.allLatestVerifications(),
       ],
       onSuccess: (_data, input) => {
         // VS-45: flash-markering på manual_entry.id (= input.id).
