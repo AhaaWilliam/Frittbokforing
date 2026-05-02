@@ -116,7 +116,7 @@ export function PeriodList() {
               </button>
               <button
                 onClick={() => handleClose(confirmId)}
-                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+                className="rounded-md bg-[var(--color-dark)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-dark-soft)]"
               >
                 Stäng månaden
               </button>
