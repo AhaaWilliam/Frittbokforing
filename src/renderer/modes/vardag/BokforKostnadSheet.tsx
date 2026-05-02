@@ -571,9 +571,13 @@ function ReceiptVisual({
   const [dragActive, setDragActive] = useState(false)
 
   function extractPath(file: File): string | null {
-    // Electron renderer: File-objekt får en `path`-attribut. I standard
-    // browser saknas det → null. Vid framtida Electron 32+ kan vi byta
-    // till webUtils.getPathForFile(file) via preload.
+    // VS-43: Föredra Electron 32+ webUtils.getPathForFile (exponerad via
+    // preload). Fall tillbaka till deprecated file.path för bakåt-
+    // kompatibilitet med tidigare Electron-versioner.
+    if (typeof window.api?.getPathForFile === 'function') {
+      const p = window.api.getPathForFile(file)
+      if (p) return p
+    }
     const f = file as File & { path?: string }
     return typeof f.path === 'string' && f.path.length > 0 ? f.path : null
   }

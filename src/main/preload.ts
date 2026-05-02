@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
   // Health
@@ -90,6 +90,16 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('expense:attach-receipt', data),
   selectReceiptFile: () =>
     ipcRenderer.invoke('expense:select-receipt-file', {}),
+  // VS-43: webUtils.getPathForFile är Electron 32+-API som ersätter
+  // det deprecated File.path-attributet. Returnerar absolut path till
+  // dropped/picked file. Synkron API — ingen IPC behövs.
+  getPathForFile: (file: File): string => {
+    try {
+      return webUtils.getPathForFile(file)
+    } catch {
+      return ''
+    }
+  },
   payExpense: (data: Record<string, unknown>) =>
     ipcRenderer.invoke('expense:pay', data),
   payExpensesBulk: (data: Record<string, unknown>) =>

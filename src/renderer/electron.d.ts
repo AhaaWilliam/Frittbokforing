@@ -258,6 +258,8 @@ interface ElectronAPI {
     source_file_path: string
   }) => Promise<IpcResult<{ receipt_path: string }>>
   selectReceiptFile: () => Promise<IpcResult<{ filePath: string } | null>>
+  // VS-43: synkron API (Electron 32+ webUtils) — ersätter file.path.
+  getPathForFile: (file: File) => string
   finalizeExpense: (data: {
     id: number
   }) => Promise<IpcResult<{ id: number; verification_number: number }>>
