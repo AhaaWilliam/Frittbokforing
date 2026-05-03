@@ -28,10 +28,16 @@ import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { ReceiptPreviewPane } from '../../components/receipts/ReceiptPreviewPane'
 import {
   matchSupplier,
+  normalizeOrgNumber,
   ocrReceipt,
   type ExtractedFields,
   type SupplierMatch,
 } from '../../lib/ocr'
+
+// VS-145d: lokal helper — normalizeOrgNumber returnerar null vid icke-10-siffr.
+function normalizeMaybe(s: string | null | undefined): string | null {
+  return normalizeOrgNumber(s)
+}
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -144,7 +150,13 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
   // supplier_hint mot aktuell suppliers-lista (kind=supplier, samma bolag).
   // null om ingen match >= 0.7-threshold.
   const [ocrSuggestion, setOcrSuggestion] = useState<
-    (ExtractedFields & { supplier_match?: SupplierMatch | null }) | null
+    | (ExtractedFields & {
+        supplier_match?: SupplierMatch | null
+        // VS-145d: true om matchen drevs av org-nr (visa "matchad via org-nr"
+        // i debug-text för att skilja mot ren namn-fuzzy).
+        supplier_match_via_org?: boolean
+      })
+    | null
   >(null)
   const [ocrLoading, setOcrLoading] = useState(false)
   const ocrTokenRef = useRef(0)
@@ -189,11 +201,15 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     type: 'supplier',
     active_only: true,
   })
-  const suppliersRef = useRef<{ id: number; name: string }[]>([])
+  const suppliersRef = useRef<
+    { id: number; name: string; org_number: string | null }[]
+  >([])
   useEffect(() => {
     suppliersRef.current = (suppliersData ?? []).map((s) => ({
       id: s.id,
       name: s.name,
+      // VS-145d: ta med org_number för prioriterad org-nr-match.
+      org_number: s.org_number,
     }))
   }, [suppliersData])
 
@@ -235,17 +251,35 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     try {
       const fields = await ocrReceipt(blob)
       if (token !== ocrTokenRef.current) return
-      // VS-145c: kör fuzzy-match mot aktuell suppliers-lista.
-      const supplier_match = fields.supplier_hint
-        ? matchSupplier(fields.supplier_hint, suppliersRef.current)
-        : null
+      // VS-145c/d: kör match mot aktuell suppliers-lista. org-nr (om OCR
+      // hittade giltigt) prioriteras över hint i matchSupplier.
+      const hint = fields.supplier_hint ?? ''
+      const supplier_match =
+        hint || fields.org_number
+          ? matchSupplier(hint, suppliersRef.current, {
+              orgNumber: fields.org_number,
+            })
+          : null
+      // Avgör om matchen drevs av org-nr (för "matchad via org-nr"-text).
+      const supplier_match_via_org = !!(
+        supplier_match &&
+        fields.org_number &&
+        suppliersRef.current.find((s) => s.id === supplier_match.id)
+          ?.org_number &&
+        normalizeMaybe(
+          suppliersRef.current.find((s) => s.id === supplier_match.id)!
+            .org_number,
+        ) === normalizeMaybe(fields.org_number)
+      )
       // Visa bara om vi har något att föreslå (>= 1 fält eller supplier-match).
       const hasAny =
         fields.amount_kr !== undefined ||
         fields.date !== undefined ||
         fields.supplier_hint !== undefined ||
+        fields.org_number !== undefined ||
         supplier_match !== null
-      if (hasAny) setOcrSuggestion({ ...fields, supplier_match })
+      if (hasAny)
+        setOcrSuggestion({ ...fields, supplier_match, supplier_match_via_org })
     } catch (e) {
       // M133-mönster: tyst felhantering, ingen UI-störning. Logga bara.
       console.warn('[BokforKostnadSheet] OCR failed:', e)
@@ -561,6 +595,9 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
                     data-testid="vardag-kostnad-ocr-supplier-match"
                   >
                     Förslag på leverantör: {ocrSuggestion.supplier_match.name}
+                    {ocrSuggestion.supplier_match_via_org
+                      ? ' (matchad via org-nr)'
+                      : ''}
                   </p>
                 ) : (
                   ocrSuggestion.supplier_hint && (

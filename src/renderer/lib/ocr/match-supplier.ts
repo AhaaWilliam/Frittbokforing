@@ -17,11 +17,18 @@
  * strängar (< 3 chars) — för osäkert.
  */
 
+import { normalizeOrgNumber } from './extract-org-number'
+
 const THRESHOLD = 0.7
 const MIN_LEN = 3
 
-export type SupplierCandidate = { id: number; name: string }
+export type SupplierCandidate = {
+  id: number
+  name: string
+  org_number?: string | null
+}
 export type SupplierMatch = { id: number; name: string; score: number }
+export type MatchSupplierOptions = { orgNumber?: string }
 
 /**
  * Strip svenska bolagsformer och interpunktion. lowercase + trim.
@@ -87,8 +94,27 @@ export function levenshtein(a: string, b: string): number {
 export function matchSupplier(
   hint: string,
   candidates: SupplierCandidate[],
+  options?: MatchSupplierOptions,
 ): SupplierMatch | null {
-  if (!hint || candidates.length === 0) return null
+  if (candidates.length === 0) return null
+
+  // VS-145d: org-nr override. Om OCR har giltigt org-nr OCH en kandidat har
+  // matchande org_number → score 1.0, oavsett hint-match. Normalisering
+  // gör att kandidater med/utan bindestreck jämförs lika.
+  const targetOrg = options?.orgNumber
+    ? normalizeOrgNumber(options.orgNumber)
+    : null
+  if (targetOrg) {
+    for (const c of candidates) {
+      const candOrg = normalizeOrgNumber(c.org_number)
+      if (candOrg && candOrg === targetOrg) {
+        return { id: c.id, name: c.name, score: 1.0 }
+      }
+    }
+    // Fallthrough till hint-match om ingen kandidat matchade org-nr.
+  }
+
+  if (!hint) return null
   const normHint = normalizeSupplierName(hint)
   if (normHint.length < MIN_LEN) return null
 

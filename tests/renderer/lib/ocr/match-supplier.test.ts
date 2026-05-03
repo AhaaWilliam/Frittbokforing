@@ -122,4 +122,67 @@ describe('matchSupplier', () => {
     expect(r!.id).toBe(11)
     expect(r!.name).toBe('Alpha Foo AB')
   })
+
+  // VS-145d: org-nr-prioritet
+  describe('org-nr override (VS-145d)', () => {
+    const candidatesWithOrg = [
+      { id: 1, name: 'Acme AB', org_number: '556074-3089' },
+      { id: 2, name: 'Beta Corp', org_number: '5567037485' },
+      { id: 3, name: 'Gamma AB', org_number: null },
+    ]
+
+    it('exakt org-nr-match override:ar dålig hint-match', () => {
+      // Hint matchar inget bra, men org-nr matchar Acme exakt.
+      const r = matchSupplier('Helt Annat XYZ', candidatesWithOrg, {
+        orgNumber: '556074-3089',
+      })
+      expect(r).not.toBeNull()
+      expect(r!.id).toBe(1)
+      expect(r!.score).toBe(1.0)
+    })
+
+    it('org-nr-match utan hint alls fungerar', () => {
+      const r = matchSupplier('', candidatesWithOrg, {
+        orgNumber: '556074-3089',
+      })
+      expect(r).not.toBeNull()
+      expect(r!.id).toBe(1)
+    })
+
+    it('normaliserar bindestreck-skillnad mellan OCR och DB', () => {
+      // OCR: med bindestreck. DB: utan bindestreck (Beta Corp).
+      const r = matchSupplier('', candidatesWithOrg, {
+        orgNumber: '556703-7485',
+      })
+      expect(r).not.toBeNull()
+      expect(r!.id).toBe(2)
+    })
+
+    it('org-nr utan match i kandidater → fallback till hint', () => {
+      // 559999-9994 finns inte i listan → fallthrough till hint-match på "Beta".
+      const r = matchSupplier('Beta', candidatesWithOrg, {
+        orgNumber: '559999-9994',
+      })
+      expect(r).not.toBeNull()
+      expect(r!.id).toBe(2) // matchad via hint, inte org
+    })
+
+    it('org-nr-mismatch i flera kandidater → exakt match väljs', () => {
+      const r = matchSupplier('Beta', candidatesWithOrg, {
+        orgNumber: '556074-3089',
+      })
+      // Acme matchar via org-nr, Beta via hint — org-nr vinner.
+      expect(r).not.toBeNull()
+      expect(r!.id).toBe(1)
+    })
+
+    it('kandidater utan org_number ignoreras i org-nr-fas', () => {
+      // Gamma har null. Org-nr-match ska inte krasha.
+      const r = matchSupplier('Gamma', candidatesWithOrg, {
+        orgNumber: '556074-3089',
+      })
+      // Acme via org-nr (1.0), Gamma via hint (1.0) → Acme vinner via org-prio.
+      expect(r!.id).toBe(1)
+    })
+  })
 })

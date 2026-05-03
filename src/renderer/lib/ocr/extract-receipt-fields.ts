@@ -10,6 +10,8 @@
  * 60 vid svag/ambiguös match.
  */
 
+import { extractOrgNumber } from './extract-org-number'
+
 const CONFIDENCE_THRESHOLD = 70
 
 export type ExtractedFieldResult<T> = {
@@ -21,6 +23,7 @@ export type ExtractedFields = {
   amount_kr?: number
   date?: string
   supplier_hint?: string
+  org_number?: string
   confidence: number
 }
 
@@ -279,10 +282,12 @@ export function extractReceiptFields(
   const amount = extractAmountKr(text)
   const date = extractDate(text)
   const supplier = extractSupplierHint(text)
+  const org = extractOrgNumber(text)
 
   const amountConf = Math.min(ocrConfidence, amount.confidence)
   const dateConf = Math.min(ocrConfidence, date.confidence)
   const supplierConf = Math.min(ocrConfidence, supplier.confidence)
+  const orgConf = Math.min(ocrConfidence, org.confidence)
 
   const result: ExtractedFields = {
     confidence: ocrConfidence,
@@ -295,6 +300,9 @@ export function extractReceiptFields(
   }
   if (supplier.value !== undefined && supplierConf >= CONFIDENCE_THRESHOLD) {
     result.supplier_hint = supplier.value
+  }
+  if (org.value !== undefined && orgConf >= CONFIDENCE_THRESHOLD) {
+    result.org_number = org.value
   }
   return result
 }

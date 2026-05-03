@@ -43,4 +43,11 @@ export {
   levenshtein,
   type SupplierCandidate,
   type SupplierMatch,
+  type MatchSupplierOptions,
 } from './match-supplier'
+export {
+  extractOrgNumber,
+  isValidSwedishOrgNumber,
+  normalizeOrgNumber,
+  type ExtractedOrgNumber,
+} from './extract-org-number'
