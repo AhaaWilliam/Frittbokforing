@@ -8,7 +8,12 @@ import { KonteringHeader, KonteringRow } from '../../components/ui/KonteringRow'
 import { SupplierPicker } from '../../components/expenses/SupplierPicker'
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
 import { useActiveCompany } from '../../contexts/ActiveCompanyContext'
-import { useAllAccounts, useCounterparty, useVatCodes } from '../../lib/hooks'
+import {
+  useAllAccounts,
+  useCounterparties,
+  useCounterparty,
+  useVatCodes,
+} from '../../lib/hooks'
 import {
   fiscalYearDateError,
   formatKr,
@@ -21,7 +26,12 @@ import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { ReceiptPreviewPane } from '../../components/receipts/ReceiptPreviewPane'
-import { ocrReceipt, type ExtractedFields } from '../../lib/ocr'
+import {
+  matchSupplier,
+  ocrReceipt,
+  type ExtractedFields,
+  type SupplierMatch,
+} from '../../lib/ocr'
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -130,9 +140,12 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
   // ovanför formuläret. ocrLoading = subtil "Läser kvitto..."-indikator under
   // attached-thumbnail. ocrTokenRef sekvens-id som invalideras vid
   // close/clear så att stale resultat inte sätter state efter unmount.
-  const [ocrSuggestion, setOcrSuggestion] = useState<ExtractedFields | null>(
-    null,
-  )
+  // VS-145c: supplier_match är auto-fuzzy-matchad counterparty från
+  // supplier_hint mot aktuell suppliers-lista (kind=supplier, samma bolag).
+  // null om ingen match >= 0.7-threshold.
+  const [ocrSuggestion, setOcrSuggestion] = useState<
+    (ExtractedFields & { supplier_match?: SupplierMatch | null }) | null
+  >(null)
   const [ocrLoading, setOcrLoading] = useState(false)
   const ocrTokenRef = useRef(0)
 
@@ -168,6 +181,21 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
 
   // Hämta full counterparty för default_expense_account-fallback.
   const { data: supplierFull } = useCounterparty(supplier?.id)
+
+  // VS-145c: Suppliers-lista för OCR-fuzzy-match. Hooken filtrerar redan
+  // på aktivt bolag (M158) och type='supplier'. Ref så runOcr kan läsa
+  // senaste listan utan att vara dep:ad.
+  const { data: suppliersData } = useCounterparties({
+    type: 'supplier',
+    active_only: true,
+  })
+  const suppliersRef = useRef<{ id: number; name: string }[]>([])
+  useEffect(() => {
+    suppliersRef.current = (suppliersData ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+    }))
+  }, [suppliersData])
 
   // När leverantör väljs och har default → prefill konto (om ej manuellt
   // ändrat).
@@ -207,12 +235,17 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     try {
       const fields = await ocrReceipt(blob)
       if (token !== ocrTokenRef.current) return
-      // Visa bara om vi har något att föreslå (>= 1 fält).
+      // VS-145c: kör fuzzy-match mot aktuell suppliers-lista.
+      const supplier_match = fields.supplier_hint
+        ? matchSupplier(fields.supplier_hint, suppliersRef.current)
+        : null
+      // Visa bara om vi har något att föreslå (>= 1 fält eller supplier-match).
       const hasAny =
         fields.amount_kr !== undefined ||
         fields.date !== undefined ||
-        fields.supplier_hint !== undefined
-      if (hasAny) setOcrSuggestion(fields)
+        fields.supplier_hint !== undefined ||
+        supplier_match !== null
+      if (hasAny) setOcrSuggestion({ ...fields, supplier_match })
     } catch (e) {
       // M133-mönster: tyst felhantering, ingen UI-störning. Logga bara.
       console.warn('[BokforKostnadSheet] OCR failed:', e)
@@ -252,6 +285,13 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     }
     if (ocrSuggestion.date !== undefined) {
       setDate(ocrSuggestion.date)
+    }
+    // VS-145c: pre-fyll counterparty om fuzzy-match hittades.
+    if (ocrSuggestion.supplier_match) {
+      setSupplier({
+        id: ocrSuggestion.supplier_match.id,
+        name: ocrSuggestion.supplier_match.name,
+      })
     }
     setOcrSuggestion(null)
   }
@@ -515,13 +555,22 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
             <Callout variant="tip" data-testid="vardag-kostnad-ocr-suggestion">
               <div className="flex flex-col gap-2">
                 <p>{buildOcrSuggestionMessage(ocrSuggestion)}</p>
-                {ocrSuggestion.supplier_hint && (
+                {ocrSuggestion.supplier_match ? (
                   <p
                     className="text-xs text-[var(--text-faint)]"
-                    data-testid="vardag-kostnad-ocr-supplier-hint"
+                    data-testid="vardag-kostnad-ocr-supplier-match"
                   >
-                    Förslag på leverantör: {ocrSuggestion.supplier_hint}
+                    Förslag på leverantör: {ocrSuggestion.supplier_match.name}
                   </p>
+                ) : (
+                  ocrSuggestion.supplier_hint && (
+                    <p
+                      className="text-xs text-[var(--text-faint)]"
+                      data-testid="vardag-kostnad-ocr-supplier-hint"
+                    >
+                      Förslag på leverantör: {ocrSuggestion.supplier_hint}
+                    </p>
+                  )
                 )}
                 <div className="flex items-center gap-2">
                   <button

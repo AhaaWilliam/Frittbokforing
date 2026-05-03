@@ -37,3 +37,10 @@ export {
   terminateWorker,
   type OcrRecognitionResult,
 } from './tesseract-worker'
+export {
+  matchSupplier,
+  normalizeSupplierName,
+  levenshtein,
+  type SupplierCandidate,
+  type SupplierMatch,
+} from './match-supplier'

@@ -17,9 +17,13 @@ import { setupMockIpc, mockIpcResponse } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
 
 // Mock ocr-modulen INNAN sheet-import. Default: returnera fixture.
+// VS-145c: matchSupplier exporteras också från modulen — re-exportas här
+// som no-op (returnera null) för bakåtkompat med VS-145b-fixtures som
+// inte testar fuzzy-match.
 const ocrReceiptMock = vi.fn()
 vi.mock('../../../../src/renderer/lib/ocr', () => ({
   ocrReceipt: (blob: Blob) => ocrReceiptMock(blob),
+  matchSupplier: () => null,
 }))
 
 // Mock SupplierPicker — minimal stub.
