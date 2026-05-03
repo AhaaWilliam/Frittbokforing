@@ -9,6 +9,7 @@ import { useDashboardSummary } from '../lib/hooks'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
 import { useNavigate } from '../lib/router'
 import { formatKr } from '../lib/format'
+import { pluralDays } from '../../shared/date-utils'
 
 const BACKUP_WARN_DAYS = 30
 
@@ -37,7 +38,7 @@ function BackupReminder({
         title={
           age === null
             ? 'Ingen säkerhetskopia har skapats ännu'
-            : `Senaste säkerhetskopia är ${age} dagar gammal`
+            : `Senaste säkerhetskopia är ${pluralDays(age)} gammal`
         }
         data-testid="backup-reminder"
       >

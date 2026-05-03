@@ -135,6 +135,20 @@ export function subtractMonths(dateStr: string, months: number): string {
 }
 
 /**
+ * Svensk pluralisering av "dag/dagar" enligt SAOL.
+ * 1 → "1 dag", övrigt → "N dagar". Negativa tal följer absolutbeloppet.
+ *
+ * Exempel: pluralDays(0) === "0 dagar", pluralDays(1) === "1 dag",
+ * pluralDays(-3) === "-3 dagar", pluralDays(2) === "2 dagar".
+ *
+ * Sprint VS-136: ersätter "X dag(ar)"-mönstret som tidigare användes
+ * i Vardag-pillen och backup-reminder.
+ */
+export function pluralDays(n: number): string {
+  return Math.abs(n) === 1 ? `${n} dag` : `${n} dagar`
+}
+
+/**
  * Lägg till N dagar.
  * addDays('2026-03-30', 2) → '2026-04-01'
  */

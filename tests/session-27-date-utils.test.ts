@@ -4,6 +4,7 @@ import {
   addMonthsMinusOneDay,
   isLeapYear,
   addDays,
+  pluralDays,
 } from '../src/shared/date-utils'
 
 describe('addOneDay', () => {
@@ -46,5 +47,27 @@ describe('addDays', () => {
   })
   it('negative days', () => {
     expect(addDays('2026-03-31', -1)).toBe('2026-03-30')
+  })
+})
+
+// VS-136: svensk pluralisering "dag/dagar"
+describe('pluralDays', () => {
+  it('singular vid 1', () => {
+    expect(pluralDays(1)).toBe('1 dag')
+  })
+  it('singular vid -1', () => {
+    expect(pluralDays(-1)).toBe('-1 dag')
+  })
+  it('plural vid 0', () => {
+    expect(pluralDays(0)).toBe('0 dagar')
+  })
+  it('plural vid 2', () => {
+    expect(pluralDays(2)).toBe('2 dagar')
+  })
+  it('plural vid -3 (försent)', () => {
+    expect(pluralDays(-3)).toBe('-3 dagar')
+  })
+  it('plural vid större tal', () => {
+    expect(pluralDays(45)).toBe('45 dagar')
   })
 })

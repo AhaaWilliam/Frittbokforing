@@ -17,6 +17,7 @@ import {
   computeVatDeadline,
   vatDeadlineTone,
 } from '../../../shared/vat-deadline'
+import { pluralDays } from '../../../shared/date-utils'
 import { BigButton } from '../../components/ui/BigButton'
 import { KbdChip, modKey } from '../../components/ui/KbdChip'
 import { VardagShell } from './VardagShell'
@@ -279,11 +280,12 @@ function VatDeadlinePill({
   })
   let label: string
   if (result.daysUntil < 0) {
-    label = `Moms ${result.periodLabel}: ${-result.daysUntil} dag(ar) försent`
+    // VS-136: pluralDays() ger "1 dag" / "N dagar" istället för "X dag(ar)"
+    label = `Moms ${result.periodLabel}: ${pluralDays(-result.daysUntil)} försent`
   } else if (result.daysUntil === 0) {
     label = `Moms ${result.periodLabel}: deadline idag`
   } else {
-    label = `Moms ${result.periodLabel}: ${dueLocal} (${result.daysUntil} dagar)`
+    label = `Moms ${result.periodLabel}: ${dueLocal} (${pluralDays(result.daysUntil)})`
   }
   return (
     <StatusPill
