@@ -3,8 +3,7 @@ import type { Company } from '../../shared/types'
 import { FiscalYearProvider } from '../contexts/FiscalYearContext'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { SkipLinksProvider } from '../contexts/SkipLinksContext'
-import { HashRouter, useRoute, useNavigate } from '../lib/router'
-import { routes } from '../lib/routes'
+import { useRoute, useNavigate } from '../lib/router'
 import { Sidebar } from '../components/layout/Sidebar'
 import { AppTopBar } from '../components/layout/AppTopBar'
 import { ZoneCons } from '../components/layout/ZoneCons'
@@ -243,11 +242,10 @@ export function AppShell() {
     <SkipLinksProvider>
       {/* Sprint MC2: re-mount FiscalYearProvider vid bolagsbyte så att
           restoredId-state nollställs och senast valda FY för nya bolaget
-          läses från settings. */}
+          läses från settings. VS-140: HashRouter ligger i App.tsx ovanpå
+          ModeRouter, inte här. */}
       <FiscalYearProvider key={activeCompany.id}>
-        <HashRouter routes={routes} fallback="/overview">
-          <AppShellInner company={activeCompany} />
-        </HashRouter>
+        <AppShellInner company={activeCompany} />
       </FiscalYearProvider>
     </SkipLinksProvider>
   )

@@ -11,6 +11,8 @@ import { ErrorFallback } from './components/ui/ErrorFallback'
 import { useAuth } from './lib/use-auth'
 import { useUiMode } from './lib/use-ui-mode'
 import { VardagApp } from './modes/vardag/VardagApp'
+import { HashRouter } from './lib/router'
+import { routes } from './lib/routes'
 
 export default function App() {
   const auth = useAuth()
@@ -85,7 +87,13 @@ function AuthenticatedApp() {
         onReset={() => window.location.reload()}
       >
         <ActiveCompanyProvider>
-          <ModeRouter />
+          {/* VS-140: HashRouter lyfts hit så useNavigate() fungerar i båda
+              modes (Vardag-pillar/CloseMonthDialog/GlobalSearch behöver
+              navigate). Tidigare bara monterad i AppShell — Vardag-mode
+              kraschade med "useNavigate must be used within HashRouter". */}
+          <HashRouter routes={routes} fallback="/overview">
+            <ModeRouter />
+          </HashRouter>
         </ActiveCompanyProvider>
       </ErrorBoundary>
       <Toaster
