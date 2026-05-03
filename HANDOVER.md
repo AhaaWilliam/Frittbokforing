@@ -1,21 +1,37 @@
 # Handover — Fritt Bokföring
 
-Sista uppdatering: 2026-05-02. Ersätter tidigare handover (cff9757).
+Sista uppdatering: 2026-05-03. Två autonoma loop-omgångar (VS-116..VS-138).
 
 ## TL;DR
 
-14 sprintar (VS-116..VS-129) levererade i en autonom loop. Alla
-omedelbara handover-items från föregående omgång är hanterade — inkl.
-4 inkorgen-utbyggnader, 4 stäng-månad-förbättringar, 2 VAT-deadline-
-delfunktioner, settings-toggle, och M156-konsolidering (native confirm
-borttagen). **263 commits ahead of origin/main, otrycka.** Tester
-1410 gröna i renderer (+13 från denna omgång), service-suites OK.
-TypeScript rent, ESLint rent.
+23 sprintar levererade i två autonoma loop-omgångar:
+- **Omgång 1** (VS-116..VS-129, 14 sprintar) — inkorgen-utbyggnader,
+  stäng-månad-flow, VAT-deadline, settings-toggles, M156-konsolidering.
+- **Omgång 2** (VS-130..VS-138, 9 sprintar) — closed_at-display i
+  perioder + år, PageSettings/SkapaFakturaSheet test-paritet,
+  React.memo-perf-fix, pluralDays-helper, M133-vakt-fix.
+
+**273 commits ahead of origin/main, otrycka.** Tester 1433 gröna i
+renderer (+23 från omgång 2). TypeScript rent, ESLint rent.
 
 Återstående backlog är dominerat av medvetna produktblockeringar
 (PDF-preview-strategi, OCR, push-notifieringar) eller större
 refaktorer (BokforKostnadSheet ~3-4h). Inga "låghängande frukter" kvar
 i den ursprungliga handover-listan.
+
+## Omgång 2 (VS-130..VS-138) sprint-katalog
+
+| Sprint | Commit | Innehåll |
+|---|---|---|
+| VS-130 | `6366f1d` | PeriodList visar `Stängd <datum>` via FiscalPeriod.closed_at. Title-attr bär timestamp. Fallback till "Klar". |
+| VS-131 | `861fbd9` | PageSettings UI-tester för VS-120 (has_employees) + VS-121 (vat_frequency). 5 nya tester. |
+| VS-132 | `d49e168` | PageSepaDd MandateRow `React.memo` + `useCallback`. |
+| VS-133 | `423a1b9` | Fixade dold M133-violation i PeriodList "returns null" (prettier-formaterad axeCheck över 3 rader). |
+| VS-134 | `8e45984` | SkapaFakturaSheet 4 paritet-tester (VS-19/28/14/22). |
+| VS-135 | `4836c1c` | YearPicker visar "Stängt 15 feb 2027 — skrivskyddat" via FiscalYear.closed_at + IPC-schema-paritet. |
+| VS-136 | `41b5113` | `pluralDays(n)` shared helper — "1 dag" / "N dagar" enligt SAOL. Fixar "X dag(ar)"-mönstret. |
+| VS-137 | `0a3dbaf` | SkapaFakturaSheet Cmd+Enter-paritet (2 tester). |
+| VS-138 | `db39899` | SkapaFakturaSheet error-clearing + account-name paritet (2 tester). |
 
 ## Vad som är gjort i denna omgång (sprint-katalog)
 
