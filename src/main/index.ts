@@ -204,7 +204,9 @@ app.whenReady().then(() => {
     vault: auth.vault,
   })
   if (process.env.FRITT_TEST === '1') {
+    // Lazy-loaded i test-mode för att inte expandera produktions-bundle.
     const { registerAuthTestHandlers } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('./auth/auth-test-handlers') as typeof import('./auth/auth-test-handlers')
     registerAuthTestHandlers({
       service: auth.service,
