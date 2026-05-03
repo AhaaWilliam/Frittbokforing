@@ -349,6 +349,34 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     setOcrSuggestion(null)
   }
 
+  // VS-152: Skapa ny leverantör från OCR-hint när fuzzy-match misslyckats.
+  // Anropar createCounterparty (M158: company_id obligatoriskt) med hint-namn
+  // + ev. org_number från OCR. Vid lyckad create pre-fylls supplier-fältet
+  // som om matchen funnits hela tiden, suggesten dismissas, och nästa kvitto
+  // från samma leverantör matchas via fuzzy/org-nr nästa gång.
+  // Felhantering: structured M100-fel → toast.error, callout kvar öppen så
+  // användaren kan välja annat (Tillämpa eller Avvisa).
+  async function handleCreateSupplierFromHint() {
+    if (!ocrSuggestion?.supplier_hint || !activeCompany) return
+    try {
+      const result = await window.api.createCounterparty({
+        name: ocrSuggestion.supplier_hint,
+        type: 'supplier',
+        company_id: activeCompany.id,
+        org_number: ocrSuggestion.org_number ?? null,
+      })
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      setSupplier({ id: result.data.id, name: result.data.name })
+      toast.success(`Skapade leverantör '${result.data.name}'`)
+      dismissOcrSuggestion()
+    } catch (e) {
+      console.warn('[BokforKostnadSheet] create supplier failed:', e)
+    }
+  }
+
   const amountInclVatOre = kronorToOre(amountKr)
   const vatRate = useMemo(() => {
     return vatCodes.find((vc) => vc.id === vatCodeId)?.rate_percent ?? 25
@@ -641,6 +669,18 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
                   >
                     Avvisa
                   </button>
+                  {!ocrSuggestion.supplier_match &&
+                    ocrSuggestion.supplier_hint && (
+                      <button
+                        type="button"
+                        onClick={handleCreateSupplierFromHint}
+                        className="rounded-md border border-[var(--color-brand-500)] px-3 py-1 text-xs font-medium text-[var(--color-brand-500)]"
+                        data-testid="vardag-kostnad-ocr-create-supplier"
+                      >
+                        Skapa &quot;{ocrSuggestion.supplier_hint}&quot; som
+                        leverantör
+                      </button>
+                    )}
                 </div>
               </div>
             </Callout>
