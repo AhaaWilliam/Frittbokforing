@@ -4,7 +4,7 @@ Sista uppdatering: 2026-05-03. Tre autonoma loop-omgångar (VS-116..VS-146) + kr
 
 ## TL;DR
 
-35 sprintar levererade i tre autonoma loop-omgångar plus en kritisk
+38 sprintar levererade i fyra autonoma loop-omgångar plus en kritisk
 produktions-fix:
 - **Omgång 1** (VS-116..VS-129, 14 sprintar) — inkorgen-utbyggnader,
   stäng-månad-flow, VAT-deadline, settings-toggles, M156-konsolidering.
@@ -14,14 +14,25 @@ produktions-fix:
 - **VS-140** — Bugfix: `useNavigate must be used within HashRouter`
   som kraschade Vardag-läget i produktion. HashRouter lyft från
   AppShell till App.tsx ovanför ModeRouter.
-- **Omgång 3** (VS-141..VS-146, 10 sprintar) — zip-bundle export,
+- **Omgång 3** (VS-141..VS-147, 10 sprintar) — zip-bundle export,
   push-notif moms, PDF-preview, ActivePeriodContext, OCR-pipeline
   (extract → UI → supplier-match → org-nr → pre-warm), ESLint hygiene.
+- **Omgång 4** (VS-148..VS-151, 4 sprintar) — PDF-OCR via PDF.js,
+  PageReports period-wiring, mock-ipc completeness audit (+ vakt-test),
+  HANDOVER backlog #11 stängd.
 
-**286 commits ahead of origin/main, otrycka.** TypeScript rent, ESLint
-rent (3 pre-existerande fel fixade i VS-146). Statiska checks alla OK.
+Pushed löpande till origin/main. TypeScript rent, ESLint rent.
+Statiska checks alla OK. mock-ipc nu drift-skyddad.
 
 **Nästa naturliga steg kräver produktbeslut** (se "Öppna frågor" nedan).
+
+## Omgång 4 (VS-148..VS-151) sprint-katalog
+
+| Sprint | Commit | Innehåll |
+|---|---|---|
+| VS-148 | `be0dfc5` | PDF-OCR via PDF.js — `pdfFirstPageToBlob` (scale 2.0, dynamic import för jsdom-kompat), ocrReceipt detekterar PDF mime-type, BokforKostnadSheet accepterar `.pdf`. Multi-page tyst trunkerad till sida 1. |
+| VS-149 | `1f4e500` | PageReports period-wiring → ActivePeriodContext. `mapDateRangeToPeriod` (pure, exakt 1-period-match) + useEffect i PageReports. Span över multipla perioder → ingen highlight. |
+| VS-150 | `c8d3fa8` | mock-ipc methodToChannel completeness audit — 22 saknade entries lagda till (credit notes, SIE5, SEPA DD, cash flow, bank reconciliation). Vakt-test förhindrar framtida drift. |
 
 ## Omgång 3 (VS-141..VS-146) sprint-katalog
 
@@ -174,15 +185,19 @@ genom att verifiera provider-hierarkin i App.tsx.
 
 ## Öppna frågor — kräver produktbeslut före nästa sprint
 
-VS-141..VS-146 levererade hela ursprungliga planen. Naturlig fortsättning kräver beslut:
+VS-141..VS-150 levererade ursprungliga planen + extras. Återstående beslut:
 
-1. **VS-144 page-wiring:** ActivePeriodContext-infrastrukturen finns men PageBudget/PageVat/PageReports har ingen befintlig period-picker. Beslut behövs:
-   - PageVat (Q1-Q4 + årssumma): hur mappa kvartal till en period-highlight?
-   - PageReports (date-range from/to): hur mappa till period-highlight?
-   - PageBudget (12-period grid): finns inget "vald period"-koncept
-2. **PDF-OCR:** Tesseract i v1 bara bilder. Lägg till PDF.js (~2-3 MB bundle) för PDF-stöd, eller behåll begränsning?
-3. **OCR till SkapaFakturaSheet:** Är OCR meningsfullt på utgående fakturor? (Sannolikt nej för svenska bolag som genererar dem själva.)
-4. **Push 286 commits → origin/main:** Granska först eller pusha direkt?
+1. **VS-144 page-wiring för PageVat:** Q1-Q4 = 3 perioder per kvartal. Nuvarande ActivePeriodContext stödjer bara *en* periods-highlight. Multi-period-highlight kräver context-shape-refactor (~5h) — vill vi det, eller skip PageVat-wiring?
+2. **VS-144 page-wiring för PageBudget:** 12-period grid har inget "vald period"-koncept. Lägga till per-period-fokus är design-arbete.
+3. **OCR till SkapaFakturaSheet:** ANSWERED — nej (sannolikt inte värdefullt för utgående fakturor).
+4. **Push commits → origin/main:** löpande nu (VS-148..VS-151 pushas i slutet av denna omgång).
+
+### Avlöst
+
+- ~~PDF-OCR~~ — Levererat i VS-148.
+- ~~PageReports period-wiring~~ — Levererat i VS-149.
+- ~~HANDOVER #11 (PageSepaDd MandateRow inline-callback)~~ — VS-132 löste primär-fallet. Återstående map-iterationer i PageSepaDd har antingen egen state (BatchRowComponent) eller är för små/utan callback-prop (CollectionRowComponent, pendingCollections). Ej aktivt issue.
+- ~~HANDOVER #13 (mock-ipc methodToChannel)~~ — VS-150 auditade och lade till 22 saknade entries + vakt-test mot framtida drift.
 
 ## Plan för förra sprint-omgången (VS-141..VS-150) — LEVERERAD
 
