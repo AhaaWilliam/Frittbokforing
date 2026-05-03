@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Company } from '../../shared/types'
 import { FiscalYearProvider } from '../contexts/FiscalYearContext'
+import { ActivePeriodProvider } from '../contexts/ActivePeriodContext'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
 import { SkipLinksProvider } from '../contexts/SkipLinksContext'
 import { useRoute, useNavigate } from '../lib/router'
@@ -245,7 +246,12 @@ export function AppShell() {
           läses från settings. VS-140: HashRouter ligger i App.tsx ovanpå
           ModeRouter, inte här. */}
       <FiscalYearProvider key={activeCompany.id}>
-        <AppShellInner company={activeCompany} />
+        {/* VS-144: ActivePeriodProvider — pages med egen period-picker
+            kan registrera vald period via useSetActivePeriod. Default
+            (null) = MonthIndicator härleder från global FY (oförändrat). */}
+        <ActivePeriodProvider>
+          <AppShellInner company={activeCompany} />
+        </ActivePeriodProvider>
       </FiscalYearProvider>
     </SkipLinksProvider>
   )

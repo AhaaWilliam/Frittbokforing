@@ -1,4 +1,5 @@
 import { useFiscalYearContext } from '../../contexts/FiscalYearContext'
+import { useActivePeriodOptional } from '../../contexts/ActivePeriodContext'
 import { useFiscalPeriods } from '../../lib/hooks'
 import type { FiscalPeriod } from '../../../shared/types'
 
@@ -15,31 +16,32 @@ function getMonthName(period: FiscalPeriod): string {
   })
 }
 
-function isFirstOpen(
-  period: FiscalPeriod,
-  allPeriods: FiscalPeriod[],
-): boolean {
-  const firstOpen = allPeriods.find((p) => p.is_closed === 0)
-  return firstOpen?.id === period.id
-}
-
 function getStateLabel(
   period: FiscalPeriod,
-  allPeriods: FiscalPeriod[],
+  highlightedId: number | undefined,
 ): string {
   if (period.is_closed === 1) return 'klar'
-  if (isFirstOpen(period, allPeriods)) return 'aktiv månad'
+  if (highlightedId === period.id) return 'aktiv månad'
   return 'öppen'
 }
 
 export function MonthIndicator() {
   const { activeFiscalYear } = useFiscalYearContext()
   const { data: periods = [] } = useFiscalPeriods(activeFiscalYear?.id)
+  // VS-144: Page-driven override. När en page satt activePeriodId via
+  // useSetActivePeriod highlightas den perioden i sidebar; annars
+  // härleds från första öppna period i FY (default-beteende).
+  const activePeriod = useActivePeriodOptional()
 
   if (periods.length === 0) return null
 
-  // VS-101: Pre-räkna firstOpen-id en gång istället för O(n²) find per cell.
-  const firstOpenId = periods.find((p) => p.is_closed === 0)?.id
+  // VS-101: Pre-räkna highlight-id en gång istället för O(n²) find per cell.
+  const overrideId = activePeriod?.activePeriodId ?? null
+  const overrideMatchesFy =
+    overrideId !== null && periods.some((p) => p.id === overrideId)
+  const highlightedId = overrideMatchesFy
+    ? (overrideId ?? undefined)
+    : periods.find((p) => p.is_closed === 0)?.id
 
   return (
     <div className="mt-3">
@@ -50,7 +52,7 @@ export function MonthIndicator() {
       >
         {periods.map((period) => {
           const monthName = getMonthName(period)
-          const stateLabel = getStateLabel(period, periods)
+          const stateLabel = getStateLabel(period, highlightedId)
           return (
             <div
               key={period.id}
@@ -59,7 +61,7 @@ export function MonthIndicator() {
               className={`flex aspect-square items-center justify-center rounded text-[10px] font-medium ${
                 period.is_closed === 1
                   ? 'bg-success-100 text-success-700'
-                  : firstOpenId === period.id
+                  : highlightedId === period.id
                     ? 'bg-info-100 text-info-700 ring-1 ring-info-500'
                     : 'bg-muted text-muted-foreground'
               }`}

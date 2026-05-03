@@ -4,6 +4,10 @@ import { screen, waitFor } from '@testing-library/react'
 import { setupMockIpc, mockIpcResponse } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
 import { MonthIndicator } from '../../../../src/renderer/components/layout/MonthIndicator'
+import {
+  ActivePeriodProvider,
+  useSetActivePeriod,
+} from '../../../../src/renderer/contexts/ActivePeriodContext'
 import type { FiscalPeriod } from '../../../../src/shared/types'
 
 function makePeriod(month: number, isClosed: boolean): FiscalPeriod {
@@ -70,5 +74,66 @@ describe('MonthIndicator', () => {
     mockIpcResponse('fiscal-period:list', { success: true, data: periods })
     const { axeResults } = await renderWithProviders(<MonthIndicator />)
     expect(axeResults?.violations).toEqual([])
+  })
+
+  // VS-144: ActivePeriodContext-override
+  it('default-läge (utan provider) highlightar första öppna period', async () => {
+    const periods = makeAllPeriods(3) // Jan-Mar closed → April är första öppna
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+    await renderWithProviders(<MonthIndicator />, { axeCheck: false }) // M133 exempt — see axe test above
+    await waitFor(() => {
+      expect(screen.getByTitle(/april/i)).toBeInTheDocument()
+    })
+    // April har ring-1 (aktiv) — lookup via aria-label
+    expect(screen.getByLabelText(/april, aktiv månad/i)).toBeInTheDocument()
+    // Maj är "öppen", inte "aktiv"
+    expect(screen.getByLabelText(/maj, öppen/i)).toBeInTheDocument()
+  })
+
+  it('highlightar override-period när ActivePeriodProvider satt id', async () => {
+    const periods = makeAllPeriods(3) // Jan-Mar closed
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+
+    function Setter() {
+      // Aktivera period 7 (juli) som override.
+      useSetActivePeriod(7)
+      return null
+    }
+
+    await renderWithProviders(
+      <ActivePeriodProvider>
+        <Setter />
+        <MonthIndicator />
+      </ActivePeriodProvider>,
+      { axeCheck: false }, // M133 exempt — see axe test above
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/juli, aktiv månad/i)).toBeInTheDocument()
+    })
+    // April är inte längre "aktiv" — fallback överskriven
+    expect(screen.getByLabelText(/april, öppen/i)).toBeInTheDocument()
+  })
+
+  it('faller tillbaka till första öppna när override pekar på okänd period', async () => {
+    const periods = makeAllPeriods(2) // Jan-Feb closed → mars första öppna
+    mockIpcResponse('fiscal-period:list', { success: true, data: periods })
+
+    function Setter() {
+      useSetActivePeriod(999) // matchar ingen period i FY:t
+      return null
+    }
+
+    await renderWithProviders(
+      <ActivePeriodProvider>
+        <Setter />
+        <MonthIndicator />
+      </ActivePeriodProvider>,
+      { axeCheck: false }, // M133 exempt — see axe test above
+    )
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/mars, aktiv månad/i)).toBeInTheDocument()
+    })
   })
 })
