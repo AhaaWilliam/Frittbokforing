@@ -269,6 +269,13 @@ export const ExportReceiptsCsvInputSchema = z
   })
   .strict()
 
+// VS-141: ZIP-bundle av kvittolista + alla fysiska filer (BFL 7 kap).
+export const ExportReceiptsZipBundleInputSchema = z
+  .object({
+    company_id: z.number().int().positive(),
+  })
+  .strict()
+
 // VS-111: koppla en inbox-receipt till en redan skapad expense.
 // Används från "Bokför från inkorgen"-flödet (VS-112).
 export const LinkReceiptToExpenseInputSchema = z
@@ -1622,6 +1629,7 @@ export const channelMap = {
   'receipt:delete': ArchiveReceiptInputSchema,
   'receipt:link-to-expense': LinkReceiptToExpenseInputSchema,
   'receipt:export-csv': ExportReceiptsCsvInputSchema,
+  'receipt:export-zip-bundle': ExportReceiptsZipBundleInputSchema,
   'period:checks': PeriodChecksInputSchema,
 } as const satisfies Record<string, z.ZodType>
 

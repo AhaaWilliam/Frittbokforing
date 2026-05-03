@@ -560,6 +560,7 @@ export const channelResponseMap = {
   'receipt:delete': LooseObject,
   'receipt:link-to-expense': LooseObject,
   'receipt:export-csv': LooseObject,
+  'receipt:export-zip-bundle': LooseObject,
   'period:checks': LooseObject,
 } as const satisfies Record<ChannelName, z.ZodType>
 

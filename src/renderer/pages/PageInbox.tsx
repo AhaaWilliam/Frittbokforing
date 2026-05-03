@@ -30,6 +30,7 @@ import {
   useBulkArchiveReceipts,
   useDeleteReceipt,
   useExportReceiptsCsv,
+  useExportReceiptsZipBundle,
   useUpdateReceiptNotes,
 } from '../lib/hooks'
 import { Button } from '../components/ui/Button'
@@ -90,6 +91,7 @@ export function PageInbox() {
   const bulkArchiveMutation = useBulkArchiveReceipts()
   const deleteMutation = useDeleteReceipt()
   const exportCsvMutation = useExportReceiptsCsv()
+  const exportZipBundleMutation = useExportReceiptsZipBundle()
   const updateNotesMutation = useUpdateReceiptNotes()
 
   function openNotesEditor(r: Receipt) {
@@ -118,6 +120,17 @@ export function PageInbox() {
       const r = await exportCsvMutation.mutateAsync()
       if (r.cancelled) return
       toast.success(`Kvittolista exporterad till ${r.filePath}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Export misslyckades')
+    }
+  }
+
+  // VS-141: ZIP-bundle (CSV + alla fysiska kvittofiler), BFL 7 kap.
+  async function handleExportZipBundle() {
+    try {
+      const r = await exportZipBundleMutation.mutateAsync()
+      if (r.cancelled) return
+      toast.success(`Kvittoarkiv exporterat till ${r.filePath}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Export misslyckades')
     }
@@ -338,18 +351,29 @@ export function PageInbox() {
               )
             })}
           </div>
-          {/* VS-123: CSV-export av kvittolistan (BFL 7 kap arkivkrav). */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleExportCsv}
-            isLoading={exportCsvMutation.isPending}
-            data-testid="inbox-export-csv"
-            className="mb-2"
-          >
-            <Download className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-            Exportera CSV
-          </Button>
+          {/* VS-123/VS-141: CSV och ZIP-export (BFL 7 kap arkivkrav). */}
+          <div className="mb-2 flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              isLoading={exportCsvMutation.isPending}
+              data-testid="inbox-export-csv"
+            >
+              <Download className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+              Exportera CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportZipBundle}
+              isLoading={exportZipBundleMutation.isPending}
+              data-testid="inbox-export-zip-bundle"
+            >
+              <Download className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+              Exportera ZIP
+            </Button>
+          </div>
         </div>
 
         {/* Bulk-toolbar */}

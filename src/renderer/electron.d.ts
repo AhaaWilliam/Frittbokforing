@@ -811,9 +811,14 @@ interface ElectronAPI {
   }) => Promise<IpcResult<{ linked: boolean }>>
   // VS-123: CSV-export av kvittolista. cancelled=true om användaren
   // avbryter save-dialog, annars filePath. Aldrig båda samtidigt.
-  exportReceiptsCsv: (data: { company_id: number }) => Promise<
-    IpcResult<{ filePath?: string; cancelled?: true }>
-  >
+  exportReceiptsCsv: (data: {
+    company_id: number
+  }) => Promise<IpcResult<{ filePath?: string; cancelled?: true }>>
+  // VS-141: ZIP-bundle (CSV + fysiska filer). Samma cancelled/filePath-
+  // semantik som exportReceiptsCsv.
+  exportReceiptsZipBundle: (data: {
+    company_id: number
+  }) => Promise<IpcResult<{ filePath?: string; cancelled?: true }>>
   // VS-113: månadsstängnings-checks
   getPeriodChecks: (data: { period_id: number }) => Promise<
     IpcResult<{

@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import archiver from 'archiver'
 import type Database from 'better-sqlite3'
 import { app } from 'electron'
 import log from 'electron-log/main'
@@ -624,4 +625,137 @@ function escapeCsv(v: string): string {
     return '"' + v.replace(/"/g, '""') + '"'
   }
   return v
+}
+
+/**
+ * Sprint VS-141 — exportReceiptsZipBundle.
+ *
+ * BFL 7 kap-konform arkivexport. Bundlar metadata.csv (samma källa som
+ * VS-123 exportReceiptsCsv) tillsammans med alla fysiska kvittofiler
+ * under `receipts/<expense_id>/<basename>` i en ZIP. Streamar direkt till
+ * disk via archiver; minnesfotavtryck oberoende av antal/storlek.
+ *
+ * Best-effort på filer som saknas på disk: metadata-raden finns ändå i
+ * CSV:n, en varning loggas, exporten fortsätter.
+ *
+ * Filnamn: receipts-<saneratbolagsnamn>-<YYYYMMDD>.zip.
+ *
+ * Skrivning till disk + dialog hanteras i IPC-handlern. Denna funktion
+ * tar destinationsväg och returnerar `{ filename }` (basenamnet, för
+ * UI-bekräftelse).
+ */
+export async function exportReceiptsZipBundle(
+  db: Database.Database,
+  input: { company_id: number; destinationPath: string },
+): Promise<IpcResult<{ filename: string }>> {
+  const company = db
+    .prepare('SELECT id, name, org_number FROM companies WHERE id = ?')
+    .get(input.company_id) as
+    | { id: number; name: string; org_number: string }
+    | undefined
+  if (!company) {
+    return {
+      success: false,
+      error: 'Bolaget hittades inte.',
+      code: 'NOT_FOUND' as ErrorCode,
+    }
+  }
+
+  const csvResult = exportReceiptsCsv(db, { company_id: input.company_id })
+  if (!csvResult.success) return csvResult
+
+  const rows = db
+    .prepare(
+      `SELECT id, expense_id, original_filename, file_path
+       FROM receipts
+       WHERE company_id = ?
+       ORDER BY id ASC`,
+    )
+    .all(input.company_id) as Array<{
+    id: number
+    expense_id: number | null
+    original_filename: string
+    file_path: string
+  }>
+
+  const documentsRoot = path.join(app.getPath('documents'), ROOT_FOLDER_NAME)
+  const filename = path.basename(input.destinationPath)
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const output = fs.createWriteStream(input.destinationPath)
+      const archive = archiver('zip', { zlib: { level: 9 } })
+
+      output.on('close', () => resolve())
+      output.on('error', (err) => reject(err))
+      archive.on('error', (err) => reject(err))
+      archive.on('warning', (err) => {
+        log.warn('[receipt-service] zip-warning:', err)
+      })
+
+      archive.pipe(output)
+
+      // metadata.csv i roten — samma rad-källa som VS-123.
+      archive.append(Buffer.from(csvResult.data.csv, 'utf8'), {
+        name: 'metadata.csv',
+      })
+
+      // Fysiska filer: receipts/<expense_id>/<basename>. Saknad expense_id
+      // → "unbooked"-katalog så att struktur förblir deterministisk.
+      for (const r of rows) {
+        const absolute = path.resolve(documentsRoot, r.file_path)
+        if (!absolute.startsWith(documentsRoot)) {
+          log.warn(
+            '[receipt-service] zip: file_path utanför documents-root:',
+            r.file_path,
+          )
+          continue
+        }
+        if (!fs.existsSync(absolute)) {
+          log.warn('[receipt-service] zip: fil saknas på disk:', absolute)
+          continue
+        }
+        const folder = r.expense_id !== null ? String(r.expense_id) : 'unbooked'
+        const basename = sanitizeBasename(r.original_filename)
+        archive.file(absolute, {
+          name: `receipts/${folder}/${basename}`,
+        })
+      }
+
+      archive.finalize().catch(reject)
+    })
+
+    return { success: true, data: { filename } }
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && 'error' in err) {
+      const e = err as { code: ErrorCode; error: string; field?: string }
+      return { success: false, error: e.error, code: e.code, field: e.field }
+    }
+    log.error('[receipt-service] exportReceiptsZipBundle:', err)
+    return {
+      success: false,
+      error: 'Det gick inte att skapa ZIP-bundle.',
+      code: 'UNEXPECTED_ERROR',
+    }
+  }
+}
+
+/**
+ * VS-141: bygger default-filnamn för zip-bundle baserat på bolagsnamn +
+ * dagens datum. Renderer-callsites läser filnamnet från service-respons,
+ * IPC-handler använder denna helper för dialog-default + E2E-bypass.
+ */
+export function buildZipBundleFilename(companyName: string): string {
+  const safe =
+    companyName
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 80) || 'bolag'
+  const d = getNow()
+  const ymd =
+    d.getFullYear().toString() +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    String(d.getDate()).padStart(2, '0')
+  return `receipts-${safe}-${ymd}.zip`
 }

@@ -1499,6 +1499,18 @@ export function useExportReceiptsCsv() {
   )
 }
 
+// VS-141: ZIP-bundle (CSV + fysiska filer)
+export function useExportReceiptsZipBundle() {
+  const { activeCompany } = useActiveCompany()
+  const companyId = activeCompany?.id
+  return useIpcMutation<void, { filePath?: string; cancelled?: true }>(
+    () =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IPC discriminated-union förenklas till löst objekt här
+      window.api.exportReceiptsZipBundle({ company_id: companyId! }) as any,
+    { invalidate: () => [] },
+  )
+}
+
 // === Period checks (Sprint VS-113) ===
 export function usePeriodChecks(periodId: number | undefined) {
   return useIpcQuery<{

@@ -211,6 +211,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   linkReceiptToExpense: 'receipt:link-to-expense',
   // Sprint VS-123: receipt CSV export
   exportReceiptsCsv: 'receipt:export-csv',
+  // Sprint VS-141: receipt ZIP bundle export
+  exportReceiptsZipBundle: 'receipt:export-zip-bundle',
 }
 
 // ── Override storage ──────────────────────────────────────────────────

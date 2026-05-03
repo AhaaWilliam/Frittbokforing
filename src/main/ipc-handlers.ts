@@ -304,6 +304,7 @@ import {
   PreviewJournalLinesInputSchema,
   ReceiptListInputSchema,
   ExportReceiptsCsvInputSchema,
+  ExportReceiptsZipBundleInputSchema,
   CreateReceiptInputSchema,
   UpdateReceiptNotesInputSchema,
   ArchiveReceiptInputSchema,
@@ -323,6 +324,8 @@ import {
   deleteReceipt,
   linkReceiptToExpense,
   exportReceiptsCsv,
+  exportReceiptsZipBundle,
+  buildZipBundleFilename,
 } from './services/receipt-service'
 import { getPeriodChecks } from './services/period-checks-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
@@ -1754,6 +1757,51 @@ export function registerIpcHandlers(): void {
       }
       fs.writeFileSync(dialogResult.filePath, buffer)
       return { filePath: dialogResult.filePath }
+    }),
+  )
+
+  // Sprint VS-141: ZIP-bundle av kvitton (CSV + fysiska filer).
+  // Service streamar zip till disk, handlern hanterar save-dialog +
+  // E2E bypass (M147).
+  ipcMain.handle(
+    'receipt:export-zip-bundle',
+    wrapIpcHandler<
+      { company_id: number },
+      { filePath?: string; cancelled?: true }
+    >(ExportReceiptsZipBundleInputSchema, async (data) => {
+      const company = db
+        .prepare('SELECT name FROM companies WHERE id = ?')
+        .get(data.company_id) as { name: string } | undefined
+      if (!company) {
+        return {
+          success: false,
+          error: 'Bolaget hittades inte.',
+          code: 'NOT_FOUND',
+        }
+      }
+      const defaultFilename = buildZipBundleFilename(company.name)
+
+      const e2ePath = getE2EFilePath(defaultFilename, 'save')
+      let destinationPath: string
+      if (e2ePath) {
+        destinationPath = e2ePath
+      } else {
+        const dialogResult = await dialog.showSaveDialog({
+          defaultPath: defaultFilename,
+          filters: [{ name: 'ZIP-arkiv', extensions: ['zip'] }],
+        })
+        if (dialogResult.canceled || !dialogResult.filePath) {
+          return { cancelled: true }
+        }
+        destinationPath = dialogResult.filePath
+      }
+
+      const result = await exportReceiptsZipBundle(db, {
+        company_id: data.company_id,
+        destinationPath,
+      })
+      if (!result.success) return result
+      return { filePath: destinationPath }
     }),
   )
 

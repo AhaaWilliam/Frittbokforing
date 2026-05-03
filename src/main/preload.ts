@@ -484,6 +484,9 @@ contextBridge.exposeInMainWorld('api', {
   // VS-123: CSV-export av kvittolista
   exportReceiptsCsv: (data: { company_id: number }) =>
     ipcRenderer.invoke('receipt:export-csv', data),
+  // VS-141: ZIP-bundle (CSV + fysiska filer) per bolag
+  exportReceiptsZipBundle: (data: { company_id: number }) =>
+    ipcRenderer.invoke('receipt:export-zip-bundle', data),
   // VS-113: månadsstängnings-checks
   getPeriodChecks: (data: { period_id: number }) =>
     ipcRenderer.invoke('period:checks', data),
