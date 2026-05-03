@@ -23,6 +23,7 @@ describe('F59 — per-channel response-schema validation', () => {
             end_date: '2026-12-31',
             is_closed: 0,
             annual_report_status: 'not_started',
+            closed_at: null,
           },
         ],
       })

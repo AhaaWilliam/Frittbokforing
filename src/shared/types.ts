@@ -120,6 +120,7 @@ export interface FiscalYear {
   end_date: string
   is_closed: 0 | 1
   annual_report_status: string
+  closed_at: string | null
 }
 
 // === Fiscal Year Context ===

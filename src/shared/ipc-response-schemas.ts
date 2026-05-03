@@ -28,6 +28,7 @@ const FiscalYearSchema = z.object({
   end_date: z.string(),
   is_closed: z.union([z.literal(0), z.literal(1)]),
   annual_report_status: z.string(),
+  closed_at: z.string().nullable(),
 })
 
 const FiscalPeriodSchema = z.object({
@@ -37,6 +38,7 @@ const FiscalPeriodSchema = z.object({
   start_date: z.string(),
   end_date: z.string(),
   is_closed: z.union([z.literal(0), z.literal(1)]),
+  closed_at: z.string().nullable(),
 })
 
 const CounterpartySchema = z

@@ -34,9 +34,7 @@ export type { AxeResults }
 
 // ── Default fiscal year fixture ───────────────────────────────────────
 
-function makeFiscalYear(
-  overrides?: Partial<FiscalYear>,
-): FiscalYear {
+function makeFiscalYear(overrides?: Partial<FiscalYear>): FiscalYear {
   return {
     id: 1,
     company_id: 1,
@@ -45,6 +43,7 @@ function makeFiscalYear(
     end_date: '2026-12-31',
     is_closed: 0,
     annual_report_status: 'not_started',
+    closed_at: null,
     ...overrides,
   }
 }
@@ -73,7 +72,15 @@ function runAxeSerialized(container: Element): Promise<AxeResults> {
 
 interface RenderWithProvidersOptions {
   /** Fiscal year state: object for loaded, 'loading' for pending, 'none' for empty list. */
-  fiscalYear?: { id: number; label: string; is_closed?: 0 | 1 } | 'loading' | 'none'
+  fiscalYear?:
+    | {
+        id: number
+        label: string
+        is_closed?: 0 | 1
+        closed_at?: string | null
+      }
+    | 'loading'
+    | 'none'
   /** Active company for ActiveCompanyContext (Sprint MC2). Default: dummy "Test AB". */
   company?: Company
   /** Initial hash route (e.g. '/overview'). */
@@ -105,31 +112,33 @@ export async function renderWithProviders(
 
   // Sprint MC2: ActiveCompanyContext mockas med ett default-bolag, om inte
   // testet gett en egen via `company`-optionen.
-  const activeCompany: Company = company ?? ({
-    id: 1,
-    name: 'Test AB',
-    org_number: '556036-0793',
-    fiscal_rule: 'K2',
-    share_capital: 2_500_000,
-    base_currency: 'SEK',
-    registration_date: '2025-01-01',
-    vat_number: null,
-    email: null,
-    phone: null,
-    address_line1: null,
-    address_line2: null,
-    postal_code: null,
-    city: null,
-    country: 'SE',
-    bankgiro: null,
-    plusgiro: null,
-    website: null,
-    board_members: null,
-    approved_for_f_tax: 0,
-    vat_frequency: 'quarterly',
-    has_employees: 0,
-    created_at: '2025-01-01 00:00:00',
-  } as Company)
+  const activeCompany: Company =
+    company ??
+    ({
+      id: 1,
+      name: 'Test AB',
+      org_number: '556036-0793',
+      fiscal_rule: 'K2',
+      share_capital: 2_500_000,
+      base_currency: 'SEK',
+      registration_date: '2025-01-01',
+      vat_number: null,
+      email: null,
+      phone: null,
+      address_line1: null,
+      address_line2: null,
+      postal_code: null,
+      city: null,
+      country: 'SE',
+      bankgiro: null,
+      plusgiro: null,
+      website: null,
+      board_members: null,
+      approved_for_f_tax: 0,
+      vat_frequency: 'quarterly',
+      has_employees: 0,
+      created_at: '2025-01-01 00:00:00',
+    } as Company)
   mockIpcResponse('company:list', { success: true, data: [activeCompany] })
   mockIpcResponse('company:switch', { success: true, data: activeCompany })
 
@@ -145,7 +154,12 @@ export async function renderWithProviders(
     const fy = makeFiscalYear({
       id: fiscalYear.id,
       year_label: fiscalYear.label,
-      ...(fiscalYear.is_closed != null ? { is_closed: fiscalYear.is_closed } : {}),
+      ...(fiscalYear.is_closed != null
+        ? { is_closed: fiscalYear.is_closed }
+        : {}),
+      ...(fiscalYear.closed_at !== undefined
+        ? { closed_at: fiscalYear.closed_at }
+        : {}),
     })
     mockIpcResponse('fiscal-year:list', { success: true, data: [fy] })
     mockIpcResponse('settings:get', fiscalYear.id)
@@ -188,7 +202,10 @@ export async function renderWithProviders(
     axeResults = await runAxeSerialized(result.container)
     if (axeResults && axeResults.violations.length > 0) {
       const msg = axeResults.violations
-        .map((v) => `[${v.impact}] ${v.id}: ${v.description}\n  targets: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
+        .map(
+          (v) =>
+            `[${v.impact}] ${v.id}: ${v.description}\n  targets: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+        )
         .join('\n')
       throw new Error(`axe-core violations:\n${msg}`)
     }

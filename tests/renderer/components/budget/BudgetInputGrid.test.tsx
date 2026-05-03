@@ -14,7 +14,7 @@ beforeEach(() => {
   mockIpcResponse('fiscal-year:list', {
     success: true,
     data: [
-      { id: 1, company_id: 1, year_label: '2026', start_date: '2026-01-01', end_date: '2026-12-31', is_closed: 0, annual_report_status: 'open' },
+      { id: 1, company_id: 1, year_label: '2026', start_date: '2026-01-01', end_date: '2026-12-31', is_closed: 0, annual_report_status: 'open', closed_at: null },
     ],
   })
 })

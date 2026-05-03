@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
-import { setupMockIpc, mockIpcResponse } from '../../../setup/mock-ipc'
+import { setupMockIpc } from '../../../setup/mock-ipc'
 import { renderWithProviders } from '../../../helpers/render-with-providers'
-import { YearPicker, formatFiscalYearLabel } from '../../../../src/renderer/components/layout/YearPicker'
+import {
+  YearPicker,
+  formatFiscalYearLabel,
+} from '../../../../src/renderer/components/layout/YearPicker'
 import type { FiscalYear } from '../../../../src/shared/types'
 
 function makeFy(overrides?: Partial<FiscalYear>): FiscalYear {
@@ -15,6 +18,7 @@ function makeFy(overrides?: Partial<FiscalYear>): FiscalYear {
     end_date: '2026-12-31',
     is_closed: 0,
     annual_report_status: 'not_started',
+    closed_at: null,
     ...overrides,
   }
 }
@@ -71,6 +75,37 @@ describe('YearPicker', () => {
     await waitFor(() => {
       expect(screen.getByText(/Stängt år/)).toBeInTheDocument()
     })
+  })
+
+  // VS-135: closed_at-datum visas i lock-label när tillgängligt.
+  it('VS-135 closed year with closed_at shows formatted date in lock label', async () => {
+    await renderWithProviders(<YearPicker />, {
+      fiscalYear: {
+        id: 1,
+        label: '2026',
+        is_closed: 1,
+        closed_at: '2027-02-15 10:30:00',
+      },
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
+    })
+
+    const lockLabel = await screen.findByTestId('year-picker-lock-label')
+    expect(lockLabel.textContent).toMatch(/Stängt /)
+    expect(lockLabel.textContent).toMatch(/15 feb/i)
+    expect(lockLabel.textContent).toMatch(/2027/)
+    expect(lockLabel.textContent).toMatch(/skrivskyddat/)
+    expect(lockLabel.getAttribute('title')).toBe('Stängt 2027-02-15 10:30:00')
+  })
+
+  it('VS-135 closed year without closed_at falls back to generic label', async () => {
+    await renderWithProviders(<YearPicker />, {
+      fiscalYear: { id: 1, label: '2026', is_closed: 1, closed_at: null },
+      axeCheck: false, // M133 exempt — dedicated axe test in outer describe
+    })
+
+    const lockLabel = await screen.findByTestId('year-picker-lock-label')
+    expect(lockLabel.textContent).toBe('Stängt år — skrivskyddat')
+    expect(lockLabel.getAttribute('title')).toBeNull()
   })
 
   it('open year has no warning styling or lock text', async () => {

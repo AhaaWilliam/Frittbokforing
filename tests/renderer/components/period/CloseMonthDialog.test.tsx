@@ -17,6 +17,7 @@ beforeEach(() => {
         start_date: '2026-01-01',
         end_date: '2026-01-31',
         is_closed: 0,
+        closed_at: null,
       },
     ],
   })

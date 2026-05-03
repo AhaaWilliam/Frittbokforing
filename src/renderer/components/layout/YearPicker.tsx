@@ -15,6 +15,20 @@ function formatFiscalYearLabel(fy: FiscalYear): string {
 
 export { formatFiscalYearLabel }
 
+// VS-135: formatera FY.closed_at som svenskt datum för lock-label.
+// Speglar VS-130-mönstret från PeriodList. Returnerar null vid saknad
+// eller oparserbar timestamp så caller kan fallback till generic label.
+function formatFiscalYearClosedAt(closedAt: string | null): string | null {
+  if (!closedAt) return null
+  const date = new Date(closedAt.replace(' ', 'T'))
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('sv-SE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
 export function YearPicker() {
   const { activeFiscalYear, setActiveFiscalYear, allFiscalYears } =
     useFiscalYearContext()
@@ -59,12 +73,28 @@ export function YearPicker() {
         ))}
         <option value="__create__">+ Skapa nytt räkenskapsår</option>
       </select>
-      {activeFiscalYear.is_closed === 1 && (
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-warning-600">
-          <Lock className="h-3 w-3" />
-          Stängt år — skrivskyddat
-        </div>
-      )}
+      {activeFiscalYear.is_closed === 1 &&
+        (() => {
+          const closedDate = formatFiscalYearClosedAt(
+            activeFiscalYear.closed_at,
+          )
+          return (
+            <div
+              className="mt-1 flex items-center gap-1 text-[11px] text-warning-600"
+              data-testid="year-picker-lock-label"
+              title={
+                activeFiscalYear.closed_at
+                  ? `Stängt ${activeFiscalYear.closed_at}`
+                  : undefined
+              }
+            >
+              <Lock className="h-3 w-3" />
+              {closedDate
+                ? `Stängt ${closedDate} — skrivskyddat`
+                : 'Stängt år — skrivskyddat'}
+            </div>
+          )
+        })()}
 
       <CreateFiscalYearDialog
         open={showCreateDialog}

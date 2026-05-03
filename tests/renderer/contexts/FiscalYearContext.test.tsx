@@ -23,6 +23,7 @@ function makeFy(overrides: Partial<FiscalYear> & { id: number }): FiscalYear {
     end_date: '2026-12-31',
     is_closed: 0,
     annual_report_status: 'not_started',
+    closed_at: null,
     ...overrides,
   }
 }

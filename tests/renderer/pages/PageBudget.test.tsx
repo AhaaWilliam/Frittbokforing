@@ -144,8 +144,8 @@ describe('PageBudget', () => {
     mockIpcResponse('fiscal-year:list', {
       success: true,
       data: [
-        { id: 1, company_id: 1, year_label: '2026', start_date: '2026-01-01', end_date: '2026-12-31', is_closed: 0, annual_report_status: 'not_started' },
-        { id: 2, company_id: 1, year_label: '2025', start_date: '2025-01-01', end_date: '2025-12-31', is_closed: 1, annual_report_status: 'not_started' },
+        { id: 1, company_id: 1, year_label: '2026', start_date: '2026-01-01', end_date: '2026-12-31', is_closed: 0, annual_report_status: 'not_started', closed_at: null },
+        { id: 2, company_id: 1, year_label: '2025', start_date: '2025-01-01', end_date: '2025-12-31', is_closed: 1, annual_report_status: 'not_started', closed_at: '2026-01-15 09:00:00' },
       ],
     })
     await waitFor(() => {
