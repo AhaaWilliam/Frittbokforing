@@ -249,9 +249,10 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     ocrTokenRef.current += 1
   }, [open, prefilledReceipt])
 
-  // VS-145b: Är path en OCR-bar bild? PDF skip för v1.
+  // VS-145b/148: Är path en OCR-bar bild eller PDF?
+  // PDF konverteras till bild via pdfFirstPageToBlob i ocrReceipt.
   function isOcrSupported(path: string): boolean {
-    return /\.(jpg|jpeg|png|webp|heic)$/i.test(path)
+    return /\.(jpg|jpeg|png|webp|heic|pdf)$/i.test(path)
   }
 
   async function runOcr(blob: Blob) {
@@ -304,7 +305,12 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
       if (!r.success) return
       const res = await fetch(r.data.url)
       if (!res.ok) return
-      const blob = await res.blob()
+      let blob = await res.blob()
+      // VS-148: säkerställ rätt mime-type för PDF även om Content-Type
+      // saknas i fetch-svaret (Electron file:// kan vara opålitlig).
+      if (/\.pdf$/i.test(path) && blob.type !== 'application/pdf') {
+        blob = new Blob([blob], { type: 'application/pdf' })
+      }
       await runOcr(blob)
     } catch (e) {
       console.warn('[BokforKostnadSheet] OCR fetch failed:', e)

@@ -24,6 +24,7 @@ const ocrReceiptMock = vi.fn()
 vi.mock('../../../../src/renderer/lib/ocr', () => ({
   ocrReceipt: (blob: Blob) => ocrReceiptMock(blob),
   matchSupplier: () => null,
+  prewarmWorker: () => Promise.resolve(),
 }))
 
 // Mock SupplierPicker — minimal stub.
@@ -55,7 +56,15 @@ beforeEach(() => {
 })
 
 function dropFile(zone: Element, name: string, ext: string) {
-  const file = Object.assign(new File(['x'], name + ext), {
+  const mime =
+    ext === '.pdf'
+      ? 'application/pdf'
+      : ext === '.png'
+        ? 'image/png'
+        : ext === '.webp'
+          ? 'image/webp'
+          : 'image/jpeg'
+  const file = Object.assign(new File(['x'], name + ext, { type: mime }), {
     path: '/tmp/' + name + ext,
   })
   fireEvent.drop(zone, { dataTransfer: { files: [file] } })
@@ -137,7 +146,12 @@ describe('Sprint VS-145b — OCR-integration i BokforKostnadSheet', () => {
     )
   })
 
-  it('PDF-attach kör inte OCR', async () => {
+  it('PDF-attach kör OCR (VS-148)', async () => {
+    ocrReceiptMock.mockResolvedValue({
+      amount_kr: 500,
+      date: '2026-04-01',
+      confidence: 80,
+    })
     await renderWithProviders(
       <BokforKostnadSheet open={true} onClose={() => {}} />,
       { axeCheck: false }, // M133 exempt — covered by Sheets.a11y.test.tsx
@@ -145,12 +159,11 @@ describe('Sprint VS-145b — OCR-integration i BokforKostnadSheet', () => {
     const zone = await screen.findByTestId('vardag-kostnad-receipt-pick')
     dropFile(zone, 'kvitto', '.pdf')
 
-    // Vänta tillräckligt för att ev. OCR skulle hunnit triggas
-    await new Promise((r) => setTimeout(r, 30))
-    expect(ocrReceiptMock).not.toHaveBeenCalled()
-    expect(
-      screen.queryByTestId('vardag-kostnad-ocr-suggestion'),
-    ).toBeNull()
+    await waitFor(() => {
+      expect(ocrReceiptMock).toHaveBeenCalledTimes(1)
+    })
+    const callout = await screen.findByTestId('vardag-kostnad-ocr-suggestion')
+    expect(callout).toHaveTextContent('500 kr')
   })
 
   it('OCR-rejection logger tyst utan att visa toast', async () => {
