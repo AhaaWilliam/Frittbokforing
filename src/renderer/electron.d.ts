@@ -848,6 +848,15 @@ interface ElectronAPI {
       allOk: boolean
     }>
   >
+  // VS-142: subscribera på notification-events från main-process.
+  onNotification: (
+    handler: (payload: {
+      title: string
+      body: string
+      action?: string
+      companyId?: number
+    }) => void,
+  ) => () => void
 }
 
 export interface UserMeta {

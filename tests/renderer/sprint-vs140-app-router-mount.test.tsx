@@ -67,6 +67,7 @@ beforeEach(() => {
     approved_for_f_tax: 1,
     vat_frequency: 'quarterly',
     has_employees: 0,
+      notify_vat_deadline: 0,
     created_at: '2025-01-01',
   }
   mockIpcResponse('company:list', { success: true, data: [company] })

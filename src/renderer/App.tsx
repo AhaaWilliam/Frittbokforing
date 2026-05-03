@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from 'sonner'
 import { useCompanies } from './lib/hooks'
@@ -11,7 +11,7 @@ import { ErrorFallback } from './components/ui/ErrorFallback'
 import { useAuth } from './lib/use-auth'
 import { useUiMode } from './lib/use-ui-mode'
 import { VardagApp } from './modes/vardag/VardagApp'
-import { HashRouter } from './lib/router'
+import { HashRouter, useNavigate } from './lib/router'
 import { routes } from './lib/routes'
 
 export default function App() {
@@ -111,7 +111,37 @@ function AuthenticatedApp() {
 // Bokförar-skalen baserat på `useUiMode`. Mode persisteras i settings
 // (key: `ui_mode`) — vid sessionsbyte återställs till samma läge.
 function ModeRouter() {
-  const { mode, loading } = useUiMode()
+  const { mode, setMode, loading } = useUiMode()
+  const navigate = useNavigate()
+
+  // VS-142: lyssna på notification:show från main-process. Skapa OS-
+  // notifikation via Notification-API, och vid klick: byt till
+  // bokförare-mode och navigera till /vat.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.api?.onNotification) return
+    const unsub = window.api.onNotification((payload) => {
+      try {
+        if (typeof Notification === 'undefined') return
+        const notif = new Notification(payload.title, { body: payload.body })
+        notif.onclick = () => {
+          if (payload.action === 'navigate-vat') {
+            setMode('bokforare')
+            // Defer navigate så ModeRouter hinner växla skal innan
+            // useNavigate-routern tar över i den nya trädet.
+            setTimeout(() => navigate('/vat'), 0)
+          }
+          try {
+            window.focus()
+          } catch {
+            /* no-op */
+          }
+        }
+      } catch {
+        /* OS:t saknar Notification eller har nekat — tyst fallback */
+      }
+    })
+    return unsub
+  }, [setMode, navigate])
 
   if (loading) {
     return (

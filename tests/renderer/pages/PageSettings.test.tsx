@@ -38,6 +38,7 @@ function makeCompany(overrides: Record<string, unknown> = {}) {
     approved_for_f_tax: 1,
     vat_frequency: 'quarterly',
     has_employees: 0,
+    notify_vat_deadline: 0,
     created_at: '2020-01-01',
     ...overrides,
   }
@@ -187,5 +188,58 @@ describe('PageSettings — VS-120/121', () => {
       has_employees: 1,
       vat_frequency: 'monthly',
     })
+  })
+
+  it('VS-142: notify_vat_deadline-checkbox prepopulerar från company', async () => {
+    mockIpcResponse('company:get', {
+      success: true,
+      data: makeCompany({ notify_vat_deadline: 1 }),
+    })
+
+    await renderWithProviders(<PageSettings />, {
+      axeCheck: false, // M133 exempt — BackupSection använder window.api.getSetting (raw)
+      initialRoute: '/settings',
+    })
+
+    const checkbox = (await screen.findByLabelText(
+      /Påminn mig om moms-deadline/,
+    )) as HTMLInputElement
+    expect(checkbox.checked).toBe(true)
+  })
+
+  it('VS-142: notify_vat_deadline submit skickar 1 efter toggle', async () => {
+    mockIpcResponse('company:get', {
+      success: true,
+      data: makeCompany({ notify_vat_deadline: 0 }),
+    })
+    mockIpcResponse('company:update', {
+      success: true,
+      data: makeCompany({ notify_vat_deadline: 1 }),
+    })
+
+    await renderWithProviders(<PageSettings />, {
+      axeCheck: false, // M133 exempt — BackupSection använder window.api.getSetting (raw)
+      initialRoute: '/settings',
+    })
+
+    const api = (window as unknown as { api: Record<string, unknown> }).api
+    const updateSpy = vi.spyOn(
+      api as { updateCompany: (...args: unknown[]) => unknown },
+      'updateCompany',
+    )
+
+    const checkbox = await screen.findByLabelText(/Påminn mig om moms-deadline/)
+    fireEvent.click(checkbox)
+
+    const buttons = screen.getAllByRole('button', { name: /^Spara$/ })
+    const submit = buttons.find((b) => b.getAttribute('type') === 'submit')
+    if (!submit) throw new Error('No submit-button found')
+    fireEvent.click(submit)
+
+    await waitFor(() => {
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+    })
+    const payload = updateSpy.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(payload).toMatchObject({ notify_vat_deadline: 1 })
   })
 })

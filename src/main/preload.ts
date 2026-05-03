@@ -490,6 +490,31 @@ contextBridge.exposeInMainWorld('api', {
   // VS-113: månadsstängnings-checks
   getPeriodChecks: (data: { period_id: number }) =>
     ipcRenderer.invoke('period:checks', data),
+  // VS-142: subscription till notification-events från main-process.
+  // Returnerar unsubscribe-funktion (kalla i useEffect cleanup).
+  onNotification: (
+    handler: (payload: {
+      title: string
+      body: string
+      action?: string
+      companyId?: number
+    }) => void,
+  ): (() => void) => {
+    const listener = (_event: unknown, payload: unknown) => {
+      handler(
+        payload as {
+          title: string
+          body: string
+          action?: string
+          companyId?: number
+        },
+      )
+    }
+    ipcRenderer.on('notification:show', listener)
+    return () => {
+      ipcRenderer.removeListener('notification:show', listener)
+    }
+  },
 })
 
 // Auth — separate namespace (window.auth.*) for the local-login + SQLCipher

@@ -330,6 +330,7 @@ export const UpdateCompanyInputSchema = z
     approved_for_f_tax: z.number().int().min(0).max(1).optional(),
     has_employees: z.number().int().min(0).max(1).optional(),
     vat_frequency: z.enum(['monthly', 'quarterly', 'yearly']).optional(),
+    notify_vat_deadline: z.number().int().min(0).max(1).optional(),
   })
   .strict()
 

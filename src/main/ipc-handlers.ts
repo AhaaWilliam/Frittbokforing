@@ -2,6 +2,7 @@ import { ipcMain, dialog, BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { dbProxy, getDbPath, getTableCount } from './db'
+import { runVatDeadlineCheck } from './services/vat-deadline-notifier'
 import { loadSettings, saveSettings } from './utils/settings'
 import { getActiveCompanyId } from './utils/active-context'
 import {
@@ -350,6 +351,19 @@ export function runPostUnlockStartup(): void {
     performAutoBackupIfDue(dbProxy).catch((err) => {
       log.error('[auto-backup] Oväntat fel vid post-unlock-backup:', err)
     })
+  }
+
+  // VS-142: moms-deadline-notifikation. Best-effort — fel ska inte blockera
+  // app-start. Skippas i test-/E2E-mode (Notification kräver renderer +
+  // OS-API som inte finns i headless-tester).
+  if (process.env.FRITT_TEST !== '1' && process.env.E2E_TESTING !== 'true') {
+    try {
+      runVatDeadlineCheck(dbProxy, {
+        getWindow: () => BrowserWindow.getAllWindows()[0] ?? null,
+      })
+    } catch (err) {
+      log.error('[vat-notifier] Oväntat fel vid post-unlock-check:', err)
+    }
   }
 }
 

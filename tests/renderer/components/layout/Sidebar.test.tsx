@@ -28,6 +28,7 @@ function makeCompany(overrides?: Partial<Company>): Company {
     approved_for_f_tax: 0,
     vat_frequency: 'quarterly',
     has_employees: 0,
+      notify_vat_deadline: 0,
     created_at: '2020-01-01T00:00:00Z',
     ...overrides,
   }

@@ -2081,6 +2081,20 @@ CREATE INDEX idx_ep_je ON expense_payments(journal_entry_id);
       DEFAULT 0
       CHECK (has_employees IN (0, 1));`,
   },
+  // ── Migration 062 — VS-142: companies.notify_vat_deadline ──────────
+  //
+  // Opt-in flagga (0/1) för OS-notifikation om kommande moms-deadline.
+  // Default 0 — ingen notifikation utan att användaren explicit toggla:r
+  // i Settings. Notifier-service triggas vid app.whenReady() och eskalerar
+  // via en 7/3/1-dagars-skala. Idempotens via settings-keys
+  // (vat_notif_<companyId>_<isoDate>_<level>).
+  //
+  // M127: ADD COLUMN med konstant DEFAULT är OK.
+  {
+    sql: `ALTER TABLE companies ADD COLUMN notify_vat_deadline INTEGER NOT NULL
+      DEFAULT 0
+      CHECK (notify_vat_deadline IN (0, 1));`,
+  },
 ]
 
 function migration039Verify(db: import('better-sqlite3').Database): void {

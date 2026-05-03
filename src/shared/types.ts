@@ -108,6 +108,8 @@ export interface Company {
   vat_frequency: 'monthly' | 'quarterly' | 'yearly'
   /** VS-120: bolaget har anställda (lönebokningar förväntas). Default 0. */
   has_employees: number
+  /** VS-142: opt-in OS-notifiering om moms-deadline (7/3/1 dagar). Default 0. */
+  notify_vat_deadline: number
   created_at: string
 }
 
@@ -208,6 +210,7 @@ export interface UpdateCompanyInput {
   approved_for_f_tax?: number
   has_employees?: number
   vat_frequency?: 'monthly' | 'quarterly' | 'yearly'
+  notify_vat_deadline?: number
 }
 
 // === Counterparty Input ===

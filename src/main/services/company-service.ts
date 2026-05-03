@@ -309,4 +309,5 @@ const ALLOWED_COMPANY_COLUMNS = new Set([
   'approved_for_f_tax',
   'has_employees',
   'vat_frequency',
+  'notify_vat_deadline',
 ])

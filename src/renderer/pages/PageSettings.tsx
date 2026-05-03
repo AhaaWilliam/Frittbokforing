@@ -411,6 +411,7 @@ export function PageSettings() {
   const [boardMembers, setBoardMembers] = useState('')
   const [approvedForFTax, setApprovedForFTax] = useState(true)
   const [hasEmployees, setHasEmployees] = useState(false)
+  const [notifyVatDeadline, setNotifyVatDeadline] = useState(false)
   const [vatFrequency, setVatFrequency] = useState<
     'monthly' | 'quarterly' | 'yearly'
   >('quarterly')
@@ -432,6 +433,7 @@ export function PageSettings() {
       setBoardMembers(company.board_members ?? '')
       setApprovedForFTax(company.approved_for_f_tax !== 0)
       setHasEmployees(company.has_employees === 1)
+      setNotifyVatDeadline(company.notify_vat_deadline === 1)
       setVatFrequency(company.vat_frequency)
     }
   }, [company])
@@ -466,6 +468,7 @@ export function PageSettings() {
       approved_for_f_tax: approvedForFTax ? 1 : 0,
       has_employees: hasEmployees ? 1 : 0,
       vat_frequency: vatFrequency,
+      notify_vat_deadline: notifyVatDeadline ? 1 : 0,
     }
 
     try {
@@ -744,6 +747,23 @@ export function PageSettings() {
                 Styr deadline-pillen i Vardag-vyn. SKV-standard för småbolag är
                 kvartalsvis.
               </p>
+            </div>
+
+            {/* VS-142: opt-in OS-notifikation 7/3/1 dagar före moms-deadline */}
+            <div className="flex items-center gap-3">
+              <input
+                id="notify_vat_deadline"
+                type="checkbox"
+                checked={notifyVatDeadline}
+                onChange={(e) => setNotifyVatDeadline(e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-primary"
+              />
+              <label
+                htmlFor="notify_vat_deadline"
+                className="text-sm text-foreground"
+              >
+                Påminn mig om moms-deadline (notifikation 7/3/1 dagar före)
+              </label>
             </div>
 
             <div className="pt-4">
