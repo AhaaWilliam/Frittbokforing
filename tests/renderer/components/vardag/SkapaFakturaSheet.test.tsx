@@ -341,6 +341,75 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     expect(vatSelect.textContent).toMatch(/Laddar momskoder/)
   })
 
+  it('VS-138/VS-25 submit-fel rensas när användaren börjar redigera', async () => {
+    mockIpcResponse('invoice:save-draft', { success: true, data: { id: 88 } })
+    mockIpcResponse('invoice:finalize', {
+      success: false,
+      error: 'Perioden är stängd.',
+      code: 'PERIOD_CLOSED',
+    })
+
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+
+    fireEvent.click(await screen.findByTestId('customer-picker-mock'))
+    fireEvent.change(screen.getByTestId('vardag-faktura-description'), {
+      target: { value: 'Konsult' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-faktura-price'), {
+      target: { value: '500,00' },
+    })
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-faktura-submit')).not.toBeDisabled(),
+    )
+    fireEvent.click(screen.getByTestId('vardag-faktura-submit'))
+
+    expect(
+      await screen.findByTestId('vardag-faktura-error'),
+    ).toBeInTheDocument()
+
+    // När användaren börjar redigera ska felet försvinna (VS-96-mönstret)
+    fireEvent.change(screen.getByTestId('vardag-faktura-description'), {
+      target: { value: 'Konsult & analys' },
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('vardag-faktura-error')).toBeNull()
+    })
+  })
+
+  it('VS-138/VS-20 visar kontonamn när kontonummer matchar', async () => {
+    mockIpcResponse('account:list-all', {
+      success: true,
+      data: [
+        {
+          id: 1,
+          account_number: '3001',
+          name: 'Försäljning inom Sverige',
+          account_type: 'revenue',
+          is_active: 1,
+          k2_allowed: 1,
+          k3_only: 0,
+          is_system_account: 0,
+        },
+      ],
+    })
+
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('vardag-faktura-account-name'),
+      ).toHaveTextContent('Försäljning inom Sverige')
+    })
+  })
+
   it('VS-137/VS-16 Cmd+Enter triggar submit när formulär är giltigt', async () => {
     mockIpcResponse('invoice:save-draft', { success: true, data: { id: 88 } })
     mockIpcResponse('invoice:finalize', {
