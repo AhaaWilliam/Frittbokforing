@@ -215,6 +215,33 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   exportReceiptsCsv: 'receipt:export-csv',
   // Sprint VS-141: receipt ZIP bundle export
   exportReceiptsZipBundle: 'receipt:export-zip-bundle',
+  // Credit notes (invoice + expense)
+  createCreditNoteDraft: 'invoice:create-credit-note-draft',
+  createExpenseCreditNoteDraft: 'expense:create-credit-note-draft',
+  // SIE5 Import (Sprint U2)
+  sie5SelectFile: 'import:sie5-select-file',
+  sie5Validate: 'import:sie5-validate',
+  sie5Import: 'import:sie5-execute',
+  // SEPA DD (Sprint U1)
+  sepaDdCreateMandate: 'sepa-dd:create-mandate',
+  sepaDdListMandates: 'sepa-dd:list-mandates',
+  sepaDdRevokeMandate: 'sepa-dd:revoke-mandate',
+  sepaDdCreateCollection: 'sepa-dd:create-collection',
+  sepaDdCreateBatch: 'sepa-dd:create-batch',
+  sepaDdExportPain008: 'sepa-dd:export-pain008',
+  sepaDdListCollections: 'sepa-dd:list-collections',
+  sepaDdListBatches: 'sepa-dd:list-batches',
+  // Cash Flow (Sprint 53 F65)
+  getCashFlowStatement: 'report:cash-flow',
+  // Bank statement / reconciliation (Sprint 55 F66-a)
+  importBankStatement: 'bank-statement:import',
+  listBankStatements: 'bank-statement:list',
+  getBankStatement: 'bank-statement:get',
+  matchBankTransaction: 'bank-statement:match-transaction',
+  suggestBankMatches: 'bank-statement:suggest-matches',
+  unmatchBankTransaction: 'bank-statement:unmatch-transaction',
+  unmatchBankBatch: 'bank-statement:unmatch-batch',
+  createBankFeeEntry: 'bank-statement:create-fee-entry',
 }
 
 // ── Override storage ──────────────────────────────────────────────────
