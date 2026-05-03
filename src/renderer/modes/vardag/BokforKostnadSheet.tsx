@@ -30,6 +30,7 @@ import {
   matchSupplier,
   normalizeOrgNumber,
   ocrReceipt,
+  prewarmWorker,
   type ExtractedFields,
   type SupplierMatch,
 } from '../../lib/ocr'
@@ -182,6 +183,14 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     const t = setTimeout(() => amountInputRef.current?.focus(), 0)
     return () => clearTimeout(t)
   }, [open])
+
+  // VS-145e: Pre-warm Tesseract-worker när komponenten mountas, så att
+  // första riktiga OCR-anropet är near-instant. Fire-and-forget — ingen
+  // await, inget loading-state, blockerar inte sheet-rendering.
+  // prewarmWorker är idempotent (singleton-cache) och no-op i test-miljö.
+  useEffect(() => {
+    void prewarmWorker()
+  }, [])
 
   // Default till IP1 (25%) när vatCodes laddats.
   useEffect(() => {

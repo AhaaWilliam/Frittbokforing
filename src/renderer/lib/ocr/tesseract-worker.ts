@@ -4,6 +4,10 @@
  * VS-145a: Singleton worker-pattern — skapa lazy vid första anropet,
  * återanvänd för efterföljande recognitions. Cleanup-funktion för tester.
  *
+ * VS-145e: Pre-warm-API som BokforKostnadSheet kallar fire-and-forget
+ * vid mount, så att första riktiga OCR-anropet är near-instant
+ * (worker-init + språkmodell-nedladdning är ~3-5s cold).
+ *
  * Språk: 'swe+eng'. Default Tesseract laddar språkfiler från CDN
  * (tessdata) — fungerar i Electron-renderer eftersom contextIsolation
  * inte blockerar fetch till externa språkfilskällor. För offline-bundling
@@ -14,7 +18,15 @@ import Tesseract, { type Worker } from 'tesseract.js'
 
 let workerPromise: Promise<Worker> | null = null
 
-async function getWorker(): Promise<Worker> {
+/**
+ * Hämta (eller skapa) singleton-workern. Lazy-init: första anropet
+ * triggar createWorker (~3-5s cold för språkmodell-nedladdning); efter-
+ * följande anrop återanvänder samma promise.
+ *
+ * Delas av recognizeReceipt och prewarmWorker så pre-warm faktiskt
+ * fyller samma cache som senare recognize-anrop använder.
+ */
+function getOrCreateWorker(): Promise<Worker> {
   if (workerPromise) return workerPromise
   workerPromise = (async () => {
     // Tesseract v7 API: createWorker(langs, oem, options)
@@ -46,7 +58,7 @@ export async function recognizeReceipt(
   }
   let worker: Worker
   try {
-    worker = await getWorker()
+    worker = await getOrCreateWorker()
   } catch (err) {
     throw {
       code: 'OCR_WORKER_INIT_FAILED',
@@ -66,6 +78,35 @@ export async function recognizeReceipt(
       error: 'OCR-bearbetning misslyckades.',
       cause: err,
     }
+  }
+}
+
+/**
+ * VS-145e: Pre-warm singleton-workern. Triggar worker-init och språk-
+ * modell-nedladdning utan att processa en bild. Fire-and-forget från
+ * BokforKostnadSheet mount.
+ *
+ * - Idempotent (singleton-cache i getOrCreateWorker säkerställer en
+ *   enda init per app-livscykel).
+ * - Best-effort: fel sväljs och loggas via console.warn — får aldrig
+ *   krasha eller störa UI.
+ * - Skipas i test-miljö (NODE_ENV='test') så vitest-runs inte försöker
+ *   ladda Tesseract-språkmodeller.
+ */
+export async function prewarmWorker(): Promise<void> {
+  if (
+    typeof process !== 'undefined' &&
+    process.env &&
+    process.env.NODE_ENV === 'test'
+  ) {
+    return
+  }
+  try {
+    await getOrCreateWorker()
+  } catch (err) {
+    // Best-effort: pre-warm-fail blockerar inte senare recognize
+    // (som har egen felhantering och kommer kasta strukturerat fel).
+    console.warn('[tesseract-worker] prewarm failed:', err)
   }
 }
 

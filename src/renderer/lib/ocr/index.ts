@@ -34,6 +34,7 @@ export {
 } from './extract-receipt-fields'
 export {
   recognizeReceipt,
+  prewarmWorker,
   terminateWorker,
   type OcrRecognitionResult,
 } from './tesseract-worker'
