@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Printer } from 'lucide-react'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useFiscalYearContext } from '../contexts/FiscalYearContext'
-import { useIncomeStatement, useBalanceSheet, useCashFlow } from '../lib/hooks'
+import { useSetActivePeriod } from '../contexts/ActivePeriodContext'
+import {
+  useIncomeStatement,
+  useBalanceSheet,
+  useCashFlow,
+  useFiscalPeriods,
+} from '../lib/hooks'
 import { IncomeStatementView } from '../components/reports/IncomeStatementView'
 import { BalanceSheetView } from '../components/reports/BalanceSheetView'
 import { CashFlowView } from '../components/reports/CashFlowView'
+import { mapDateRangeToPeriod } from '../lib/period-mapping'
 
 type Tab = 'income-statement' | 'balance-sheet' | 'cash-flow'
 
@@ -18,6 +25,19 @@ export function PageReports() {
   const fyId = activeFiscalYear?.id
   const dateRange =
     fromDate && toDate ? { from: fromDate, to: toDate } : undefined
+
+  // VS-149: Mappa date-range → period-id, sätt sidebar-override.
+  // Default (ingen range eller spänner flera perioder) = null → MonthIndicator
+  // faller tillbaka till global FY default.
+  const { data: periods = [] } = useFiscalPeriods(fyId)
+  const mappedPeriod = useMemo(
+    () =>
+      fromDate && toDate
+        ? mapDateRangeToPeriod(fromDate, toDate, periods)
+        : null,
+    [fromDate, toDate, periods],
+  )
+  useSetActivePeriod(mappedPeriod?.periodId ?? null)
 
   const { data: incomeStatement, isLoading: isLoadingIS } = useIncomeStatement(
     fyId,
