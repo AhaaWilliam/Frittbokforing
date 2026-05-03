@@ -21,6 +21,7 @@ import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
 import { ReceiptPreviewPane } from '../../components/receipts/ReceiptPreviewPane'
+import { ocrReceipt, type ExtractedFields } from '../../lib/ocr'
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -63,6 +64,32 @@ interface Props {
 
 const FALLBACK_EXPENSE_ACCOUNT = '6110'
 
+/**
+ * VS-145b: Bygg dynamisk förslags-text baserat på vilka fält OCR hittade.
+ * Båda fält → datum + belopp. Bara datum eller bara belopp → enkel mening.
+ */
+function buildOcrSuggestionMessage(fields: ExtractedFields): string {
+  const hasAmount = fields.amount_kr !== undefined
+  const hasDate = fields.date !== undefined
+  // sv-SE thousand separator för belopps-presentation.
+  const amountStr = hasAmount
+    ? new Intl.NumberFormat('sv-SE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(fields.amount_kr!)
+    : ''
+  if (hasAmount && hasDate) {
+    return `Vi tror datumet är ${fields.date} och beloppet ${amountStr} kr — klicka för att tillämpa`
+  }
+  if (hasDate) {
+    return `Vi tror datumet är ${fields.date} — klicka för att tillämpa`
+  }
+  if (hasAmount) {
+    return `Vi tror beloppet är ${amountStr} kr — klicka för att tillämpa`
+  }
+  return ''
+}
+
 export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
   const { activeFiscalYear } = useFiscalYearContext()
   const { activeCompany } = useActiveCompany()
@@ -98,6 +125,16 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
   const amountInputRef = useRef<HTMLInputElement | null>(null)
   // VS-37: synkron submit-guard mot double-click race (se SkapaFakturaSheet).
   const submittingRef = useRef(false)
+
+  // VS-145b: OCR-state. ocrSuggestion = pre-fill-förslag visat som Callout
+  // ovanför formuläret. ocrLoading = subtil "Läser kvitto..."-indikator under
+  // attached-thumbnail. ocrTokenRef sekvens-id som invalideras vid
+  // close/clear så att stale resultat inte sätter state efter unmount.
+  const [ocrSuggestion, setOcrSuggestion] = useState<ExtractedFields | null>(
+    null,
+  )
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const ocrTokenRef = useRef(0)
 
   // VS-25: Rensa submit-fel automatiskt så fort användaren börjar
   // redigera ett fält efter ett misslyckat submit (t.ex. ändra datum
@@ -154,14 +191,73 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
     submittingRef.current = false
     setSubmitting(false)
     setReceiptPath(prefilledReceipt ? prefilledReceipt.file_path : null)
+    setOcrSuggestion(null)
+    setOcrLoading(false)
+    ocrTokenRef.current += 1
   }, [open, prefilledReceipt])
+
+  // VS-145b: Är path en OCR-bar bild? PDF skip för v1.
+  function isOcrSupported(path: string): boolean {
+    return /\.(jpg|jpeg|png|webp|heic)$/i.test(path)
+  }
+
+  async function runOcr(blob: Blob) {
+    const token = ++ocrTokenRef.current
+    setOcrLoading(true)
+    try {
+      const fields = await ocrReceipt(blob)
+      if (token !== ocrTokenRef.current) return
+      // Visa bara om vi har något att föreslå (>= 1 fält).
+      const hasAny =
+        fields.amount_kr !== undefined ||
+        fields.date !== undefined ||
+        fields.supplier_hint !== undefined
+      if (hasAny) setOcrSuggestion(fields)
+    } catch (e) {
+      // M133-mönster: tyst felhantering, ingen UI-störning. Logga bara.
+      console.warn('[BokforKostnadSheet] OCR failed:', e)
+    } finally {
+      if (token === ocrTokenRef.current) setOcrLoading(false)
+    }
+  }
+
+  async function ocrFromPath(path: string) {
+    if (!isOcrSupported(path)) return
+    try {
+      const r = await window.api.getReceiptAbsolutePath({ receipt_path: path })
+      if (!r.success) return
+      const res = await fetch(r.data.url)
+      if (!res.ok) return
+      const blob = await res.blob()
+      await runOcr(blob)
+    } catch (e) {
+      console.warn('[BokforKostnadSheet] OCR fetch failed:', e)
+    }
+  }
 
   async function handlePickReceipt() {
     const res = await window.api.selectReceiptFile()
     if (!res.success) return
     if (res.data && res.data.filePath) {
       setReceiptPath(res.data.filePath)
+      void ocrFromPath(res.data.filePath)
     }
+  }
+
+  function applyOcrSuggestion() {
+    if (!ocrSuggestion) return
+    if (ocrSuggestion.amount_kr !== undefined) {
+      // Svenskt komma-format för konsistens med befintlig input.
+      setAmountKr(ocrSuggestion.amount_kr.toFixed(2).replace('.', ','))
+    }
+    if (ocrSuggestion.date !== undefined) {
+      setDate(ocrSuggestion.date)
+    }
+    setOcrSuggestion(null)
+  }
+
+  function dismissOcrSuggestion() {
+    setOcrSuggestion(null)
   }
 
   const amountInclVatOre = kronorToOre(amountKr)
@@ -368,7 +464,12 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
             path={null}
             onPick={handlePickReceipt}
             onClear={() => setReceiptPath(null)}
-            onDropPath={(p) => setReceiptPath(p)}
+            onDropPath={(p, file) => {
+              setReceiptPath(p)
+              // VS-145b: drop-File är redan en Blob — kör OCR direkt utan
+              // att gå via fetch+absolute-path. PDF skip via isOcrSupported.
+              if (file && isOcrSupported(p)) void runOcr(file)
+            }}
             locked={false}
           />
         )}
@@ -400,6 +501,48 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
                 </button>
               )}
             </div>
+          )}
+          {ocrLoading && (
+            <p
+              className="text-[11px] text-[var(--text-faint)]"
+              data-testid="vardag-kostnad-ocr-loading"
+              aria-live="polite"
+            >
+              Läser kvitto…
+            </p>
+          )}
+          {ocrSuggestion && (
+            <Callout variant="tip" data-testid="vardag-kostnad-ocr-suggestion">
+              <div className="flex flex-col gap-2">
+                <p>{buildOcrSuggestionMessage(ocrSuggestion)}</p>
+                {ocrSuggestion.supplier_hint && (
+                  <p
+                    className="text-xs text-[var(--text-faint)]"
+                    data-testid="vardag-kostnad-ocr-supplier-hint"
+                  >
+                    Förslag på leverantör: {ocrSuggestion.supplier_hint}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={applyOcrSuggestion}
+                    className="rounded-md bg-[var(--color-brand-500)] px-3 py-1 text-xs font-medium text-white"
+                    data-testid="vardag-kostnad-ocr-apply"
+                  >
+                    Tillämpa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissOcrSuggestion}
+                    className="text-xs text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+                    data-testid="vardag-kostnad-ocr-dismiss"
+                  >
+                    Avvisa
+                  </button>
+                </div>
+              </div>
+            </Callout>
           )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Datum" hint="ÅÅÅÅ-MM-DD">
@@ -648,7 +791,7 @@ function ReceiptVisual({
   path: string | null
   onPick: () => void
   onClear: () => void
-  onDropPath: (filePath: string) => void
+  onDropPath: (filePath: string, file?: File) => void
   /** VS-112: när true visas bara filename utan möjlighet att byta. */
   locked?: boolean
 }) {
@@ -708,7 +851,7 @@ function ReceiptVisual({
         const file = e.dataTransfer.files[0]
         if (!file) return
         const p = extractPath(file)
-        if (p) onDropPath(p)
+        if (p) onDropPath(p, file)
       }}
       className={`flex aspect-[3/4] flex-col items-center justify-center rounded-md border border-dashed text-center transition-colors ${
         dragActive
