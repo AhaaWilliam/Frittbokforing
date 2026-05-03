@@ -341,6 +341,56 @@ describe('Sprint VS-4 — SkapaFakturaSheet', () => {
     expect(vatSelect.textContent).toMatch(/Laddar momskoder/)
   })
 
+  it('VS-137/VS-16 Cmd+Enter triggar submit när formulär är giltigt', async () => {
+    mockIpcResponse('invoice:save-draft', { success: true, data: { id: 88 } })
+    mockIpcResponse('invoice:finalize', {
+      success: true,
+      data: { id: 88, journal_entry_id: 600, verification_number: 1 },
+    })
+    mockIpcResponse('counterparty:set-default-account', {
+      success: true,
+      data: customerFixtures[0],
+    })
+
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+
+    fireEvent.click(await screen.findByTestId('customer-picker-mock'))
+    fireEvent.change(screen.getByTestId('vardag-faktura-description'), {
+      target: { value: 'Konsulttimmar' },
+    })
+    fireEvent.change(screen.getByTestId('vardag-faktura-price'), {
+      target: { value: '1500,00' },
+    })
+
+    await waitFor(() =>
+      expect(screen.getByTestId('vardag-faktura-submit')).not.toBeDisabled(),
+    )
+    await waitFor(() => {
+      expect(ipcCalls('getCounterparty').length).toBeGreaterThan(0)
+    })
+
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled())
+    expect(ipcCalls('saveDraft').length).toBe(1)
+  })
+
+  it('VS-137/VS-16 Cmd+Enter triggar INTE submit när formulär är ogiltigt', async () => {
+    await renderWithProviders(
+      <SkapaFakturaSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+
+    await screen.findByTestId('vardag-faktura-description')
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+
+    await new Promise((r) => setTimeout(r, 50))
+    expect(ipcCalls('saveDraft')).toEqual([])
+  })
+
   // VS-47: regression-test för VS-37 (submittingRef-guard mot double-click).
   // Två snabba klick på submit-knappen ska aldrig resultera i fler än ett
   // saveDraft-anrop, även om React-batchningen gör att submitting-state
