@@ -1,10 +1,10 @@
 # Handover — Fritt Bokföring
 
-Sista uppdatering: 2026-05-03. Två autonoma loop-omgångar (VS-116..VS-140) + plan för VS-141..VS-150.
+Sista uppdatering: 2026-05-03. Tre autonoma loop-omgångar (VS-116..VS-146) + kritisk produktions-fix.
 
 ## TL;DR
 
-25 sprintar levererade i två autonoma loop-omgångar plus en kritisk
+35 sprintar levererade i tre autonoma loop-omgångar plus en kritisk
 produktions-fix:
 - **Omgång 1** (VS-116..VS-129, 14 sprintar) — inkorgen-utbyggnader,
   stäng-månad-flow, VAT-deadline, settings-toggles, M156-konsolidering.
@@ -13,15 +13,30 @@ produktions-fix:
   React.memo-perf-fix, pluralDays-helper, M133-vakt-fix, dokumentation.
 - **VS-140** — Bugfix: `useNavigate must be used within HashRouter`
   som kraschade Vardag-läget i produktion. HashRouter lyft från
-  AppShell till App.tsx ovanför ModeRouter. Inkluderar regressionstest
-  som mountar full `<App />` utan helper-wrapper.
+  AppShell till App.tsx ovanför ModeRouter.
+- **Omgång 3** (VS-141..VS-146, 10 sprintar) — zip-bundle export,
+  push-notif moms, PDF-preview, ActivePeriodContext, OCR-pipeline
+  (extract → UI → supplier-match → org-nr → pre-warm), ESLint hygiene.
 
-**276 commits ahead of origin/main, otrycka.** Tester 1428 gröna i
-renderer. TypeScript rent, ESLint rent. Statiska checks alla OK.
+**286 commits ahead of origin/main, otrycka.** TypeScript rent, ESLint
+rent (3 pre-existerande fel fixade i VS-146). Statiska checks alla OK.
 
-**Nästa sprint-omgång:** Konkret plan för VS-141..VS-150 (zip-bundle,
-push-notifieringar, PDF-preview, period-label, OCR-MVP) — alla
-produktbeslut mottagna. Estimerad scope: 15-20h. Se nedan.
+**Nästa naturliga steg kräver produktbeslut** (se "Öppna frågor" nedan).
+
+## Omgång 3 (VS-141..VS-146) sprint-katalog
+
+| Sprint | Commit | Innehåll |
+|---|---|---|
+| VS-141 | `a894586` | Receipts zip-bundle (archiver-lib, per-bolag, BFL 7 kap-arkivkrav). PageInbox-knapp. M147-bypass. |
+| VS-142 | `05954ce` | Push-notif moms-deadline (opt-in). Migration 062 `companies.notify_vat_deadline`. 7/3/1-eskalering, idempotent state via settings-keys. |
+| VS-143 | `6a8bd61` | PDF/bild-preview i sheets. ReceiptPreviewPane (iframe/img). IPC `receipt:get-absolute-path` med path-traversal-skydd. BokforKostnadSheet 60/40 split + Eye-knapp i PageInbox. |
+| VS-144 | `06ff171` | ActivePeriodContext infrastruktur. MonthIndicator läser från useActivePeriod() (default = global FY = no-op idag). Page-wiring backlog (kräver beslut för VAT/Reports period-mappning). |
+| VS-145a | `509bae2` | Tesseract.js worker singleton + pure extract-funktioner (amount/date/supplier_hint, 70% threshold). |
+| VS-145b | `317b8e9` | OCR-integration i BokforKostnadSheet. Suggestion-Callout med "Tillämpa"/"Avvisa". Tyst felhantering. |
+| VS-145c | `98e9994` | Counterparty fuzzy-match från supplier_hint. matchSupplier (substring + Levenshtein, suffix-strip för AB/Aktiebolag), threshold 0.7. |
+| VS-145d | `99970fe` | Org-nummer-extraktion (Luhn-validering). matchSupplier optional orgNumber-arg → exakt match score=1.0 prioriteras. |
+| VS-145e | `9bacef5` | Pre-warm Tesseract worker vid sheet-open. Eliminerar 3-5s cold-start vid första kvittot. |
+| VS-146 | `8942bc2` | ESLint hygiene — fixat 3 pre-existerande fel (BalanceSheet/IncomeStatement prettier + index.ts lazy-require disable). Validation matrix nu helt grön. |
 
 ## Omgång 2 (VS-130..VS-140) sprint-katalog
 
@@ -157,7 +172,21 @@ Lägg till i checklista vid framtida mode-arbete: se till att hooks som
 useNavigate/useFiscalYearContext/useActiveCompany funkar i båda modes
 genom att verifiera provider-hierarkin i App.tsx.
 
-## Plan för nästa sprint-omgång (VS-141..VS-150)
+## Öppna frågor — kräver produktbeslut före nästa sprint
+
+VS-141..VS-146 levererade hela ursprungliga planen. Naturlig fortsättning kräver beslut:
+
+1. **VS-144 page-wiring:** ActivePeriodContext-infrastrukturen finns men PageBudget/PageVat/PageReports har ingen befintlig period-picker. Beslut behövs:
+   - PageVat (Q1-Q4 + årssumma): hur mappa kvartal till en period-highlight?
+   - PageReports (date-range from/to): hur mappa till period-highlight?
+   - PageBudget (12-period grid): finns inget "vald period"-koncept
+2. **PDF-OCR:** Tesseract i v1 bara bilder. Lägg till PDF.js (~2-3 MB bundle) för PDF-stöd, eller behåll begränsning?
+3. **OCR till SkapaFakturaSheet:** Är OCR meningsfullt på utgående fakturor? (Sannolikt nej för svenska bolag som genererar dem själva.)
+4. **Push 286 commits → origin/main:** Granska först eller pusha direkt?
+
+## Plan för förra sprint-omgången (VS-141..VS-150) — LEVERERAD
+
+**Status:** VS-141..VS-145e + VS-146 (ESLint hygiene) levererade. VS-146..VS-150-platser i numreringen kvarstår fritt för framtida sprintar.
 
 **Produktbeslut mottagna:** "Ok på allt" — alla rekommenderade defaults gäller.
 
