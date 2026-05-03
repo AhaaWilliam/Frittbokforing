@@ -811,4 +811,43 @@ describe('Sprint VS-3 — BokforKostnadSheet', () => {
     expect(ipcCalls('saveExpenseDraft').length).toBe(1)
     expect(ipcCalls('finalizeExpense').length).toBe(1)
   })
+
+  it('VS-143 prefilledReceipt → split-vy med preview-kolumn', async () => {
+    mockIpcResponse('receipt:get-absolute-path', {
+      success: true,
+      data: { url: 'file:///tmp/Fritt%20Bokforing/receipts-inbox/x.pdf' },
+    })
+    await renderWithProviders(
+      <BokforKostnadSheet
+        open={true}
+        onClose={() => {}}
+        prefilledReceipt={{
+          receipt_id: 7,
+          file_path: 'receipts-inbox/x.pdf',
+          original_filename: 'kvitto-x.pdf',
+        }}
+      />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+    const layout = await screen.findByTestId('vardag-kostnad-layout')
+    expect(layout.getAttribute('data-split')).toBe('true')
+    expect(screen.getByTestId('vardag-kostnad-preview-col')).toBeInTheDocument()
+    expect(
+      screen.getByTestId('vardag-kostnad-receipt-attached'),
+    ).toBeInTheDocument()
+    // PDF → iframe
+    await waitFor(() => {
+      expect(screen.getByTestId('receipt-preview-iframe')).toBeInTheDocument()
+    })
+  })
+
+  it('VS-143 utan kvitto → ingen split-vy, ingen preview', async () => {
+    await renderWithProviders(
+      <BokforKostnadSheet open={true} onClose={() => {}} />,
+      { axeCheck: false }, // M133 exempt — dedicated axe test in Sheets.a11y.test.tsx
+    )
+    const layout = await screen.findByTestId('vardag-kostnad-layout')
+    expect(layout.getAttribute('data-split')).toBe('false')
+    expect(screen.queryByTestId('vardag-kostnad-preview-col')).toBeNull()
+  })
 })

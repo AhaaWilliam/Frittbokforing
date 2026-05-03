@@ -276,6 +276,15 @@ export const ExportReceiptsZipBundleInputSchema = z
   })
   .strict()
 
+// VS-143: hämta absolut file://-URL för ett receipt (PDF/bild-preview i renderer).
+// Path-traversal-skydd i service-lagret: relativ path resolveras mot
+// <documents>/Fritt Bokföring/ och får inte peka utanför roten.
+export const GetReceiptAbsolutePathInputSchema = z
+  .object({
+    receipt_path: z.string().min(1).max(2048),
+  })
+  .strict()
+
 // VS-111: koppla en inbox-receipt till en redan skapad expense.
 // Används från "Bokför från inkorgen"-flödet (VS-112).
 export const LinkReceiptToExpenseInputSchema = z
@@ -1631,6 +1640,7 @@ export const channelMap = {
   'receipt:link-to-expense': LinkReceiptToExpenseInputSchema,
   'receipt:export-csv': ExportReceiptsCsvInputSchema,
   'receipt:export-zip-bundle': ExportReceiptsZipBundleInputSchema,
+  'receipt:get-absolute-path': GetReceiptAbsolutePathInputSchema,
   'period:checks': PeriodChecksInputSchema,
 } as const satisfies Record<string, z.ZodType>
 

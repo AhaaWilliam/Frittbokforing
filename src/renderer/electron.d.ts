@@ -809,6 +809,12 @@ interface ElectronAPI {
     expense_id: number
     company_id: number
   }) => Promise<IpcResult<{ linked: boolean }>>
+  // VS-143: hämta absolut file://-URL för PDF/bild-preview i renderer.
+  // Path-traversal-skydd i main: relativ path resolveras mot
+  // <documents>/Fritt Bokföring/ och får inte peka utanför.
+  getReceiptAbsolutePath: (data: {
+    receipt_path: string
+  }) => Promise<IpcResult<{ url: string }>>
   // VS-123: CSV-export av kvittolista. cancelled=true om användaren
   // avbryter save-dialog, annars filePath. Aldrig båda samtidigt.
   exportReceiptsCsv: (data: {

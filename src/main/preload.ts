@@ -481,6 +481,9 @@ contextBridge.exposeInMainWorld('api', {
     expense_id: number
     company_id: number
   }) => ipcRenderer.invoke('receipt:link-to-expense', data),
+  // VS-143: hämta absolut file://-URL för PDF/bild-preview
+  getReceiptAbsolutePath: (data: { receipt_path: string }) =>
+    ipcRenderer.invoke('receipt:get-absolute-path', data),
   // VS-123: CSV-export av kvittolista
   exportReceiptsCsv: (data: { company_id: number }) =>
     ipcRenderer.invoke('receipt:export-csv', data),

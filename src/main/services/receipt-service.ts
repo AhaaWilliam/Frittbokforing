@@ -20,6 +20,7 @@ import {
   BulkArchiveReceiptInputSchema,
   ReceiptCountsInputSchema,
   LinkReceiptToExpenseInputSchema,
+  GetReceiptAbsolutePathInputSchema,
 } from '../ipc-schemas'
 import { validateWithZod } from './validate-with-zod'
 import {
@@ -738,6 +739,57 @@ export async function exportReceiptsZipBundle(
       code: 'UNEXPECTED_ERROR',
     }
   }
+}
+
+/**
+ * Sprint VS-143 — getReceiptAbsolutePath.
+ *
+ * Resolverar en relativ receipt-path (mot <documents>/Fritt Bokföring/) till
+ * en absolut `file://`-URL som renderer kan ladda i `<iframe>`/`<img>`.
+ * Path-traversal-skydd: resultatet måste börja med documents-roten — annars
+ * `INVALID_PATH`. Filen måste existera — annars `NOT_FOUND`.
+ *
+ * Samma resolutions-mönster som `exportReceiptsZipBundle` (path.resolve +
+ * startsWith-guard). Renderer får aldrig konstruera file://-URL själv —
+ * Electron säkerhets-mönstret är att main process äger filsystem-resolution.
+ */
+export function getReceiptAbsolutePath(
+  rawInput: unknown,
+): IpcResult<{ url: string }> {
+  const v = parseOrFail(GetReceiptAbsolutePathInputSchema, rawInput)
+  if (!v.ok) return v.result
+  const input = v.data
+
+  const documentsRoot = path.join(app.getPath('documents'), ROOT_FOLDER_NAME)
+  const absolute = path.resolve(documentsRoot, input.receipt_path)
+
+  // Path-traversal-skydd. Använd path.sep-medveten check via relative.
+  const rel = path.relative(documentsRoot, absolute)
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    return {
+      success: false,
+      error: 'Ogiltig kvitto-path.',
+      code: 'VALIDATION_ERROR',
+      field: 'receipt_path',
+    }
+  }
+
+  if (!fs.existsSync(absolute)) {
+    return {
+      success: false,
+      error: 'Kvittofilen kunde inte hittas på disk.',
+      code: 'NOT_FOUND',
+    }
+  }
+
+  // file://-URL: encodera path-segment per segment för att bevara `/`-
+  // separatorer. På macOS/Linux är detta /a/b → file:///a/b. På Windows
+  // C:\a\b → file:///C:/a/b efter konvertering.
+  const normalized = absolute.split(path.sep).join('/')
+  const prefix = normalized.startsWith('/') ? 'file://' : 'file:///'
+  const url = prefix + normalized.split('/').map(encodeURIComponent).join('/')
+
+  return { success: true, data: { url } }
 }
 
 /**

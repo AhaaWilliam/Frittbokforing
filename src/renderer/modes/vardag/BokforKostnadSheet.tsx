@@ -20,6 +20,7 @@ import { buildQuickExpensePayload } from '../../lib/build-quick-expense-payload'
 import { netFromInclVatOre } from '../../lib/build-quick-expense-payload'
 import { useUiMode } from '../../lib/use-ui-mode'
 import { useKeyboardShortcuts } from '../../lib/useKeyboardShortcuts'
+import { ReceiptPreviewPane } from '../../components/receipts/ReceiptPreviewPane'
 
 /**
  * Sprint VS-3 — BokforKostnadSheet (funktionell).
@@ -353,17 +354,53 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
       title="Bokför kostnad"
       description="Kvitto eller faktura — fyll i, eller låt Fritt föreslå."
     >
-      <div className="grid grid-cols-[200px_1fr] gap-6">
-        <ReceiptVisual
-          path={
-            prefilledReceipt ? prefilledReceipt.original_filename : receiptPath
-          }
-          onPick={prefilledReceipt ? () => {} : handlePickReceipt}
-          onClear={prefilledReceipt ? () => {} : () => setReceiptPath(null)}
-          onDropPath={prefilledReceipt ? () => {} : (p) => setReceiptPath(p)}
-          locked={!!prefilledReceipt}
-        />
+      <div
+        className={
+          receiptPath
+            ? 'grid grid-cols-1 gap-6 min-[900px]:grid-cols-[3fr_2fr]'
+            : 'grid grid-cols-[200px_1fr] gap-6'
+        }
+        data-testid="vardag-kostnad-layout"
+        data-split={receiptPath ? 'true' : 'false'}
+      >
+        {!receiptPath && (
+          <ReceiptVisual
+            path={null}
+            onPick={handlePickReceipt}
+            onClear={() => setReceiptPath(null)}
+            onDropPath={(p) => setReceiptPath(p)}
+            locked={false}
+          />
+        )}
         <div className="space-y-5">
+          {receiptPath && (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border-default)] bg-[var(--surface-secondary)]/40 px-3 py-2 text-xs">
+              <span
+                className="truncate font-mono text-[var(--text-secondary)]"
+                title={
+                  prefilledReceipt
+                    ? prefilledReceipt.original_filename
+                    : receiptPath
+                }
+                data-testid="vardag-kostnad-receipt-attached"
+              >
+                📎{' '}
+                {prefilledReceipt
+                  ? prefilledReceipt.original_filename
+                  : pathBasename(receiptPath)}
+              </span>
+              {!prefilledReceipt && (
+                <button
+                  type="button"
+                  onClick={() => setReceiptPath(null)}
+                  className="text-[10px] text-[var(--text-faint)] underline hover:text-[var(--text-primary)]"
+                  data-testid="vardag-kostnad-receipt-clear"
+                >
+                  Ta bort
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Datum" hint="ÅÅÅÅ-MM-DD">
               <input
@@ -588,6 +625,14 @@ export function BokforKostnadSheet({ open, onClose, prefilledReceipt }: Props) {
             </div>
           </div>
         </div>
+        {receiptPath && (
+          <div
+            className="min-h-[400px]"
+            data-testid="vardag-kostnad-preview-col"
+          >
+            <ReceiptPreviewPane receiptPath={receiptPath} />
+          </div>
+        )}
       </div>
     </BottomSheet>
   )

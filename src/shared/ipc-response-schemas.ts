@@ -561,6 +561,7 @@ export const channelResponseMap = {
   'receipt:link-to-expense': LooseObject,
   'receipt:export-csv': LooseObject,
   'receipt:export-zip-bundle': LooseObject,
+  'receipt:get-absolute-path': z.object({ url: z.string() }),
   'period:checks': LooseObject,
 } as const satisfies Record<ChannelName, z.ZodType>
 

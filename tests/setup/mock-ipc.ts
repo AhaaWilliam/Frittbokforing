@@ -209,6 +209,8 @@ const methodToChannel: Record<string, ChannelName | NoSchemaChannel> = {
   receiptCounts: 'receipt:counts',
   deleteReceipt: 'receipt:delete',
   linkReceiptToExpense: 'receipt:link-to-expense',
+  // Sprint VS-143: receipt absolute path for inline preview
+  getReceiptAbsolutePath: 'receipt:get-absolute-path',
   // Sprint VS-123: receipt CSV export
   exportReceiptsCsv: 'receipt:export-csv',
   // Sprint VS-141: receipt ZIP bundle export

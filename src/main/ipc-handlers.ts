@@ -312,6 +312,7 @@ import {
   BulkArchiveReceiptInputSchema,
   ReceiptCountsInputSchema,
   LinkReceiptToExpenseInputSchema,
+  GetReceiptAbsolutePathInputSchema,
   PeriodChecksInputSchema,
 } from './ipc-schemas'
 import { previewJournalLines } from './services/preview-service'
@@ -327,6 +328,7 @@ import {
   exportReceiptsCsv,
   exportReceiptsZipBundle,
   buildZipBundleFilename,
+  getReceiptAbsolutePath,
 } from './services/receipt-service'
 import { getPeriodChecks } from './services/period-checks-service'
 import type { HealthCheckResponse, IpcResult } from '../shared/types'
@@ -1740,6 +1742,15 @@ export function registerIpcHandlers(): void {
     'receipt:link-to-expense',
     wrapIpcHandler(LinkReceiptToExpenseInputSchema, (data) =>
       linkReceiptToExpense(db, data),
+    ),
+  )
+
+  // Sprint VS-143: hämta absolut file://-URL för PDF/bild-preview i renderer.
+  // Path-traversal-skydd i service-lagret.
+  ipcMain.handle(
+    'receipt:get-absolute-path',
+    wrapIpcHandler(GetReceiptAbsolutePathInputSchema, (data) =>
+      getReceiptAbsolutePath(data),
     ),
   )
 

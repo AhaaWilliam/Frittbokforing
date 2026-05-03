@@ -19,6 +19,7 @@ import {
   Send,
   Download,
   StickyNote,
+  Eye,
 } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useActiveCompany } from '../contexts/ActiveCompanyContext'
@@ -39,6 +40,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { BokforKostnadSheet } from '../modes/vardag/BokforKostnadSheet'
+import { ReceiptPreviewPane } from '../components/receipts/ReceiptPreviewPane'
 import { toast } from 'sonner'
 import type { Receipt, ReceiptStatus } from '../../shared/types'
 
@@ -83,6 +85,8 @@ export function PageInbox() {
   // VS-126: notes-editor dialog
   const [notesTarget, setNotesTarget] = useState<Receipt | null>(null)
   const [notesDraft, setNotesDraft] = useState('')
+  // VS-143: inline-preview-modal för kvitto-rad.
+  const [previewTarget, setPreviewTarget] = useState<Receipt | null>(null)
 
   const { data: receipts = [], isLoading } = useReceipts({ status: tab })
   const { data: counts } = useReceiptCounts()
@@ -427,6 +431,7 @@ export function PageInbox() {
             onDelete={handleDelete}
             onBokfor={(r) => setBokforReceipt(r)}
             onEditNotes={openNotesEditor}
+            onPreview={(r) => setPreviewTarget(r)}
           />
         )}
       </div>
@@ -500,6 +505,43 @@ export function PageInbox() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+      <Dialog.Root
+        open={previewTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) setPreviewTarget(null)
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 z-50 flex h-[80vh] w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg bg-[var(--surface-elevated)] p-4 shadow-xl focus:outline-none"
+            data-testid="receipt-preview-dialog"
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <Dialog.Title className="font-serif text-lg">
+                  Förhandsgranska kvitto
+                </Dialog.Title>
+                <Dialog.Description className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                  {previewTarget?.original_filename}
+                </Dialog.Description>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPreviewTarget(null)}
+              >
+                Stäng
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <ReceiptPreviewPane
+                receiptPath={previewTarget?.file_path ?? null}
+              />
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
@@ -514,6 +556,7 @@ interface ReceiptTableProps {
   onDelete: (id: number) => void
   onBokfor: (r: Receipt) => void
   onEditNotes: (r: Receipt) => void
+  onPreview: (r: Receipt) => void
 }
 
 function ReceiptTable({
@@ -526,6 +569,7 @@ function ReceiptTable({
   onDelete,
   onBokfor,
   onEditNotes,
+  onPreview,
 }: ReceiptTableProps) {
   return (
     <table className="w-full text-sm" data-testid="inbox-list">
@@ -601,6 +645,16 @@ function ReceiptTable({
                     </Button>
                   </>
                 )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onPreview(r)}
+                  title="Förhandsgranska"
+                  data-testid={`inbox-row-preview-${r.id}`}
+                  aria-label={`Förhandsgranska ${r.original_filename}`}
+                >
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
