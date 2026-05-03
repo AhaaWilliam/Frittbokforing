@@ -1,25 +1,29 @@
 # Handover — Fritt Bokföring
 
-Sista uppdatering: 2026-05-03. Två autonoma loop-omgångar (VS-116..VS-138).
+Sista uppdatering: 2026-05-03. Två autonoma loop-omgångar (VS-116..VS-140) + plan för VS-141..VS-150.
 
 ## TL;DR
 
-23 sprintar levererade i två autonoma loop-omgångar:
+25 sprintar levererade i två autonoma loop-omgångar plus en kritisk
+produktions-fix:
 - **Omgång 1** (VS-116..VS-129, 14 sprintar) — inkorgen-utbyggnader,
   stäng-månad-flow, VAT-deadline, settings-toggles, M156-konsolidering.
-- **Omgång 2** (VS-130..VS-138, 9 sprintar) — closed_at-display i
+- **Omgång 2** (VS-130..VS-139, 10 sprintar) — closed_at-display i
   perioder + år, PageSettings/SkapaFakturaSheet test-paritet,
-  React.memo-perf-fix, pluralDays-helper, M133-vakt-fix.
+  React.memo-perf-fix, pluralDays-helper, M133-vakt-fix, dokumentation.
+- **VS-140** — Bugfix: `useNavigate must be used within HashRouter`
+  som kraschade Vardag-läget i produktion. HashRouter lyft från
+  AppShell till App.tsx ovanför ModeRouter. Inkluderar regressionstest
+  som mountar full `<App />` utan helper-wrapper.
 
-**273 commits ahead of origin/main, otrycka.** Tester 1433 gröna i
-renderer (+23 från omgång 2). TypeScript rent, ESLint rent.
+**276 commits ahead of origin/main, otrycka.** Tester 1428 gröna i
+renderer. TypeScript rent, ESLint rent. Statiska checks alla OK.
 
-Återstående backlog är dominerat av medvetna produktblockeringar
-(PDF-preview-strategi, OCR, push-notifieringar) eller större
-refaktorer (BokforKostnadSheet ~3-4h). Inga "låghängande frukter" kvar
-i den ursprungliga handover-listan.
+**Nästa sprint-omgång:** Konkret plan för VS-141..VS-150 (zip-bundle,
+push-notifieringar, PDF-preview, period-label, OCR-MVP) — alla
+produktbeslut mottagna. Estimerad scope: 15-20h. Se nedan.
 
-## Omgång 2 (VS-130..VS-138) sprint-katalog
+## Omgång 2 (VS-130..VS-140) sprint-katalog
 
 | Sprint | Commit | Innehåll |
 |---|---|---|
@@ -32,6 +36,8 @@ i den ursprungliga handover-listan.
 | VS-136 | `41b5113` | `pluralDays(n)` shared helper — "1 dag" / "N dagar" enligt SAOL. Fixar "X dag(ar)"-mönstret. |
 | VS-137 | `0a3dbaf` | SkapaFakturaSheet Cmd+Enter-paritet (2 tester). |
 | VS-138 | `db39899` | SkapaFakturaSheet error-clearing + account-name paritet (2 tester). |
+| VS-139 | `aa32797` | HANDOVER.md uppdatering + e2e/README.md whitelist för 3 nya data-testid. |
+| VS-140 | `4d7025a` + `95d1ae0` | **BUGFIX:** HashRouter lyft till App.tsx (kraschade Vardag-mode). Regressionstest mountar full App-stack. |
 
 ## Vad som är gjort i denna omgång (sprint-katalog)
 
@@ -126,100 +132,226 @@ npx vitest run tests/renderer/components/layout/GlobalSearch.test.tsx     # 11 (
 npx vitest run tests/renderer/modes/vardag/VardagApp.test.tsx             # 11 (VS-117+118)
 
 # Commits ahead of origin/main
-git log origin/main..HEAD --oneline | wc -l   # 263
+git log origin/main..HEAD --oneline | wc -l   # 276
 ```
 
 **better-sqlite3 ABI**: kvarstår som M115 — `npm rebuild better-sqlite3`
 om vitest klagar på NODE_MODULE_VERSION efter Electron-bygge.
 
-## Vad som är kvar att bygga
+## Lärdomar från VS-140
 
-### Helt blockerat på produktbeslut
+Bugg där Vardag-mode kraschade i produktion (men inte i tester) avslöjade
+ett mönster:
 
-**1. PDF-preview i sheets** (~5h, från föregående handover)
-Sheet:erna visar idag bara filnamn + 📎-emoji. Ingen visuell preview.
-**Frågor**: `<iframe src={path}>` för PDF + `<img>` för bilder, eller
-PDF.js? Var ska PreviewPane visas (sidebar i sheet vs. ny modal)?
-Acceptabelt med native iframe-rendering trots olika look per OS?
+- **`renderWithProviders` ger false positives för router-buggar.** Testerna
+  wrappar alltid i HashRouter, så test-suite kan grön-stämpla en render-tree
+  där production-stacken saknar provider.
+- **Mönster för regressionstest:** `tests/renderer/sprint-vs140-app-router-mount.test.tsx`
+  mountar full `<App />` utan helper-wrapper. Använd samma mönster för
+  framtida hela-app-stack-tester.
+- **Princip:** Provider-monteringar (HashRouter, FiscalYearProvider,
+  ActiveCompanyProvider, QueryClientProvider) ska ligga i `App.tsx`, inte
+  i mode-skal som AppShell — annars måste varje mode duplicera dem.
 
-**2. Receipt-detail-vy / inline-preview i KostnadSheet** (~3h utöver #1)
-Bygger ovanpå #1.
+Lägg till i checklista vid framtida mode-arbete: se till att hooks som
+useNavigate/useFiscalYearContext/useActiveCompany funkar i båda modes
+genom att verifiera provider-hierarkin i App.tsx.
 
-**3. OCR-pipeline för auto-fyllning** (medvetet uppskjuten)
-Tesseract.js (lokal) eller cloud-API. Receipts-schema och file-storage
-är förberett. Hänger inte fast i något befintligt — kan
-implementeras isolerat.
+## Plan för nästa sprint-omgång (VS-141..VS-150)
 
-**4. Period-label dynamic per kontext** (~2h)
-Sidebar-headern visar samma period-label överallt. På PageBudget,
-PageVat, PageReports skulle period kunna reflektera vald period.
-**Frågor**: Sidebar bero på vilken page som visas? Separat
-per-page-period-context? Hur hanteras "valda perioder" på sidor med
-egna period-pickers?
+**Produktbeslut mottagna:** "Ok på allt" — alla rekommenderade defaults gäller.
 
-**5. Push-notifiering nära deadline** (UX-design behövs)
-Electron stöder native notifications. Vid `daysUntil ≤ 7` vid
-app-start kan notification öppnas. Behöver per-användare-settings
-för opt-in/dismiss-mekanism.
+### Prioriterad ordning
 
-### Möjliga utan produktblockad
+#### 🟢 Första session (snabba, väl-avgränsade — 6-9h)
 
-**6. BokforKostnadSheet refactor** (~3-5h, riskerar gränsen)
-678 rader, delas mellan Vardag-läget och PageInbox via
-`prefilledReceipt`-prop. Kunde extraheras till `expense-form-core`
-+ två thin shells (Vardag-sheet, Inkorgen-context). Räknas som
-arkitektur-skuld men inte akut.
+**VS-141: Receipts zip-bundle (~4-5h)** — handover-item #5
 
-**7. Receipts zip-bundle med fysiska filer** (BFL-arkivkrav-utbyggnad)
-VS-123 ger CSV med metadata. BFL 7 kap kräver att även de fysiska
-kvittofilerna arkiveras. Skulle exportera CSV + alla files i
-zip-bundle. Filerna ligger redan strukturerade i
-`<documents>/Fritt Bokföring/receipts-inbox/` — bara att packa.
+Mål: BFL 7 kap-konform arkivexport (CSV + alla fysiska kvittofiler).
 
-**8. Helg-bump generaliserad** (VS-129 är specifik för VAT)
-`bumpToNextWorkday` är publik export. Kan användas av:
-- Lönedeklaration-deadline (om/när det implementeras)
-- K10-deadline (juli)
-- Inkomstdeklaration (maj)
+**Beslut tagna:**
+- Lib: `archiver` (mest mogen, MIT-licens, ~80 KB med deps)
+- Granularitet: per-bolag (alla statusar, alla år)
+- Filstruktur: `receipts/<expense_id>/<basename>` + `metadata.csv` i roten
 
-**9. Test-coverage för PageSettings** (saknas helt)
-Inga befintliga tester. Med VS-120 + VS-121 har Settings utökats
-med 3 nya kontroller utan UI-test.
+Implementation:
+- Ny dep: `npm install archiver @types/archiver`
+- `receipt-service.exportReceiptsZipBundle(db, { company_id })` returnerar
+  `IpcResult<{ filename: string }>` (skriver direkt till disk via stream).
+- IPC `receipt:export-zip-bundle` med save-dialog (M147 E2E-bypass).
+- PageInbox-knapp bredvid "Exportera CSV" (VS-123).
+- Återanvänd VS-123 CSV-genereringslogik som rad-källa.
+- Test: säkerhetskopia-mönstret (skriver tmp-fil, läser tillbaka, verifierar
+  metadata.csv + minst en fysisk fil i zip:en).
 
-**10. Bokförare-PeriodList per-period status även för stängda**
-VS-122 visar status bara på första öppna period. För stängda perioder
-kunde en "stängd"-pill med datumet visas istället för "Klar"-pill.
-Liten UX-polish.
+**VS-142: Push-notifiering MVP — moms-deadline (~2-3h)** — handover-item #4
 
-### Tekniska skulder utan produktblockad
+Mål: Native OS-notification 7/3/1 dagar före moms-deadline.
 
-**11. PageSepaDd MandateRow är extraherad men prop-onRevoke är
-kvar som inline-callback** (efter VS-125). Småsak.
+**Beslut tagna:**
+- Opt-in (default off), via Settings-toggle
+- Bara moms i v1 (K10/inkomstdeklaration backlog)
+- Eskalerande trigger vid 7, 3, 1 dagar (en gång per nivå per deadline)
+- One-shot-state: `last_notified_vat_deadline_<level>` settings
 
-**12. CloseMonthDialog auto-pickar "första öppna" period när inget
-override** — pickActivePeriod-funktionen tittar bara på
-`is_closed === 0`. Om FY börjar mid-period kan det leda till en
-felaktig pick. Edge-case som inte triggar i praktiken.
+Implementation:
+- Ny migration 062 — `companies.notify_vat_deadline INTEGER NOT NULL DEFAULT 0`
+- Settings-UI under "Moms-deklarationsfrekvens" (PageSettings).
+- Main-process: `vat-deadline-notifier.ts` triggas i `app.whenReady()` i
+  `src/main/index.ts`. Hämtar alla bolag, beräknar nästa deadline per bolag
+  via `computeVatDeadline` + `bumpToNextWorkday` (VS-129), filtrerar de som
+  har `notify=1` och `daysUntil ∈ {7, 3, 1, 0, -1, -2, ...}`.
+- Settings-key per bolag+deadline-nivå: `vat_notif_<companyId>_<isoDate>_<level>`.
+- `new Notification(...)` på main side via `webContents.send('notification:show', ...)`
+  → renderer dispatchar `new Notification`. (Renderer-side så Electron-permissions
+  hanteras naturligt.)
+- Klick på notif: öppnar appen + navigerar till `/vat`.
+- Test: enhetstest av `shouldNotify(now, deadline, last_notified, frequency)`-logik.
 
-**13. mock-ipc.ts methodToChannel är inkomplett**
-VS-126 upptäckte att 8 receipt-metoder saknades. Det finns
-sannolikt fler — t.ex. inga av sepa-dd, banking, depreciation
-finns med. När nya tester skrivs som behöver dem måste de
-registreras manuellt.
+#### 🟡 Andra session (medel-svår, layout-arbete — 4-6h)
+
+**VS-143: PDF-preview i sheets (MVP) (~3-5h)** — handover-item #1
+
+Mål: Visa kvittofil inline i BokforKostnadSheet + Inkorgen.
+
+**Beslut tagna:**
+- Native iframe (PDF) + `<img>` (bild) — inte PDF.js
+- Sheet-sidobar (split-vy: form vänster, preview höger)
+- Bildformat: jpg/png/webp/heic via OS-default — fallback "Kan inte
+  visa filen" om misslyckat
+
+Implementation:
+- Ny komponent: `src/renderer/components/receipts/ReceiptPreviewPane.tsx`
+- Tar `receiptPath: string | null` (relativ path mot `<documents>/Fritt Bokföring/`)
+- IPC `receipt:get-absolute-path(receipt_path)` — returnerar `file://...`-URL
+  efter path-traversal-validering (workaround för Electron file://-protokoll
+  i renderer; absolut-path resolveras i main för säkerhet).
+- BokforKostnadSheet: layout breddas till 60/40 split när `prefilledReceipt`
+  eller egen `receipt_path` finns. Preview-pane försvinner när inget kvitto.
+- Format-detection: `path.endsWith('.pdf')` → `<iframe>`; bildtyper → `<img>`.
+- Tester: snapshot för layout-shift, mock receipt:get-absolute-path med
+  fake file://-URL, verifiera iframe vs img per filtyp.
+
+**VS-144: Period-label dynamic per kontext (~2h)** — handover-item #3
+
+Mål: Sidebar's MonthIndicator + period-label reflekterar page-vald period
+där det finns (PageBudget, PageVat, PageReports).
+
+**Beslut tagna:**
+- Page-driven: pages med egen period-picker exponerar via context
+- Pages utan picker (PageOverview, PageIncome m.fl.) — sidebar fortsätter
+  visa global FY (oförändrat)
+
+Implementation:
+- Ny `ActivePeriodContext` (analogt med FiscalYearContext) i
+  `src/renderer/contexts/ActivePeriodContext.tsx` med default = global FY.
+- PageBudget/PageVat/PageReports wrappar sin sub-tree i provider med
+  page-state.
+- MonthIndicator läser från `useActivePeriod()` istället för
+  `useFiscalYearContext()` direkt.
+- Test: render Sidebar inom PageBudget med period-override, verifiera
+  highlight på rätt månad.
+
+#### 🔵 Tredje session (komplex, kräver mest beslut — 5-7h)
+
+**VS-145: OCR-MVP via Tesseract.js (~5-7h)** — handover-item #2
+
+Mål: När användare attachar kvitto, försök auto-extrahera datum + belopp
+och pre-fyll fält i BokforKostnadSheet.
+
+**Beslut tagna:**
+- Tesseract.js (lokal, ~5 MB bundle) — privacy-första
+- Pre-fill med "föreslagen"-toast: "Vi tror datumet är 2026-04-15 och
+  beloppet 2 350 kr — klicka för att tillämpa" (inte auto-overwrite)
+- Confidence-threshold: visa förslag bara om >70% confidence
+
+Implementation:
+- Ny dep: `npm install tesseract.js`
+- Worker körs i renderer (web worker för att inte blockera UI).
+- `src/renderer/lib/ocr/extract-receipt-fields.ts` — pure function:
+  - Input: bild-blob (skip för PDF i v1 — användare attachar bild)
+  - Output: `{ amount_kr?: number; date?: string; supplier_hint?: string; confidence: number }`
+  - Regex-baserad post-processing av OCR-text: SEK-formaterade belopp,
+    yyyy-mm-dd / dd/mm/yyyy / dd.mm.yyyy datum, leta supplier-namn
+    (första rad i printbart område).
+- Hook in: `BokforKostnadSheet.handleReceiptAttached` startar OCR i
+  bakgrunden, visar toast med "Tillämpa förslag"-knapp.
+- Tester: enhetstest av regex-parser med 5-10 olika kvitto-text-fixtures.
+
+#### ⚪ Backlog efter VS-141..VS-145
+
+**VS-146+ (BokforKostnadSheet refactor):** Skip till naturligt drift.
+Bygg eventuellt `expense-form-core` om PDF-preview (VS-143) tvingar
+fram delning mellan BokforKostnadSheet och ExpenseForm — annars vänta.
+
+**Kvarvarande backlog från ursprunglig handover:**
+- #8 Helg-bump generaliserad (VS-129) — vänta tills callsite uppstår
+- #11 PageSepaDd MandateRow inline-callback (delvis löst i VS-132)
+- #12 CloseMonthDialog edge-case (mid-period FY) — låg prio
+- #13 mock-ipc methodToChannel komplettering — gör när nya tester behöver
+
+### Beslut som fortfarande är öppna
+
+Inga från huvudplanen — alla frågor har defaults (rekommenderad approach
+i parantes per item ovan).
+
+**Eventuellt extra under arbete:**
+- **VS-145 OCR confidence-threshold:** 70% är gissning. Justera baserat
+  på faktiska kvitton i testdata. Be om feedback efter första iteration.
+- **VS-142 push-notif klick-beteende:** Min antagande "öppna app +
+  navigera till /vat". Verifiera UX-känslan när det är byggt.
+- **VS-141 zip-filnamn:** Förslag `receipts-<bolagsnamn>-<datum>.zip`.
+  Föreslå bättre om något visar sig bra.
+
+### Tekniska skulder utan produktblockad (oförändrade)
+
+- #11 PageSepaDd MandateRow edge-case
+- #12 CloseMonthDialog mid-period edge-case
+- #13 mock-ipc methodToChannel komplettering
 
 ## Filer att läsa först i nästa session
 
+**För VS-141 (zip-bundle):**
+```
+src/main/services/receipt-service.ts               # VS-123 exportReceiptsCsv som mall
+src/renderer/pages/PageInbox.tsx                   # VS-123 export-knapp + IPC-anrop
+src/main/utils/e2e-helpers.ts                      # M147 dialog-bypass-mönstret
+```
+
+**För VS-142 (push-notif):**
+```
+src/shared/vat-deadline.ts                         # VS-115b/129 deadline-beräkning
+src/renderer/modes/vardag/VardagApp.tsx            # VAT-pill konsumer (referens)
+src/main/index.ts                                  # app.whenReady() entry-point
+src/renderer/pages/PageSettings.tsx                # toggle-mönster (vat_frequency)
+```
+
+**För VS-143 (PDF-preview):**
+```
+src/renderer/modes/vardag/BokforKostnadSheet.tsx   # ReceiptVisual-komponent (line 596)
+src/renderer/pages/PageInbox.tsx                   # receipt-row med samma path
+src/main/services/receipt-service.ts               # file-path-resolution + sanity
+```
+
+**För VS-144 (period-label):**
+```
+src/renderer/components/layout/MonthIndicator.tsx  # nuvarande global FY-konsumer
+src/renderer/contexts/FiscalYearContext.tsx        # mönster för ny ActivePeriodContext
+src/renderer/pages/PageBudget.tsx                  # exempel page med period-picker
+```
+
+**För VS-145 (OCR):**
+```
+src/renderer/modes/vardag/BokforKostnadSheet.tsx   # handleReceiptAttached hook-in-punkt
+src/main/services/receipt-service.ts               # file-storage + path-helpers
+```
+
+**Allmänna referenser:**
 ```
 CLAUDE.md                                          # M1..M162 projektprinciper
-HANDOVER.md                                        # detta dokument
-src/shared/vat-deadline.ts                         # VS-129 helg-bump
-src/main/services/period-checks-service.ts         # VS-120 has_employees
-src/main/services/receipt-service.ts               # VS-123 CSV + VS-119 unlink
-src/renderer/components/period/CloseMonthDialog.tsx # VS-127+128 navigation
-src/renderer/pages/PageInbox.tsx                   # VS-124+126 dialogs + notes
-src/renderer/pages/PageSettings.tsx                # VS-120+121 toggles
-src/renderer/components/overview/PeriodList.tsx    # VS-116+122
-tests/sprint-vs125-no-native-confirm.test.ts       # statisk vakt — pages-scan
+src/main/migrations.ts                             # user_version=61, lägg till 062
+tests/setup/mock-ipc.ts                            # methodToChannel för nya kanaler
+tests/renderer/sprint-vs140-app-router-mount.test.tsx  # mönster för full-stack-tester
 ```
 
 ## Kommandoreferens
@@ -228,12 +360,21 @@ tests/sprint-vs125-no-native-confirm.test.ts       # statisk vakt — pages-scan
 # Snabb sanity-check vid sessionsstart
 npx tsc --noEmit                                   # ren
 npx eslint src/renderer src/main src/shared       # ren
-npx vitest run tests/renderer                     # 1410 gröna
+npx vitest run tests/renderer                     # 1428 gröna
 
-# Kör en domän
-npx vitest run tests/sprint-vs1               # alla VS-* tester (mönster-match)
+# Statiska checks (kör innan commit)
+npm run check:m133 && npm run check:m133-ast      # axeCheck-vakt + AST-scan
+npm run check:m131                                 # heltalsmoms-aritmetik
+npm run check:m144-ast                             # IpcResult-mandat
+npm run check:m150-ast                             # getNow() i main
+npm run check:m153                                 # deterministisk scoring
+npm run check:dynamic-update                       # SQL UPDATE-templates
+npm run check:ipc-handlers                         # handler-mönster
 
-# Ny migration: lägg till i src/main/migrations.ts (befintlig user_version=61)
+# Commits ahead of origin/main
+git log origin/main..HEAD --oneline | wc -l       # 276
+
+# Ny migration: lägg till i src/main/migrations.ts (nästa: user_version=62)
 # Ny IPC-kanal: lägg till i src/shared/ipc-schemas.ts (channelMap) +
 #               src/shared/ipc-response-schemas.ts (channelResponseMap) +
 #               src/main/ipc-handlers.ts (registrera) +
@@ -242,19 +383,30 @@ npx vitest run tests/sprint-vs1               # alla VS-* tester (mönster-match
 #               tests/setup/mock-ipc.ts methodToChannel (för tester)
 ```
 
-## Loop-instruktion (om du vill fortsätta)
+**better-sqlite3 ABI:** kvarstår som M115 — `npm rebuild better-sqlite3`
+om vitest klagar på NODE_MODULE_VERSION efter Electron-bygge.
+
+## Loop-instruktion för nästa session
+
+Föreslagen prompt för att starta:
 
 ```
-loop kör nästa del av designen på Fritt Bokföring. Stoppa loopen
-(skicka final summary, kalla inte ScheduleWakeup) om någon av
-dessa gäller:
-  (a) sprinten skulle kräva produktbeslut eller refaktor > 5 timme
+loop kör VS-141 (receipts zip-bundle) enligt plan i HANDOVER.md.
+Använd archiver-lib, per-bolag-export, filstruktur receipts/<expense_id>/<basename>.
+Återanvänd VS-123 CSV-genereringen som metadata.csv inuti zip:en.
+Stoppa loopen efter VS-141 är committad och pusha en final-summary.
+```
+
+Eller, om du vill köra hela planen i ett:
+
+```
+loop kör VS-141..VS-145 enligt plan i HANDOVER.md. Stoppa loopen
+(final summary) om någon av dessa gäller:
+  (a) en sprint avviker från planen och kräver nytt produktbeslut
   (b) jag har kört 40 sprintar i rad — paus för granskning
+  (c) test-suite blir röd och inte direkt fixbar
 ```
 
-**Notera:** Med denna omgångs leveranser har de mest uppenbara
-unblocked items konsumerats. Nästa loop-körning kommer sannolikt
-träffa stop-villkor (a) tidigt eftersom återstående backlog
-(handover #1-5) kräver produktbeslut. Inkludera ev. nya direktiv
-för PDF-strategi, OCR-prioritering eller period-label-semantik om
-du vill fortsätta loopen utan paus.
+Den första prompten är säkrast (ett välavgränsat steg). Den andra
+är mer aggressiv — gör många timmars arbete utan check-in. Stop-villkor
+(a) i v2-prompten gör att du fortfarande hör av mig vid avvikelser.
